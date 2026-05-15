@@ -26,17 +26,17 @@ defineEmits(['validate'])
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #ffffff;
+  background: $input-bg;
   border: 3px solid transparent;
   border-radius: $radius-pill;
-  padding: 4px 4px 4px 12px;
+  padding: $padding-xxs $padding-xxs $padding-xxs $padding-xl;
   transition: border-color 0.2s;
 
-  &--error { border-color: $red; }
+  &--error { border-color: $error; }
 
   &__icon {
     flex-shrink: 0;
-    color: #333;
+    color: $input-icon;
     display: flex;
     align-items: center;
   }
@@ -44,16 +44,16 @@ defineEmits(['validate'])
   &__value {
     flex: 1;
     font-family: $font-display;
-    font-size: 26px;
-    color: #111;
+    font-size: $title-sm;
+    color: $input-text;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.5px;
 
     &--placeholder {
       font-family: $font-body;
-      font-size: 15px;
+      font-size: $text-sm;
       font-weight: 400;
-      color: rgba(0, 0, 0, 0.35);
+      color: $input-placeholder;
       letter-spacing: 0;
     }
   }
@@ -61,11 +61,11 @@ defineEmits(['validate'])
   &__btn {
     background: $accent;
     border-radius: $radius-pill;
-    color: #fff;
+    color: $white;
     font-family: $font-body;
-    font-size: 15px;
+    font-size: $text-sm;
     font-weight: 700;
-    padding: 11px 28px;
+    padding: $padding-xs $padding-xl;
     transition: background 0.15s, transform 0.1s;
     white-space: nowrap;
     flex-shrink: 0;

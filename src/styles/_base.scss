@@ -1,5 +1,22 @@
 @use 'variables' as *;
 
+// --- CSS custom properties (accessibles depuis le JS pour les styles inline) ---
+:root {
+  --dart-red:        #{$dart-red};
+  --dart-green:      #{$dart-green};
+  --dart-black:      #{$dart-black};
+  --dart-cream:      #{$dart-cream};
+  --dart-cream-text: #{$dart-cream-text};
+  --dart-border:     #{$dart-border};
+  --text-color:      #{$text-color};
+  --dart-miss-bg:    rgba(0, 0, 0, 0.22);
+  --dart-miss-text:  rgba(255, 255, 255, 0.35);
+  --dart-miss-border:rgba(255, 255, 255, 0.1);
+  --color-error:     #{$error};
+  --color-orange:    #{$orange};
+  --color-accent:    #{$accent};
+}
+
 // --- Fonts ---
 @font-face {
   font-family: 'Bulevar';
@@ -25,7 +42,7 @@
 // --- Global ---
 body {
   background: $bg;
-  color: $text;
+  color: $text-color;
   font-family: $font-body;
   min-height: 100dvh;
   overflow-x: hidden;

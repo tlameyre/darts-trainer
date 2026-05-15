@@ -2,33 +2,73 @@
 $font-body:    'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 $font-display: 'Bulevar', sans-serif;
 
-// Colors — dark forest green base (DA DartCounter)
-$bg:          #101c14;
-$surface:     #1a2b1d;
-$surface2:    #223026;
-$border:      rgba(255, 255, 255, 0.08);
+// Backgrounds — dark forest green (DA DartCounter)
+$bg:       #101c14;
+$surface:  #1a2b1d;
+$surface2: #223026;
+$border:   rgba(255, 255, 255, 0.08);
 
-// Brand orange
+// Brand — orange
 $orange:      #D64A24;
 $orange-dark: #B83D1C;
 
-// Accent green (correct / submit)
-$accent:      #22c55e;
-$accent-dark: #16a34a;
-$accent-light:#86efac;
+// Accent — green (correct / submit)
+$accent:       #2ACE82;
+$accent-dark:  #16a34a;
+$accent-light: #86efac;
 
-// Semantic
-$red:         #ef4444;
-$red-light:   #fca5a5;
-$text:        #ffffff;
-$muted:       rgba(255, 255, 255, 0.40);
+// Semantic — error / wrong
+$error:       #ef4444;
+$error-dark:  #B21327;
+$error-light: #fca5a5;
 
-// Dart type tints (text color on orange card)
-$dart-double-light: #ede9fe;
-$dart-triple-light: #fef9c3;
-$dart-bull-light:   #fee2e2;
+// Text
+$white:      #ffffff;
+$text-color: #ffffff;
+$muted:      rgba(255, 255, 255, 0.40);
 
-// Spacing
+// Input (pill blanc)
+$input-bg:          #ffffff;
+$input-text:        #111111;
+$input-icon:        #333333;
+$input-placeholder: rgba(0, 0, 0, 0.35);
+
+// Font sizes — Geist (body) — multiples de 4
+$text-xxs: 8px;
+$text-xs:  12px;
+$text-sm:  16px;
+$text-md:  20px;
+$text-lg:  24px;
+$text-xl:  28px;
+$text-xxl: 32px;
+
+// Font sizes — Bulevar (display) — multiples de 4
+$title-xxs: 16px;
+$title-xs:  20px;
+$title-sm:  24px;
+$title-md:  40px;
+$title-lg:  48px;
+$title-xl:  60px;
+$title-xxl: 72px;
+
+// Dartboard chip colors (fidèle aux couleurs de la cible)
+$dart-red:        #B21327;  // double/triple secteurs rouges + double bull
+$dart-green:      #2ACE82;  // double/triple secteurs verts + outer bull
+$dart-black:      #000000;  // simple secteurs rouges
+$dart-cream:      #f0e8d0;  // simple secteurs verts
+$dart-cream-text: #111111;  // texte sur fond crème
+$dart-border:     #ffffff;  // bordure des secteurs
+
+// Padding — multiples de 4
+$padding-xxs: 4px;
+$padding-xs:  8px;
+$padding-sm:  12px;
+$padding-md:  16px;
+$padding-lg:  20px;
+$padding-xl:  24px;
+$padding-xxl: 32px;
+
+// Border radius
 $radius-sm:   8px;
 $radius-md:   14px;
 $radius-lg:   20px;

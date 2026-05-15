@@ -67,9 +67,9 @@ const rows = [
     justify-content: center;
     background: transparent;
     border: none;
-    color: $text;
+    color: $text-color;
     font-family: $font-display;
-    font-size: 24px;
+    font-size: $title-md;
     font-weight: 400;
     padding: 0;
     transition: background 0.1s, transform 0.08s;
@@ -81,19 +81,19 @@ const rows = [
 
     &:active {
       transform: scale(0.88);
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba($white, 0.06);
     }
 
     &--del {
       font-family: $font-body;
-      font-size: 15px;
+      font-size: $text-md;
       color: $muted;
     }
 
     &--validate {
       color: $accent;
       font-family: $font-body;
-      font-size: 18px;
+      font-size: $text-lg;
     }
   }
 }

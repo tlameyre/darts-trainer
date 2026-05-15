@@ -28,14 +28,14 @@ const chipColors = computed(() => {
   const { dart } = props
 
   if (dart.type === 'miss') {
-    return { bg: 'rgba(0,0,0,0.22)', text: 'rgba(255,255,255,0.35)', border: 'rgba(255,255,255,0.1)' }
+    return { bg: 'var(--dart-miss-bg)', text: 'var(--dart-miss-text)', border: 'var(--dart-miss-border)' }
   }
 
   if (dart.type === 'bull') {
     // Double bull = rouge, simple bull = vert (comme la cible)
     return dart.pts === 50
-      ? { bg: '#bf3a28', text: '#ffffff', border: 'rgba(255,255,255,0.55)' }
-      : { bg: '#1a9147', text: '#ffffff', border: 'rgba(255,255,255,0.55)' }
+      ? { bg: 'var(--dart-red)',   text: '#fff', border: 'var(--dart-border)' }
+      : { bg: 'var(--dart-green)', text: '#fff', border: 'var(--dart-border)' }
   }
 
   const n = getBaseNumber(dart)
@@ -45,14 +45,14 @@ const chipColors = computed(() => {
     // Simple rouge → fond noir, texte blanc
     // Simple vert  → fond crème, texte noir
     return isRed
-      ? { bg: '#1a1a1a',  text: '#ffffff', border: 'rgba(255,255,255,0.18)' }
-      : { bg: '#f0e8d0',  text: '#111111', border: 'rgba(0,0,0,0.12)' }
+      ? { bg: 'var(--dart-black)', text: '#fff',                   border: 'var(--dart-border)' }
+      : { bg: 'var(--dart-cream)', text: 'var(--dart-cream-text)', border: 'var(--dart-border)' }
   }
 
   // Double ou Triple : couleur vive de la cible
   return isRed
-    ? { bg: '#c0392b', text: '#ffffff', border: 'rgba(255,255,255,0.6)' }
-    : { bg: '#1a9147', text: '#ffffff', border: 'rgba(255,255,255,0.6)' }
+    ? { bg: 'var(--dart-red)',   text: '#fff', border: 'var(--dart-border)' }
+    : { bg: 'var(--dart-green)', text: '#fff', border: 'var(--dart-border)' }
 })
 </script>
 
@@ -75,12 +75,12 @@ const chipColors = computed(() => {
 .dart-chip {
   flex: 1;
   border-radius: $radius-md;
-  padding: 8px 6px;
+  padding: $padding-xs $padding-xxs;
   text-align: center;
   border: 2px solid transparent;
 
   &__type {
-    font-size: 9px;
+    font-size: $text-xxs;
     text-transform: uppercase;
     letter-spacing: 0.8px;
     font-weight: 700;
@@ -90,12 +90,12 @@ const chipColors = computed(() => {
 
   &__label {
     font-family: $font-display;
-    font-size: 20px;
+    font-size: $title-xs;
     line-height: 1;
   }
 
   &__pts {
-    font-size: 10px;
+    font-size: $text-xs;
     opacity: 0.55;
     margin-top: 2px;
   }

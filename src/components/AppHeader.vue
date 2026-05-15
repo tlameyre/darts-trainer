@@ -24,17 +24,17 @@ defineEmits(['back'])
 <style lang="scss" scoped>
 .app-header {
   width: 100%;
-  padding: 14px 20px 10px;
+  padding: $padding-sm $padding-lg $padding-xs;
   display: grid;
   grid-template-columns: 40px 1fr 40px;
   align-items: center;
 
   &__back {
-    color: $text;
+    color: $text-color;
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    padding: 4px;
+    padding: $padding-xxs;
     transition: opacity 0.15s;
 
     &:active { opacity: 0.6; }
@@ -42,10 +42,10 @@ defineEmits(['back'])
 
   &__title {
     font-family: $font-display;
-    font-size: 18px;
+    font-size: $title-xxs;
     font-weight: 400;
     letter-spacing: 1px;
-    color: $text;
+    color: $text-color;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;

@@ -105,7 +105,7 @@ export function useDarts({ difficulty, maxQuestions, timeLimit, doubleValidation
       } else {
         nextRound()
       }
-    }, 3000)
+    }, 1500)
   }
 
   function onTimeout() {

@@ -77,7 +77,7 @@ const timeOptions = [
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: 0 16px 40px;
+  padding: 0 $padding-md $padding-xxl;
   max-width: 420px;
   margin: 0 auto;
 
@@ -86,12 +86,12 @@ const timeOptions = [
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 32px 0 28px;
+    padding: $padding-xxl 0 $padding-xxl;
     gap: 4px;
   }
 
   &__sub {
-    font-size: 11px;
+    font-size: $text-xs;
     font-weight: 700;
     letter-spacing: 3px;
     color: $orange;
@@ -100,9 +100,9 @@ const timeOptions = [
 
   &__title {
     font-family: $font-display;
-    font-size: 58px;
+    font-size: $title-xl;
     line-height: 0.9;
-    color: $text;
+    color: $text-color;
   }
 
   &__settings {
@@ -115,7 +115,7 @@ const timeOptions = [
     background: $surface;
     border: 1px solid $border;
     border-radius: $radius-lg;
-    padding: 16px;
+    padding: $padding-md;
   }
 
   // Double calcul toggle row
@@ -123,7 +123,7 @@ const timeOptions = [
     background: $surface;
     border: 1px solid $border;
     border-radius: $radius-lg;
-    padding: 16px;
+    padding: $padding-md;
     display: flex;
     align-items: center;
     gap: 14px;
@@ -137,15 +137,15 @@ const timeOptions = [
 
   &__toggle-title {
     display: block;
-    font-size: 13px;
+    font-size: $text-sm;
     font-weight: 700;
-    color: $text;
+    color: $text-color;
     margin-bottom: 2px;
   }
 
   &__toggle-desc {
     display: block;
-    font-size: 11px;
+    font-size: $text-xs;
     color: $muted;
     line-height: 1.4;
   }
@@ -172,7 +172,7 @@ const timeOptions = [
     left: 3px;
     width: 18px;
     height: 18px;
-    background: #fff;
+    background: $white;
     border-radius: 50%;
     transition: transform 0.2s;
 
@@ -183,11 +183,11 @@ const timeOptions = [
     margin-top: 20px;
     background: $orange;
     border-radius: $radius-pill;
-    color: #fff;
+    color: $white;
     font-family: $font-display;
-    font-size: 20px;
+    font-size: $title-xs;
     letter-spacing: 3px;
-    padding: 17px;
+    padding: $padding-md;
     width: 100%;
     transition: background 0.15s, transform 0.1s;
 

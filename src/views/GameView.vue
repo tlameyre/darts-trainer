@@ -30,7 +30,7 @@ const newScore = computed(() => currentScore.value - correctAnswer.value)
 const overlayLabel = computed(() => {
   if (feedbackState.value === 'phase1ok') return 'CORRECT !'
   if (feedbackState.value === 'correct')  return 'CORRECT !'
-  if (feedbackState.value === 'timeout')  return 'TEMPS !'
+  if (feedbackState.value === 'timeout')  return 'TEMPS ÉCOULÉ !'
   return 'RATÉ !'
 })
 
@@ -104,10 +104,7 @@ onUnmounted(() => {
           <Transition name="fade">
             <div v-if="feedbackState && feedbackState !== 'phase1ok'" class="round-card__overlay" :class="overlayClass">
               <div class="round-card__overlay-title">{{ overlayLabel }}</div>
-              <div v-if="feedbackState === 'correct'" class="round-card__overlay-sub">
-                &minus;{{ phase === 2 ? voleeTotal : correctAnswer }} &rarr; {{ newScore }}
-              </div>
-              <div v-else class="round-card__overlay-sub">
+              <div v-if="feedbackState === 'wrong' || feedbackState === 'timeout'" class="round-card__overlay-sub">
                 Réponse : <strong>{{ correctAnswer }}</strong>
               </div>
             </div>
@@ -166,7 +163,7 @@ onUnmounted(() => {
     min-height: 0;
     width: 100%;
     max-width: 420px;
-    padding: 6px 16px 10px;
+    padding: $padding-xs $padding-md $padding-xs;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -181,7 +178,7 @@ onUnmounted(() => {
 
   &__tour-label {
     font-family: $font-display;
-    font-size: 18px;
+    font-size: $title-xxs;
     color: $orange;
     letter-spacing: 1px;
   }
@@ -193,17 +190,17 @@ onUnmounted(() => {
     background: $surface2;
     border: 1px solid $border;
     border-radius: $radius-pill;
-    padding: 4px 12px;
-    font-size: 13px;
+    padding: $padding-xxs $padding-sm;
+    font-size: $text-sm;
     font-weight: 700;
-    color: $text;
+    color: $text-color;
     font-variant-numeric: tabular-nums;
     transition: background 0.3s, border-color 0.3s;
 
     &--urgent {
-      background: rgba($red, 0.2);
-      border-color: rgba($red, 0.5);
-      color: $red-light;
+      background: rgba($error, 0.2);
+      border-color: rgba($error, 0.5);
+      color: $error-light;
     }
   }
 
@@ -211,8 +208,8 @@ onUnmounted(() => {
     background: rgba($accent, 0.15);
     border: 1px solid rgba($accent, 0.3);
     border-radius: $radius-pill;
-    padding: 4px 12px;
-    font-size: 12px;
+    padding: $padding-xxs $padding-sm;
+    font-size: $text-sm;
     font-weight: 700;
     color: $accent-light;
   }
@@ -230,23 +227,23 @@ onUnmounted(() => {
   overflow: hidden;
 
   &__top {
-    padding: 14px 18px 8px;
+    padding: $padding-sm $padding-lg $padding-xs;
     text-align: center;
 
-    &--phase2 .round-card__score { font-size: 56px; }
+    &--phase2 .round-card__score { font-size: $title-xl; }
   }
 
   &__label {
-    font-size: 10px;
+    font-size: $text-xs;
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    color: rgba(255,255,255,0.55);
+    color: rgba($white, 0.55);
     margin-bottom: 2px;
 
     &--question {
-      font-size: 14px;
+      font-size: $text-md;
       letter-spacing: 0.5px;
-      color: rgba(255,255,255,0.9);
+      color: rgba($white, 0.9);
       font-weight: 700;
       margin-top: 6px;
       text-transform: none;
@@ -255,27 +252,27 @@ onUnmounted(() => {
 
   &__score {
     font-family: $font-display;
-    font-size: 72px;
+    font-size: $title-xxl;
     line-height: 1;
-    color: #fff;
+    color: $white;
     font-variant-numeric: tabular-nums;
   }
 
   &__volee-total {
     font-family: $font-display;
-    font-size: 48px;
-    color: #fff;
+    font-size: $title-lg;
+    color: $white;
     font-variant-numeric: tabular-nums;
   }
 
   &__divider {
     height: 1px;
-    background: rgba(255,255,255,0.2);
-    margin: 0 18px;
+    background: rgba($white, 0.2);
+    margin: 0 $padding-lg;
   }
 
   &__bottom {
-    padding: 8px 14px 12px;
+    padding: $padding-xs $padding-sm $padding-sm;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -293,23 +290,23 @@ onUnmounted(() => {
     gap: 10px;
     border-radius: $radius-lg;
 
-    &--correct { background: rgba(22, 163, 74, 0.95); }
-    &--wrong   { background: rgba(185, 28, 28, 0.95); }
-    &--brief   { background: rgba(22, 163, 74, 0.88); }
+    &--correct { background: $accent-dark; }
+    &--wrong   { background: $error-dark; }
+    &--brief   { background: $accent-dark; }
   }
 
   &__overlay-title {
     font-family: $font-display;
-    font-size: 44px;
-    color: #fff;
+    font-size: $title-lg;
+    color: $white;
     letter-spacing: 2px;
   }
 
   &__overlay-sub {
-    font-size: 15px;
-    color: rgba(255,255,255,0.9);
+    font-size: $text-md;
+    color: rgba($white, 0.9);
     font-weight: 600;
-    strong { font-weight: 800; color: #fff; }
+    strong { font-weight: 800; color: $white; }
   }
 }
 

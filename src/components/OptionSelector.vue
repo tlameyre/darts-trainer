@@ -28,7 +28,7 @@ defineEmits(['update:modelValue'])
 <style lang="scss" scoped>
 .option-selector {
   &__label {
-    font-size: 11px;
+    font-size: $text-xs;
     text-transform: uppercase;
     letter-spacing: 1.2px;
     color: $muted;
@@ -40,20 +40,20 @@ defineEmits(['update:modelValue'])
 
   &__btn {
     flex: 1;
-    background: rgba(255,255,255,0.05);
+    background: rgba($white, 0.05);
     border: 1.5px solid $border;
     border-radius: $radius-md;
     color: $muted;
     font-family: $font-body;
-    font-size: 14px;
+    font-size: $text-sm;
     font-weight: 700;
-    padding: 11px 6px;
+    padding: $padding-sm;
     transition: all 0.15s;
 
     &--active {
       background: $orange;
       border-color: $orange;
-      color: #fff;
+      color: $white;
     }
   }
 }
