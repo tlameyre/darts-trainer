@@ -18,12 +18,13 @@ const emit = defineEmits(['home', 'replay'])
 const {
   currentScore, currentVolee, inputValue,
   feedbackState, streak, best,
-  questionIndex, correctCount, gameOver, timeLeft,
+  correctCount, gameOver, timeLeft,
   correctAnswer, questionLabel,
   nextRound, appendDigit, deleteDigit, validate, cleanup,
 } = useDarts(props.settings)
 
-const newScore = computed(() => currentScore.value + correctAnswer.value)
+// En 501, on descend son score
+const newScore = computed(() => currentScore.value - correctAnswer.value)
 
 const feedbackLabel = computed(() => {
   if (feedbackState.value === 'correct') return 'Correct !'
@@ -50,11 +51,11 @@ onUnmounted(() => {
 
 <template>
   <div class="game">
-    <AppHeader :streak="streak" :best="best">
-      <template #center>
-        <span class="game__counter">{{ questionLabel }}</span>
-      </template>
-    </AppHeader>
+    <AppHeader
+      :streak="streak"
+      :question-label="questionLabel"
+      :max-questions="settings.maxQuestions"
+    />
 
     <main class="game__main">
       <!-- Game over -->
@@ -98,7 +99,7 @@ onUnmounted(() => {
             >
               <div class="round-card__overlay-title">{{ feedbackLabel }}</div>
               <div v-if="feedbackState === 'correct'" class="round-card__overlay-sub">
-                +{{ correctAnswer }} &rarr; {{ newScore }}
+                &minus;{{ correctAnswer }} &rarr; {{ newScore }}
               </div>
               <div v-else class="round-card__overlay-sub">
                 La bonne réponse était <strong>{{ correctAnswer }}</strong>
@@ -136,17 +137,10 @@ onUnmounted(() => {
     min-height: 0;
     width: 100%;
     max-width: 420px;
-    padding: 14px 16px 20px;
+    padding: 10px 14px 14px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-  }
-
-  &__counter {
-    font-size: 13px;
-    font-weight: 600;
-    color: $muted;
-    font-variant-numeric: tabular-nums;
+    gap: 8px;
   }
 }
 
@@ -156,7 +150,7 @@ onUnmounted(() => {
   background: $card;
   border: 1px solid $border;
   border-radius: $radius-lg;
-  padding: 16px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
@@ -168,7 +162,7 @@ onUnmounted(() => {
   }
 
   &__label {
-    font-size: 11px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: $muted;
@@ -176,7 +170,7 @@ onUnmounted(() => {
   }
 
   &__score {
-    font-size: 56px;
+    font-size: 48px;
     font-weight: 800;
     line-height: 1;
     font-variant-numeric: tabular-nums;
@@ -185,17 +179,16 @@ onUnmounted(() => {
   &__divider {
     height: 1px;
     background: $border;
-    margin: 0 -16px;
+    margin: 0 -14px;
   }
 
   &__volee-section {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
 
-  // Feedback overlay
   &__overlay {
     position: absolute;
     inset: 0;
@@ -203,28 +196,28 @@ onUnmounted(() => {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
     border-radius: $radius-lg;
 
     &--correct {
-      background: rgba($accent, 0.92);
+      background: rgba($accent, 0.93);
       color: #fff;
     }
 
     &--wrong, &--timeout {
-      background: rgba($red, 0.92);
+      background: rgba($red, 0.93);
       color: #fff;
     }
   }
 
   &__overlay-title {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 800;
   }
 
   &__overlay-sub {
-    font-size: 16px;
-    opacity: 0.9;
+    font-size: 15px;
+    opacity: 0.92;
     font-weight: 500;
 
     strong { font-weight: 800; }

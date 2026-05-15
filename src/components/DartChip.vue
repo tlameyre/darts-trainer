@@ -1,10 +1,6 @@
 <script setup>
 defineProps({
-  dart: {
-    type: Object,
-    required: true,
-    // { type: 'single'|'double'|'triple'|'bull'|'miss', label: String, pts: Number }
-  },
+  dart: { type: Object, required: true },
 })
 
 const TYPE_LABELS = {
@@ -27,31 +23,30 @@ const TYPE_LABELS = {
 <style lang="scss" scoped>
 .dart-chip {
   flex: 1;
-  max-width: 110px;
   border-radius: $radius-md;
-  padding: 12px 8px;
+  padding: 8px 6px;
   text-align: center;
   border: 2px solid transparent;
 
   &__type {
-    font-size: 10px;
+    font-size: 9px;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.6px;
     font-weight: 600;
     opacity: 0.75;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
   }
 
   &__label {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 700;
     line-height: 1;
   }
 
   &__pts {
-    font-size: 11px;
+    font-size: 10px;
     opacity: 0.6;
-    margin-top: 3px;
+    margin-top: 2px;
   }
 
   &--single { background: rgba($dart-single, 0.15); border-color: rgba($dart-single, 0.4); color: $dart-single-light; }

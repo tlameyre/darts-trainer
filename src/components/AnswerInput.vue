@@ -27,18 +27,20 @@ defineEmits(['validate'])
   background: $card;
   border: 1px solid $border;
   border-radius: $radius-lg;
-  padding: 20px;
+  padding: 10px 14px;
 
   &__label {
-    font-size: 13px;
+    font-size: 11px;
     color: $muted;
-    margin-bottom: 12px;
+    margin-bottom: 6px;
     text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   &__row {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
   }
 
@@ -48,10 +50,10 @@ defineEmits(['validate'])
     border: 2px solid $border;
     border-radius: $radius-md;
     color: $text;
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 700;
     text-align: center;
-    padding: 14px 12px;
+    padding: 9px 10px;
     font-variant-numeric: tabular-nums;
     transition: border-color 0.2s;
 
@@ -62,9 +64,9 @@ defineEmits(['validate'])
     background: $accent;
     border-radius: $radius-md;
     color: #fff;
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 700;
-    padding: 14px 22px;
+    padding: 9px 20px;
     transition: background 0.15s, transform 0.1s;
 
     &:active {

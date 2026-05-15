@@ -67,6 +67,28 @@ export function useDarts({ difficulty, maxQuestions, timeLimit }) {
     return               { type: 'bull', label: 'D.Bull', pts: 50 }
   }
 
+  // Génère une volée dont la somme ne dépasse pas scoreLimit
+  function generateVolee(scoreLimit) {
+    for (let i = 0; i < 50; i++) {
+      const v = [generateDart(), generateDart(), generateDart()]
+      if (v.reduce((s, d) => s + d.pts, 0) <= scoreLimit) return v
+    }
+    // Fallback : génération contrainte par le budget restant
+    const darts = []
+    let budget = scoreLimit
+    for (let i = 0; i < 3; i++) {
+      if (budget <= 0) {
+        darts.push({ type: 'miss', label: 'Miss', pts: 0 })
+        continue
+      }
+      const maxVal = Math.min(budget, 20)
+      const n = Math.floor(Math.random() * maxVal) + 1
+      darts.push({ type: 'single', label: String(n), pts: n })
+      budget -= n
+    }
+    return darts
+  }
+
   // --- Timers ---
   function stopTimer() {
     clearInterval(_timer)
@@ -114,7 +136,7 @@ export function useDarts({ difficulty, maxQuestions, timeLimit }) {
     feedbackState.value = null
     questionIndex.value++
     currentScore.value  = Math.floor(Math.random() * 500) + 2
-    currentVolee.value  = [generateDart(), generateDart(), generateDart()]
+    currentVolee.value  = generateVolee(currentScore.value)
     startTimer()
   }
 
@@ -159,13 +181,10 @@ export function useDarts({ difficulty, maxQuestions, timeLimit }) {
   }
 
   return {
-    // state
     currentScore, currentVolee, inputValue,
     feedbackState, answered, streak, best,
     questionIndex, correctCount, gameOver, timeLeft,
-    // computed
     correctAnswer, timerProgress, questionLabel,
-    // actions
     nextRound, appendDigit, deleteDigit, validate, cleanup,
   }
 }
