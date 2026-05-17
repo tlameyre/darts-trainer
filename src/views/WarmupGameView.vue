@@ -110,6 +110,7 @@ function fmtDuration(ms) {
 
 // --- Actions ---
 function tapSector(sector) {
+  if (justCompleted.value) return
   const tab = TABS.find(t => t.id === activeTab.value)
   flash(`s-${sector}`)
   recordDart({
@@ -121,16 +122,19 @@ function tapSector(sector) {
 }
 
 function tapBull() {
+  if (justCompleted.value) return
   flash('bull')
   recordDart({ type: 'bull', sector: null, pts: 50, label: 'Bull' })
 }
 
 function tapOuter() {
+  if (justCompleted.value) return
   flash('outer')
   recordDart({ type: 'bull', sector: null, pts: 25, label: 'Outer' })
 }
 
 function tapMiss() {
+  if (justCompleted.value) return
   flash('miss')
   recordDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })
 }
