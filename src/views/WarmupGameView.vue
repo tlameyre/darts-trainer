@@ -2,15 +2,18 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { gameSettings } from '../store/gameStore.js'
-import { useWarmup } from '../composables/useWarmup.js'
+import { useWarmup, formatZoneLabel } from '../composables/useWarmup.js'
+import ZonePicker from '../components/ZonePicker.vue'
 
 const router = useRouter()
 
+if (!gameSettings.value) router.replace({ name: 'warmup-settings' })
+
 const {
   timeDisplay, isUrgent, gameOver,
-  totalDarts, hits, accuracy, totalScore,
-  darts, recordDart, undoLast, startTimer, endSession, cleanup,
-} = useWarmup(gameSettings.value)
+  currentZone, currentZoneStats, zoneRecapStats, sessionStats,
+  darts, recordDart, undoLast, changeZone, startTimer, endSession, cleanup,
+} = useWarmup(gameSettings.value ?? { duration: 5, zone: { sector: 20, type: 'D' } })
 
 // --- Dartboard red/green sector mapping ---
 const RED_NUMBERS = new Set([20, 18, 13, 10, 2, 3, 7, 8, 14, 12])
@@ -35,11 +38,19 @@ const currentMultiplier = computed(
   () => TABS.find(t => t.id === activeTab.value)?.multiplier ?? 1
 )
 
-const ZONE_LABELS = {
-  single: 'Simple', double: 'Double', triple: 'Triple',
-  bull: 'Bull (50)', outer: 'Outer (25)',
+// --- Zone change modal ---
+const showZoneModal = ref(false)
+const tempZone = ref({ sector: 20, type: 'D' })
+
+function openZoneModal() {
+  tempZone.value = { ...currentZone.value }
+  showZoneModal.value = true
 }
-const zoneLabel = computed(() => ZONE_LABELS[gameSettings.value?.trainZone] ?? '')
+
+function confirmZoneChange() {
+  changeZone(tempZone.value)
+  showZoneModal.value = false
+}
 
 // --- Tour tracking (3 darts = 1 tour) ---
 const justCompleted = ref(false)
@@ -87,6 +98,14 @@ function cellStyle(sector) {
   return RED_NUMBERS.has(sector)
     ? { background: '#B21327', color: '#ffffff' }
     : { background: '#36cc86', color: '#ffffff' }
+}
+
+// --- Duration format for recap ---
+function fmtDuration(ms) {
+  const s = Math.floor(ms / 1000)
+  const m = Math.floor(s / 60)
+  const sec = s % 60
+  return m > 0 ? `${m}min ${sec}s` : `${sec}s`
 }
 
 // --- Actions ---
@@ -139,7 +158,7 @@ onUnmounted(() => {
         </svg>
       </button>
       <h1 class="warmup__header-title">ECHAUFFEMENT</h1>
-      <button class="warmup__header-btn" @click="router.push({ name: 'warmup-settings' })">
+      <button class="warmup__header-btn" @click="openZoneModal">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
           <path
             d="M9.71622 2.75625C9.82872 2.20125 10.32 1.8 10.89 1.8H13.1325C13.7025 1.8 14.1937 2.20125 14.3062 2.75625L14.85 5.38125C15.3787 5.60625 15.8737 5.895 16.3237 6.23625L18.8662 5.3925C19.4062 5.2125 19.9987 5.4375 20.2837 5.9325L21.405 7.875C21.69 8.37 21.5887 8.9925 21.1612 9.37125L19.1625 11.1487C19.1962 11.4262 19.2112 11.7112 19.2112 12C19.2112 12.2887 19.1925 12.5737 19.1625 12.8512L21.165 14.6325C21.5925 15.0112 21.69 15.6375 21.4087 16.1287L20.2875 18.0712C20.0025 18.5625 19.41 18.7912 18.87 18.6112L16.3275 17.7675C15.8737 18.1087 15.3787 18.3937 14.8537 18.6225L14.3137 21.2437C14.1975 21.8025 13.7062 22.2 13.14 22.2H10.8975C10.3275 22.2 9.83622 21.7987 9.72372 21.2437L9.18372 18.6225C8.65497 18.3975 8.16372 18.1087 7.70997 17.7675L5.15622 18.6112C4.61622 18.7912 4.02372 18.5662 3.73872 18.0712L2.61747 16.1287C2.33247 15.6337 2.43372 15.0112 2.86122 14.6325L4.86372 12.8512C4.82997 12.5737 4.81497 12.2887 4.81497 12C4.81497 11.7112 4.83372 11.4262 4.86372 11.1487L2.86122 9.3675C2.43372 8.98875 2.33622 8.3625 2.61747 7.87125L3.73872 5.92875C4.02372 5.43375 4.61622 5.20875 5.15622 5.38875L7.69872 6.2325C8.15247 5.89125 8.64747 5.60625 9.17247 5.3775L9.71622 2.75625ZM12.0112 15C13.6687 14.9925 15.0075 13.6462 15 11.9887C14.9925 10.3312 13.6462 8.9925 11.9887 9C10.3312 9.0075 8.99247 10.3537 8.99997 12.0112C9.00747 13.6687 10.3537 15.0075 12.0112 15Z"
@@ -153,19 +172,19 @@ onUnmounted(() => {
 
       <!-- Carte stats bleue -->
       <div class="warmup__card">
-        <div class="warmup__card-big">{{ totalScore }}</div>
+        <div class="warmup__card-zone">{{ formatZoneLabel(currentZone) }}</div>
         <div class="warmup__card-rows">
           <div class="warmup__card-row">
             <span class="warmup__card-lbl">Fléchettes jetées</span>
-            <span class="warmup__card-val">{{ totalDarts }}</span>
+            <span class="warmup__card-val">{{ currentZoneStats.total }}</span>
           </div>
           <div class="warmup__card-row">
             <span class="warmup__card-lbl">Fléchettes touchées</span>
-            <span class="warmup__card-val">{{ hits }}</span>
+            <span class="warmup__card-val">{{ currentZoneStats.hits }}</span>
           </div>
           <div class="warmup__card-row">
             <span class="warmup__card-lbl">Taux de réussite</span>
-            <span class="warmup__card-val">{{ accuracy }}%</span>
+            <span class="warmup__card-val">{{ currentZoneStats.accuracy }}%</span>
           </div>
         </div>
       </div>
@@ -191,6 +210,7 @@ onUnmounted(() => {
               fill="#333" />
           </svg>
         </div>
+        <div class="warmup__slots-sep" />
         <div class="warmup__slot" v-for="i in 3" :key="i">
           <Transition name="slot-pop">
             <span v-if="displayedDarts[i - 1]" :key="displayedDarts[i - 1].ts">
@@ -212,7 +232,7 @@ onUnmounted(() => {
           <button v-for="n in row" :key="n" class="warmup__cell" :style="cellStyle(n)"
             :class="{ 'warmup__cell--pressed': pressedKey === `s-${n}` }" @click="tapSector(n)">
             <span class="warmup__cell-num">{{ n }}</span>
-            <span v-if="currentMultiplier != 1" class="warmup__cell-pts">{{ n * currentMultiplier }}</span>
+            <span class="warmup__cell-pts">{{ n * currentMultiplier }}</span>
           </button>
         </template>
       </div>
@@ -220,7 +240,7 @@ onUnmounted(() => {
       <!-- Bas : undo / MANQUÉ / fin -->
       <div class="warmup__bottom">
         <button class="warmup__bottom-undo" @click="undoLast">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 14 4 9l5-5" />
             <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
@@ -229,7 +249,7 @@ onUnmounted(() => {
         <button class="warmup__bottom-miss" :class="{ 'warmup__bottom-miss--pressed': pressedKey === 'miss' }"
           @click="tapMiss">MANQUÉ</button>
         <button class="warmup__bottom-end" @click="endSession">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="18" height="18" rx="2" />
             <line x1="9" y1="9" x2="15" y2="15" />
@@ -243,36 +263,80 @@ onUnmounted(() => {
     <div v-else class="warmup__recap">
       <div class="warmup__recap-title">SESSION TERMINÉE</div>
 
-      <div class="warmup__recap-score"
-        :class="`warmup__recap-score--${accuracy >= 70 ? 'good' : accuracy >= 40 ? 'mid' : 'low'}`">
-        {{ accuracy }}<span>%</span>
+      <!-- Par zone -->
+      <div class="warmup__recap-zones">
+        <div v-for="zs in zoneRecapStats" :key="`${zs.zone.sector}-${zs.zone.type}`" class="warmup__recap-zone-card">
+          <div class="warmup__recap-zone-header">
+            <span class="warmup__recap-zone-name">{{ formatZoneLabel(zs.zone) }}</span>
+            <span class="warmup__recap-zone-acc" :class="`warmup__recap-zone-acc--${zs.accuracy >= 70 ? 'good' : zs.accuracy >= 40 ? 'mid' : 'low'}`">
+              {{ zs.accuracy }}%
+            </span>
+          </div>
+          <div class="warmup__recap-zone-stats">
+            <div class="warmup__recap-zone-stat">
+              <span class="warmup__recap-zone-stat-val">{{ fmtDuration(zs.durationMs) }}</span>
+              <span class="warmup__recap-zone-stat-lbl">temps</span>
+            </div>
+            <div class="warmup__recap-zone-sep" />
+            <div class="warmup__recap-zone-stat">
+              <span class="warmup__recap-zone-stat-val">{{ zs.total }}</span>
+              <span class="warmup__recap-zone-stat-lbl">jetées</span>
+            </div>
+            <div class="warmup__recap-zone-sep" />
+            <div class="warmup__recap-zone-stat">
+              <span class="warmup__recap-zone-stat-val">{{ zs.hits }}</span>
+              <span class="warmup__recap-zone-stat-lbl">touches</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="warmup__recap-zone">{{ zoneLabel }}</div>
 
-      <div class="warmup__recap-stats">
-        <div class="warmup__recap-stat">
-          <span class="warmup__recap-stat-val">{{ totalDarts }}</span>
-          <span class="warmup__recap-stat-lbl">fléchettes</span>
-        </div>
-        <div class="warmup__recap-sep" />
-        <div class="warmup__recap-stat">
-          <span class="warmup__recap-stat-val">{{ hits }}</span>
-          <span class="warmup__recap-stat-lbl">dans la zone</span>
-        </div>
-        <div class="warmup__recap-sep" />
-        <div class="warmup__recap-stat">
-          <span class="warmup__recap-stat-val">{{ totalDarts - hits }}</span>
-          <span class="warmup__recap-stat-lbl">manqués</span>
+      <!-- Total session -->
+      <div class="warmup__recap-total">
+        <div class="warmup__recap-total-title">SESSION TOTALE</div>
+        <div class="warmup__recap-stats">
+          <div class="warmup__recap-stat">
+            <span class="warmup__recap-stat-val">{{ sessionStats.total }}</span>
+            <span class="warmup__recap-stat-lbl">fléchettes</span>
+          </div>
+          <div class="warmup__recap-sep" />
+          <div class="warmup__recap-stat">
+            <span class="warmup__recap-stat-val">{{ sessionStats.hits }}</span>
+            <span class="warmup__recap-stat-lbl">touches</span>
+          </div>
+          <div class="warmup__recap-sep" />
+          <div class="warmup__recap-stat">
+            <span class="warmup__recap-stat-val">{{ sessionStats.accuracy }}%</span>
+            <span class="warmup__recap-stat-lbl">précision</span>
+          </div>
         </div>
       </div>
 
       <div class="warmup__recap-actions">
-        <button class="warmup__recap-btn warmup__recap-btn--primary"
+        <button
+          class="warmup__recap-btn warmup__recap-btn--primary"
           @click="router.push({ name: 'warmup-game', query: { t: Date.now() } })">Recommencer</button>
-        <button class="warmup__recap-btn warmup__recap-btn--secondary"
+        <button
+          class="warmup__recap-btn warmup__recap-btn--secondary"
           @click="router.push({ name: 'lobby' })">Accueil</button>
       </div>
     </div>
+
+    <!-- Modal changement de zone -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showZoneModal" class="warmup-modal" @click.self="showZoneModal = false">
+          <div class="warmup-modal__sheet">
+            <div class="warmup-modal__title">Changer de zone</div>
+            <ZonePicker v-model="tempZone" />
+            <div class="warmup-modal__actions">
+              <button class="warmup-modal__btn warmup-modal__btn--cancel" @click="showZoneModal = false">Annuler</button>
+              <button class="warmup-modal__btn warmup-modal__btn--confirm" @click="confirmZoneChange">Confirmer</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
   </div>
 </template>
@@ -300,10 +364,7 @@ onUnmounted(() => {
     align-items: center;
     justify-content: center;
     transition: opacity 0.15s;
-
-    &:active {
-      opacity: 0.6;
-    }
+    &:active { opacity: 0.6; }
   }
 
   &__header-title {
@@ -336,9 +397,11 @@ onUnmounted(() => {
     flex: 1;
   }
 
-  &__card-big {
+  &__card-zone {
     font-family: $font-display;
     font-size: $title-xl;
+    color: $white;
+    line-height: 1;
     text-align: center;
     flex: 1;
     display: flex;
@@ -360,11 +423,14 @@ onUnmounted(() => {
 
   &__card-lbl {
     font-size: $text-md;
+    color: rgba(255, 255, 255, 0.75);
   }
 
   &__card-val {
     font-size: $text-md;
     font-weight: 700;
+    color: $white;
+    font-variant-numeric: tabular-nums;
   }
 
   // Ligne TOUR + timer
@@ -389,10 +455,7 @@ onUnmounted(() => {
     gap: $gap-xs;
     font-size: $title-xxs;
     transition: color 0.3s;
-
-    &--urgent {
-      color: $error;
-    }
+    &--urgent { color: $error; }
   }
 
   // Pill slots
@@ -403,7 +466,7 @@ onUnmounted(() => {
     border-radius: $radius-pill;
     overflow: hidden;
     flex-shrink: 0;
-    height: 44px;
+    height: 50px;
   }
 
   &__slots-icon {
@@ -414,20 +477,25 @@ onUnmounted(() => {
     flex-shrink: 0;
   }
 
+  &__slots-sep {
+    width: 1px;
+    background: rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+  }
+
   &__slot {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: $font-display;
-    font-size: $title-xxs;
+    font-size: $title-xs;
     color: $input-text;
     border-left: 1px solid rgba(0, 0, 0, 0.15);
     overflow: hidden;
   }
 
   // Grille
-
   &__gtab {
     aspect-ratio: 1;
     display: flex;
@@ -440,28 +508,16 @@ onUnmounted(() => {
     border-right: 1px solid $border;
     transition: background 0.12s, color 0.12s, filter 0.1s;
 
-    &:last-child {
-      border-right: none;
-    }
+    &:last-child { border-right: none; }
 
     &--active {
       color: $white;
       background: rgba(255, 255, 255, 0.12);
     }
 
-    &--sb {
-      background: $dart-green;
-      color: $white;
-    }
-
-    &--b {
-      background: $dart-red;
-      color: $white;
-    }
-
-    &--pressed {
-      filter: brightness(1.35);
-    }
+    &--sb { background: $dart-green; color: $white; }
+    &--b  { background: $dart-red;   color: $white; }
+    &--pressed { filter: brightness(1.35); }
   }
 
   &__grid {
@@ -526,9 +582,7 @@ onUnmounted(() => {
     border-radius: $radius-md;
     padding: $padding-xs;
     transition: background 0.1s, color 0.1s;
-
-    &:active,
-    &--pressed {
+    &:active, &--pressed {
       background: rgba($error, 0.2);
       color: $error-light;
     }
@@ -536,22 +590,22 @@ onUnmounted(() => {
 
   &__bottom-end {
     color: $white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: color 0.15s;
-
-    &:active {
-      color: $error;
-    }
+    &:active { color: $error; }
   }
 
   // Récap
   &__recap {
     flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: $padding-xl $padding-md;
-    gap: $padding-lg;
+    gap: $gap-md;
+    padding-bottom: $padding-md;
   }
 
   &__recap-title {
@@ -559,64 +613,114 @@ onUnmounted(() => {
     font-size: $title-xs;
     letter-spacing: 2px;
     color: $muted;
+    text-align: center;
+    flex-shrink: 0;
   }
 
-  &__recap-score {
+  &__recap-zones {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
+  }
+
+  &__recap-zone-card {
+    background: $surface;
+    border: 1px solid $border;
+    border-radius: $radius-lg;
+    padding: $padding-sm $padding-md;
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
+  }
+
+  &__recap-zone-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__recap-zone-name {
     font-family: $font-display;
-    font-size: $title-xxl;
-    line-height: 1;
+    font-size: $title-xxs;
+    color: $text-color;
+    letter-spacing: 1px;
+  }
+
+  &__recap-zone-acc {
+    font-family: $font-display;
+    font-size: $title-xs;
     font-variant-numeric: tabular-nums;
+    &--good { color: $accent; }
+    &--mid  { color: $orange; }
+    &--low  { color: $error; }
+  }
 
-    span {
-      font-size: $title-lg;
+  &__recap-zone-stats {
+    display: flex;
+    align-items: center;
+    gap: $gap-sm;
+  }
+
+  &__recap-zone-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    &-val {
+      font-family: $font-display;
+      font-size: $title-xxs;
+      color: $text-color;
+      font-variant-numeric: tabular-nums;
     }
-
-    &--good {
-      color: $accent;
-    }
-
-    &--mid {
-      color: $orange;
-    }
-
-    &--low {
-      color: $error;
+    &-lbl {
+      font-size: $text-xxs;
+      color: $muted;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
   }
 
-  &__recap-zone {
-    font-size: $text-sm;
-    color: $muted;
+  &__recap-zone-sep {
+    width: 1px;
+    height: 28px;
+    background: $border;
+  }
+
+  &__recap-total {
+    background: $surface;
+    border: 1px solid $border;
+    border-radius: $radius-lg;
+    padding: $padding-sm $padding-md;
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
+  }
+
+  &__recap-total-title {
+    font-size: $text-xs;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-top: -$padding-md;
+    letter-spacing: 1.5px;
+    color: $muted;
+    font-weight: 700;
   }
 
   &__recap-stats {
     display: flex;
     align-items: center;
     gap: $padding-md;
-    background: $surface;
-    border: 1px solid $border;
-    border-radius: $radius-lg;
-    padding: $padding-md $padding-lg;
-    width: 100%;
-    justify-content: center;
+    justify-content: space-around;
   }
 
   &__recap-stat {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: $padding-xs;
-
+    gap: 4px;
     &-val {
       font-family: $font-display;
       font-size: $title-xs;
       color: $text-color;
       font-variant-numeric: tabular-nums;
     }
-
     &-lbl {
       font-size: $text-xxs;
       color: $muted;
@@ -634,7 +738,8 @@ onUnmounted(() => {
   &__recap-actions {
     display: flex;
     gap: $padding-xs;
-    width: 100%;
+    flex-shrink: 0;
+    margin-top: auto;
   }
 
   &__recap-btn {
@@ -644,32 +749,68 @@ onUnmounted(() => {
     font-weight: 700;
     padding: $padding-sm;
     transition: transform 0.1s, opacity 0.15s;
-
-    &:active {
-      transform: scale(0.97);
-      opacity: 0.85;
-    }
-
-    &--primary {
-      background: #1D4ED8;
-      color: $white;
-    }
-
-    &--secondary {
-      background: $surface;
-      border: 1px solid $border;
-      color: $muted;
-    }
+    &:active { transform: scale(0.97); opacity: 0.85; }
+    &--primary   { background: #1D4ED8; color: $white; }
+    &--secondary { background: $surface; border: 1px solid $border; color: $muted; }
   }
 }
 
 // Animation score dans slot
-.slot-pop-enter-active {
-  transition: transform 0.15s ease, opacity 0.15s ease;
+.slot-pop-enter-active { transition: transform 0.15s ease, opacity 0.15s ease; }
+.slot-pop-enter-from   { transform: scale(0.5); opacity: 0; }
+</style>
+
+<style lang="scss">
+// Modal (non scoped — Teleport sort du scope)
+.warmup-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  z-index: 100;
+
+  &__sheet {
+    width: 100%;
+    background: #1a2422;
+    border-radius: 24px 24px 0 0;
+    padding: 24px 16px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__title {
+    font-family: 'Noka', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: #fff;
+    text-align: center;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  &__btn {
+    flex: 1;
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 12px;
+    transition: transform 0.1s, opacity 0.15s;
+    &:active { transform: scale(0.97); opacity: 0.85; }
+    &--cancel  { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+    &--confirm { background: #1D4ED8; color: #fff; }
+  }
 }
 
-.slot-pop-enter-from {
-  transform: scale(0.5);
-  opacity: 0;
-}
+.modal-enter-active, .modal-leave-active { transition: opacity 0.2s ease; }
+.modal-enter-active .warmup-modal__sheet,
+.modal-leave-active .warmup-modal__sheet { transition: transform 0.25s ease; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
+.modal-enter-from .warmup-modal__sheet,
+.modal-leave-to .warmup-modal__sheet { transform: translateY(100%); }
 </style>

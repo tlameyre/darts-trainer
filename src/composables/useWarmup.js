@@ -1,56 +1,80 @@
 import { ref, computed } from 'vue'
 
-export function useWarmup({ duration, trainZone }) {
-  const darts    = ref([])
-  const timeLeft = ref(duration * 60)
-  const gameOver = ref(false)
+export function formatZoneLabel(zone) {
+  if (!zone) return ''
+  if (zone.sector === null) return zone.type === 'B' ? 'Bull (50)' : 'Outer (25)'
+  const types = { S: 'Simple', D: 'Double', T: 'Triple' }
+  return `${types[zone.type]} ${zone.sector}`
+}
+
+function zonesMatch(z1, z2) {
+  return z1?.sector === z2?.sector && z1?.type === z2?.type
+}
+
+function isHit(dart, zone) {
+  if (!zone || dart.type === 'miss') return false
+  if (zone.sector === null) {
+    return dart.type === 'bull' && (zone.type === 'B' ? dart.pts === 50 : dart.pts === 25)
+  }
+  const typeMap = { S: 'single', D: 'double', T: 'triple' }
+  return dart.type === typeMap[zone.type] && dart.sector === zone.sector
+}
+
+export function useWarmup({ duration, zone: initialZone }) {
+  const darts       = ref([])
+  const currentZone = ref({ ...initialZone })
+  const periods     = ref([])
+  const timeLeft    = ref(duration !== null ? duration * 60 : null)
+  const gameOver    = ref(false)
   let _timer = null
 
-  // --- Computed stats ---
-  const totalDarts = computed(() => darts.value.length)
-
-  const hits = computed(() =>
-    darts.value.filter(d => isTargetHit(d)).length
-  )
-
-  const accuracy = computed(() =>
-    totalDarts.value > 0 ? Math.round((hits.value / totalDarts.value) * 100) : 0
-  )
-
   const timeDisplay = computed(() => {
+    if (timeLeft.value === null) return '∞'
     const m = Math.floor(timeLeft.value / 60)
     const s = timeLeft.value % 60
     return `${m}:${s.toString().padStart(2, '0')}`
   })
 
-  // La session est urgente (< 30s) pour feedback visuel
-  const isUrgent = computed(() => timeLeft.value <= 30 && timeLeft.value > 0)
+  const isUrgent = computed(() =>
+    timeLeft.value !== null && timeLeft.value <= 30 && timeLeft.value > 0
+  )
 
-  // Breakdown par secteur (1-20) pour le récap
-  const breakdown = computed(() => {
-    const result = {}
-    for (let i = 1; i <= 20; i++) result[i] = 0
-    darts.value.forEach(d => {
-      if (d.sector && isTargetHit(d)) result[d.sector] = (result[d.sector] || 0) + 1
-    })
-    return result
+  const currentZoneStats = computed(() => {
+    const zd = darts.value.filter(d => zonesMatch(d.zone, currentZone.value))
+    const hits = zd.filter(d => isHit(d, currentZone.value)).length
+    return { total: zd.length, hits, accuracy: zd.length > 0 ? Math.round(hits / zd.length * 100) : 0 }
   })
 
-  // --- Helpers ---
-  function isTargetHit(dart) {
-    if (dart.type === 'miss') return false
-    if (trainZone === 'single') return dart.type === 'single'
-    if (trainZone === 'double') return dart.type === 'double'
-    if (trainZone === 'triple') return dart.type === 'triple'
-    if (trainZone === 'bull')   return dart.type === 'bull' && dart.pts === 50
-    if (trainZone === 'outer')  return dart.type === 'bull' && dart.pts === 25
-    return false
-  }
+  const zoneRecapStats = computed(() => {
+    const seen = []
+    periods.value.forEach(p => {
+      if (!seen.find(z => zonesMatch(z, p.zone))) seen.push(p.zone)
+    })
+    return seen.map(zone => {
+      const zd = darts.value.filter(d => zonesMatch(d.zone, zone))
+      const hits = zd.filter(d => isHit(d, zone)).length
+      const durationMs = periods.value
+        .filter(p => zonesMatch(p.zone, zone))
+        .reduce((sum, p) => sum + ((p.endTs ?? Date.now()) - p.startTs), 0)
+      return {
+        zone,
+        total: zd.length,
+        hits,
+        accuracy: zd.length > 0 ? Math.round(hits / zd.length * 100) : 0,
+        durationMs,
+      }
+    })
+  })
 
-  // --- Actions ---
+  const sessionStats = computed(() => {
+    const total = darts.value.length
+    const hits  = darts.value.filter(d => isHit(d, d.zone)).length
+    return { total, hits, accuracy: total > 0 ? Math.round(hits / total * 100) : 0 }
+  })
+
   function recordDart(dart) {
     if (gameOver.value) return
-    darts.value.push({ ...dart, ts: Date.now() })
+    darts.value.push({ ...dart, zone: { ...currentZone.value }, ts: Date.now() })
   }
 
   function undoLast() {
@@ -58,12 +82,23 @@ export function useWarmup({ duration, trainZone }) {
     darts.value.pop()
   }
 
+  function changeZone(newZone) {
+    const now = Date.now()
+    if (periods.value.length > 0) periods.value[periods.value.length - 1].endTs = now
+    periods.value.push({ zone: { ...newZone }, startTs: now, endTs: null })
+    currentZone.value = { ...newZone }
+  }
+
   function startTimer() {
+    const now = Date.now()
+    periods.value.push({ zone: { ...currentZone.value }, startTs: now, endTs: null })
+    if (timeLeft.value === null) return
     clearInterval(_timer)
     _timer = setInterval(() => {
       timeLeft.value--
       if (timeLeft.value <= 0) {
         clearInterval(_timer)
+        _closePeriod()
         gameOver.value = true
       }
     }, 1000)
@@ -71,20 +106,20 @@ export function useWarmup({ duration, trainZone }) {
 
   function endSession() {
     clearInterval(_timer)
+    _closePeriod()
     gameOver.value = true
   }
 
-  function cleanup() {
-    clearInterval(_timer)
+  function _closePeriod() {
+    const last = periods.value[periods.value.length - 1]
+    if (last && !last.endTs) last.endTs = Date.now()
   }
 
-  const totalScore = computed(() =>
-    darts.value.reduce((sum, d) => sum + d.pts, 0)
-  )
+  function cleanup() { clearInterval(_timer) }
 
   return {
-    darts, timeLeft, timeDisplay, isUrgent, gameOver,
-    totalDarts, hits, accuracy, totalScore, breakdown,
-    recordDart, undoLast, startTimer, endSession, cleanup,
+    darts, currentZone, gameOver, timeDisplay, isUrgent,
+    currentZoneStats, zoneRecapStats, sessionStats,
+    recordDart, undoLast, changeZone, startTimer, endSession, cleanup,
   }
 }

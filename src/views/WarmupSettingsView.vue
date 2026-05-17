@@ -1,33 +1,35 @@
 <script setup>
-import { reactive } from 'vue'
-import { useRouter }     from 'vue-router'
-import AppHeader         from '../components/AppHeader.vue'
-import OptionSelector    from '../components/OptionSelector.vue'
-import { gameSettings }  from '../store/gameStore.js'
+import { ref, reactive, computed } from 'vue'
+import { useRouter }    from 'vue-router'
+import AppHeader        from '../components/AppHeader.vue'
+import OptionSelector   from '../components/OptionSelector.vue'
+import ZonePicker       from '../components/ZonePicker.vue'
+import { gameSettings } from '../store/gameStore.js'
 
 const router = useRouter()
 
 const settings = reactive({
-  duration:  5,
-  trainZone: 'double',
+  duration: 5,
+  zone: { sector: 20, type: 'D' },
 })
 
+const customMinutes = ref(10)
+
 const durationOptions = [
-  { value: 2,  label: '2 min'  },
-  { value: 5,  label: '5 min'  },
-  { value: 10, label: '10 min' },
+  { value: 2,        label: '2 min'    },
+  { value: 5,        label: '5 min'    },
+  { value: 10,       label: '10 min'   },
+  { value: null,     label: 'Illimité' },
+  { value: 'custom', label: 'Perso'    },
 ]
 
-const zoneOptions = [
-  { value: 'single', label: 'Simple'  },
-  { value: 'double', label: 'Double'  },
-  { value: 'triple', label: 'Triple'  },
-  { value: 'bull',   label: 'Bull'    },
-  { value: 'outer',  label: 'Outer'   },
-]
+const isCustomDuration = computed(() => settings.duration === 'custom')
 
 function startGame() {
-  gameSettings.value = { ...settings, mode: 'warmup' }
+  const duration = settings.duration === 'custom'
+    ? (Number(customMinutes.value) > 0 ? Number(customMinutes.value) : 5)
+    : settings.duration
+  gameSettings.value = { mode: 'warmup', duration, zone: settings.zone }
   router.push({ name: 'warmup-game' })
 }
 </script>
@@ -44,19 +46,26 @@ function startGame() {
             :options="durationOptions"
             v-model="settings.duration"
           />
+          <div v-if="isCustomDuration" class="settings__custom-duration">
+            <input
+              type="number"
+              v-model="customMinutes"
+              min="1"
+              max="120"
+              class="settings__custom-input"
+              placeholder="Minutes"
+            />
+            <span class="settings__custom-label">minutes</span>
+          </div>
         </div>
+
         <div class="settings__card">
-          <OptionSelector
-            label="Zone à travailler"
-            :options="zoneOptions"
-            v-model="settings.trainZone"
-          />
+          <div class="settings__zone-label">Zone à travailler</div>
+          <ZonePicker v-model="settings.zone" />
         </div>
       </div>
 
-      <button class="settings__start" @click="startGame">
-        COMMENCER
-      </button>
+      <button class="settings__start" @click="startGame">COMMENCER</button>
     </main>
   </div>
 </template>
@@ -83,8 +92,6 @@ function startGame() {
     display: flex;
     flex-direction: column;
     gap: $padding-xs;
-    flex: 1;
-    justify-content: center;
   }
 
   &__card {
@@ -92,6 +99,43 @@ function startGame() {
     border: 1px solid $border;
     border-radius: $radius-lg;
     padding: $padding-sm;
+    display: flex;
+    flex-direction: column;
+    gap: $gap-sm;
+  }
+
+  &__zone-label {
+    font-size: $text-xs;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: $muted;
+    font-weight: 700;
+  }
+
+  &__custom-duration {
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
+    margin-top: $padding-xxs;
+  }
+
+  &__custom-input {
+    width: 80px;
+    background: rgba($white, 0.05);
+    border: 1.5px solid $border;
+    border-radius: $radius-md;
+    color: $text-color;
+    font-family: $font-body;
+    font-size: $text-sm;
+    font-weight: 700;
+    padding: $padding-xs $padding-sm;
+    text-align: center;
+    &:focus { outline: none; border-color: $orange; }
+  }
+
+  &__custom-label {
+    font-size: $text-sm;
+    color: $muted;
   }
 
   &__start {
@@ -104,7 +148,6 @@ function startGame() {
     padding: $padding-md;
     width: 100%;
     transition: background 0.15s, transform 0.1s;
-
     &:active { background: #1E40AF; transform: scale(0.98); }
   }
 }
