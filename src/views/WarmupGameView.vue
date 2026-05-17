@@ -398,19 +398,19 @@ onUnmounted(() => {
   // Pill slots
   &__slots {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     background: $white;
     border-radius: $radius-pill;
     overflow: hidden;
     flex-shrink: 0;
-    padding: $padding-sm 0 $padding-sm $padding-md;
+    height: 44px;
   }
 
   &__slots-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-right: calc($padding-md - 2px);
+    padding: 0 $padding-md;
     flex-shrink: 0;
   }
 
@@ -420,10 +420,10 @@ onUnmounted(() => {
     align-items: center;
     justify-content: center;
     font-family: $font-display;
-    font-size: $title-sm;
+    font-size: $title-xxs;
     color: $input-text;
-    border-left: 1px solid $black;
-    height: 100%;
+    border-left: 1px solid rgba(0, 0, 0, 0.15);
+    overflow: hidden;
   }
 
   // Grille
