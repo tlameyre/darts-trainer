@@ -1,13 +1,17 @@
 <script setup>
-import { reactive } from 'vue'
+import { reactive, computed } from 'vue'
+import { useRoute, useRouter }  from 'vue-router'
 import AppHeader      from '../components/AppHeader.vue'
 import OptionSelector from '../components/OptionSelector.vue'
+import { GAME_MODES } from '../data/gameModes.js'
+import { gameSettings } from '../store/gameStore.js'
 
-const props = defineProps({
-  mode: { type: Object, required: true },
-})
+const route  = useRoute()
+const router = useRouter()
 
-const emit = defineEmits(['start', 'back'])
+const mode = computed(() =>
+  GAME_MODES.find(m => m.id === route.params.modeId)
+)
 
 const settings = reactive({
   difficulty:       'easy',
@@ -33,11 +37,19 @@ const timeOptions = [
   { value: 30,   label: '30 s'  },
   { value: null, label: 'Libre' },
 ]
+
+function startGame() {
+  gameSettings.value = { ...settings }
+  router.push({ name: 'game', params: { modeId: mode.value.id } })
+}
 </script>
 
 <template>
   <div class="settings">
-    <AppHeader :title="mode.title.replace('\n', ' ')" @back="emit('back')" />
+    <AppHeader
+      :title="mode?.title.replace('\n', ' ')"
+      @back="router.push({ name: 'lobby' })"
+    />
 
     <main class="settings__main">
       <div class="settings__cards">
@@ -63,7 +75,6 @@ const timeOptions = [
           />
         </div>
 
-        <!-- Double calcul toggle -->
         <button
           class="settings__toggle"
           :class="{ 'settings__toggle--on': settings.doubleValidation }"
@@ -84,7 +95,7 @@ const timeOptions = [
         </button>
       </div>
 
-      <button class="settings__start" @click="emit('start', { ...settings })">
+      <button class="settings__start" @click="startGame">
         JOUER
       </button>
     </main>
@@ -124,7 +135,6 @@ const timeOptions = [
     padding: $padding-sm;
   }
 
-  // Toggle double calcul
   &__toggle {
     background: $surface;
     border: 1px solid $border;
@@ -166,10 +176,7 @@ const timeOptions = [
     flex-shrink: 0;
     transition: background 0.2s, border-color 0.2s;
 
-    &--on {
-      background: $orange;
-      border-color: $orange;
-    }
+    &--on { background: $orange; border-color: $orange; }
   }
 
   &__toggle-knob {

@@ -1,6 +1,8 @@
 <script setup>
 import { computed, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useDarts } from '../composables/useDarts.js'
+import { gameSettings } from '../store/gameStore.js'
 
 import AppHeader    from '../components/AppHeader.vue'
 import VoleeDisplay from '../components/VoleeDisplay.vue'
@@ -8,11 +10,8 @@ import AnswerInput  from '../components/AnswerInput.vue'
 import NumPad       from '../components/NumPad.vue'
 import GameOver     from '../components/GameOver.vue'
 
-const props = defineProps({
-  settings: { type: Object, required: true },
-})
-
-const emit = defineEmits(['home', 'back', 'replay'])
+const route  = useRoute()
+const router = useRouter()
 
 const {
   currentScore, currentVolee, inputValue,
@@ -21,7 +20,7 @@ const {
   phase, voleeTotal,
   correctAnswer, questionLabel, phaseLabel,
   nextRound, appendDigit, deleteDigit, validate, cleanup,
-} = useDarts(props.settings)
+} = useDarts(gameSettings.value)
 
 // En 501 on descend le score
 const newScore = computed(() => currentScore.value - correctAnswer.value)
@@ -58,7 +57,10 @@ onUnmounted(() => {
 
 <template>
   <div class="game">
-    <AppHeader title="ENTRAINEMENT" @back="emit('back')" />
+    <AppHeader
+      title="ENTRAINEMENT"
+      @back="router.push({ name: 'settings', params: { modeId: route.params.modeId } })"
+    />
 
     <main class="game__main">
       <GameOver
@@ -66,8 +68,8 @@ onUnmounted(() => {
         :correct-count="correctCount"
         :max-questions="settings.maxQuestions ?? questionLabel"
         :best="best"
-        @replay="emit('replay')"
-        @home="emit('home')"
+        @replay="router.push({ name: 'game', params: { modeId: route.params.modeId }, query: { t: Date.now() } })"
+        @home="router.push({ name: 'lobby' })"
       />
 
       <template v-else>

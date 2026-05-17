@@ -1,7 +1,12 @@
 <script setup>
+import { useRouter } from 'vue-router'
 import { GAME_MODES } from '../data/gameModes.js'
 
-const emit = defineEmits(['select'])
+const router = useRouter()
+
+function selectMode(mode) {
+  router.push({ name: 'settings', params: { modeId: mode.id } })
+}
 </script>
 
 <template>
@@ -17,7 +22,7 @@ const emit = defineEmits(['select'])
         :key="mode.id"
         class="mode-card"
         :style="{ '--mode-color': mode.color }"
-        @click="emit('select', mode)"
+        @click="selectMode(mode)"
       >
         <h2 class="mode-card__title">{{ mode.title }}</h2>
         <p class="mode-card__desc">{{ mode.description }}</p>
