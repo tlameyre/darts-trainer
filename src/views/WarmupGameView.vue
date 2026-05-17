@@ -212,7 +212,7 @@ onUnmounted(() => {
           <button v-for="n in row" :key="n" class="warmup__cell" :style="cellStyle(n)"
             :class="{ 'warmup__cell--pressed': pressedKey === `s-${n}` }" @click="tapSector(n)">
             <span class="warmup__cell-num">{{ n }}</span>
-            <span class="warmup__cell-pts">{{ n * currentMultiplier }}</span>
+            <span v-if="currentMultiplier != 1" class="warmup__cell-pts">{{ n * currentMultiplier }}</span>
           </button>
         </template>
       </div>
@@ -220,7 +220,7 @@ onUnmounted(() => {
       <!-- Bas : undo / MANQUÉ / fin -->
       <div class="warmup__bottom">
         <button class="warmup__bottom-undo" @click="undoLast">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 14 4 9l5-5" />
             <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
@@ -229,7 +229,7 @@ onUnmounted(() => {
         <button class="warmup__bottom-miss" :class="{ 'warmup__bottom-miss--pressed': pressedKey === 'miss' }"
           @click="tapMiss">MANQUÉ</button>
         <button class="warmup__bottom-end" @click="endSession">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="18" height="18" rx="2" />
             <line x1="9" y1="9" x2="15" y2="15" />
@@ -468,12 +468,13 @@ onUnmounted(() => {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     align-self: start;
+    width: 100%;
   }
 
   &__cell {
     aspect-ratio: 1;
     display: flex;
-    flex-direction: column;
+    gap: $gap-xxs;
     align-items: center;
     justify-content: center;
     border-right: 2px solid $border;
@@ -487,43 +488,39 @@ onUnmounted(() => {
 
     &-num {
       font-family: $font-display;
-      font-size: $title-xs;
+      font-size: $title-sm;
       line-height: 1;
       font-variant-numeric: tabular-nums;
     }
 
     &-pts {
-      font-size: $text-xxs;
-      opacity: 0.6;
-      font-variant-numeric: tabular-nums;
+      font-family: $font-display;
+      font-size: $text-xs;
+      opacity: .8;
     }
   }
 
-  // Bas
+  // Bas — aligné sur la grille (1 case | 3 cases | 1 case)
   &__bottom {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 3fr 1fr;
     align-items: center;
-    gap: $padding-xs;
     flex-shrink: 0;
-    padding-bottom: $padding-xxs;
   }
 
   &__bottom-undo {
-    color: $muted;
-    padding: $padding-xs;
+    color: $white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: color 0.15s;
-
-    &:active {
-      color: $text-color;
-    }
   }
 
   &__bottom-miss {
-    flex: 1;
     font-family: $font-display;
     font-size: $title-xxs;
     letter-spacing: 2px;
-    color: $text-color;
+    color: $white;
     background: $surface;
     border: 1px solid $border;
     border-radius: $radius-md;
@@ -538,8 +535,7 @@ onUnmounted(() => {
   }
 
   &__bottom-end {
-    color: $muted;
-    padding: $padding-xs;
+    color: $white;
     transition: color 0.15s;
 
     &:active {
