@@ -78,7 +78,7 @@ defineProps({
 
 .warmup__slots-sep {
   width: 1px;
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba($black, 0.15);
   flex-shrink: 0;
 }
 
@@ -90,7 +90,7 @@ defineProps({
   font-family: $font-display;
   font-size: $title-xs;
   color: $input-text;
-  border-left: 1px solid rgba(0, 0, 0, 0.15);
+  border-left: 1px solid rgba($black, 0.15);
   overflow: hidden;
 }
 

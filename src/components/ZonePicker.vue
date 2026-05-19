@@ -42,11 +42,8 @@ function selectType(type) {
   emit('update:modelValue', { ...props.modelValue, type })
 }
 
-function cellStyle(n) {
-  if (props.modelValue.sector === n) return { background: '#1D4ED8', color: '#fff' }
-  return RED_NUMBERS.has(n)
-    ? { background: '#1e1e1e', color: '#fff' }
-    : { background: '#e8ddc8', color: '#111' }
+function cellSelected(n) {
+  return props.modelValue.sector === n
 }
 </script>
 
@@ -54,8 +51,7 @@ function cellStyle(n) {
   <div class="zone-picker">
     <div class="zone-picker__grid">
       <template v-for="row in SECTOR_ROWS" :key="row[0]">
-        <button v-for="n in row" :key="n" class="zone-picker__cell" :style="cellStyle(n)" @click="selectSector(n)">{{ n
-          }}</button>
+        <button v-for="n in row" :key="n" class="zone-picker__cell" :class="{ 'zone-picker__cell--selected': cellSelected(n) }" @click="selectSector(n)">{{ n }}</button>
       </template>
     </div>
 
@@ -91,13 +87,14 @@ function cellStyle(n) {
     justify-content: center;
     font-family: $font-display;
     font-size: $title-xxs;
-    border-right: 1px solid rgba(0, 0, 0, 0.2);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    background: $bg;
+    color: $white;
+    border-right: 1px solid $border;
+    border-bottom: 1px solid $border;
     transition: filter 0.1s;
 
-    &:active {
-      filter: brightness(1.3);
-    }
+    &:active { filter: brightness(1.3); }
+    &--selected { background: $blue; }
   }
 
   &__bull {
@@ -110,13 +107,8 @@ function cellStyle(n) {
     border-radius: $radius-sm;
     transition: filter 0.1s;
 
-    &:active {
-      filter: brightness(1.2);
-    }
-
-    &--active {
-      background: #1D4ED8;
-    }
+    &:active { filter: brightness(1.2); }
+    &--active { background: $blue; }
   }
 
   &__types {
@@ -127,7 +119,7 @@ function cellStyle(n) {
   &__type {
     flex: 1;
     padding: $padding-xs;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba($white, 0.05);
     border: 1.5px solid $border;
     border-radius: $radius-md;
     color: $muted;

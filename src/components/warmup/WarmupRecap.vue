@@ -226,7 +226,7 @@ function fmtDuration(ms) {
     padding: $padding-sm;
     transition: transform 0.1s, opacity 0.15s;
     &:active { transform: scale(0.97); opacity: 0.85; }
-    &--primary   { background: #1D4ED8; color: $white; }
+    &--primary   { background: $blue; color: $white; }
     &--secondary { background: $surface; border: 1px solid $border; color: $muted; }
   }
 }

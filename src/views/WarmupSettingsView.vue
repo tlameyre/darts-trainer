@@ -133,7 +133,7 @@ function startGame() {
   }
 
   &__start {
-    background: #1D4ED8;
+    background: $blue;
     border-radius: $radius-pill;
     color: $white;
     font-family: $font-display;
@@ -144,7 +144,7 @@ function startGame() {
     transition: background 0.15s, transform 0.1s;
 
     &:active {
-      background: #1E40AF;
+      background: $blue-dark;
       transform: scale(0.98);
     }
   }

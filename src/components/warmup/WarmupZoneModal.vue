@@ -37,45 +37,45 @@ watch(() => props.show, (val) => {
 .warmup-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba($black, 0.6);
   display: flex;
   align-items: flex-end;
   z-index: 100;
 
   &__sheet {
     width: 100%;
-    background: #1a2422;
-    border-radius: 24px 24px 0 0;
-    padding: 24px 16px 40px;
+    background: $surface;
+    border-radius: $radius-lg $radius-lg 0 0;
+    padding: $padding-xl $padding-md $padding-xxl;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: $gap-md;
   }
 
   &__title {
-    font-family: 'Noka', sans-serif;
-    font-size: 20px;
+    font-family: $font-display;
+    font-size: $title-xs;
     letter-spacing: 1px;
-    color: #fff;
+    color: $white;
     text-align: center;
   }
 
   &__actions {
     display: flex;
-    gap: 8px;
-    margin-top: 4px;
+    gap: $gap-xs;
+    margin-top: $padding-xxs;
   }
 
   &__btn {
     flex: 1;
-    border-radius: 999px;
-    font-size: 16px;
+    border-radius: $radius-pill;
+    font-size: $text-sm;
     font-weight: 700;
-    padding: 12px;
+    padding: $padding-sm;
     transition: transform 0.1s, opacity 0.15s;
     &:active { transform: scale(0.97); opacity: 0.85; }
-    &--cancel  { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
-    &--confirm { background: #1D4ED8; color: #fff; }
+    &--cancel  { background: rgba($white, 0.08); border: 1px solid rgba($white, 0.08); color: $muted; }
+    &--confirm { background: $blue; color: $white; }
   }
 }
 

@@ -30,15 +30,11 @@ const currentMultiplier = computed(
   () => TABS.find(t => t.id === activeTab.value)?.multiplier ?? 1
 )
 
-function cellStyle(sector) {
+function cellClass(sector) {
   if (activeTab.value === 'single') {
-    return RED_NUMBERS.has(sector)
-      ? { background: '#000000', color: '#ffffff' }
-      : { background: '#f0e8d0', color: '#111111' }
+    return RED_NUMBERS.has(sector) ? 'warmup__cell--black' : 'warmup__cell--cream'
   }
-  return RED_NUMBERS.has(sector)
-    ? { background: '#B21327', color: '#ffffff' }
-    : { background: '#36cc86', color: '#ffffff' }
+  return RED_NUMBERS.has(sector) ? 'warmup__cell--red' : 'warmup__cell--green'
 }
 
 function flash(key) {
@@ -81,8 +77,8 @@ function tapOuter() {
     <button class="warmup__gtab warmup__gtab--b" :class="{ 'warmup__gtab--pressed': pressedKey === 'bull' }"
       @click="tapBull">B</button>
     <template v-for="row in GRID_ROWS" :key="row[0]">
-      <button v-for="n in row" :key="n" class="warmup__cell" :style="cellStyle(n)"
-        :class="{ 'warmup__cell--pressed': pressedKey === `s-${n}` }" @click="tapSector(n)">
+      <button v-for="n in row" :key="n" class="warmup__cell"
+        :class="[cellClass(n), { 'warmup__cell--pressed': pressedKey === `s-${n}` }]" @click="tapSector(n)">
         <span class="warmup__cell-num">{{ n }}</span>
         <span v-if="activeTab !== 'single'" class="warmup__cell-pts">{{ n * currentMultiplier }}</span>
       </button>
@@ -107,7 +103,7 @@ function tapOuter() {
 
   &--active {
     color: $white;
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba($white, 0.12);
   }
 
   &--sb { background: $dart-green; color: $white; }
@@ -131,6 +127,11 @@ function tapOuter() {
   border-right: 2px solid $border;
   border-bottom: 2px solid $border;
   transition: filter 0.1s, transform 0.1s;
+
+  &--black { background: $dart-black; color: $white; }
+  &--cream { background: $dart-cream; color: $dart-cream-text; }
+  &--red   { background: $dart-red;   color: $white; }
+  &--green { background: $dart-green; color: $white; }
 
   &--pressed {
     filter: brightness(1.45);

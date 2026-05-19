@@ -29,7 +29,7 @@ defineProps({
 
 <style lang="scss" scoped>
 .stats-card {
-  background: #1D4ED8;
+  background: $blue;
   border-radius: $radius-lg;
   padding: $padding-md;
   display: flex;
@@ -64,7 +64,7 @@ defineProps({
 
   &__lbl {
     font-size: $text-md;
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba($white, 0.75);
   }
 
   &__val {

@@ -98,7 +98,7 @@ function selectMode(mode) {
 
   &__desc {
     font-size: $text-sm;
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba($white, 0.75);
     line-height: 1.4;
     max-width: 260px;
   }
