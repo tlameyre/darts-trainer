@@ -17,6 +17,7 @@ const settings = reactive({
   maxQuestions:     10,
   timeLimit:        null,
   doubleValidation: false,
+  showDartValue:    false,
 })
 
 const difficultyOptions = [
@@ -78,6 +79,12 @@ function startGame() {
           v-model="settings.doubleValidation"
           title="Double calcul"
           description="Après une bonne réponse, calcule aussi le score restant"
+        />
+
+        <ToggleSwitch
+          v-model="settings.showDartValue"
+          title="Valeur des fléchettes"
+          description="Affiche les points sous chaque fléchette (ex: 60 pts sous T20)"
         />
       </div>
 

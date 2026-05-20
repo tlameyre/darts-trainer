@@ -74,6 +74,7 @@ onUnmounted(() => {
           :volee-total="voleeTotal"
           :feedback-state="feedbackState"
           :correct-answer="correctAnswer"
+          :show-value="gameSettings.showDartValue"
         />
 
         <AnswerInput

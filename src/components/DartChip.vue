@@ -2,7 +2,8 @@
 import { computed } from 'vue'
 
 const props = defineProps({
-  dart: { type: Object, required: true },
+  dart:      { type: Object,  required: true },
+  showValue: { type: Boolean, default: false },
 })
 
 const TYPE_LABELS = {
@@ -67,7 +68,7 @@ const chipColors = computed(() => {
   >
     <div class="dart-chip__type">{{ TYPE_LABELS[dart.type] }}</div>
     <div class="dart-chip__label">{{ dart.label }}</div>
-    <div class="dart-chip__pts">{{ dart.pts }} pts</div>
+    <div v-if="showValue" class="dart-chip__pts">{{ dart.pts }} pts</div>
   </div>
 </template>
 

@@ -2,7 +2,8 @@
 import DartChip from './DartChip.vue'
 
 defineProps({
-  volee: { type: Array, required: true },
+  volee:     { type: Array,   required: true },
+  showValue: { type: Boolean, default: false },
 })
 </script>
 
@@ -10,7 +11,7 @@ defineProps({
   <div class="volee-darts">
     <template v-for="(dart, i) in volee" :key="i">
       <span v-if="i > 0" class="volee-darts__plus">+</span>
-      <DartChip :dart="dart" />
+      <DartChip :dart="dart" :show-value="showValue" />
     </template>
   </div>
 </template>

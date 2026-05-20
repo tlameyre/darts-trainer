@@ -7,8 +7,9 @@ const props = defineProps({
   currentScore:  Number,
   currentVolee:  Array,
   voleeTotal:    Number,
-  feedbackState: { type: String, default: null },
+  feedbackState: { type: String,  default: null },
   correctAnswer: Number,
+  showValue:     { type: Boolean, default: false },
 })
 
 const overlayLabel = computed(() => {
@@ -34,7 +35,7 @@ const overlayClass = computed(() => {
       <div class="round-card__divider" />
       <div class="round-card__bottom">
         <div class="round-card__label">Volée</div>
-        <VoleeDisplay :volee="currentVolee" />
+        <VoleeDisplay :volee="currentVolee" :show-value="showValue" />
       </div>
     </template>
 
