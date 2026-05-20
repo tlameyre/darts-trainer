@@ -7,7 +7,6 @@ const props = defineProps({
 
 const emit = defineEmits(['dart'])
 
-const RED_NUMBERS = new Set([20, 18, 13, 10, 2, 3, 7, 8, 14, 12])
 
 const TABS = [
   { id: 'single', label: 'S', multiplier: 1 },
@@ -30,12 +29,6 @@ const currentMultiplier = computed(
   () => TABS.find(t => t.id === activeTab.value)?.multiplier ?? 1
 )
 
-function cellClass(sector) {
-  if (activeTab.value === 'single') {
-    return RED_NUMBERS.has(sector) ? 'warmup__cell--black' : 'warmup__cell--cream'
-  }
-  return RED_NUMBERS.has(sector) ? 'warmup__cell--red' : 'warmup__cell--green'
-}
 
 function flash(key) {
   clearTimeout(_pressTimer)
@@ -78,7 +71,7 @@ function tapOuter() {
       @click="tapBull">B</button>
     <template v-for="row in GRID_ROWS" :key="row[0]">
       <button v-for="n in row" :key="n" class="warmup__cell"
-        :class="[cellClass(n), { 'warmup__cell--pressed': pressedKey === `s-${n}` }]" @click="tapSector(n)">
+        :class="{ 'warmup__cell--pressed': pressedKey === `s-${n}` }" @click="tapSector(n)">
         <span class="warmup__cell-num">{{ n }}</span>
         <span v-if="activeTab !== 'single'" class="warmup__cell-pts">{{ n * currentMultiplier }}</span>
       </button>
@@ -128,10 +121,8 @@ function tapOuter() {
   border-bottom: 2px solid $border;
   transition: filter 0.1s, transform 0.1s;
 
-  &--black { background: $dart-black; color: $white; }
-  &--cream { background: $dart-cream; color: $dart-cream-text; }
-  &--red   { background: $dart-red;   color: $white; }
-  &--green { background: $dart-green; color: $white; }
+  background: $bg;
+  color: $white;
 
   &--pressed {
     filter: brightness(1.45);
