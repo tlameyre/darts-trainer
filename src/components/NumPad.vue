@@ -49,9 +49,8 @@ const rows = [
     flex: 1;
     flex-direction: column;
 
-    // Bordure du bas sur toutes les lignes sauf la dernière
     &:not(:last-child) .numpad__row-keys {
-      border-bottom: 1px solid $muted;
+      border-bottom: 1px solid $border;
     }
   }
 
@@ -70,13 +69,12 @@ const rows = [
     color: $text-color;
     font-family: $font-display;
     font-size: $title-md;
-    font-weight: 400;
+    font-weight: 600;
     padding: 0;
     transition: background 0.1s, transform 0.08s;
 
-    // Bordure droite sur toutes les touches sauf la dernière de chaque ligne
     &:not(:last-child) {
-      border-right: 1px solid $muted;
+      border-right: 1px solid $border;
     }
 
     &:active {
@@ -87,6 +85,7 @@ const rows = [
     &--del {
       font-family: $font-body;
       font-size: $title-sm;
+      font-weight: 600;
       color: $white;
     }
 
@@ -94,6 +93,7 @@ const rows = [
       color: $accent;
       font-family: $font-body;
       font-size: $title-sm;
+      font-weight: 700;
     }
   }
 }

@@ -25,7 +25,7 @@ defineEmits(['validate'])
 .answer-input {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: $gap-xs;
   background: $input-bg;
   border: 3px solid transparent;
   border-radius: $radius-pill;
@@ -64,7 +64,7 @@ defineEmits(['validate'])
     color: $white;
     font-family: $font-body;
     font-size: $text-sm;
-    font-weight: 700;
+    font-weight: 600;
     padding: $padding-xs $padding-xl;
     transition: background 0.15s, transform 0.1s;
     white-space: nowrap;

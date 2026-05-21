@@ -50,7 +50,7 @@ const scoreColor = computed(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: $gap-xl;
 
   &__title {
     font-family: $font-display;
@@ -94,7 +94,7 @@ const scoreColor = computed(() => {
 
   &__actions {
     display: flex;
-    gap: 10px;
+    gap: $gap-xs;
     width: 100%;
   }
 

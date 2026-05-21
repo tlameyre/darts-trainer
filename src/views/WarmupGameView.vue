@@ -131,7 +131,7 @@ onUnmounted(() => {
   &__header-title {
     font-family: $font-display;
     font-size: $title-sm;
-    font-weight: 400;
+    font-weight: 600;
     letter-spacing: 1px;
     color: $text-color;
     text-align: center;

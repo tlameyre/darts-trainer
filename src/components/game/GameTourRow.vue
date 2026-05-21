@@ -32,12 +32,14 @@ defineProps({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: $gap-xs;
+  flex-shrink: 0;
 }
 
 .game__tour-label {
   font-family: $font-display;
   font-size: $title-sm;
+  font-weight: 700;
   color: $orange;
   letter-spacing: 1px;
 }
@@ -45,13 +47,14 @@ defineProps({
 .game__timer-badge {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: $gap-xxs;
   background: $surface;
   border: 1px solid $border;
   border-radius: $radius-pill;
   padding: $padding-xxs $padding-sm;
+  font-family: $font-body;
   font-size: $text-sm;
-  font-weight: 700;
+  font-weight: 600;
   color: $text-color;
   font-variant-numeric: tabular-nums;
   transition: background 0.3s, border-color 0.3s;
@@ -68,8 +71,9 @@ defineProps({
   border: 1px solid rgba($accent, 0.3);
   border-radius: $radius-pill;
   padding: $padding-xxs $padding-sm;
+  font-family: $font-body;
   font-size: $text-sm;
-  font-weight: 700;
+  font-weight: 600;
   color: $accent-light;
 }
 </style>

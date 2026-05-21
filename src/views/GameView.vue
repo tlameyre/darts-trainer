@@ -51,22 +51,13 @@ onUnmounted(() => {
       <GameOver
         v-if="gameOver"
         :correct-count="correctCount"
-        :max-questions="settings.maxQuestions ?? questionLabel"
+        :max-questions="gameSettings.maxQuestions ?? questionLabel"
         :best="best"
         @replay="router.push({ name: 'score-game', query: { t: Date.now() } })"
         @home="router.push({ name: 'lobby' })"
       />
 
       <template v-else>
-        <GameTourRow
-          :question-label="questionLabel"
-          :phase="phase"
-          :show-phase="gameSettings.doubleValidation"
-          :time-left="timeLeft"
-          :show-timer="!!gameSettings.timeLimit"
-          :is-urgent="timeLeft <= 5"
-        />
-
         <GameRoundCard
           :phase="phase"
           :current-score="currentScore"
@@ -75,6 +66,15 @@ onUnmounted(() => {
           :feedback-state="feedbackState"
           :correct-answer="correctAnswer"
           :show-value="gameSettings.showDartValue"
+        />
+
+        <GameTourRow
+          :question-label="questionLabel"
+          :phase="phase"
+          :show-phase="gameSettings.doubleValidation"
+          :time-left="timeLeft"
+          :show-timer="!!gameSettings.timeLimit"
+          :is-urgent="timeLeft <= 5"
         />
 
         <AnswerInput
@@ -110,7 +110,7 @@ onUnmounted(() => {
     padding: $padding-md;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: $gap-md;
   }
 }
 </style>
