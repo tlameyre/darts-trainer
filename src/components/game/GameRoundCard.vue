@@ -89,13 +89,11 @@ const overlayClass = computed(() => {
   &__label {
     font-size: $text-xs;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
     color: $white;
     margin-bottom: 2px;
 
     &--question {
       font-size: $text-md;
-      letter-spacing: 0.5px;
       color: $white;
       font-weight: 700;
       margin-top: 6px;
@@ -151,7 +149,6 @@ const overlayClass = computed(() => {
     font-family: $font-display;
     font-size: $title-lg;
     color: $white;
-    letter-spacing: 2px;
   }
 
   &__overlay-sub {

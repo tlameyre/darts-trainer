@@ -12,8 +12,7 @@ function selectMode(mode) {
 <template>
   <div class="lobby">
     <header class="lobby__header">
-      <span class="lobby__sub">TRAINING</span>
-      <h1 class="lobby__title">DARTS<br>COUNTER</h1>
+      <h1 class="lobby__title">DARTS<br>TRAINER</h1>
     </header>
 
     <main class="lobby__modes">
@@ -51,7 +50,6 @@ function selectMode(mode) {
   &__sub {
     font-size: $text-xs;
     font-weight: 700;
-    letter-spacing: 3px;
     color: $orange;
     text-transform: uppercase;
   }
@@ -60,7 +58,6 @@ function selectMode(mode) {
     font-family: $font-display;
     font-size: $title-xl;
     line-height: 0.9;
-    letter-spacing: 1px;
     color: $text-color;
   }
 
@@ -93,7 +90,6 @@ function selectMode(mode) {
     font-size: $title-sm;
     line-height: 1;
     color: $white;
-    letter-spacing: 1px;
   }
 
   &__desc {

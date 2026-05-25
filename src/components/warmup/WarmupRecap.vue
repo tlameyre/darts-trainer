@@ -87,7 +87,6 @@ function fmtDuration(ms) {
   &-title {
     font-family: $font-display;
     font-size: $title-xs;
-    letter-spacing: 2px;
     color: $muted;
     text-align: center;
     flex-shrink: 0;
@@ -119,7 +118,6 @@ function fmtDuration(ms) {
     font-family: $font-display;
     font-size: $title-xxs;
     color: $text-color;
-    letter-spacing: 1px;
   }
 
   &-zone-acc {
@@ -151,7 +149,6 @@ function fmtDuration(ms) {
       font-size: $text-xxs;
       color: $muted;
       text-transform: uppercase;
-      letter-spacing: 1px;
     }
   }
 
@@ -173,7 +170,6 @@ function fmtDuration(ms) {
     &-title {
       font-size: $text-xs;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
       color: $muted;
       font-weight: 700;
     }
@@ -201,7 +197,6 @@ function fmtDuration(ms) {
       font-size: $text-xxs;
       color: $muted;
       text-transform: uppercase;
-      letter-spacing: 1px;
     }
   }
 

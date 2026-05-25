@@ -17,10 +17,9 @@ const customMinutes = ref(10)
 
 const durationOptions = [
   { value: null, label: 'Illimité' },
-  { value: 2, label: '2 min' },
-  { value: 5, label: '5 min' },
   { value: 10, label: '10 min' },
-  { value: 'custom', label: 'Perso' },
+  { value: 20, label: '20 min' },
+  { value: 'custom', label: 'Custom' },
 ]
 
 const isCustomDuration = computed(() => settings.duration === 'custom')
@@ -97,7 +96,6 @@ function startGame() {
   &__zone-label {
     font-size: $text-xs;
     text-transform: uppercase;
-    letter-spacing: 1.2px;
     color: $muted;
     font-weight: 700;
   }
@@ -138,7 +136,6 @@ function startGame() {
     color: $white;
     font-family: $font-display;
     font-size: $title-sm;
-    letter-spacing: 2px;
     padding: $padding-md;
     width: 100%;
     transition: background 0.15s, transform 0.1s;

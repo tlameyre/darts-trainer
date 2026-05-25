@@ -55,7 +55,6 @@ const scoreColor = computed(() => {
   &__title {
     font-family: $font-display;
     font-size: $title-xxl;
-    letter-spacing: 1px;
   }
 
   &__result { text-align: center; }
@@ -77,7 +76,6 @@ const scoreColor = computed(() => {
     color: $muted;
     margin-top: 4px;
     text-transform: uppercase;
-    letter-spacing: 1px;
   }
 
   &__stat {

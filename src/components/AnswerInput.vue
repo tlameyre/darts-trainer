@@ -47,14 +47,12 @@ defineEmits(['validate'])
     font-size: $title-sm;
     color: $input-text;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.5px;
 
     &--placeholder {
       font-family: $font-body;
       font-size: $text-sm;
       font-weight: 400;
       color: $input-placeholder;
-      letter-spacing: 0;
     }
   }
 

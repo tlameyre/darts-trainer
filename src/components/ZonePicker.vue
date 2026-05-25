@@ -92,6 +92,7 @@ function cellSelected(n) {
     border-right: 1px solid $border;
     border-bottom: 1px solid $border;
     transition: filter 0.1s;
+    font-weight: 700;
 
     &:active { filter: brightness(1.3); }
     &--selected { background: $blue; }
@@ -106,6 +107,7 @@ function cellSelected(n) {
     font-size: $title-xxs;
     border-radius: $radius-sm;
     transition: filter 0.1s;
+    font-weight: 700;
 
     &:active { filter: brightness(1.2); }
     &--active { background: $blue; }

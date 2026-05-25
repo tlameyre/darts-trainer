@@ -134,7 +134,6 @@ function startGame() {
     color: $white;
     font-family: $font-display;
     font-size: $title-sm;
-    letter-spacing: 2px;
     padding: $padding-md;
     width: 100%;
     transition: background 0.15s, transform 0.1s;

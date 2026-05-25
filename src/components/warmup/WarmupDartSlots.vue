@@ -45,7 +45,6 @@ defineProps({
   font-family: $font-display;
   font-size: $title-xxs;
   color: $text-color;
-  letter-spacing: 1px;
 }
 
 .warmup__timer {

@@ -63,12 +63,12 @@ defineProps({
   }
 
   &__lbl {
-    font-size: $text-md;
+    font-size: $text-sm;
     color: rgba($white, 0.75);
   }
 
   &__val {
-    font-size: $text-md;
+    font-size: $text-sm;
     font-weight: 700;
     color: $white;
     font-variant-numeric: tabular-nums;

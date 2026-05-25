@@ -30,7 +30,6 @@ defineEmits(['update:modelValue'])
   &__label {
     font-size: $text-xs;
     text-transform: uppercase;
-    letter-spacing: 1.2px;
     color: $muted;
     margin-bottom: 10px;
     font-weight: 700;

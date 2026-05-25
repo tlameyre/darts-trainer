@@ -83,7 +83,6 @@ const chipColors = computed(() => {
   &__type {
     font-size: $text-xxs;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
     font-weight: 700;
     opacity: 0.6;
     margin-bottom: 3px;

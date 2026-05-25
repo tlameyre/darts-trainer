@@ -41,7 +41,6 @@ defineProps({
   font-size: $title-sm;
   font-weight: 700;
   color: $orange;
-  letter-spacing: 1px;
 }
 
 .game__timer-badge {
