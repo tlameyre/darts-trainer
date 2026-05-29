@@ -26,8 +26,8 @@ defineEmits(['validate'])
   display: flex;
   align-items: center;
   gap: $gap-xs;
-  background: $input-bg;
-  border: 3px solid transparent;
+  background: $white;
+  border: $border-md solid transparent;
   border-radius: $radius-pill;
   padding: $padding-xxs $padding-xxs $padding-xxs $padding-xl;
   transition: border-color 0.2s;
@@ -38,7 +38,7 @@ defineEmits(['validate'])
 
   &__icon {
     flex-shrink: 0;
-    color: $input-icon;
+    color: $black;
     display: flex;
     align-items: center;
   }
@@ -46,7 +46,7 @@ defineEmits(['validate'])
   &__value {
     flex: 1;
     @include title-xl;
-    color: $input-text;
+    color: $black;
     font-variant-numeric: tabular-nums;
 
     &--placeholder {

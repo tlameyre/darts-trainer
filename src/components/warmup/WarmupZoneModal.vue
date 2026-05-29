@@ -25,7 +25,8 @@ watch(() => props.show, (val) => {
           <div class="warmup-modal__title">Changer de zone</div>
           <ZonePicker v-model="tempZone" />
           <div class="warmup-modal__actions">
-            <AppButton size="small" rounded="full" variant="secondary" @click="emit('update:show', false)">Annuler</AppButton>
+            <AppButton size="small" rounded="full" variant="secondary" @click="emit('update:show', false)">Annuler
+            </AppButton>
             <AppButton size="small" rounded="full" @click="emit('confirm', tempZone)">Confirmer</AppButton>
           </div>
         </div>
@@ -45,7 +46,7 @@ watch(() => props.show, (val) => {
 
   &__sheet {
     width: 100%;
-    background: $surface;
+    background: $bg;
     border-radius: $radius-lg $radius-lg 0 0;
     padding: $padding-xl $padding-md $padding-xxl;
     display: flex;
@@ -54,7 +55,7 @@ watch(() => props.show, (val) => {
   }
 
   &__title {
-    @include title-xs;
+    @include title-lg;
     color: $white;
     text-align: center;
   }
@@ -64,14 +65,29 @@ watch(() => props.show, (val) => {
     gap: $gap-xs;
     margin-top: $padding-xxs;
 
-    .btn { flex: 1; }
+    .btn {
+      flex: 1;
+    }
   }
 }
 
-.modal-enter-active, .modal-leave-active { transition: opacity 0.2s ease; }
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+
 .modal-enter-active .warmup-modal__sheet,
-.modal-leave-active .warmup-modal__sheet { transition: transform 0.25s ease; }
-.modal-enter-from, .modal-leave-to { opacity: 0; }
+.modal-leave-active .warmup-modal__sheet {
+  transition: transform 0.25s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
 .modal-enter-from .warmup-modal__sheet,
-.modal-leave-to .warmup-modal__sheet { transform: translateY(100%); }
+.modal-leave-to .warmup-modal__sheet {
+  transform: translateY(100%);
+}
 </style>

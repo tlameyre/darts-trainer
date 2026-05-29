@@ -95,7 +95,7 @@ const scoreColorStreak = computed(() => {
     @include text-lg;
 
     strong {
-      @include title-sm;
+      @include title-xl;
       color: $text-color;
     }
 
@@ -113,7 +113,9 @@ const scoreColorStreak = computed(() => {
     gap: $gap-xs;
     width: 100%;
 
-    :deep(.btn) { flex: 1; }
+    :deep(.btn) {
+      flex: 1;
+    }
   }
 }
 </style>

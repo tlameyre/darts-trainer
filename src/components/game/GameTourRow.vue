@@ -44,8 +44,8 @@ defineProps({
   align-items: center;
   justify-content: space-between;
   gap: $gap-xxs;
-  background: $surface;
-  border: 1px solid $border;
+  background: $bg;
+  border: 1px solid $white;
   border-radius: $radius-pill;
   padding: $padding-xxs $padding-sm;
   @include title-md;

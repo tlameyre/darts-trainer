@@ -1,10 +1,11 @@
 <script setup>
 import { computed } from 'vue'
 import { formatZoneLabel } from '../../composables/useWarmup.js'
+import AppButton from '../AppButton.vue'
 
 const props = defineProps({
-  zoneRecapStats: { type: Array,  required: true },
-  sessionStats:   { type: Object, required: true },
+  zoneRecapStats: { type: Array, required: true },
+  sessionStats: { type: Object, required: true },
 })
 
 const emit = defineEmits(['restart', 'home'])
@@ -16,10 +17,10 @@ function cardStyle(zone) {
   // Tout (A / AB) → noir
   if (zone.type === 'A' || zone.type === 'AB') {
     return {
-      '--card-bg':    '#000000',
-      '--card-text':  '#ffffff',
+      '--card-bg': '#000000',
+      '--card-text': '#ffffff',
       '--card-muted': 'rgba(255,255,255,0.55)',
-      '--card-sep':   'rgba(255,255,255,0.12)',
+      '--card-sep': 'rgba(255,255,255,0.12)',
     }
   }
 
@@ -27,10 +28,10 @@ function cardStyle(zone) {
   if (zone.sector === null) {
     const bg = zone.type === 'B' ? 'var(--dart-red)' : 'var(--dart-green)'
     return {
-      '--card-bg':    bg,
-      '--card-text':  '#ffffff',
+      '--card-bg': bg,
+      '--card-text': '#ffffff',
       '--card-muted': 'rgba(255,255,255,0.7)',
-      '--card-sep':   'rgba(255,255,255,0.25)',
+      '--card-sep': 'rgba(255,255,255,0.25)',
     }
   }
 
@@ -40,39 +41,39 @@ function cardStyle(zone) {
   if (zone.type === 'S') {
     if (isRed) {
       return {
-        '--card-bg':    'var(--dart-black)',
-        '--card-text':  '#ffffff',
+        '--card-bg': 'var(--dart-black)',
+        '--card-text': '#ffffff',
         '--card-muted': 'rgba(255,255,255,0.55)',
-        '--card-sep':   'rgba(255,255,255,0.12)',
+        '--card-sep': 'rgba(255,255,255,0.12)',
       }
     }
     return {
-      '--card-bg':    'var(--dart-cream)',
-      '--card-text':  'var(--dart-cream-text)',
+      '--card-bg': 'var(--dart-cream)',
+      '--card-text': 'var(--dart-cream-text)',
       '--card-muted': 'rgba(0,0,0,0.4)',
-      '--card-sep':   'rgba(0,0,0,0.12)',
+      '--card-sep': 'rgba(0,0,0,0.12)',
     }
   }
 
   // Double / Triple
   return isRed
     ? {
-        '--card-bg':    'var(--dart-red)',
-        '--card-text':  '#ffffff',
-        '--card-muted': 'rgba(255,255,255,0.7)',
-        '--card-sep':   'rgba(255,255,255,0.25)',
-      }
+      '--card-bg': 'var(--dart-red)',
+      '--card-text': '#ffffff',
+      '--card-muted': 'rgba(255,255,255,0.7)',
+      '--card-sep': 'rgba(255,255,255,0.25)',
+    }
     : {
-        '--card-bg':    'var(--dart-green)',
-        '--card-text':  '#ffffff',
-        '--card-muted': 'rgba(255,255,255,0.7)',
-        '--card-sep':   'rgba(255,255,255,0.25)',
-      }
+      '--card-bg': 'var(--dart-green)',
+      '--card-text': '#ffffff',
+      '--card-muted': 'rgba(255,255,255,0.7)',
+      '--card-sep': 'rgba(255,255,255,0.25)',
+    }
 }
 
 function fmtDuration(ms) {
-  const s   = Math.floor(ms / 1000)
-  const m   = Math.floor(s / 60)
+  const s = Math.floor(ms / 1000)
+  const m = Math.floor(s / 60)
   const sec = s % 60
   return m > 0 ? `${m} min ${sec}s` : `${sec}s`
 }
@@ -93,18 +94,12 @@ const totalDurationMs = computed(() =>
 
     <!-- Cards par zone -->
     <div class="recap__zones">
-      <div
-        v-for="zs in zoneRecapStats"
-        :key="`${zs.zone.sector}-${zs.zone.type}`"
-        class="recap__zone-card"
-        :style="cardStyle(zs.zone)"
-      >
+      <div v-for="zs in zoneRecapStats" :key="`${zs.zone.sector}-${zs.zone.type}`" class="recap__zone-card"
+        :style="cardStyle(zs.zone)">
         <div class="recap__zone-header">
           <span class="recap__zone-name">Zone travaillée : {{ zoneLabel(zs.zone) }}</span>
           <span class="recap__zone-acc">{{ zs.accuracy }}%</span>
         </div>
-
-        <div class="recap__zone-divider" />
 
         <div class="recap__zone-stats">
           <div class="recap__zone-stat">
@@ -150,8 +145,8 @@ const totalDurationMs = computed(() =>
 
     <!-- Actions -->
     <div class="recap__actions">
-      <button class="recap__btn" @click="emit('restart')">Recommencer</button>
-      <button class="recap__btn" @click="emit('home')">Accueil</button>
+      <AppButton @click="emit('restart')">Recommencer</AppButton>
+      <AppButton variant="secondary" @click="emit('home')">Accueil</AppButton>
     </div>
   </div>
 </template>
@@ -178,15 +173,17 @@ const totalDurationMs = computed(() =>
     display: flex;
     flex-direction: column;
     gap: $gap-xs;
+    flex: 1;
   }
 
   &__zone-card {
     background: var(--card-bg);
-    border-radius: $radius-lg;
-    padding: $padding-md;
+    border-radius: $radius-sm;
+    padding: $padding-sm;
     display: flex;
     flex-direction: column;
     gap: $gap-xs;
+    border: $border-md solid $white;
   }
 
   &__zone-header {
@@ -206,11 +203,6 @@ const totalDurationMs = computed(() =>
     font-variant-numeric: tabular-nums;
   }
 
-  &__zone-divider {
-    height: 1px;
-    background: var(--card-sep);
-  }
-
   &__zone-stats {
     display: flex;
     align-items: center;
@@ -221,7 +213,7 @@ const totalDurationMs = computed(() =>
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: $gap-xxs;
+    padding: 0 $padding-md;
 
     &-val {
       @include title-lg;
@@ -230,8 +222,8 @@ const totalDurationMs = computed(() =>
     }
 
     &-lbl {
-      @include text-xs;
-      color: var(--card-muted);
+      @include text-sm;
+      color: $white;
     }
   }
 
@@ -244,17 +236,13 @@ const totalDurationMs = computed(() =>
 
   // ── Total session ────────────────────────────────
   &__total {
-    background: $surface;
-    border: $border-sm solid $border;
-    border-radius: $radius-lg;
-    padding: $padding-md;
     display: flex;
     flex-direction: column;
-    gap: $gap-sm;
+    gap: $gap-md;
   }
 
   &__total-title {
-    @include title-lg;
+    @include title-xl;
     color: $white;
     text-align: center;
   }
@@ -263,8 +251,13 @@ const totalDurationMs = computed(() =>
     display: grid;
     grid-template-columns: 1fr 1fr;
 
-    > :nth-child(odd)  { border-right:  $border-sm solid $border; }
-    > :nth-child(-n+2) { border-bottom: $border-sm solid $border; }
+    > :nth-child(odd) {
+      border-right: $border-md solid $white;
+    }
+
+    > :nth-child(-n+2) {
+      border-bottom: $border-md solid $white;
+    }
   }
 
   &__total-cell {
@@ -272,7 +265,7 @@ const totalDurationMs = computed(() =>
     flex-direction: column;
     align-items: center;
     gap: $gap-xxs;
-    padding: $padding-sm $padding-xs;
+    padding: $padding-md;
   }
 
   &__total-val {
@@ -282,31 +275,20 @@ const totalDurationMs = computed(() =>
   }
 
   &__total-lbl {
-    @include text-xs;
-    color: $muted;
+    @include text-sm;
+    color: $white;
   }
 
   // ── Boutons ──────────────────────────────────────
   &__actions {
     display: flex;
     gap: $gap-xs;
-    flex-shrink: 0;
-    margin-top: auto;
-  }
+    width: 100%;
 
-  &__btn {
-    flex: 1;
-    background: $blue;
-    border-radius: $radius-pill;
-    color: $white;
-    @include title-md;
-    padding: $padding-sm $padding-md;
-    transition: background 0.15s, transform 0.1s;
-
-    &:active {
-      background: $blue-dark;
-      transform: scale(0.98);
+    :deep(.btn) {
+      flex: 1;
     }
   }
+
 }
 </style>

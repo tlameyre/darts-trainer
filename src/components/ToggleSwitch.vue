@@ -51,8 +51,8 @@ defineEmits(['update:modelValue'])
   &__switch {
     width: 44px;
     height: 26px;
-    background: $surface;
-    border: 1px solid $border;
+    background: $bg;
+    border: 1px solid $white;
     border-radius: $radius-pill;
     position: relative;
     flex-shrink: 0;

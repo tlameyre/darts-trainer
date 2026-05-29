@@ -146,7 +146,7 @@ function startGame() {
     flex: 1;
     min-width: 0;
     background: rgba($white, 0.05);
-    border: 1.5px solid $border;
+    border: none;
     border-radius: $radius-sm;
     color: $text-color;
     @include title-md;
@@ -160,8 +160,7 @@ function startGame() {
   }
 
   &__custom-label {
-    @include text-sm;
-    color: $muted;
+    @include title-md;
     white-space: nowrap;
   }
 

@@ -78,7 +78,7 @@ defineProps({
   &--secondary {
     background: transparent;
     color: $white;
-    border: $border-md solid $border;
+    border: $border-md solid $white;
 
     &:active {
       background: rgba($white, 0.05);
