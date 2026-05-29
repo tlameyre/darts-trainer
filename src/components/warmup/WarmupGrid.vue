@@ -80,35 +80,44 @@ function tapOuter() {
 </template>
 
 <style lang="scss" scoped>
+.warmup__grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-self: start;
+  width: 100%;
+  border-top: $border-md solid $white;
+  border-left: $border-md solid $white;
+}
+
 .warmup__gtab {
   aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: $font-title;
-  font-size: $title-xxs;
-  font-weight: 700;
-  color: $muted;
-  border-right: 1px solid $border;
+  @include title-xxl;
+  color: $white;
+  border-right: $border-md solid $white;
+  border-bottom: $border-md solid $white;
   transition: background 0.12s, color 0.12s, filter 0.1s;
-
-  &:last-child { border-right: none; }
 
   &--active {
     color: $white;
     background: rgba($white, 0.12);
   }
 
-  &--sb { background: $dart-green; color: $white; }
-  &--b  { background: $dart-red;   color: $white; }
-  &--pressed { filter: brightness(1.35); }
-}
+  &--sb {
+    background: $dart-green;
+    color: $white;
+  }
 
-.warmup__grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  align-self: start;
-  width: 100%;
+  &--b {
+    background: $dart-red;
+    color: $white;
+  }
+
+  &--pressed {
+    filter: brightness(1.35);
+  }
 }
 
 .warmup__cell {
@@ -117,8 +126,8 @@ function tapOuter() {
   gap: $gap-xxs;
   align-items: center;
   justify-content: center;
-  border-right: 2px solid $border;
-  border-bottom: 2px solid $border;
+  border-right: $border-md solid $white;
+  border-bottom: $border-md solid $white;
   transition: filter 0.1s, transform 0.1s;
 
   background: $bg;
@@ -126,20 +135,15 @@ function tapOuter() {
 
   &--pressed {
     filter: brightness(1.45);
-    transform: scale(0.93);
   }
 
   &-num {
-    font-family: $font-title;
-    font-size: $title-sm;
-    line-height: 1;
+    @include title-xxl;
     font-variant-numeric: tabular-nums;
   }
 
   &-pts {
-    font-family: $font-title;
-    font-size: $text-xs;
-    opacity: .8;
+    @include title-xs;
   }
 }
 </style>

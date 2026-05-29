@@ -43,8 +43,7 @@ function selectMode(mode) {
   }
 
   &__sub {
-    font-size: $text-xs;
-    font-weight: 700;
+    @include title-xs;
     color: $orange;
     text-transform: uppercase;
   }

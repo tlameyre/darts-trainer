@@ -50,9 +50,7 @@ defineEmits(['validate'])
     font-variant-numeric: tabular-nums;
 
     &--placeholder {
-      font-family: $font-text;
-      font-size: $text-sm;
-      font-weight: 400;
+      @include text-sm;
       color: $input-placeholder;
     }
   }

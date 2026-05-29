@@ -95,8 +95,8 @@ const scoreColorStreak = computed(() => {
     @include text-lg;
 
     strong {
+      @include title-sm;
       color: $text-color;
-      font-weight: 700;
     }
 
     display: flex;

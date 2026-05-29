@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import AppIcon from '../AppIcon.vue'
+import AppButton from '../AppButton.vue'
 
 const props = defineProps({
   locked: { type: Boolean, default: false },
@@ -23,12 +24,12 @@ function tapMiss() {
 <template>
   <div class="warmup__bottom">
     <button class="warmup__bottom-undo" @click="emit('undo')">
-      <AppIcon name="undo" :width="22" :height="22" />
+      <AppIcon name="undo" :width="24" :height="24" />
     </button>
-    <button class="warmup__bottom-miss" :class="{ 'warmup__bottom-miss--pressed': pressedMiss }"
-      @click="tapMiss">MANQUÉ</button>
+    <AppButton variant="secondary" size="small" :class="{ 'warmup__miss--pressed': pressedMiss }" @click="tapMiss">
+      MANQUÉ</AppButton>
     <button class="warmup__bottom-end" @click="emit('end')">
-      <AppIcon name="stop" :width="20" :height="20" />
+      <AppIcon name="stop" :width="24" :height="24" />
     </button>
   </div>
 </template>
@@ -49,19 +50,9 @@ function tapMiss() {
   transition: color 0.15s;
 }
 
-.warmup__bottom-miss {
-  font-family: $font-title;
-  font-size: $title-xxs;
-  color: $white;
-  background: $surface;
-  border: 1px solid $border;
-  border-radius: $radius-md;
-  padding: $padding-xs;
-  transition: background 0.1s, color 0.1s;
-  &:active, &--pressed {
-    background: rgba($error, 0.2);
-    color: $error-light;
-  }
+.warmup__miss--pressed {
+  background: rgba($error, 0.2) !important;
+  color: $error-light !important;
 }
 
 .warmup__bottom-end {
@@ -70,6 +61,9 @@ function tapMiss() {
   align-items: center;
   justify-content: center;
   transition: color 0.15s;
-  &:active { color: $error; }
+
+  &:active {
+    color: $error;
+  }
 }
 </style>

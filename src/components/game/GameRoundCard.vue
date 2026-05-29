@@ -103,7 +103,6 @@ const overlayClass = computed(() => {
     &--question {
       @include title-xl;
       color: $white;
-      font-weight: 700;
       text-transform: none;
     }
   }

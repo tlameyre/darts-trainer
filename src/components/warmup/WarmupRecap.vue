@@ -167,9 +167,7 @@ const totalDurationMs = computed(() =>
   padding-bottom: $padding-md;
 
   &__title {
-    font-family: $font-display;
-    font-size: $title-sm;
-    font-weight: 700;
+    @include title-xxl;
     color: $white;
     text-align: center;
     flex-shrink: 0;
@@ -198,16 +196,12 @@ const totalDurationMs = computed(() =>
   }
 
   &__zone-name {
-    font-family: $font-display;
-    font-size: $title-xxs;
-    font-weight: 700;
+    @include title-lg;
     color: var(--card-text);
   }
 
   &__zone-acc {
-    font-family: $font-display;
-    font-size: $title-xs;
-    font-weight: 700;
+    @include title-xl;
     color: var(--card-text);
     font-variant-numeric: tabular-nums;
   }
@@ -230,17 +224,13 @@ const totalDurationMs = computed(() =>
     gap: $gap-xxs;
 
     &-val {
-      font-family: $font-display;
-      font-size: $title-xxs;
-      font-weight: 700;
+      @include title-lg;
       color: var(--card-text);
       font-variant-numeric: tabular-nums;
     }
 
     &-lbl {
-      font-family: $font-body;
-      font-size: $text-xs;
-      font-weight: 500;
+      @include text-xs;
       color: var(--card-muted);
     }
   }
@@ -255,7 +245,7 @@ const totalDurationMs = computed(() =>
   // ── Total session ────────────────────────────────
   &__total {
     background: $surface;
-    border: 1px solid $border;
+    border: $border-sm solid $border;
     border-radius: $radius-lg;
     padding: $padding-md;
     display: flex;
@@ -264,9 +254,7 @@ const totalDurationMs = computed(() =>
   }
 
   &__total-title {
-    font-family: $font-display;
-    font-size: $title-xxs;
-    font-weight: 700;
+    @include title-lg;
     color: $white;
     text-align: center;
   }
@@ -275,15 +263,8 @@ const totalDurationMs = computed(() =>
     display: grid;
     grid-template-columns: 1fr 1fr;
 
-    // Séparateur vertical entre les 2 colonnes
-    > :nth-child(odd) {
-      border-right: 1px solid $border;
-    }
-
-    // Séparateur horizontal entre les 2 lignes
-    > :nth-child(-n+2) {
-      border-bottom: 1px solid $border;
-    }
+    > :nth-child(odd)  { border-right:  $border-sm solid $border; }
+    > :nth-child(-n+2) { border-bottom: $border-sm solid $border; }
   }
 
   &__total-cell {
@@ -295,17 +276,13 @@ const totalDurationMs = computed(() =>
   }
 
   &__total-val {
-    font-family: $font-display;
-    font-size: $title-sm;
-    font-weight: 700;
+    @include title-xl;
     color: $white;
     font-variant-numeric: tabular-nums;
   }
 
   &__total-lbl {
-    font-family: $font-body;
-    font-size: $text-xs;
-    font-weight: 500;
+    @include text-xs;
     color: $muted;
   }
 
@@ -322,9 +299,7 @@ const totalDurationMs = computed(() =>
     background: $blue;
     border-radius: $radius-pill;
     color: $white;
-    font-family: $font-body;
-    font-size: $text-sm;
-    font-weight: 600;
+    @include title-md;
     padding: $padding-sm $padding-md;
     transition: background 0.15s, transform 0.1s;
 

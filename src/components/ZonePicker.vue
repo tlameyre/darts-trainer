@@ -87,14 +87,12 @@ function cellSelected(n) {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: $font-title;
-    font-size: $title-xl;
+    @include title-xl;
     background: $bg;
     color: $white;
     border-right: $border-md solid $white;
     border-bottom: $border-md solid $white;
     transition: filter 0.1s;
-    font-weight: 700;
 
     &:nth-child(5n) {
       border-right: none;
@@ -112,7 +110,7 @@ function cellSelected(n) {
       grid-column: 1 / -1;
       aspect-ratio: unset;
       padding: $padding-sm;
-      font-size: $title-lg;
+      @include title-lg;
       border-right: none;
       border-bottom: none;
     }

@@ -39,8 +39,7 @@ defineProps({
   flex: 1;
 
   &__zone {
-    font-family: $font-title;
-    font-size: $title-xl;
+    @include title-xxxl;
     color: $white;
     line-height: 1;
     text-align: center;
@@ -63,13 +62,12 @@ defineProps({
   }
 
   &__lbl {
-    font-size: $text-sm;
+    @include text-sm;
     color: rgba($white, 0.75);
   }
 
   &__val {
-    font-size: $text-sm;
-    font-weight: 700;
+    @include title-sm;
     color: $white;
     font-variant-numeric: tabular-nums;
   }

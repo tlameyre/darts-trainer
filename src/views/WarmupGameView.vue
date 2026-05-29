@@ -16,7 +16,7 @@ const router = useRouter()
 if (!gameSettings.value) router.replace({ name: 'warmup-settings' })
 
 const {
-  timeDisplay, isUrgent, gameOver,
+  timeDisplay, isUnlimited, isUrgent, gameOver,
   currentZone, currentZoneStats, zoneRecapStats, sessionStats,
   darts, recordDart, undoLast, changeZone, startTimer, endSession, cleanup,
 } = useWarmup(gameSettings.value ?? { duration: 5, zone: { sector: 20, type: 'D' } })
@@ -74,6 +74,7 @@ onUnmounted(() => {
         :darts="displayedDarts"
         :tourNumber="tourNumber"
         :timeDisplay="timeDisplay"
+        :isUnlimited="isUnlimited"
         :isUrgent="isUrgent"
       />
       <WarmupGrid :locked="justCompleted" @dart="recordDart" />
@@ -129,9 +130,7 @@ onUnmounted(() => {
   }
 
   &__header-title {
-    font-family: $font-title;
-    font-size: $title-sm;
-    font-weight: 600;
+    @include title-sm;
     color: $text-color;
     text-align: center;
   }

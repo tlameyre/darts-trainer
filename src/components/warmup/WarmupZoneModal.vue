@@ -54,8 +54,7 @@ watch(() => props.show, (val) => {
   }
 
   &__title {
-    font-family: $font-title;
-    font-size: $title-xs;
+    @include title-xs;
     color: $white;
     text-align: center;
   }

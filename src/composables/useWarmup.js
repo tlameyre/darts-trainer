@@ -48,6 +48,8 @@ export function useWarmup({ duration, zone: initialZone }) {
     return `${m}:${s.toString().padStart(2, "0")}`;
   });
 
+  const isUnlimited = computed(() => timeLeft.value === null);
+
   const isUrgent = computed(
     () => timeLeft.value !== null && timeLeft.value <= 30 && timeLeft.value > 0,
   );
@@ -154,6 +156,7 @@ export function useWarmup({ duration, zone: initialZone }) {
     currentZone,
     gameOver,
     timeDisplay,
+    isUnlimited,
     isUrgent,
     currentZoneStats,
     zoneRecapStats,

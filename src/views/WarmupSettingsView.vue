@@ -149,9 +149,7 @@ function startGame() {
     border: 1.5px solid $border;
     border-radius: $radius-sm;
     color: $text-color;
-    font-family: $font-text;
-    font-size: $text-sm;
-    font-weight: 700;
+    @include title-md;
     padding: $padding-xs $padding-sm;
     text-align: center;
 
@@ -162,7 +160,7 @@ function startGame() {
   }
 
   &__custom-label {
-    font-size: $text-sm;
+    @include text-sm;
     color: $muted;
     white-space: nowrap;
   }
