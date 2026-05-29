@@ -1,5 +1,6 @@
 <script setup>
 import { formatZoneLabel } from '../../composables/useWarmup.js'
+import AppButton from '../AppButton.vue'
 
 defineProps({
   zoneRecapStats: { type: Array, required: true },
@@ -68,8 +69,8 @@ function fmtDuration(ms) {
     </div>
 
     <div class="warmup__recap-actions">
-      <button class="warmup__recap-btn warmup__recap-btn--primary" @click="emit('restart')">Recommencer</button>
-      <button class="warmup__recap-btn warmup__recap-btn--secondary" @click="emit('home')">Accueil</button>
+      <AppButton rounded="full" @click="emit('restart')">Recommencer</AppButton>
+      <AppButton rounded="full" variant="secondary" @click="emit('home')">Accueil</AppButton>
     </div>
   </div>
 </template>
@@ -208,21 +209,11 @@ function fmtDuration(ms) {
 
   &-actions {
     display: flex;
-    gap: $padding-xs;
+    gap: $gap-xs;
     flex-shrink: 0;
     margin-top: auto;
-  }
 
-  &-btn {
-    flex: 1;
-    border-radius: $radius-pill;
-    font-size: $text-sm;
-    font-weight: 700;
-    padding: $padding-sm;
-    transition: transform 0.1s, opacity 0.15s;
-    &:active { transform: scale(0.97); opacity: 0.85; }
-    &--primary   { background: $blue; color: $white; }
-    &--secondary { background: $surface; border: 1px solid $border; color: $muted; }
+    :deep(.btn) { flex: 1; }
   }
 }
 </style>

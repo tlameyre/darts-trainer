@@ -16,13 +16,8 @@ function selectMode(mode) {
     </header>
 
     <main class="lobby__modes">
-      <button
-        v-for="mode in GAME_MODES"
-        :key="mode.id"
-        class="mode-card"
-        :style="{ '--mode-color': mode.color }"
-        @click="selectMode(mode)"
-      >
+      <button v-for="mode in GAME_MODES" :key="mode.id" class="mode-card" :style="{ '--mode-color': mode.color }"
+        @click="selectMode(mode)">
         <h2 class="mode-card__title">{{ mode.title }}</h2>
         <p class="mode-card__desc">{{ mode.description }}</p>
       </button>
@@ -55,10 +50,9 @@ function selectMode(mode) {
   }
 
   &__title {
-    font-family: $font-title;
-    font-size: $title-xl;
-    line-height: 0.9;
-    color: $text-color;
+    @include title-xl;
+    font-size: 32px;
+    line-height: .9;
   }
 
   &__modes {
@@ -86,17 +80,14 @@ function selectMode(mode) {
   }
 
   &__title {
-    font-family: $font-title;
-    font-size: $title-sm;
-    line-height: 1;
+    @include title-lg;
+    line-height: 100%;
     color: $white;
   }
 
   &__desc {
-    font-size: $text-sm;
+    @include text-sm;
     color: rgba($white, 0.75);
-    line-height: 1.4;
-    max-width: 260px;
   }
 }
 </style>

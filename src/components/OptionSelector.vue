@@ -1,4 +1,6 @@
 <script setup>
+import AppButton from './AppButton.vue'
+
 defineProps({
   label: { type: String, required: true },
   options: { type: Array, required: true },
@@ -12,11 +14,16 @@ defineEmits(['update:modelValue'])
   <div class="option-selector">
     <div class="option-selector__label">{{ label }}</div>
     <div class="option-selector__options">
-      <button v-for="opt in options" :key="opt.value" class="option-selector__btn"
-        :class="{ 'option-selector__btn--active': modelValue === opt.value }"
-        @click="$emit('update:modelValue', opt.value)">
+      <AppButton
+        v-for="opt in options"
+        :key="opt.value"
+        size="small"
+        variant="ghost"
+        :active="modelValue === opt.value"
+        @click="$emit('update:modelValue', opt.value)"
+      >
         {{ opt.label }}
-      </button>
+      </AppButton>
     </div>
   </div>
 </template>
@@ -35,23 +42,8 @@ defineEmits(['update:modelValue'])
   &__options {
     display: flex;
     gap: $gap-xs;
-  }
 
-  &__btn {
-    flex: 1;
-    background: transparent;
-    border: $border-md solid $white;
-    border-radius: $radius-sm;
-    color: $white;
-    @include title-sm;
-    padding: $padding-sm;
-    transition: all 0.15s;
-
-    &--active {
-      background: $orange;
-      border-color: $orange;
-      color: $white;
-    }
+    :deep(.btn) { flex: 1; }
   }
 }
 </style>

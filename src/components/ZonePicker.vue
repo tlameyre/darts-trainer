@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import AppButton from './AppButton.vue'
 
 const RED_NUMBERS = new Set([20, 18, 13, 10, 2, 3, 7, 8, 14, 12])
 
@@ -17,9 +18,9 @@ const TYPES_NUM = [
   { id: 'T', label: 'Triple' },
 ]
 const TYPES_BULL = [
-  { id: 'AB', label: 'Tout'       },
+  { id: 'AB', label: 'Tout' },
   { id: 'SB', label: 'Outer (25)' },
-  { id: 'B',  label: 'Bull (50)'  },
+  { id: 'B', label: 'Bull (50)' },
 ]
 
 const props = defineProps({
@@ -49,19 +50,20 @@ function cellSelected(n) {
 
 <template>
   <div class="zone-picker">
-    <div class="zone-picker__grid">
-      <template v-for="row in SECTOR_ROWS" :key="row[0]">
-        <button v-for="n in row" :key="n" class="zone-picker__cell" :class="{ 'zone-picker__cell--selected': cellSelected(n) }" @click="selectSector(n)">{{ n }}</button>
-      </template>
+    <div class="zone-picker__types">
+      <AppButton v-for="t in availableTypes" :key="t.id" size="small" variant="ghost" :active="modelValue.type === t.id"
+        @click="selectType(t.id)">{{ t.label }}</AppButton>
     </div>
 
-    <button class="zone-picker__bull" :class="{ 'zone-picker__bull--active': modelValue.sector === null }"
-      @click="selectSector(null)">BULL</button>
-
-    <div class="zone-picker__types">
-      <button v-for="t in availableTypes" :key="t.id" class="zone-picker__type"
-        :class="{ 'zone-picker__type--active': modelValue.type === t.id }" @click="selectType(t.id)">{{ t.label
-        }}</button>
+    <div class="zone-picker__grid">
+      <template v-for="row in SECTOR_ROWS" :key="row[0]">
+        <button v-for="n in row" :key="n" class="zone-picker__cell"
+          :class="{ 'zone-picker__cell--selected': cellSelected(n) }" @click="selectSector(n)">{{ n }}</button>
+      </template>
+      <button class="zone-picker__cell zone-picker__cell--bull"
+        :class="{ 'zone-picker__cell--selected': modelValue.sector === null }" @click="selectSector(null)">
+        BULL
+      </button>
     </div>
   </div>
 </template>
@@ -70,14 +72,14 @@ function cellSelected(n) {
 .zone-picker {
   display: flex;
   flex-direction: column;
-  gap: $gap-xs;
+  gap: $gap-xl;
 
   &__grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     border-radius: $radius-sm;
     overflow: hidden;
-    border: 1px solid $border;
+    border: $border-md solid $white;
   }
 
   &__cell {
@@ -86,54 +88,42 @@ function cellSelected(n) {
     align-items: center;
     justify-content: center;
     font-family: $font-title;
-    font-size: $title-xxs;
+    font-size: $title-xl;
     background: $bg;
     color: $white;
-    border-right: 1px solid $border;
-    border-bottom: 1px solid $border;
+    border-right: $border-md solid $white;
+    border-bottom: $border-md solid $white;
     transition: filter 0.1s;
     font-weight: 700;
 
-    &:active { filter: brightness(1.3); }
-    &--selected { background: $blue; }
-  }
+    &:nth-child(5n) {
+      border-right: none;
+    }
 
-  &__bull {
-    width: 100%;
-    padding: $padding-xs;
-    background: $dart-green;
-    color: $white;
-    font-family: $font-title;
-    font-size: $title-xxs;
-    border-radius: $radius-sm;
-    transition: filter 0.1s;
-    font-weight: 700;
+    &:active {
+      filter: brightness(1.3);
+    }
 
-    &:active { filter: brightness(1.2); }
-    &--active { background: $blue; }
+    &--selected {
+      background: $blue;
+    }
+
+    &--bull {
+      grid-column: 1 / -1;
+      aspect-ratio: unset;
+      padding: $padding-sm;
+      font-size: $title-lg;
+      border-right: none;
+      border-bottom: none;
+    }
   }
 
   &__types {
     display: flex;
     gap: $gap-xs;
-  }
 
-  &__type {
-    flex: 1;
-    padding: $padding-xs;
-    background: rgba($white, 0.05);
-    border: 1.5px solid $border;
-    border-radius: $radius-md;
-    color: $muted;
-    font-family: $font-text;
-    font-size: $text-xs;
-    font-weight: 700;
-    transition: all 0.15s;
-
-    &--active {
-      background: $orange;
-      border-color: $orange;
-      color: $white;
+    :deep(.btn) {
+      flex: 1;
     }
   }
 }

@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import AppButton from './AppButton.vue'
 
 const props = defineProps({
   correctCount: { type: Number, required: true },
@@ -44,12 +45,8 @@ const scoreColorStreak = computed(() => {
 
   </div>
   <div class="game-over__actions">
-    <button class="game-over__btn game-over__btn--primary" @click="$emit('replay')">
-      Rejouer
-    </button>
-    <button class="game-over__btn game-over__btn--secondary" @click="$emit('home')">
-      Accueil
-    </button>
+    <AppButton @click="$emit('replay')">Rejouer</AppButton>
+    <AppButton variant="secondary" @click="$emit('home')">Accueil</AppButton>
   </div>
 </template>
 
@@ -115,30 +112,8 @@ const scoreColorStreak = computed(() => {
     display: flex;
     gap: $gap-xs;
     width: 100%;
-  }
 
-  &__btn {
-    flex: 1;
-    border-radius: $radius-sm;
-    @include title-lg;
-    padding: $padding-sm $padding-lg;
-    transition: transform 0.1s, opacity 0.15s;
-
-    &:active {
-      transform: scale(0.97);
-      opacity: 0.85;
-    }
-
-    &--primary {
-      background: $orange;
-      color: $white;
-    }
-
-    &--secondary {
-      background: transparent;
-      border: 1px solid $white;
-      color: $white;
-    }
+    :deep(.btn) { flex: 1; }
   }
 }
 </style>

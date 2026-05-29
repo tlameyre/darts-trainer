@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import ZonePicker from '../ZonePicker.vue'
+import AppButton from '../AppButton.vue'
 
 const props = defineProps({
   show: { type: Boolean, required: true },
@@ -24,8 +25,8 @@ watch(() => props.show, (val) => {
           <div class="warmup-modal__title">Changer de zone</div>
           <ZonePicker v-model="tempZone" />
           <div class="warmup-modal__actions">
-            <button class="warmup-modal__btn warmup-modal__btn--cancel" @click="emit('update:show', false)">Annuler</button>
-            <button class="warmup-modal__btn warmup-modal__btn--confirm" @click="emit('confirm', tempZone)">Confirmer</button>
+            <AppButton size="small" rounded="full" variant="secondary" @click="emit('update:show', false)">Annuler</AppButton>
+            <AppButton size="small" rounded="full" @click="emit('confirm', tempZone)">Confirmer</AppButton>
           </div>
         </div>
       </div>
@@ -63,18 +64,8 @@ watch(() => props.show, (val) => {
     display: flex;
     gap: $gap-xs;
     margin-top: $padding-xxs;
-  }
 
-  &__btn {
-    flex: 1;
-    border-radius: $radius-pill;
-    font-size: $text-sm;
-    font-weight: 700;
-    padding: $padding-sm;
-    transition: transform 0.1s, opacity 0.15s;
-    &:active { transform: scale(0.97); opacity: 0.85; }
-    &--cancel  { background: rgba($white, 0.08); border: 1px solid rgba($white, 0.08); color: $muted; }
-    &--confirm { background: $blue; color: $white; }
+    .btn { flex: 1; }
   }
 }
 

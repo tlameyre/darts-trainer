@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import OptionSelector from '../components/OptionSelector.vue'
 import ToggleSwitch from '../components/ToggleSwitch.vue'
+import AppButton from '../components/AppButton.vue'
 import { GAME_MODES } from '../data/gameModes.js'
 import { gameSettings } from '../store/gameStore.js'
 
@@ -29,7 +30,7 @@ const difficultyOptions = [
 const questionOptions = [
   { value: 10, label: '10' },
   { value: 20, label: '20' },
-  { value: null, label: 'Illimité' },
+  { value: null, label: 'Infini' },
 ]
 
 const timeOptions = [
@@ -65,9 +66,7 @@ function startGame() {
         description="Affiche les points sous chaque fléchette (ex: 60 pts sous T20)" />
 
     </main>
-    <button class="settings__start" @click="startGame">
-      JOUER
-    </button>
+    <AppButton @click="startGame">JOUER</AppButton>
   </div>
 </template>
 
@@ -96,19 +95,9 @@ function startGame() {
     gap: $gap-md;
   }
 
-  &__start {
-    @include title-md;
-    background: $orange;
-    border-radius: $radius-sm;
-    color: $white;
-    padding: $padding-md 0;
-    width: 100%;
-    transition: background 0.15s, transform 0.1s;
-
-    &:active {
-      background: $orange-dark;
-      transform: scale(0.98);
-    }
+  .btn {
+    max-width: 420px;
+    margin: 0 auto;
   }
 }
 </style>
