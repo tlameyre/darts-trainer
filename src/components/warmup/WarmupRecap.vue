@@ -1,82 +1,163 @@
 <script setup>
+import { computed } from 'vue'
 import { formatZoneLabel } from '../../composables/useWarmup.js'
-import AppButton from '../AppButton.vue'
 
-defineProps({
-  zoneRecapStats: { type: Array, required: true },
-  sessionStats: { type: Object, required: true },
+const props = defineProps({
+  zoneRecapStats: { type: Array,  required: true },
+  sessionStats:   { type: Object, required: true },
 })
 
 const emit = defineEmits(['restart', 'home'])
 
-function fmtDuration(ms) {
-  const s = Math.floor(ms / 1000)
-  const m = Math.floor(s / 60)
-  const sec = s % 60
-  return m > 0 ? `${m}min ${sec}s` : `${sec}s`
+// Même logique de couleurs que DartChip
+const RED_NUMBERS = new Set([20, 18, 13, 10, 2, 3, 7, 8, 14, 12])
+
+function cardStyle(zone) {
+  // Tout (A / AB) → noir
+  if (zone.type === 'A' || zone.type === 'AB') {
+    return {
+      '--card-bg':    '#000000',
+      '--card-text':  '#ffffff',
+      '--card-muted': 'rgba(255,255,255,0.55)',
+      '--card-sep':   'rgba(255,255,255,0.12)',
+    }
+  }
+
+  // Bull
+  if (zone.sector === null) {
+    const bg = zone.type === 'B' ? 'var(--dart-red)' : 'var(--dart-green)'
+    return {
+      '--card-bg':    bg,
+      '--card-text':  '#ffffff',
+      '--card-muted': 'rgba(255,255,255,0.7)',
+      '--card-sep':   'rgba(255,255,255,0.25)',
+    }
+  }
+
+  const isRed = RED_NUMBERS.has(zone.sector)
+
+  // Simple
+  if (zone.type === 'S') {
+    if (isRed) {
+      return {
+        '--card-bg':    'var(--dart-black)',
+        '--card-text':  '#ffffff',
+        '--card-muted': 'rgba(255,255,255,0.55)',
+        '--card-sep':   'rgba(255,255,255,0.12)',
+      }
+    }
+    return {
+      '--card-bg':    'var(--dart-cream)',
+      '--card-text':  'var(--dart-cream-text)',
+      '--card-muted': 'rgba(0,0,0,0.4)',
+      '--card-sep':   'rgba(0,0,0,0.12)',
+    }
+  }
+
+  // Double / Triple
+  return isRed
+    ? {
+        '--card-bg':    'var(--dart-red)',
+        '--card-text':  '#ffffff',
+        '--card-muted': 'rgba(255,255,255,0.7)',
+        '--card-sep':   'rgba(255,255,255,0.25)',
+      }
+    : {
+        '--card-bg':    'var(--dart-green)',
+        '--card-text':  '#ffffff',
+        '--card-muted': 'rgba(255,255,255,0.7)',
+        '--card-sep':   'rgba(255,255,255,0.25)',
+      }
 }
+
+function fmtDuration(ms) {
+  const s   = Math.floor(ms / 1000)
+  const m   = Math.floor(s / 60)
+  const sec = s % 60
+  return m > 0 ? `${m} min ${sec}s` : `${sec}s`
+}
+
+function zoneLabel(zone) {
+  return formatZoneLabel(zone).trim()
+}
+
+const totalDurationMs = computed(() =>
+  props.zoneRecapStats.reduce((sum, zs) => sum + zs.durationMs, 0)
+)
 </script>
 
 <template>
-  <div class="warmup__recap">
-    <div class="warmup__recap-title">SESSION TERMINÉE</div>
+  <div class="recap">
+    <!-- Titre -->
+    <h1 class="recap__title">SESSION TERMINÉE</h1>
 
-    <div class="warmup__recap-zones">
-      <div v-for="zs in zoneRecapStats" :key="`${zs.zone.sector}-${zs.zone.type}`" class="warmup__recap-zone-card">
-        <div class="warmup__recap-zone-header">
-          <span class="warmup__recap-zone-name">{{ formatZoneLabel(zs.zone) }}</span>
-          <span class="warmup__recap-zone-acc" :class="`warmup__recap-zone-acc--${zs.accuracy >= 70 ? 'good' : zs.accuracy >= 40 ? 'mid' : 'low'}`">
-            {{ zs.accuracy }}%
-          </span>
+    <!-- Cards par zone -->
+    <div class="recap__zones">
+      <div
+        v-for="zs in zoneRecapStats"
+        :key="`${zs.zone.sector}-${zs.zone.type}`"
+        class="recap__zone-card"
+        :style="cardStyle(zs.zone)"
+      >
+        <div class="recap__zone-header">
+          <span class="recap__zone-name">Zone travaillée : {{ zoneLabel(zs.zone) }}</span>
+          <span class="recap__zone-acc">{{ zs.accuracy }}%</span>
         </div>
-        <div class="warmup__recap-zone-stats">
-          <div class="warmup__recap-zone-stat">
-            <span class="warmup__recap-zone-stat-val">{{ fmtDuration(zs.durationMs) }}</span>
-            <span class="warmup__recap-zone-stat-lbl">temps</span>
+
+        <div class="recap__zone-divider" />
+
+        <div class="recap__zone-stats">
+          <div class="recap__zone-stat">
+            <span class="recap__zone-stat-val">{{ fmtDuration(zs.durationMs) }}</span>
+            <span class="recap__zone-stat-lbl">Temps</span>
           </div>
-          <div class="warmup__recap-zone-sep" />
-          <div class="warmup__recap-zone-stat">
-            <span class="warmup__recap-zone-stat-val">{{ zs.total }}</span>
-            <span class="warmup__recap-zone-stat-lbl">jetées</span>
+          <div class="recap__zone-sep" />
+          <div class="recap__zone-stat">
+            <span class="recap__zone-stat-val">{{ zs.total }}</span>
+            <span class="recap__zone-stat-lbl">Jetées</span>
           </div>
-          <div class="warmup__recap-zone-sep" />
-          <div class="warmup__recap-zone-stat">
-            <span class="warmup__recap-zone-stat-val">{{ zs.hits }}</span>
-            <span class="warmup__recap-zone-stat-lbl">touches</span>
+          <div class="recap__zone-sep" />
+          <div class="recap__zone-stat">
+            <span class="recap__zone-stat-val">{{ zs.hits }}</span>
+            <span class="recap__zone-stat-lbl">Touchées</span>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="warmup__recap-total">
-      <div class="warmup__recap-total-title">SESSION TOTALE</div>
-      <div class="warmup__recap-stats">
-        <div class="warmup__recap-stat">
-          <span class="warmup__recap-stat-val">{{ sessionStats.total }}</span>
-          <span class="warmup__recap-stat-lbl">fléchettes</span>
+    <!-- Total session -->
+    <div class="recap__total">
+      <div class="recap__total-title">TOTAL DE SESSION</div>
+      <div class="recap__total-grid">
+        <div class="recap__total-cell">
+          <span class="recap__total-val">{{ fmtDuration(totalDurationMs) }}</span>
+          <span class="recap__total-lbl">Temps</span>
         </div>
-        <div class="warmup__recap-sep" />
-        <div class="warmup__recap-stat">
-          <span class="warmup__recap-stat-val">{{ sessionStats.hits }}</span>
-          <span class="warmup__recap-stat-lbl">touches</span>
+        <div class="recap__total-cell">
+          <span class="recap__total-val">{{ sessionStats.total }}</span>
+          <span class="recap__total-lbl">Jetées</span>
         </div>
-        <div class="warmup__recap-sep" />
-        <div class="warmup__recap-stat">
-          <span class="warmup__recap-stat-val">{{ sessionStats.accuracy }}%</span>
-          <span class="warmup__recap-stat-lbl">précision</span>
+        <div class="recap__total-cell">
+          <span class="recap__total-val">{{ sessionStats.hits }}</span>
+          <span class="recap__total-lbl">Touchées</span>
+        </div>
+        <div class="recap__total-cell">
+          <span class="recap__total-val">{{ sessionStats.accuracy }}%</span>
+          <span class="recap__total-lbl">Précision</span>
         </div>
       </div>
     </div>
 
-    <div class="warmup__recap-actions">
-      <AppButton rounded="full" @click="emit('restart')">Recommencer</AppButton>
-      <AppButton rounded="full" variant="secondary" @click="emit('home')">Accueil</AppButton>
+    <!-- Actions -->
+    <div class="recap__actions">
+      <button class="recap__btn" @click="emit('restart')">Recommencer</button>
+      <button class="recap__btn" @click="emit('home')">Accueil</button>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.warmup__recap {
+.recap {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -85,135 +166,172 @@ function fmtDuration(ms) {
   gap: $gap-md;
   padding-bottom: $padding-md;
 
-  &-title {
-    font-family: $font-title;
-    font-size: $title-xs;
-    color: $muted;
+  &__title {
+    font-family: $font-display;
+    font-size: $title-sm;
+    font-weight: 700;
+    color: $white;
     text-align: center;
     flex-shrink: 0;
   }
 
-  &-zones {
+  // ── Zone cards ──────────────────────────────────
+  &__zones {
     display: flex;
     flex-direction: column;
     gap: $gap-xs;
   }
 
-  &-zone-card {
-    background: $surface;
-    border: 1px solid $border;
+  &__zone-card {
+    background: var(--card-bg);
     border-radius: $radius-lg;
-    padding: $padding-sm $padding-md;
+    padding: $padding-md;
     display: flex;
     flex-direction: column;
     gap: $gap-xs;
   }
 
-  &-zone-header {
+  &__zone-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
 
-  &-zone-name {
-    font-family: $font-title;
+  &__zone-name {
+    font-family: $font-display;
     font-size: $title-xxs;
-    color: $text-color;
+    font-weight: 700;
+    color: var(--card-text);
   }
 
-  &-zone-acc {
-    font-family: $font-title;
+  &__zone-acc {
+    font-family: $font-display;
     font-size: $title-xs;
+    font-weight: 700;
+    color: var(--card-text);
     font-variant-numeric: tabular-nums;
-    &--good { color: $accent; }
-    &--mid  { color: $orange; }
-    &--low  { color: $error; }
   }
 
-  &-zone-stats {
+  &__zone-divider {
+    height: 1px;
+    background: var(--card-sep);
+  }
+
+  &__zone-stats {
     display: flex;
     align-items: center;
-    gap: $gap-sm;
   }
 
-  &-zone-stat {
+  &__zone-stat {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    align-items: center;
+    gap: $gap-xxs;
+
     &-val {
-      font-family: $font-title;
+      font-family: $font-display;
       font-size: $title-xxs;
-      color: $text-color;
+      font-weight: 700;
+      color: var(--card-text);
       font-variant-numeric: tabular-nums;
     }
+
     &-lbl {
-      font-size: $text-xxs;
-      color: $muted;
-      text-transform: uppercase;
+      font-family: $font-body;
+      font-size: $text-xs;
+      font-weight: 500;
+      color: var(--card-muted);
     }
   }
 
-  &-zone-sep {
+  &__zone-sep {
     width: 1px;
-    height: 28px;
-    background: $border;
+    height: 32px;
+    background: var(--card-sep);
+    flex-shrink: 0;
   }
 
-  &-total {
+  // ── Total session ────────────────────────────────
+  &__total {
     background: $surface;
     border: 1px solid $border;
     border-radius: $radius-lg;
-    padding: $padding-sm $padding-md;
+    padding: $padding-md;
     display: flex;
     flex-direction: column;
-    gap: $gap-xs;
+    gap: $gap-sm;
+  }
 
-    &-title {
-      font-size: $text-xs;
-      text-transform: uppercase;
-      color: $muted;
-      font-weight: 700;
+  &__total-title {
+    font-family: $font-display;
+    font-size: $title-xxs;
+    font-weight: 700;
+    color: $white;
+    text-align: center;
+  }
+
+  &__total-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    // Séparateur vertical entre les 2 colonnes
+    > :nth-child(odd) {
+      border-right: 1px solid $border;
+    }
+
+    // Séparateur horizontal entre les 2 lignes
+    > :nth-child(-n+2) {
+      border-bottom: 1px solid $border;
     }
   }
 
-  &-stats {
-    display: flex;
-    align-items: center;
-    gap: $padding-md;
-    justify-content: space-around;
-  }
-
-  &-stat {
+  &__total-cell {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    &-val {
-      font-family: $font-title;
-      font-size: $title-xs;
-      color: $text-color;
-      font-variant-numeric: tabular-nums;
-    }
-    &-lbl {
-      font-size: $text-xxs;
-      color: $muted;
-      text-transform: uppercase;
-    }
+    gap: $gap-xxs;
+    padding: $padding-sm $padding-xs;
   }
 
-  &-sep {
-    width: 1px;
-    height: 36px;
-    background: $border;
+  &__total-val {
+    font-family: $font-display;
+    font-size: $title-sm;
+    font-weight: 700;
+    color: $white;
+    font-variant-numeric: tabular-nums;
   }
 
-  &-actions {
+  &__total-lbl {
+    font-family: $font-body;
+    font-size: $text-xs;
+    font-weight: 500;
+    color: $muted;
+  }
+
+  // ── Boutons ──────────────────────────────────────
+  &__actions {
     display: flex;
     gap: $gap-xs;
     flex-shrink: 0;
     margin-top: auto;
+  }
 
-    :deep(.btn) { flex: 1; }
+  &__btn {
+    flex: 1;
+    background: $blue;
+    border-radius: $radius-pill;
+    color: $white;
+    font-family: $font-body;
+    font-size: $text-sm;
+    font-weight: 600;
+    padding: $padding-sm $padding-md;
+    transition: background 0.15s, transform 0.1s;
+
+    &:active {
+      background: $blue-dark;
+      transform: scale(0.98);
+    }
   }
 }
 </style>
