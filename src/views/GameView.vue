@@ -49,7 +49,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="game">
+  <div class="game" :class="{ gameOver: 'game-over' }">
     <AppHeader title="ENTRAINEMENT" @back="router.push({ name: 'score-settings' })">
       <template v-if="isUnlimited && !gameOver" #right>
         <button class="game__finish-btn" @click="finishGame">
@@ -87,9 +87,13 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
   padding: $padding-md;
+  align-items: center;
   gap: $gap-md;
+
+  &.gameOver {
+    padding: $padding-md $padding-md $padding-xxl;
+  }
 
   &__finish-btn {
     color: $text-color;

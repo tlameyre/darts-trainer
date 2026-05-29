@@ -88,6 +88,7 @@ const overlayClass = computed(() => {
     flex-direction: column;
     justify-content: center;
     gap: $gap-xs;
+    padding-bottom: $padding-md;
 
     &--phase2 .round-card__score {
       font-size: $title-xxxl;
@@ -100,10 +101,9 @@ const overlayClass = computed(() => {
     color: $white;
 
     &--question {
-      @include text-md;
+      @include title-xl;
       color: $white;
       font-weight: 700;
-      margin-top: 6px;
       text-transform: none;
     }
   }
@@ -133,6 +133,7 @@ const overlayClass = computed(() => {
     align-items: center;
     justify-content: center;
     gap: $gap-xs;
+    padding-top: $padding-md;
   }
 
   &__overlay {
@@ -144,6 +145,7 @@ const overlayClass = computed(() => {
     justify-content: center;
     gap: $gap-xs;
     border-radius: $radius-lg;
+    padding: $padding-md;
 
     &--correct {
       background: $accent-dark;
@@ -166,6 +168,7 @@ const overlayClass = computed(() => {
   &__overlay-sub {
     @include text-xl;
     color: $white;
+    text-align: center;
 
     strong {
       @include text-xl;
