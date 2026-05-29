@@ -85,7 +85,7 @@ function cellSelected(n) {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: $font-display;
+    font-family: $font-title;
     font-size: $title-xxs;
     background: $bg;
     color: $white;
@@ -103,7 +103,7 @@ function cellSelected(n) {
     padding: $padding-xs;
     background: $dart-green;
     color: $white;
-    font-family: $font-display;
+    font-family: $font-title;
     font-size: $title-xxs;
     border-radius: $radius-sm;
     transition: filter 0.1s;
@@ -125,7 +125,7 @@ function cellSelected(n) {
     border: 1.5px solid $border;
     border-radius: $radius-md;
     color: $muted;
-    font-family: $font-body;
+    font-family: $font-text;
     font-size: $text-xs;
     font-weight: 700;
     transition: all 0.15s;

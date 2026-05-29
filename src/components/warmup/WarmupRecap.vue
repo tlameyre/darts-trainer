@@ -85,7 +85,7 @@ function fmtDuration(ms) {
   padding-bottom: $padding-md;
 
   &-title {
-    font-family: $font-display;
+    font-family: $font-title;
     font-size: $title-xs;
     color: $muted;
     text-align: center;
@@ -115,13 +115,13 @@ function fmtDuration(ms) {
   }
 
   &-zone-name {
-    font-family: $font-display;
+    font-family: $font-title;
     font-size: $title-xxs;
     color: $text-color;
   }
 
   &-zone-acc {
-    font-family: $font-display;
+    font-family: $font-title;
     font-size: $title-xs;
     font-variant-numeric: tabular-nums;
     &--good { color: $accent; }
@@ -140,7 +140,7 @@ function fmtDuration(ms) {
     flex-direction: column;
     gap: 2px;
     &-val {
-      font-family: $font-display;
+      font-family: $font-title;
       font-size: $title-xxs;
       color: $text-color;
       font-variant-numeric: tabular-nums;
@@ -188,7 +188,7 @@ function fmtDuration(ms) {
     align-items: center;
     gap: 4px;
     &-val {
-      font-family: $font-display;
+      font-family: $font-title;
       font-size: $title-xs;
       color: $text-color;
       font-variant-numeric: tabular-nums;

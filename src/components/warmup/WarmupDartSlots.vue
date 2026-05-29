@@ -42,13 +42,13 @@ defineProps({
 }
 
 .warmup__tour-label {
-  font-family: $font-display;
+  font-family: $font-title;
   font-size: $title-xxs;
   color: $text-color;
 }
 
 .warmup__timer {
-  font-family: $font-display;
+  font-family: $font-title;
   display: flex;
   align-items: center;
   gap: $gap-xs;
@@ -86,7 +86,7 @@ defineProps({
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: $font-display;
+  font-family: $font-title;
   font-size: $title-xs;
   color: $input-text;
   border-left: 1px solid rgba($black, 0.15);

@@ -11,7 +11,7 @@ defineEmits(['back'])
 <template>
   <header class="app-header">
     <button class="app-header__back" @click="$emit('back')">
-      <AppIcon name="arrow-left" :width="20" :height="20" />
+      <AppIcon name="arrow-left" :width="24" :height="24" />
     </button>
 
     <h1 class="app-header__title">{{ title }}</h1>
@@ -25,7 +25,6 @@ defineEmits(['back'])
 <style lang="scss" scoped>
 .app-header {
   width: 100%;
-  padding: $padding-md $padding-md 0;
   display: grid;
   grid-template-columns: 40px 1fr 40px;
   align-items: center;
@@ -42,9 +41,7 @@ defineEmits(['back'])
   }
 
   &__title {
-    font-family: $font-display;
-    font-size: $title-xxs;
-    font-weight: 600;
+    @include title-lg;
     color: $text-color;
     text-align: center;
     white-space: nowrap;

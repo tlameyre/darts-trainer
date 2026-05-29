@@ -1,8 +1,8 @@
 <script setup>
 defineProps({
-  value:       { type: String,  required: true },
-  hasError:    { type: Boolean, default: false },
-  placeholder: { type: String,  default: 'Entrer un score' },
+  value: { type: String, required: true },
+  hasError: { type: Boolean, default: false },
+  placeholder: { type: String, default: 'Entrer un score' },
 })
 
 defineEmits(['validate'])
@@ -32,7 +32,9 @@ defineEmits(['validate'])
   padding: $padding-xxs $padding-xxs $padding-xxs $padding-xl;
   transition: border-color 0.2s;
 
-  &--error { border-color: $error; }
+  &--error {
+    border-color: $error;
+  }
 
   &__icon {
     flex-shrink: 0;
@@ -43,13 +45,12 @@ defineEmits(['validate'])
 
   &__value {
     flex: 1;
-    font-family: $font-display;
-    font-size: $title-sm;
+    @include title-xl;
     color: $input-text;
     font-variant-numeric: tabular-nums;
 
     &--placeholder {
-      font-family: $font-body;
+      font-family: $font-text;
       font-size: $text-sm;
       font-weight: 400;
       color: $input-placeholder;
@@ -60,9 +61,7 @@ defineEmits(['validate'])
     background: $accent;
     border-radius: $radius-pill;
     color: $white;
-    font-family: $font-body;
-    font-size: $text-sm;
-    font-weight: 600;
+    @include title-md;
     padding: $padding-xs $padding-xl;
     transition: background 0.15s, transform 0.1s;
     white-space: nowrap;

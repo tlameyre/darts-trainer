@@ -4,14 +4,15 @@ import { useRoute, useRouter } from 'vue-router'
 import { useDarts } from '../composables/useDarts.js'
 import { gameSettings } from '../store/gameStore.js'
 
-import AppHeader    from '../components/AppHeader.vue'
-import AnswerInput  from '../components/AnswerInput.vue'
-import NumPad       from '../components/NumPad.vue'
-import GameOver     from '../components/GameOver.vue'
-import GameTourRow  from '../components/game/GameTourRow.vue'
+import AppHeader from '../components/AppHeader.vue'
+import AppIcon from '../components/AppIcon.vue'
+import AnswerInput from '../components/AnswerInput.vue'
+import NumPad from '../components/NumPad.vue'
+import GameOver from '../components/GameOver.vue'
+import GameTourRow from '../components/game/GameTourRow.vue'
 import GameRoundCard from '../components/game/GameRoundCard.vue'
 
-const route  = useRoute()
+const route = useRoute()
 const router = useRouter()
 
 const {
@@ -22,6 +23,13 @@ const {
   correctAnswer, questionLabel, phaseLabel,
   nextRound, appendDigit, deleteDigit, validate, cleanup,
 } = useDarts(gameSettings.value)
+
+const isUnlimited = computed(() => !gameSettings.value?.maxQuestions)
+
+function finishGame() {
+  cleanup()
+  gameOver.value = true
+}
 
 function onKeydown(e) {
   if (e.key >= '0' && e.key <= '9') appendDigit(e.key)
@@ -42,53 +50,32 @@ onUnmounted(() => {
 
 <template>
   <div class="game">
-    <AppHeader
-      title="ENTRAINEMENT"
-      @back="router.push({ name: 'score-settings' })"
-    />
+    <AppHeader title="ENTRAINEMENT" @back="router.push({ name: 'score-settings' })">
+      <template v-if="isUnlimited && !gameOver" #right>
+        <button class="game__finish-btn" @click="finishGame">
+          <AppIcon name="turn-off" :width="24" :height="24" />
+        </button>
+      </template>
+    </AppHeader>
 
     <main class="game__main">
-      <GameOver
-        v-if="gameOver"
-        :correct-count="correctCount"
-        :max-questions="gameSettings.maxQuestions ?? questionLabel"
-        :best="best"
+      <GameOver v-if="gameOver" :correct-count="correctCount"
+        :max-questions="gameSettings.maxQuestions ?? questionLabel" :best="best"
         @replay="router.push({ name: 'score-game', query: { t: Date.now() } })"
-        @home="router.push({ name: 'lobby' })"
-      />
+        @home="router.push({ name: 'lobby' })" />
 
       <template v-else>
-        <GameRoundCard
-          :phase="phase"
-          :current-score="currentScore"
-          :current-volee="currentVolee"
-          :volee-total="voleeTotal"
-          :feedback-state="feedbackState"
-          :correct-answer="correctAnswer"
-          :show-value="gameSettings.showDartValue"
-        />
+        <GameRoundCard :phase="phase" :current-score="currentScore" :current-volee="currentVolee"
+          :volee-total="voleeTotal" :feedback-state="feedbackState" :correct-answer="correctAnswer"
+          :show-value="gameSettings.showDartValue" />
 
-        <GameTourRow
-          :question-label="questionLabel"
-          :phase="phase"
-          :show-phase="gameSettings.doubleValidation"
-          :time-left="timeLeft"
-          :show-timer="!!gameSettings.timeLimit"
-          :is-urgent="timeLeft <= 5"
-        />
+        <GameTourRow :question-label="questionLabel" :phase="phase" :show-phase="gameSettings.doubleValidation"
+          :time-left="timeLeft" :show-timer="!!gameSettings.timeLimit" :is-urgent="timeLeft <= 5" />
 
-        <AnswerInput
-          :value="inputValue"
-          :placeholder="phaseLabel"
-          :has-error="feedbackState === 'wrong' || feedbackState === 'timeout'"
-          @validate="validate"
-        />
+        <AnswerInput :value="inputValue" :placeholder="phaseLabel"
+          :has-error="feedbackState === 'wrong' || feedbackState === 'timeout'" @validate="validate" />
 
-        <NumPad
-          @digit="appendDigit"
-          @delete="deleteDigit"
-          @validate="validate"
-        />
+        <NumPad @digit="appendDigit" @delete="deleteDigit" @validate="validate" />
       </template>
     </main>
   </div>
@@ -101,13 +88,27 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: $padding-md;
+  gap: $gap-md;
+
+  &__finish-btn {
+    color: $text-color;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: $padding-xxs;
+    transition: opacity 0.15s;
+
+    &:active {
+      opacity: 0.6;
+    }
+  }
 
   &__main {
     flex: 1;
     min-height: 0;
     width: 100%;
     max-width: 420px;
-    padding: $padding-md;
     display: flex;
     flex-direction: column;
     gap: $gap-md;

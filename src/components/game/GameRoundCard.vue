@@ -3,19 +3,19 @@ import { computed } from 'vue'
 import VoleeDisplay from '../VoleeDisplay.vue'
 
 const props = defineProps({
-  phase:         Number,
-  currentScore:  Number,
-  currentVolee:  Array,
-  voleeTotal:    Number,
-  feedbackState: { type: String,  default: null },
+  phase: Number,
+  currentScore: Number,
+  currentVolee: Array,
+  voleeTotal: Number,
+  feedbackState: { type: String, default: null },
   correctAnswer: Number,
-  showValue:     { type: Boolean, default: false },
+  showValue: { type: Boolean, default: false },
 })
 
 const overlayLabel = computed(() => {
   if (props.feedbackState === 'phase1ok') return 'CORRECT !'
-  if (props.feedbackState === 'correct')  return 'CORRECT !'
-  if (props.feedbackState === 'timeout')  return 'TEMPS ÉCOULÉ !'
+  if (props.feedbackState === 'correct') return 'CORRECT !'
+  if (props.feedbackState === 'timeout') return 'TEMPS ÉCOULÉ !'
   return 'RATÉ !'
 })
 
@@ -60,7 +60,8 @@ const overlayClass = computed(() => {
         </div>
       </div>
 
-      <div v-else-if="feedbackState === 'phase1ok'" class="round-card__overlay round-card__overlay--correct round-card__overlay--brief">
+      <div v-else-if="feedbackState === 'phase1ok'"
+        class="round-card__overlay round-card__overlay--correct round-card__overlay--brief">
         <div class="round-card__overlay-title">{{ voleeTotal }}</div>
         <div class="round-card__overlay-sub">Maintenant le score restant</div>
       </div>
@@ -75,25 +76,31 @@ const overlayClass = computed(() => {
   border-radius: $radius-lg;
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
   position: relative;
   overflow: hidden;
+  padding: $padding-md;
+  flex: 1;
 
   &__top {
-    padding: $padding-sm $padding-lg $padding-xs;
     text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: $gap-xs;
 
-    &--phase2 .round-card__score { font-size: $title-xl; }
+    &--phase2 .round-card__score {
+      font-size: $title-xxxl;
+    }
   }
 
   &__label {
-    font-size: $text-xs;
+    @include text-sm;
     text-transform: uppercase;
     color: $white;
-    margin-bottom: 2px;
 
     &--question {
-      font-size: $text-md;
+      @include text-md;
       color: $white;
       font-weight: 700;
       margin-top: 6px;
@@ -102,32 +109,30 @@ const overlayClass = computed(() => {
   }
 
   &__score {
-    font-family: $font-display;
-    font-size: $title-xxl;
+    @include title-xxxl;
     line-height: 1;
     color: $white;
     font-variant-numeric: tabular-nums;
   }
 
   &__volee-total {
-    font-family: $font-display;
-    font-size: $title-lg;
+    @include title-xxxl;
     color: $white;
     font-variant-numeric: tabular-nums;
   }
 
   &__divider {
-    height: 1px;
-    background: $muted;
-    margin: 0 $padding-lg;
+    height: $border-md;
+    background: $white;
   }
 
   &__bottom {
-    padding: $padding-xs $padding-sm $padding-sm;
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    gap: $gap-xs;
   }
 
   &__overlay {
@@ -137,28 +142,45 @@ const overlayClass = computed(() => {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: $gap-xs;
     border-radius: $radius-lg;
 
-    &--correct { background: $accent-dark; }
-    &--wrong   { background: $error-dark; }
-    &--brief   { background: $accent-dark; }
+    &--correct {
+      background: $accent-dark;
+    }
+
+    &--wrong {
+      background: $error-dark;
+    }
+
+    &--brief {
+      background: $accent-dark;
+    }
   }
 
   &__overlay-title {
-    font-family: $font-display;
-    font-size: $title-lg;
+    @include title-xxxl;
     color: $white;
   }
 
   &__overlay-sub {
-    font-size: $text-md;
+    @include text-xl;
     color: $white;
-    font-weight: 600;
-    strong { font-weight: 800; color: $white; }
+
+    strong {
+      @include text-xl;
+      color: $white;
+    }
   }
 }
 
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-.fade-enter-from, .fade-leave-to       { opacity: 0; }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

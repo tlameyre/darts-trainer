@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 const props = defineProps({
-  dart:      { type: Object,  required: true },
+  dart: { type: Object, required: true },
   showValue: { type: Boolean, default: false },
 })
 
@@ -10,8 +10,8 @@ const TYPE_LABELS = {
   single: 'Simple',
   double: 'Double',
   triple: 'Triple',
-  bull:   'Bull',
-  miss:   'Raté',
+  bull: 'Bull',
+  miss: 'Raté',
 }
 
 // Secteurs rouges/noirs sur la cible (doubles/triples = rouge, simple = noir)
@@ -35,7 +35,7 @@ const chipColors = computed(() => {
   if (dart.type === 'bull') {
     // Double bull = rouge, simple bull = vert (comme la cible)
     return dart.pts === 50
-      ? { bg: 'var(--dart-red)',   text: '#fff', border: 'var(--dart-border)' }
+      ? { bg: 'var(--dart-red)', text: '#fff', border: 'var(--dart-border)' }
       : { bg: 'var(--dart-green)', text: '#fff', border: 'var(--dart-border)' }
   }
 
@@ -46,26 +46,23 @@ const chipColors = computed(() => {
     // Simple rouge → fond noir, texte blanc
     // Simple vert  → fond crème, texte noir
     return isRed
-      ? { bg: 'var(--dart-black)', text: '#fff',                   border: 'var(--dart-border)' }
+      ? { bg: 'var(--dart-black)', text: '#fff', border: 'var(--dart-border)' }
       : { bg: 'var(--dart-cream)', text: 'var(--dart-cream-text)', border: 'var(--dart-border)' }
   }
 
   // Double ou Triple : couleur vive de la cible
   return isRed
-    ? { bg: 'var(--dart-red)',   text: '#fff', border: 'var(--dart-border)' }
+    ? { bg: 'var(--dart-red)', text: '#fff', border: 'var(--dart-border)' }
     : { bg: 'var(--dart-green)', text: '#fff', border: 'var(--dart-border)' }
 })
 </script>
 
 <template>
-  <div
-    class="dart-chip"
-    :style="{
-      background: chipColors.bg,
-      color: chipColors.text,
-      borderColor: chipColors.border,
-    }"
-  >
+  <div class="dart-chip" :style="{
+    background: chipColors.bg,
+    color: chipColors.text,
+    borderColor: chipColors.border,
+  }">
     <div class="dart-chip__type">{{ TYPE_LABELS[dart.type] }}</div>
     <div class="dart-chip__label">{{ dart.label }}</div>
     <div v-if="showValue" class="dart-chip__pts">{{ dart.pts }} pts</div>
@@ -75,29 +72,21 @@ const chipColors = computed(() => {
 <style lang="scss" scoped>
 .dart-chip {
   flex: 1;
-  border-radius: $radius-md;
-  padding: $padding-xs $padding-xxs;
+  border-radius: $radius-sm;
+  padding: $padding-xs $padding-md;
   text-align: center;
   border: 2px solid transparent;
 
   &__type {
-    font-size: $text-xxs;
-    text-transform: uppercase;
-    font-weight: 700;
-    opacity: 0.6;
-    margin-bottom: 3px;
+    @include text-xs;
   }
 
   &__label {
-    font-family: $font-display;
-    font-size: $title-xs;
-    line-height: 1;
+    @include title-xxl;
   }
 
   &__pts {
-    font-size: $text-xs;
-    opacity: 0.55;
-    margin-top: 2px;
+    @include text-xs;
   }
 }
 </style>

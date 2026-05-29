@@ -1,75 +1,95 @@
-// --- Fonts ---
-@font-face {
-  font-family: 'Noka';
-  src: url('/fonts/noka-hairline.otf') format('opentype');
-  font-weight: 100;
-  font-display: swap;
+@use 'sass:map';
+@use 'variables' as *;
+
+// --- Typography mixins ---
+@mixin _font($size, $type) {
+  @if $type ==title {
+    font-size: map.get(('xxs': $title-xxs, 'xs': $title-xs, 'sm': $title-sm, 'md': $title-md, 'lg': $title-lg, 'xl': $title-xl, 'xxl': $title-xxl, 'xxxl': $title-xxxl), $size);
+    font-weight: 600;
+    font-family: $font-title;
+  }
+
+  @else {
+    font-size: map.get(('xxs': $text-xxs, 'xs': $text-xs, 'sm': $text-sm, 'md': $text-md, 'lg': $text-lg, 'xl': $text-xl, 'xxl': $text-xxl), $size);
+    font-weight: 300;
+    font-family: $font-text;
+  }
 }
 
+// text — light
+@mixin text-xxs {
+  @include _font('xxs', text);
+}
+
+@mixin text-xs {
+  @include _font('xs', text);
+}
+
+@mixin text-sm {
+  @include _font('sm', text);
+}
+
+@mixin text-md {
+  @include _font('md', text);
+}
+
+@mixin text-lg {
+  @include _font('lg', text);
+}
+
+@mixin text-xl {
+  @include _font('xl', text);
+}
+
+@mixin text-xxl {
+  @include _font('xxl', text);
+}
+
+// title — semibold
+@mixin title-xxs {
+  @include _font('xxs', title);
+}
+
+@mixin title-xs {
+  @include _font('xs', title);
+}
+
+@mixin title-sm {
+  @include _font('sm', title);
+}
+
+@mixin title-md {
+  @include _font('md', title);
+}
+
+@mixin title-lg {
+  @include _font('lg', title);
+}
+
+@mixin title-xl {
+  @include _font('xl', title);
+}
+
+@mixin title-xxl {
+  @include _font('xxl', title);
+}
+
+@mixin title-xxxl {
+  @include _font('xxxl', title);
+}
+
+
+// --- Fonts face ---
 @font-face {
-  font-family: 'Noka';
-  src: url('/fonts/noka-light.otf') format('opentype');
+  font-family: 'Outfit';
+  src: url('/fonts/outfit-light.ttf') format('truetype');
   font-weight: 300;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Noka';
-  src: url('/fonts/noka-medium.otf') format('opentype');
-  font-weight: 500;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Noka';
-  src: url('/fonts/noka-semibold.otf') format('opentype');
+  font-family: 'Outfit';
+  src: url('/fonts/outfit-semibold.ttf') format('truetype');
   font-weight: 600;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Noka';
-  src: url('/fonts/noka-bold.otf') format('opentype');
-  font-weight: 700;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Noka';
-  src: url('/fonts/noka-black.otf') format('opentype');
-  font-weight: 900;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Fredoka';
-  src: url('/fonts/fredoka-light.ttf') format('truetype');
-  font-weight: 300;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Fredoka';
-  src: url('/fonts/fredoka-regular.ttf') format('truetype');
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Fredoka';
-  src: url('/fonts/fredoka-medium.ttf') format('truetype');
-  font-weight: 500;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Fredoka';
-  src: url('/fonts/fredoka-semibold.ttf') format('truetype');
-  font-weight: 600;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Fredoka';
-  src: url('/fonts/fredoka-bold.ttf') format('truetype');
-  font-weight: 700;
   font-display: swap;
 }

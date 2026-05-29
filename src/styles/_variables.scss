@@ -1,6 +1,6 @@
 // Typography
-$font-body: 'Fredoka', -apple-system, BlinkMacSystemFont, sans-serif;
-$font-display: 'Noka', sans-serif;
+$font-text: 'Outfit', sans-serif;
+$font-title: 'Outfit', sans-serif;
 
 // Backgrounds — dark forest green (DA DartCounter)
 $bg: #121A18;
@@ -29,13 +29,21 @@ $error-light: #fca5a5;
 // Text
 $white: #ffffff;
 $text-color: #ffffff;
-$muted: rgba(255, 255, 255, 0.471);
+$muted: rgba(255, 255, 255, 0.656);
 
 // Input (pill blanc)
 $input-bg: #ffffff;
 $input-text: #111111;
 $input-icon: #333333;
 $input-placeholder: rgba(0, 0, 0, 0.35);
+
+// Dartboard chip colors (fidèle aux couleurs de la cible)
+$dart-red: #B21327; // double/triple secteurs rouges + double bull
+$dart-green: #36cc86; // double/triple secteurs verts + outer bull
+$dart-black: #121A18; // simple secteurs rouges
+$dart-cream: #f0e8d0; // simple secteurs verts
+$dart-cream-text: #111111; // texte sur fond crème
+$dart-border: #ffffff; // bordure des secteurs
 
 // Font sizes — Fredoka (body) — multiples de 4
 $text-xxs: 8px;
@@ -46,22 +54,16 @@ $text-lg: 24px;
 $text-xl: 28px;
 $text-xxl: 32px;
 
-// Font sizes — Noka (display) — multiples de 4
-$title-xxs: 16px;
-$title-xs: 20px;
-$title-sm: 24px;
-$title-md: 40px;
-$title-lg: 48px;
-$title-xl: 60px;
-$title-xxl: 72px;
+// Font sizes — Outfit (display) — multiples de 4
+$title-xxs: 8px;
+$title-xs: 12px;
+$title-sm: 14px;
+$title-md: 16px;
+$title-lg: 18px;
+$title-xl: 24px;
+$title-xxl: 28px;
+$title-xxxl: 48px;
 
-// Dartboard chip colors (fidèle aux couleurs de la cible)
-$dart-red: #B21327; // double/triple secteurs rouges + double bull
-$dart-green: #36cc86; // double/triple secteurs verts + outer bull
-$dart-black: #121A18; // simple secteurs rouges
-$dart-cream: #f0e8d0; // simple secteurs verts
-$dart-cream-text: #111111; // texte sur fond crème
-$dart-border: #ffffff; // bordure des secteurs
 
 // Padding — multiples de 4
 $padding-xxs: 4px;
@@ -86,3 +88,8 @@ $radius-sm: 8px;
 $radius-md: 14px;
 $radius-lg: 20px;
 $radius-pill: 999px;
+
+// Border widths
+$border-sm: 1px;
+$border-md: 2px;
+$border-lg: 3px;

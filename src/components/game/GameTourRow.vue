@@ -3,11 +3,11 @@ import AppIcon from '../AppIcon.vue'
 
 defineProps({
   questionLabel: [String, Number],
-  phase:         Number,
-  showPhase:     Boolean,
-  timeLeft:      { type: Number, default: null },
-  showTimer:     Boolean,
-  isUrgent:      Boolean,
+  phase: Number,
+  showPhase: Boolean,
+  timeLeft: { type: Number, default: null },
+  showTimer: Boolean,
+  isUrgent: Boolean,
 })
 </script>
 
@@ -19,8 +19,7 @@ defineProps({
     <div v-if="showPhase" class="game__phase-badge">
       Phase {{ phase }}/2
     </div>
-    <div v-if="showTimer" class="game__timer-badge"
-      :class="isUrgent && 'game__timer-badge--urgent'">
+    <div v-if="showTimer" class="game__timer-badge" :class="isUrgent && 'game__timer-badge--urgent'">
       <AppIcon name="clock" :width="13" :height="13" />
       {{ timeLeft }}S
     </div>
@@ -32,30 +31,27 @@ defineProps({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $gap-xs;
-  flex-shrink: 0;
+  width: 100%;
 }
 
 .game__tour-label {
-  font-family: $font-display;
-  font-size: $title-sm;
-  font-weight: 700;
-  color: $orange;
+  @include title-md;
+  color: $white;
 }
 
 .game__timer-badge {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: $gap-xxs;
   background: $surface;
   border: 1px solid $border;
   border-radius: $radius-pill;
   padding: $padding-xxs $padding-sm;
-  font-family: $font-body;
-  font-size: $text-sm;
-  font-weight: 600;
+  @include title-md;
   color: $text-color;
   font-variant-numeric: tabular-nums;
+  min-width: 75px;
   transition: background 0.3s, border-color 0.3s;
 
   &--urgent {
@@ -70,9 +66,7 @@ defineProps({
   border: 1px solid rgba($accent, 0.3);
   border-radius: $radius-pill;
   padding: $padding-xxs $padding-sm;
-  font-family: $font-body;
-  font-size: $text-sm;
-  font-weight: 600;
+  @include title-md;
   color: $accent-light;
 }
 </style>

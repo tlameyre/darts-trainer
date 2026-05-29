@@ -1,7 +1,7 @@
 <script setup>
 defineProps({
-  label:      { type: String, required: true },
-  options:    { type: Array,  required: true },
+  label: { type: String, required: true },
+  options: { type: Array, required: true },
   modelValue: { required: true },
 })
 
@@ -12,13 +12,9 @@ defineEmits(['update:modelValue'])
   <div class="option-selector">
     <div class="option-selector__label">{{ label }}</div>
     <div class="option-selector__options">
-      <button
-        v-for="opt in options"
-        :key="opt.value"
-        class="option-selector__btn"
+      <button v-for="opt in options" :key="opt.value" class="option-selector__btn"
         :class="{ 'option-selector__btn--active': modelValue === opt.value }"
-        @click="$emit('update:modelValue', opt.value)"
-      >
+        @click="$emit('update:modelValue', opt.value)">
         {{ opt.label }}
       </button>
     </div>
@@ -27,25 +23,27 @@ defineEmits(['update:modelValue'])
 
 <style lang="scss" scoped>
 .option-selector {
+  display: flex;
+  flex-direction: column;
+  gap: $gap-md;
+
   &__label {
-    font-size: $text-xs;
-    text-transform: uppercase;
-    color: $muted;
-    margin-bottom: 10px;
-    font-weight: 700;
+    @include title-lg;
+    color: $white;
   }
 
-  &__options { display: flex; gap: 8px; }
+  &__options {
+    display: flex;
+    gap: $gap-xs;
+  }
 
   &__btn {
     flex: 1;
-    background: rgba($white, 0.05);
-    border: 1.5px solid $border;
-    border-radius: $radius-md;
-    color: $muted;
-    font-family: $font-body;
-    font-size: $text-xs;
-    font-weight: 700;
+    background: transparent;
+    border: $border-md solid $white;
+    border-radius: $radius-sm;
+    color: $white;
+    @include title-sm;
     padding: $padding-sm;
     transition: all 0.15s;
 

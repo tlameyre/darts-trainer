@@ -14,7 +14,7 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         // Injecte les variables SCSS dans chaque composant automatiquement
-        additionalData: `@use "@/styles/variables" as *;`,
+        additionalData: `@use "@/styles/variables" as *;\n@use "@/styles/fonts" as *;`,
       },
     },
   },

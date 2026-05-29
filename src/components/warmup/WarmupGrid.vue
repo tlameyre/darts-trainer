@@ -85,7 +85,7 @@ function tapOuter() {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: $font-display;
+  font-family: $font-title;
   font-size: $title-xxs;
   font-weight: 700;
   color: $muted;
@@ -130,14 +130,14 @@ function tapOuter() {
   }
 
   &-num {
-    font-family: $font-display;
+    font-family: $font-title;
     font-size: $title-sm;
     line-height: 1;
     font-variant-numeric: tabular-nums;
   }
 
   &-pts {
-    font-family: $font-display;
+    font-family: $font-title;
     font-size: $text-xs;
     opacity: .8;
   }

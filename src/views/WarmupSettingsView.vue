@@ -113,7 +113,7 @@ function startGame() {
     border: 1.5px solid $border;
     border-radius: $radius-md;
     color: $text-color;
-    font-family: $font-body;
+    font-family: $font-text;
     font-size: $text-sm;
     font-weight: 700;
     padding: $padding-xs $padding-sm;
@@ -134,7 +134,7 @@ function startGame() {
     background: $blue;
     border-radius: $radius-pill;
     color: $white;
-    font-family: $font-display;
+    font-family: $font-title;
     font-size: $title-sm;
     padding: $padding-md;
     width: 100%;

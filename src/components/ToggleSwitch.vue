@@ -1,7 +1,7 @@
 <script setup>
 defineProps({
-  modelValue:  Boolean,
-  title:       String,
+  modelValue: Boolean,
+  title: String,
   description: String,
 })
 
@@ -9,51 +9,43 @@ defineEmits(['update:modelValue'])
 </script>
 
 <template>
-  <button
-    class="toggle"
-    :class="{ 'toggle--on': modelValue }"
-    @click="$emit('update:modelValue', !modelValue)"
-  >
+  <button class="toggle" @click="$emit('update:modelValue', !modelValue)">
+    <span class="toggle__title">{{ title }}</span>
     <div class="toggle__text">
-      <span class="toggle__title">{{ title }}</span>
       <span class="toggle__desc">{{ description }}</span>
-    </div>
-    <div class="toggle__switch" :class="{ 'toggle__switch--on': modelValue }">
-      <div class="toggle__knob" />
+      <div class="toggle__switch" :class="{ 'toggle__switch--on': modelValue }">
+        <div class="toggle__knob" />
+      </div>
     </div>
   </button>
 </template>
 
 <style lang="scss" scoped>
 .toggle {
-  background: $surface;
-  border: 1px solid $border;
-  border-radius: $radius-lg;
-  padding: $padding-sm $padding-md;
   display: flex;
-  align-items: center;
-  gap: $padding-sm;
+  flex-direction: column;
+  gap: $gap-md;
   text-align: left;
-  transition: border-color 0.2s;
   width: 100%;
 
-  &--on { border-color: rgba($orange, 0.6); }
-
-  &__text { flex: 1; }
-
   &__title {
-    display: block;
-    font-size: $text-sm;
-    font-weight: 700;
+    @include title-lg;
     color: $text-color;
-    margin-bottom: $padding-xxs;
   }
 
+  &__text {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: $gap-xl;
+  }
+
+
   &__desc {
-    display: block;
-    font-size: $text-xs;
+    @include text-sm;
     color: $muted;
-    line-height: 1.4;
+    max-width: 75%;
   }
 
   &__switch {
@@ -66,7 +58,10 @@ defineEmits(['update:modelValue'])
     flex-shrink: 0;
     transition: background 0.2s, border-color 0.2s;
 
-    &--on { background: $orange; border-color: $orange; }
+    &--on {
+      background: $orange;
+      border-color: $orange;
+    }
   }
 
   &__knob {
@@ -79,7 +74,9 @@ defineEmits(['update:modelValue'])
     border-radius: 50%;
     transition: transform 0.2s;
 
-    .toggle__switch--on & { transform: translateX(18px); }
+    .toggle__switch--on & {
+      transform: translateX(18px);
+    }
   }
 }
 </style>

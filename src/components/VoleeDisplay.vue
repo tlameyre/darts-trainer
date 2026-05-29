@@ -2,7 +2,7 @@
 import DartChip from './DartChip.vue'
 
 defineProps({
-  volee:     { type: Array,   required: true },
+  volee: { type: Array, required: true },
   showValue: { type: Boolean, default: false },
 })
 </script>
@@ -19,15 +19,15 @@ defineProps({
 <style lang="scss" scoped>
 .volee-darts {
   display: flex;
-  gap: 6px;
+  gap: $gap-xs;
   align-items: center;
   justify-content: center;
   width: 100%;
+  margin-top: $gap-xs;
 
   &__plus {
-    color: $muted;
-    font-size: $text-sm;
-    font-weight: 300;
+    color: $white;
+    @include title-lg;
     flex-shrink: 0;
   }
 }

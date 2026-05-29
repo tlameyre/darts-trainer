@@ -1,4 +1,6 @@
 <script setup>
+import AppIcon from './AppIcon.vue'
+
 const emit = defineEmits(['digit', 'delete', 'validate'])
 
 const rows = [
@@ -18,9 +20,9 @@ const rows = [
     { label: '9', action: () => emit('digit', '9') },
   ],
   [
-    { label: '⌫', mod: 'del', action: () => emit('delete') },
+    { icon: 'delete', mod: 'del', action: () => emit('delete') },
     { label: '0', action: () => emit('digit', '0') },
-    { label: '✓', mod: 'validate', action: () => emit('validate') },
+    { icon: 'check', mod: 'validate', action: () => emit('validate') },
   ],
 ]
 </script>
@@ -29,9 +31,10 @@ const rows = [
   <div class="numpad">
     <div v-for="(row, ri) in rows" :key="ri" class="numpad__row">
       <div class="numpad__row-keys">
-        <button v-for="key in row" :key="key.label" class="numpad__key" :class="key.mod && `numpad__key--${key.mod}`"
-          @click="key.action">
-          {{ key.label }}
+        <button v-for="key in row" :key="key.icon ?? key.label" class="numpad__key"
+          :class="key.mod && `numpad__key--${key.mod}`" @click="key.action">
+          <AppIcon v-if="key.icon" :name="key.icon" :width="32" :height="32" />
+          <template v-else>{{ key.label }}</template>
         </button>
       </div>
     </div>
@@ -50,7 +53,7 @@ const rows = [
     flex-direction: column;
 
     &:not(:last-child) .numpad__row-keys {
-      border-bottom: 1px solid $border;
+      border-bottom: $border-md solid $white;
     }
   }
 
@@ -67,34 +70,26 @@ const rows = [
     background: transparent;
     border: none;
     color: $text-color;
-    font-family: $font-display;
-    font-size: $title-md;
-    font-weight: 600;
+    @include title-xxl;
     padding: 0;
     transition: background 0.1s, transform 0.08s;
 
     &:not(:last-child) {
-      border-right: 1px solid $border;
+      border-right: $border-md solid $white;
     }
 
     &:active {
-      transform: scale(0.88);
       background: rgba($white, 0.06);
     }
 
     &--del {
-      font-family: $font-body;
-      font-size: $title-sm;
-      font-weight: 600;
       color: $white;
     }
 
     &--validate {
       color: $accent;
-      font-family: $font-body;
-      font-size: $title-sm;
-      font-weight: 700;
     }
+
   }
 }
 </style>

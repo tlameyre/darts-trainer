@@ -39,7 +39,7 @@ defineProps({
   flex: 1;
 
   &__zone {
-    font-family: $font-display;
+    font-family: $font-title;
     font-size: $title-xl;
     color: $white;
     line-height: 1;

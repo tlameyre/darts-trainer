@@ -55,7 +55,7 @@ function selectMode(mode) {
   }
 
   &__title {
-    font-family: $font-display;
+    font-family: $font-title;
     font-size: $title-xl;
     line-height: 0.9;
     color: $text-color;
@@ -86,7 +86,7 @@ function selectMode(mode) {
   }
 
   &__title {
-    font-family: $font-display;
+    font-family: $font-title;
     font-size: $title-sm;
     line-height: 1;
     color: $white;

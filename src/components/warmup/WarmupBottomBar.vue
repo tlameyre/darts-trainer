@@ -50,7 +50,7 @@ function tapMiss() {
 }
 
 .warmup__bottom-miss {
-  font-family: $font-display;
+  font-family: $font-title;
   font-size: $title-xxs;
   color: $white;
   background: $surface;
