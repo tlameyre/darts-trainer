@@ -22,10 +22,18 @@ async function fetchProfile(userId) {
 // onAuthStateChange est la source unique de vérité.
 // Il fire un événement INITIAL_SESSION au démarrage (session existante ou null),
 // puis SIGNED_IN après l'échange du code PKCE (OAuth Google).
-supabase.auth.onAuthStateChange((_event, session) => {
+supabase.auth.onAuthStateChange((event, session) => {
   _user.value = session?.user ?? null
   if (_user.value) fetchProfile(_user.value.id)
   else _profile.value = null
+
+  // Avec PKCE (OAuth Google), onAuthStateChange fire d'abord INITIAL_SESSION
+  // avec null (code pas encore échangé), puis SIGNED_IN avec l'user.
+  // On maintient _loading=true tant que le code est dans l'URL pour éviter
+  // que le router guard redirige vers /login trop tôt.
+  const hasPkceCode = new URLSearchParams(window.location.search).has('code')
+  if (event === 'INITIAL_SESSION' && hasPkceCode) return
+
   _loading.value = false
 })
 
