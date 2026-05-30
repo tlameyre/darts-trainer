@@ -47,7 +47,7 @@ function startGame() {
 
 <template>
   <div class="settings">
-    <AppHeader :title="mode?.title.replace('\n', ' ')" @back="router.push({ name: 'lobby' })" />
+    <AppHeader :title="mode?.title.replace('\n', ' ')" @back="router.push({ name: 'home' })" />
     <main class="settings__main">
       <div class="settings__card">
         <OptionSelector label="Difficulté des volées" :options="difficultyOptions" v-model="settings.difficulty" />

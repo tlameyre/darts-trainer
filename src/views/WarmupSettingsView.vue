@@ -35,7 +35,7 @@ function startGame() {
 
 <template>
   <div class="settings">
-    <AppHeader title="ECHAUFFEMENT" @back="router.push({ name: 'lobby' })" />
+    <AppHeader title="ECHAUFFEMENT" @back="router.push({ name: 'home' })" />
 
     <main class="settings__main">
       <div class="settings__card">

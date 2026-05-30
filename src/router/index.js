@@ -11,6 +11,7 @@ import WarmupGameView     from '../views/WarmupGameView.vue'
 import LoginView          from '../views/LoginView.vue'
 import RegisterView       from '../views/RegisterView.vue'
 import ProfileView        from '../views/ProfileView.vue'
+import ProfileEditView    from '../views/ProfileEditView.vue'
 
 const routes = [
   // Auth
@@ -24,6 +25,7 @@ const routes = [
 
   // App — autres
   { path: '/profile',            name: 'profile',        component: ProfileView },
+  { path: '/profile/edit',      name: 'profile-edit',   component: ProfileEditView },
   { path: '/score-training',     name: 'score-settings', component: SettingsView },
   { path: '/score-training/play',name: 'score-game',     component: GameView },
   { path: '/warmup',             name: 'warmup-settings',component: WarmupSettingsView },

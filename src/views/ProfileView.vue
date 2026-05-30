@@ -1,29 +1,19 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { user, profile, signOut, updateProfile, updateEmail, updatePassword } from '../store/authStore.js'
+import { user, profile, signOut } from '../store/authStore.js'
 import { fetchProfileStats } from '../store/dbStore.js'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
 import AppIcon from '../components/AppIcon.vue'
-import ProfileEditModal from '../components/profile/ProfileEditModal.vue'
-import ChangeEmailModal from '../components/profile/ChangeEmailModal.vue'
-import ChangePasswordModal from '../components/profile/ChangePasswordModal.vue'
 
 const router = useRouter()
-
-const stats            = ref(null)
-const showEdit         = ref(false)
-const showEmailModal   = ref(false)
-const showPasswordModal = ref(false)
-const saveLoading      = ref(false)
-const feedback         = ref('')
+const stats  = ref(null)
 
 onMounted(async () => {
   stats.value = await fetchProfileStats()
 })
 
-// Nom affiché : "Prénom Nom" si dispo, sinon surnom, sinon email
 const displayName = computed(() => {
   const p = profile.value
   if (!p) return '—'
@@ -31,7 +21,6 @@ const displayName = computed(() => {
   return full || p.username || user.value?.email || '—'
 })
 
-// Initiales pour l'avatar
 const initials = computed(() => {
   const p = profile.value
   if (!p) return '?'
@@ -40,38 +29,6 @@ const initials = computed(() => {
   }
   return (p.username?.[0] ?? user.value?.email?.[0] ?? '?').toUpperCase()
 })
-
-async function onSave(fields) {
-  saveLoading.value = true
-  try {
-    await updateProfile(fields)
-    showEdit.value = false
-  } finally {
-    saveLoading.value = false
-  }
-}
-
-async function onEmailSave(newEmail) {
-  try {
-    await updateEmail(newEmail)
-    showEmailModal.value = false
-    feedback.value = 'Un email de confirmation a été envoyé.'
-    setTimeout(() => { feedback.value = '' }, 4000)
-  } catch (e) {
-    feedback.value = e.message
-  }
-}
-
-async function onPasswordSave(newPassword) {
-  try {
-    await updatePassword(newPassword)
-    showPasswordModal.value = false
-    feedback.value = 'Mot de passe mis à jour.'
-    setTimeout(() => { feedback.value = '' }, 4000)
-  } catch (e) {
-    feedback.value = e.message
-  }
-}
 
 async function onSignOut() {
   await signOut()
@@ -83,7 +40,7 @@ async function onSignOut() {
   <div class="profile">
     <AppHeader title="PROFIL" @back="router.push({ name: 'home' })">
       <template #right>
-        <button class="profile__edit-btn" @click="showEdit = true">
+        <button class="profile__edit-btn" @click="router.push({ name: 'profile-edit' })">
           <AppIcon name="pen" :width="18" :height="18" />
         </button>
       </template>
@@ -91,7 +48,6 @@ async function onSignOut() {
 
     <main class="profile__main">
 
-      <!-- Avatar + identité -->
       <section class="profile__hero">
         <div class="profile__avatar">
           <span class="profile__avatar-initials">{{ initials }}</span>
@@ -100,7 +56,6 @@ async function onSignOut() {
         <p v-if="profile?.username" class="profile__username">{{ profile.username }}</p>
       </section>
 
-      <!-- Stats -->
       <section class="profile__stats-card">
         <div class="profile__stat">
           <span class="profile__stat-value">{{ stats?.totalSessions ?? '—' }}</span>
@@ -120,48 +75,11 @@ async function onSignOut() {
         </div>
       </section>
 
-      <!-- Compte -->
-      <section class="profile__account">
-        <h2 class="profile__account-title">Compte</h2>
-        <button class="profile__account-item" @click="showEmailModal = true">
-          <span>Changer d'adresse email</span>
-          <AppIcon name="arrow-left" :width="16" :height="16" class="profile__account-arrow" />
-        </button>
-        <button class="profile__account-item" @click="showPasswordModal = true">
-          <span>Changer de mot de passe</span>
-          <AppIcon name="arrow-left" :width="16" :height="16" class="profile__account-arrow" />
-        </button>
-      </section>
-
-      <p v-if="feedback" class="profile__feedback">{{ feedback }}</p>
-
       <AppButton variant="ghost" class="profile__logout" @click="onSignOut">
         Se déconnecter
       </AppButton>
 
     </main>
-
-    <ProfileEditModal
-      :show="showEdit"
-      :first-name="profile?.first_name ?? ''"
-      :last-name="profile?.last_name ?? ''"
-      :username="profile?.username ?? ''"
-      @close="showEdit = false"
-      @save="onSave"
-    />
-
-    <ChangeEmailModal
-      :show="showEmailModal"
-      :current-email="user?.email ?? ''"
-      @close="showEmailModal = false"
-      @save="onEmailSave"
-    />
-
-    <ChangePasswordModal
-      :show="showPasswordModal"
-      @close="showPasswordModal = false"
-      @save="onPasswordSave"
-    />
   </div>
 </template>
 
@@ -191,7 +109,6 @@ async function onSignOut() {
     padding-bottom: $padding-xxl;
   }
 
-  // --- Hero ---
   &__hero {
     display: flex;
     flex-direction: column;
@@ -230,7 +147,6 @@ async function onSignOut() {
     text-align: center;
   }
 
-  // --- Stats ---
   &__stats-card {
     display: flex;
     align-items: stretch;
@@ -268,50 +184,6 @@ async function onSignOut() {
     letter-spacing: 0.04em;
   }
 
-  // --- Compte ---
-  &__account {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: $radius-lg;
-    overflow: hidden;
-  }
-
-  &__account-title {
-    @include title-sm;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: $padding-sm $padding-md;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  &__account-item {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: $padding-md;
-    @include text-sm;
-    color: $text-color;
-    transition: background 0.15s;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-
-    &:last-child { border-bottom: none; }
-    &:active { background: rgba(255, 255, 255, 0.05); }
-  }
-
-  &__account-arrow {
-    transform: rotate(180deg);
-    color: $muted;
-  }
-
-  // --- Feedback ---
-  &__feedback {
-    @include text-sm;
-    color: $accent;
-    text-align: center;
-  }
-
-  // --- Logout ---
   &__logout {
     color: $error;
     border-color: rgba($error, 0.3);

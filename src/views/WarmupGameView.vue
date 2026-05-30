@@ -95,7 +95,7 @@ onUnmounted(() => {
 
     <WarmupRecap v-else :zoneRecapStats="zoneRecapStats" :sessionStats="sessionStats"
       @restart="router.push({ name: 'warmup-game', query: { t: Date.now() } })"
-      @home="router.push({ name: 'lobby' })" />
+      @home="router.push({ name: 'play' })" />
 
     <WarmupZoneModal :show="showZoneModal" :zone="currentZone" @update:show="showZoneModal = $event"
       @confirm="zone => { changeZone(zone); showZoneModal = false }" />

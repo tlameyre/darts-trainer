@@ -1,12 +1,10 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { signUp, signInWithOAuth, isAuth } from '../store/authStore.js'
+import { signUp, signInWithOAuth } from '../store/authStore.js'
 import AppButton from '../components/AppButton.vue'
 
 const router = useRouter()
-
-watch(isAuth, (val) => { if (val) router.replace({ name: 'lobby' }) }, { immediate: true })
 
 const username     = ref('')
 const email        = ref('')
@@ -23,7 +21,7 @@ async function onSubmit() {
     const data = await signUp(email.value, password.value, username.value)
     // Si confirmation email désactivée → session dispo directement
     if (data?.session) {
-      router.replace({ name: 'lobby' })
+      router.replace({ name: 'play' })
     } else {
       success.value = true
     }
