@@ -69,8 +69,9 @@
       </symbol>
 
 
-      <symbol id="icon-user" viewBox="0 0 24 24" fill="none">
-        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.204 0-9.6 1.608-9.6 4.8v2.4h19.2v-2.4c0-3.192-6.396-4.8-9.6-4.8z" fill="currentColor"/>
+      <!-- Font Awesome Free — fa-user (solid) -->
+      <symbol id="icon-user" viewBox="0 0 448 512">
+        <path fill="currentColor" d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304l-91.4 0z"/>
       </symbol>
 
       <!-- Font Awesome Free — fa-house (solid) -->

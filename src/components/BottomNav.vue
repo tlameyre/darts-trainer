@@ -1,11 +1,19 @@
 <script setup>
 import AppIcon from './AppIcon.vue'
 
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+
 const tabs = [
-  { name: 'home',  label: 'Accueil',  icon: 'home' },
-  { name: 'play',  label: 'Jouer',    icon: 'dartboard' },
-  { name: 'stats', label: 'Stats',    icon: 'chart' },
+  { name: 'home',    label: 'Accueil', icon: 'home' },
+  { name: 'play',    label: 'Jouer',   icon: 'dartboard' },
+  { name: 'stats',   label: 'Stats',   icon: 'chart' },
+  { name: 'profile', label: 'Profil',  icon: 'user' },
 ]
+
+// L'onglet profil est actif sur /profile, /profile/edit et /profile/badges
+const profileRoutes = new Set(['profile', 'profile-edit', 'badges'])
 </script>
 
 <template>
@@ -15,7 +23,12 @@ const tabs = [
       :key="tab.name"
       :to="{ name: tab.name }"
       class="bottom-nav__tab"
-      active-class="bottom-nav__tab--active"
+      :class="{
+        'bottom-nav__tab--active':
+          tab.name === 'profile'
+            ? profileRoutes.has(route.name)
+            : route.name === tab.name
+      }"
     >
       <AppIcon :name="tab.icon" :width="24" :height="24" />
       <span class="bottom-nav__label">{{ tab.label }}</span>
