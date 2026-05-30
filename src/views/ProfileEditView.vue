@@ -161,7 +161,7 @@ async function onPasswordSave(newPassword) {
     display: flex;
     flex-direction: column;
     gap: $gap-lg;
-    padding-bottom: $padding-xxl;
+    padding-bottom: calc($padding-xxl + 64px);
   }
 
   &__section {

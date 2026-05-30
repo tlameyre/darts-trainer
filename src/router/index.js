@@ -20,18 +20,18 @@ const routes = [
   { path: '/register', name: 'register', component: RegisterView, meta: { public: true } },
 
   // App — onglets nav
-  { path: '/',      name: 'home',  component: HomeView,  meta: { nav: true } },
-  { path: '/play',  name: 'play',  component: LobbyView, meta: { nav: true } },
-  { path: '/stats', name: 'stats', component: StatsView, meta: { nav: true } },
+  { path: '/',      name: 'home',  component: HomeView  },
+  { path: '/play',  name: 'play',  component: LobbyView },
+  { path: '/stats', name: 'stats', component: StatsView },
 
   // App — autres
-  { path: '/profile',            name: 'profile',        component: ProfileView },
-  { path: '/profile/edit',      name: 'profile-edit',   component: ProfileEditView },
-  { path: '/profile/badges',    name: 'badges',         component: BadgesView },
-  { path: '/score-training',     name: 'score-settings', component: SettingsView },
-  { path: '/score-training/play',name: 'score-game',     component: GameView },
-  { path: '/warmup',             name: 'warmup-settings',component: WarmupSettingsView },
-  { path: '/warmup/play',        name: 'warmup-game',    component: WarmupGameView },
+  { path: '/profile',             name: 'profile',        component: ProfileView },
+  { path: '/profile/edit',        name: 'profile-edit',   component: ProfileEditView },
+  { path: '/profile/badges',      name: 'badges',         component: BadgesView },
+  { path: '/score-training',      name: 'score-settings', component: SettingsView },
+  { path: '/score-training/play', name: 'score-game',     component: GameView,        meta: { hideNav: true } },
+  { path: '/warmup',              name: 'warmup-settings',component: WarmupSettingsView },
+  { path: '/warmup/play',         name: 'warmup-game',    component: WarmupGameView,  meta: { hideNav: true } },
 ]
 
 export const router = createRouter({

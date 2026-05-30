@@ -123,7 +123,7 @@ const unlockedCount = computed(() => userBadges.value.length)
     display: flex;
     flex-direction: column;
     gap: $gap-xl;
-    padding-bottom: $padding-xxl;
+    padding-bottom: calc($padding-xxl + 64px);
   }
 
   &__category {
