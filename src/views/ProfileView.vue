@@ -1,18 +1,23 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { user, profile, signOut, updateProfile } from '../store/authStore.js'
+import { user, profile, signOut, updateProfile, updateEmail, updatePassword } from '../store/authStore.js'
 import { fetchProfileStats } from '../store/dbStore.js'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
 import AppIcon from '../components/AppIcon.vue'
 import ProfileEditModal from '../components/profile/ProfileEditModal.vue'
+import ChangeEmailModal from '../components/profile/ChangeEmailModal.vue'
+import ChangePasswordModal from '../components/profile/ChangePasswordModal.vue'
 
 const router = useRouter()
 
-const stats       = ref(null)
-const showEdit    = ref(false)
-const saveLoading = ref(false)
+const stats            = ref(null)
+const showEdit         = ref(false)
+const showEmailModal   = ref(false)
+const showPasswordModal = ref(false)
+const saveLoading      = ref(false)
+const feedback         = ref('')
 
 onMounted(async () => {
   stats.value = await fetchProfileStats()
@@ -43,6 +48,28 @@ async function onSave(fields) {
     showEdit.value = false
   } finally {
     saveLoading.value = false
+  }
+}
+
+async function onEmailSave(newEmail) {
+  try {
+    await updateEmail(newEmail)
+    showEmailModal.value = false
+    feedback.value = 'Un email de confirmation a été envoyé.'
+    setTimeout(() => { feedback.value = '' }, 4000)
+  } catch (e) {
+    feedback.value = e.message
+  }
+}
+
+async function onPasswordSave(newPassword) {
+  try {
+    await updatePassword(newPassword)
+    showPasswordModal.value = false
+    feedback.value = 'Mot de passe mis à jour.'
+    setTimeout(() => { feedback.value = '' }, 4000)
+  } catch (e) {
+    feedback.value = e.message
   }
 }
 
@@ -93,6 +120,21 @@ async function onSignOut() {
         </div>
       </section>
 
+      <!-- Compte -->
+      <section class="profile__account">
+        <h2 class="profile__account-title">Compte</h2>
+        <button class="profile__account-item" @click="showEmailModal = true">
+          <span>Changer d'adresse email</span>
+          <AppIcon name="arrow-left" :width="16" :height="16" class="profile__account-arrow" />
+        </button>
+        <button class="profile__account-item" @click="showPasswordModal = true">
+          <span>Changer de mot de passe</span>
+          <AppIcon name="arrow-left" :width="16" :height="16" class="profile__account-arrow" />
+        </button>
+      </section>
+
+      <p v-if="feedback" class="profile__feedback">{{ feedback }}</p>
+
       <AppButton variant="ghost" class="profile__logout" @click="onSignOut">
         Se déconnecter
       </AppButton>
@@ -106,6 +148,19 @@ async function onSignOut() {
       :username="profile?.username ?? ''"
       @close="showEdit = false"
       @save="onSave"
+    />
+
+    <ChangeEmailModal
+      :show="showEmailModal"
+      :current-email="user?.email ?? ''"
+      @close="showEmailModal = false"
+      @save="onEmailSave"
+    />
+
+    <ChangePasswordModal
+      :show="showPasswordModal"
+      @close="showPasswordModal = false"
+      @save="onPasswordSave"
     />
   </div>
 </template>
@@ -211,6 +266,49 @@ async function onSignOut() {
     text-align: center;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+  }
+
+  // --- Compte ---
+  &__account {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: $radius-lg;
+    overflow: hidden;
+  }
+
+  &__account-title {
+    @include title-sm;
+    color: $muted;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: $padding-sm $padding-md;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  &__account-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $padding-md;
+    @include text-sm;
+    color: $text-color;
+    transition: background 0.15s;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+    &:last-child { border-bottom: none; }
+    &:active { background: rgba(255, 255, 255, 0.05); }
+  }
+
+  &__account-arrow {
+    transform: rotate(180deg);
+    color: $muted;
+  }
+
+  // --- Feedback ---
+  &__feedback {
+    @include text-sm;
+    color: $accent;
+    text-align: center;
   }
 
   // --- Logout ---
