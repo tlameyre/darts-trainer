@@ -31,7 +31,7 @@ const routes = [
 ]
 
 export const router = createRouter({
-  history: createWebHistory('/darts-counter/'),
+  history: createWebHistory('/darts-trainer/'),
   routes,
 })
 

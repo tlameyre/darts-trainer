@@ -2,20 +2,20 @@
   "name": "Darts Trainer",
   "short_name": "Darts",
   "description": "Entrainement au comptage des fléchettes",
-  "start_url": "/darts-counter/",
+  "start_url": "/darts-trainer/",
   "display": "standalone",
   "background_color": "#121A18",
   "theme_color": "#121A18",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/darts-counter/web-app-manifest-192x192.png",
+      "src": "/darts-trainer/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/darts-counter/web-app-manifest-512x512.png",
+      "src": "/darts-trainer/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
