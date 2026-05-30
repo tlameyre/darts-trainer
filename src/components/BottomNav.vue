@@ -3,7 +3,7 @@ import AppIcon from './AppIcon.vue'
 
 const tabs = [
   { name: 'home',  label: 'Accueil',  icon: 'home' },
-  { name: 'play',  label: 'Jouer',    icon: 'plus-circle' },
+  { name: 'play',  label: 'Jouer',    icon: 'dartboard' },
   { name: 'stats', label: 'Stats',    icon: 'chart' },
 ]
 </script>
