@@ -9,8 +9,7 @@ const router = useRouter()
 const route  = useRoute()
 
 watch(isAuth, (val) => {
-  // Ne pas rediriger depuis la route de dev (mode développement)
-  if (route.name === 'dev') return
+  if (route.meta.dev) return
   if (val) router.replace({ name: 'home' })
   else router.replace({ name: 'login' })
 })

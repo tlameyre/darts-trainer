@@ -40,7 +40,7 @@ routes.push({
   path:      '/dev',
   name:      'dev',
   component: () => import('../views/DevView.vue'),
-  meta:      { public: true },
+  meta:      { dev: true },
 })
 
 export const router = createRouter({
@@ -49,8 +49,7 @@ export const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  // La route de dev est toujours accessible (mode développement uniquement)
-  if (to.name === 'dev') return
+  if (to.meta.dev) return
 
   // Attendre la résolution de la session Supabase au premier chargement
   if (loading.value) {
