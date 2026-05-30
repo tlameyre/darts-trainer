@@ -1,8 +1,9 @@
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDarts } from '../composables/useDarts.js'
 import { gameSettings } from '../store/gameStore.js'
+import { saveGameSession } from '../store/dbStore.js'
 
 import AppHeader from '../components/AppHeader.vue'
 import AppIcon from '../components/AppIcon.vue'
@@ -18,11 +19,23 @@ const router = useRouter()
 const {
   currentScore, currentVolee, inputValue,
   feedbackState, streak, best,
-  correctCount, gameOver, timeLeft,
+  correctCount, questionIndex, gameOver, timeLeft,
   phase, voleeTotal,
   correctAnswer, questionLabel, phaseLabel,
   nextRound, appendDigit, deleteDigit, validate, cleanup,
 } = useDarts(gameSettings.value)
+
+watch(gameOver, (val) => {
+  if (val) {
+    saveGameSession({
+      correctCount:   correctCount.value,
+      totalQuestions: questionIndex.value,
+      streak:         streak.value,
+      bestStreak:     best.value,
+      settings:       gameSettings.value,
+    })
+  }
+})
 
 const isUnlimited = computed(() => !gameSettings.value?.maxQuestions)
 

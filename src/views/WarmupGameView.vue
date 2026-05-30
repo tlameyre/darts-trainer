@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { gameSettings } from '../store/gameStore.js'
 import { useWarmup } from '../composables/useWarmup.js'
+import { saveWarmupSession } from '../store/dbStore.js'
 import WarmupStatsCard from '../components/warmup/WarmupStatsCard.vue'
 import WarmupDartSlots from '../components/warmup/WarmupDartSlots.vue'
 import WarmupGrid from '../components/warmup/WarmupGrid.vue'
@@ -20,6 +21,19 @@ const {
   currentZone, currentZoneStats, zoneRecapStats, sessionStats,
   darts, recordDart, undoLast, changeZone, startTimer, endSession, cleanup,
 } = useWarmup(gameSettings.value ?? { duration: 5, zone: { sector: 20, type: 'D' } })
+
+watch(gameOver, (val) => {
+  if (val) {
+    const duration = gameSettings.value?.duration
+    saveWarmupSession({
+      zone:        currentZone.value,
+      totalDarts:  sessionStats.value.total,
+      hits:        sessionStats.value.hits,
+      durationS:   duration !== null ? duration * 60 : null,
+      settings:    gameSettings.value,
+    })
+  }
+})
 
 const showZoneModal = ref(false)
 
@@ -69,37 +83,22 @@ onUnmounted(() => {
     </header>
 
     <div v-if="!gameOver" class="warmup__game">
-      <WarmupStatsCard :zone="currentZone" :stats="currentZoneStats" />
-      <WarmupDartSlots
-        :darts="displayedDarts"
-        :tourNumber="tourNumber"
-        :timeDisplay="timeDisplay"
-        :isUnlimited="isUnlimited"
-        :isUrgent="isUrgent"
-      />
-      <WarmupGrid :locked="justCompleted" @dart="recordDart" />
-      <WarmupBottomBar
-        :locked="justCompleted"
-        @undo="undoLast"
-        @miss="recordDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })"
-        @end="endSession"
-      />
+      <WarmupStatsCard class="warmup__stats-card" :zone="currentZone" :stats="currentZoneStats" />
+      <div class="warmup__game-main">
+        <WarmupDartSlots :darts="displayedDarts" :tourNumber="tourNumber" :timeDisplay="timeDisplay"
+          :isUnlimited="isUnlimited" :isUrgent="isUrgent" />
+        <WarmupGrid :locked="justCompleted" @dart="recordDart" />
+        <WarmupBottomBar :locked="justCompleted" @undo="undoLast"
+          @miss="recordDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })" @end="endSession" />
+      </div>
     </div>
 
-    <WarmupRecap
-      v-else
-      :zoneRecapStats="zoneRecapStats"
-      :sessionStats="sessionStats"
+    <WarmupRecap v-else :zoneRecapStats="zoneRecapStats" :sessionStats="sessionStats"
       @restart="router.push({ name: 'warmup-game', query: { t: Date.now() } })"
-      @home="router.push({ name: 'lobby' })"
-    />
+      @home="router.push({ name: 'lobby' })" />
 
-    <WarmupZoneModal
-      :show="showZoneModal"
-      :zone="currentZone"
-      @update:show="showZoneModal = $event"
-      @confirm="zone => { changeZone(zone); showZoneModal = false }"
-    />
+    <WarmupZoneModal :show="showZoneModal" :zone="currentZone" @update:show="showZoneModal = $event"
+      @confirm="zone => { changeZone(zone); showZoneModal = false }" />
 
   </div>
 </template>
@@ -112,35 +111,75 @@ onUnmounted(() => {
   height: 100dvh;
   overflow: hidden;
   padding: $padding-md;
+  max-width: 420px;
+  margin: 0 auto;
+}
 
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
+.warmup__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.warmup__header-btn {
+  color: $text-color;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+
+  &:active {
+    opacity: 0.6;
   }
+}
 
-  &__header-btn {
-    color: $text-color;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.15s;
-    &:active { opacity: 0.6; }
-  }
+.warmup__header-title {
+  @include title-sm;
+  color: $text-color;
+  text-align: center;
+}
 
-  &__header-title {
-    @include title-sm;
-    color: $text-color;
-    text-align: center;
-  }
+.warmup__game {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $gap-md;
+}
 
-  &__game {
+.warmup__game-main {
+  display: flex;
+  flex-direction: column;
+  gap: $gap-md;
+}
+
+@media (min-width: $bp-tablet) {
+  .warmup__game-main {
     flex: 1;
     min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-md;
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .warmup {
+    max-width: none;
+    padding: $padding-xxl;
+  }
+
+  .warmup__game {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .warmup__stats-card {
+    flex: 1;
+    min-height: 50%;
+  }
+
+  .warmup__game-main {
+    flex: 1;
+    margin: auto;
   }
 }
 </style>

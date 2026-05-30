@@ -1,6 +1,8 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { GAME_MODES } from '../data/gameModes.js'
+import { profile } from '../store/authStore.js'
+import AppIcon from '../components/AppIcon.vue'
 
 const router = useRouter()
 
@@ -12,7 +14,13 @@ function selectMode(mode) {
 <template>
   <div class="lobby">
     <header class="lobby__header">
-      <h1 class="lobby__title">DARTS<br>TRAINER</h1>
+      <div class="lobby__header-top">
+        <h1 class="lobby__title">DARTS<br>TRAINER</h1>
+        <button class="lobby__profile-btn" @click="router.push({ name: 'profile' })">
+          <AppIcon name="user" :width="22" :height="22" />
+          <span v-if="profile?.username" class="lobby__profile-name">{{ profile.username }}</span>
+        </button>
+      </div>
     </header>
 
     <main class="lobby__modes">
@@ -36,10 +44,32 @@ function selectMode(mode) {
   gap: $padding-xl;
 
   &__header {
-    display: flex;
-    flex-direction: column;
-    gap: $padding-xxs;
     padding-top: $padding-lg;
+  }
+
+  &__header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  &__profile-btn {
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
+    color: $muted;
+    transition: color 0.15s;
+
+    &:active { color: $text-color; }
+  }
+
+  &__profile-name {
+    @include text-sm;
+    color: $muted;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__sub {
