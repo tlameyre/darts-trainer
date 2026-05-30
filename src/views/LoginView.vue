@@ -1,10 +1,13 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { signIn, signInWithOAuth } from '../store/authStore.js'
+import { signIn, signInWithOAuth, isAuth } from '../store/authStore.js'
 import AppButton from '../components/AppButton.vue'
 
 const router = useRouter()
+
+// Redirige dès que Supabase confirme la session (ex: retour OAuth Google)
+watch(isAuth, (val) => { if (val) router.replace({ name: 'lobby' }) }, { immediate: true })
 
 const email    = ref('')
 const password = ref('')
