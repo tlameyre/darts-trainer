@@ -5,13 +5,17 @@ import { user, profile, signOut } from '../store/authStore.js'
 import { fetchProfileStats } from '../store/dbStore.js'
 import { fetchUserBadges } from '../store/badgeStore.js'
 import { BADGES } from '../data/badges.js'
+import BadgeDetailModal from '../components/badges/BadgeDetailModal.vue'
+import { getBadgeProgress } from '../store/badgeStore.js'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
 import AppIcon from '../components/AppIcon.vue'
 
 const router = useRouter()
-const stats        = ref(null)
-const userBadges   = ref([])
+const stats          = ref(null)
+const userBadges     = ref([])
+const selectedBadge  = ref(null)
+const showBadgeModal = ref(false)
 
 onMounted(async () => {
   const [s, b] = await Promise.all([fetchProfileStats(), fetchUserBadges()])
@@ -19,14 +23,18 @@ onMounted(async () => {
   userBadges.value = b
 })
 
-function isUnlocked(badgeId) {
-  return userBadges.value.some(b => b.id === badgeId)
-}
+// 4 derniers badges débloqués (déjà triés desc par unlockedAt)
+const recentBadges = computed(() => userBadges.value.slice(0, 4))
 
-function unlockedAt(badgeId) {
-  const b = userBadges.value.find(b => b.id === badgeId)
-  if (!b) return null
-  return new Date(b.unlockedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+const selectedProgress = computed(() =>
+  selectedBadge.value && !selectedBadge.value.unlockedAt
+    ? getBadgeProgress(selectedBadge.value.id, stats.value)
+    : null
+)
+
+function openBadge(badge) {
+  selectedBadge.value  = badge
+  showBadgeModal.value = true
 }
 
 const displayName = computed(() => {
@@ -92,20 +100,30 @@ async function onSignOut() {
 
       <!-- Badges -->
       <section class="profile__badges">
-        <h2 class="profile__badges-title">Badges <span>{{ userBadges.length }}/{{ BADGES.length }}</span></h2>
-        <div class="profile__badges-grid">
-          <div
-            v-for="badge in BADGES"
+        <div class="profile__badges-header">
+          <h2 class="profile__badges-title">
+            Badges <span>{{ userBadges.length }}/{{ BADGES.length }}</span>
+          </h2>
+          <button class="profile__badges-more" @click="router.push({ name: 'badges' })">
+            Voir tout
+          </button>
+        </div>
+
+        <div v-if="recentBadges.length" class="profile__badges-grid">
+          <button
+            v-for="badge in recentBadges"
             :key="badge.id"
             class="profile__badge"
-            :class="{ 'profile__badge--locked': !isUnlocked(badge.id) }"
+            @click="openBadge(badge)"
           >
             <span class="profile__badge-icon">{{ badge.icon }}</span>
             <span class="profile__badge-label">{{ badge.label }}</span>
-            <span v-if="isUnlocked(badge.id)" class="profile__badge-date">{{ unlockedAt(badge.id) }}</span>
-            <span v-else class="profile__badge-locked">Verrouillé</span>
-          </div>
+          </button>
         </div>
+
+        <p v-else class="profile__badges-empty">
+          Joue ta première partie pour débloquer des badges.
+        </p>
       </section>
 
       <AppButton variant="ghost" class="profile__logout" @click="onSignOut">
@@ -113,6 +131,13 @@ async function onSignOut() {
       </AppButton>
 
     </main>
+
+    <BadgeDetailModal
+      :show="showBadgeModal"
+      :badge="selectedBadge"
+      :progress="selectedProgress"
+      @close="showBadgeModal = false"
+    />
   </div>
 </template>
 
@@ -224,57 +249,63 @@ async function onSignOut() {
     gap: $gap-sm;
   }
 
+  &__badges-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   &__badges-title {
     @include title-sm;
     color: $muted;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 
-    span {
-      color: $orange;
-      margin-left: $gap-xs;
-    }
+    span { color: $orange; margin-left: $gap-xs; }
+  }
+
+  &__badges-more {
+    @include text-sm;
+    color: $orange;
+    font-size: 13px;
   }
 
   &__badges-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: $gap-sm;
   }
 
   &__badge {
     background: rgba(255, 255, 255, 0.05);
     border-radius: $radius-md;
-    padding: $padding-sm $padding-md;
+    padding: $padding-sm;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    transition: opacity 0.2s;
+    align-items: center;
+    gap: $gap-xxs;
+    text-align: center;
+    transition: background 0.15s;
 
-    &--locked {
-      opacity: 0.35;
-    }
+    &:active { background: rgba(255, 255, 255, 0.09); }
   }
 
   &__badge-icon {
     font-size: 28px;
     line-height: 1;
-    margin-bottom: $gap-xxs;
   }
 
   &__badge-label {
-    @include title-sm;
-    color: $text-color;
-  }
-
-  &__badge-date {
-    font-size: 11px;
-    color: $accent;
-  }
-
-  &__badge-locked {
-    font-size: 11px;
+    font-size: 10px;
     color: $muted;
+    line-height: 1.3;
+  }
+
+  &__badges-empty {
+    @include text-sm;
+    color: $muted;
+    text-align: center;
+    font-size: 13px;
   }
 
   // --- Logout ---

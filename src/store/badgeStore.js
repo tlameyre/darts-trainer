@@ -78,14 +78,31 @@ export async function checkWarmupBadges({ totalDarts, accuracy, cumulativeStats 
   return unlockBadges(toUnlock)
 }
 
+// Retourne la progression d'un badge non débloqué (ou null si binaire)
+export function getBadgeProgress(badgeId, stats) {
+  if (!stats) return null
+  const { totalDarts, totalSessions, bestAccuracy, bestStreak } = stats
+  switch (badgeId) {
+    case 'centurion':      return { current: Math.min(totalDarts, 100),    target: 100,  suffix: '' }
+    case 'thousand_darts': return { current: Math.min(totalDarts, 1000),   target: 1000, suffix: '' }
+    case 'assiduous':      return { current: Math.min(totalSessions, 10),  target: 10,   suffix: '' }
+    case 'veteran':        return { current: Math.min(totalSessions, 50),  target: 50,   suffix: '' }
+    case 'on_fire':        return { current: Math.min(bestStreak, 10),     target: 10,   suffix: '' }
+    case 'precise':        return { current: Math.round(bestAccuracy),     target: 80,   suffix: '%' }
+    case 'sniper':         return { current: Math.round(bestAccuracy),     target: 95,   suffix: '%' }
+    default:               return null
+  }
+}
+
 // Récupère tous les badges de l'utilisateur avec leur date de déblocage
+// ascending: false → les plus récents en premier
 export async function fetchUserBadges() {
   if (!user.value) return []
   const { data } = await supabase
     .from('user_badges')
     .select('badge_id, unlocked_at')
     .eq('user_id', user.value.id)
-    .order('unlocked_at', { ascending: true })
+    .order('unlocked_at', { ascending: false })
   return (data ?? []).map(r => ({
     ...getBadge(r.badge_id),
     unlockedAt: r.unlocked_at,
