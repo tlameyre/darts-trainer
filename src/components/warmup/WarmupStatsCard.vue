@@ -12,16 +12,16 @@ defineProps({
     <div class="stats-card__zone">{{ formatZoneLabel(zone) }}</div>
     <div class="stats-card__rows">
       <div class="stats-card__row">
-        <span class="stats-card__lbl">Fléchettes jetées</span>
-        <span class="stats-card__val">{{ stats.total }}</span>
+        <span class="stats-card__label">Fléchettes jetées</span>
+        <span class="stats-card__value">{{ stats.total }}</span>
       </div>
       <div class="stats-card__row">
-        <span class="stats-card__lbl">Fléchettes touchées</span>
-        <span class="stats-card__val">{{ stats.hits }}</span>
+        <span class="stats-card__label">Fléchettes touchées</span>
+        <span class="stats-card__value">{{ stats.hits }}</span>
       </div>
       <div class="stats-card__row">
-        <span class="stats-card__lbl">Taux de réussite</span>
-        <span class="stats-card__val">{{ stats.accuracy }}%</span>
+        <span class="stats-card__label">Taux de réussite</span>
+        <span class="stats-card__value">{{ stats.accuracy }}%</span>
       </div>
     </div>
   </div>
@@ -61,15 +61,27 @@ defineProps({
     align-items: center;
   }
 
-  &__lbl {
+  &__label {
     @include text-sm;
     color: rgba($white, 0.75);
   }
 
-  &__val {
+  &__value {
     @include title-sm;
     color: $white;
     font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (min-width: $bp-tablet) {
+  .stats-card {
+    &__label {
+      @include text-lg;
+    }
+
+    &__value {
+      @include title-lg;
+    }
   }
 }
 </style>

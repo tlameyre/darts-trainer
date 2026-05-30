@@ -39,7 +39,7 @@ watch(() => props.show, (val) => {
 .warmup-modal {
   position: fixed;
   inset: 0;
-  background: rgba($black, 0.6);
+  background: rgba($black, 0.9);
   display: flex;
   align-items: flex-end;
   z-index: 100;
@@ -89,5 +89,19 @@ watch(() => props.show, (val) => {
 .modal-enter-from .warmup-modal__sheet,
 .modal-leave-to .warmup-modal__sheet {
   transform: translateY(100%);
+}
+
+@media (min-width: $bp-tablet) {
+  .warmup-modal {
+    align-items: center;
+    justify-content: center;
+
+    &__sheet {
+      width: auto;
+      min-width: 50%;
+      border-radius: $radius-lg;
+    }
+  }
+
 }
 </style>

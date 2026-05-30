@@ -168,5 +168,13 @@ function startGame() {
     max-width: 420px;
     margin: 0 auto;
   }
+
+  @media (min-width: $bp-tablet) {
+    padding: $padding-xxl;
+
+    &__main {
+      max-width: none;
+    }
+  }
 }
 </style>

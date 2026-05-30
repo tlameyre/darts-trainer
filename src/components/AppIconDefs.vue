@@ -69,6 +69,10 @@
       </symbol>
 
 
+      <symbol id="icon-user" viewBox="0 0 24 24" fill="none">
+        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.204 0-9.6 1.608-9.6 4.8v2.4h19.2v-2.4c0-3.192-6.396-4.8-9.6-4.8z" fill="currentColor"/>
+      </symbol>
+
     </defs>
   </svg>
 </template>

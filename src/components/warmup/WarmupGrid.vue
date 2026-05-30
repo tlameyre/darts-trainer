@@ -46,6 +46,7 @@ function tapSector(sector) {
     pts: sector * tab.multiplier,
     label: tab.id === 'single' ? String(sector) : `${tab.id === 'double' ? 'D' : 'T'}${sector}`,
   })
+  activeTab.value = 'single'
 }
 
 function tapBull() {
@@ -87,6 +88,20 @@ function tapOuter() {
   width: 100%;
   border-top: $border-md solid $white;
   border-left: $border-md solid $white;
+}
+
+@media (min-width: $bp-tablet) {
+  .warmup__grid {
+    flex: 1;
+    min-height: 0;
+    align-self: stretch;
+    grid-template-rows: repeat(5, 1fr);
+  }
+
+  .warmup__gtab,
+  .warmup__cell {
+    aspect-ratio: unset;
+  }
 }
 
 .warmup__gtab {

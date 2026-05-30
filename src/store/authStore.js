@@ -51,7 +51,10 @@ export async function signIn(email, password) {
 export async function signInWithOAuth(provider) {
   const { error } = await supabase.auth.signInWithOAuth({
     provider,
-    options: { redirectTo: window.location.origin },
+    options: {
+      // Avec WebHashHistory, Supabase redirige vers /#/ après le callback
+      redirectTo: `${window.location.origin}${window.location.pathname}`,
+    },
   })
   if (error) throw error
 }
