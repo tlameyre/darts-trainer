@@ -40,7 +40,7 @@ function selectMode(mode) {
   min-height: 100dvh;
   max-width: 420px;
   margin: 0 auto;
-  padding: $padding-lg $padding-md $padding-xl;
+  padding: $padding-lg $padding-md calc($padding-xxl + 64px);
   gap: $padding-xl;
 
   &__header {

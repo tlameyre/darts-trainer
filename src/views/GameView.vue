@@ -1,17 +1,17 @@
 <script setup>
-import { computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDarts } from '../composables/useDarts.js'
 import { gameSettings } from '../store/gameStore.js'
 import { saveGameSession } from '../store/dbStore.js'
 
 import AppHeader from '../components/AppHeader.vue'
-import AppIcon from '../components/AppIcon.vue'
 import AnswerInput from '../components/AnswerInput.vue'
 import NumPad from '../components/NumPad.vue'
 import GameOver from '../components/GameOver.vue'
 import GameTourRow from '../components/game/GameTourRow.vue'
 import GameRoundCard from '../components/game/GameRoundCard.vue'
+import GameMenuModal from '../components/game/GameMenuModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -30,18 +30,24 @@ watch(gameOver, (val) => {
     saveGameSession({
       correctCount:   correctCount.value,
       totalQuestions: questionIndex.value,
-      streak:         streak.value,
       bestStreak:     best.value,
       settings:       gameSettings.value,
     })
   }
 })
 
-const isUnlimited = computed(() => !gameSettings.value?.maxQuestions)
+const showMenu = ref(false)
 
 function finishGame() {
+  showMenu.value = false
   cleanup()
   gameOver.value = true
+}
+
+function quitGame() {
+  showMenu.value = false
+  cleanup()
+  router.push({ name: 'score-settings' })
 }
 
 function onKeydown(e) {
@@ -64,9 +70,9 @@ onUnmounted(() => {
 <template>
   <div class="game" :class="{ gameOver: 'game-over' }">
     <AppHeader title="ENTRAINEMENT" @back="router.push({ name: 'score-settings' })">
-      <template v-if="isUnlimited && !gameOver" #right>
-        <button class="game__finish-btn" @click="finishGame">
-          <AppIcon name="turn-off" :width="24" :height="24" />
+      <template v-if="!gameOver" #right>
+        <button class="game__menu-btn" @click="showMenu = true">
+          <AppIcon name="gear" :width="22" :height="22" />
         </button>
       </template>
     </AppHeader>
@@ -75,7 +81,7 @@ onUnmounted(() => {
       <GameOver v-if="gameOver" :correct-count="correctCount"
         :max-questions="gameSettings.maxQuestions ?? questionLabel" :best="best"
         @replay="router.push({ name: 'score-game', query: { t: Date.now() } })"
-        @home="router.push({ name: 'lobby' })" />
+        @home="router.push({ name: 'play' })" />
 
       <template v-else>
         <GameRoundCard :phase="phase" :current-score="currentScore" :current-volee="currentVolee"
@@ -91,6 +97,8 @@ onUnmounted(() => {
         <NumPad @digit="appendDigit" @delete="deleteDigit" @validate="validate" />
       </template>
     </main>
+
+    <GameMenuModal :show="showMenu" @close="showMenu = false" @finish="finishGame" @quit="quitGame" />
   </div>
 </template>
 
@@ -108,17 +116,14 @@ onUnmounted(() => {
     padding: $padding-md $padding-md $padding-xxl;
   }
 
-  &__finish-btn {
+  &__menu-btn {
     color: $text-color;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     padding: $padding-xxs;
     transition: opacity 0.15s;
 
-    &:active {
-      opacity: 0.6;
-    }
+    &:active { opacity: 0.6; }
   }
 
   &__main {

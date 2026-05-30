@@ -7,7 +7,6 @@ export async function saveGameSession({ correctCount, totalQuestions, streak, be
     user_id:         user.value.id,
     correct_count:   correctCount,
     total_questions: totalQuestions,
-    streak,
     best_streak:     bestStreak,
     settings,
   })

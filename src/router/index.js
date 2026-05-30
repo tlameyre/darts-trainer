@@ -1,7 +1,9 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import { isAuth, loading } from '../store/authStore.js'
 
+import HomeView         from '../views/HomeView.vue'
 import LobbyView          from '../views/LobbyView.vue'
+import StatsView          from '../views/StatsView.vue'
 import SettingsView       from '../views/SettingsView.vue'
 import GameView           from '../views/GameView.vue'
 import WarmupSettingsView from '../views/WarmupSettingsView.vue'
@@ -15,8 +17,12 @@ const routes = [
   { path: '/login',    name: 'login',    component: LoginView,    meta: { public: true } },
   { path: '/register', name: 'register', component: RegisterView, meta: { public: true } },
 
-  // App
-  { path: '/',                   name: 'lobby',          component: LobbyView },
+  // App — onglets nav
+  { path: '/',      name: 'home',  component: HomeView,  meta: { nav: true } },
+  { path: '/play',  name: 'play',  component: LobbyView, meta: { nav: true } },
+  { path: '/stats', name: 'stats', component: StatsView, meta: { nav: true } },
+
+  // App — autres
   { path: '/profile',            name: 'profile',        component: ProfileView },
   { path: '/score-training',     name: 'score-settings', component: SettingsView },
   { path: '/score-training/play',name: 'score-game',     component: GameView },
@@ -25,7 +31,7 @@ const routes = [
 ]
 
 export const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory('/darts-counter/'),
   routes,
 })
 
@@ -44,6 +50,6 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.public && isAuth.value) {
-    return { name: 'lobby' }
+    return { name: 'home' }
   }
 })

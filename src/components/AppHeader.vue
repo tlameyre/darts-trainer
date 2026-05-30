@@ -2,7 +2,7 @@
 import AppIcon from './AppIcon.vue'
 
 defineProps({
-  title: { type: String, default: 'DARTS COUNTER' },
+  title: { type: String, default: 'DARTS TRAINER' },
 })
 
 defineEmits(['back'])

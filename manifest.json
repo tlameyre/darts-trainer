@@ -1,5 +1,5 @@
 {
-  "name": "Darts Counter",
+  "name": "Darts Trainer",
   "short_name": "Darts",
   "description": "Entrainement au comptage des fléchettes",
   "start_url": "/darts-counter/",

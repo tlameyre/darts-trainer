@@ -1,8 +1,8 @@
 import { ref, computed } from 'vue'
 
 export function useDarts({ difficulty, maxQuestions, timeLimit, doubleValidation }) {
-  // --- Persistent ---
-  const best = ref(parseInt(localStorage.getItem('dartsBest') || '0'))
+  // Meilleure série de la session en cours (non persisté — l'historique est dans Supabase)
+  const best = ref(0)
 
   // --- Game state ---
   const streak        = ref(0)
@@ -152,7 +152,6 @@ export function useDarts({ difficulty, maxQuestions, timeLimit, doubleValidation
         correctCount.value++
         if (streak.value > best.value) {
           best.value = streak.value
-          localStorage.setItem('dartsBest', String(best.value))
         }
 
         // Si double validation activé → passer en phase 2

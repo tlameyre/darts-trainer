@@ -42,7 +42,6 @@ create table public.game_sessions (
   user_id         uuid references auth.users(id) on delete cascade not null,
   correct_count   int not null,
   total_questions int not null,
-  streak          int default 0,
   best_streak     int default 0,
   settings        jsonb default '{}'::jsonb,
   played_at       timestamptz default now()
