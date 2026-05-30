@@ -52,6 +52,23 @@ export async function fetchWarmupSessions(limit = 20) {
   return data
 }
 
+export async function fetchProfileStats() {
+  if (!user.value) return null
+
+  const [{ data: gameSessions }, { data: warmupSessions }] = await Promise.all([
+    supabase.from('game_sessions').select('id').eq('user_id', user.value.id),
+    supabase.from('warmup_sessions').select('total_darts, accuracy').eq('user_id', user.value.id),
+  ])
+
+  const totalSessions  = (gameSessions?.length ?? 0) + (warmupSessions?.length ?? 0)
+  const totalDarts     = warmupSessions?.reduce((s, r) => s + r.total_darts, 0) ?? 0
+  const avgAccuracy    = warmupSessions?.length
+    ? Math.round(warmupSessions.reduce((s, r) => s + Number(r.accuracy), 0) / warmupSessions.length)
+    : null
+
+  return { totalSessions, totalDarts, avgAccuracy }
+}
+
 export async function fetchGlobalStats() {
   if (!user.value) return null
 

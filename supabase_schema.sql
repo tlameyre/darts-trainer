@@ -6,6 +6,8 @@
 -- 1. Profiles (1 par utilisateur)
 create table public.profiles (
   id         uuid primary key references auth.users(id) on delete cascade,
+  first_name text,
+  last_name  text,
   username   text,
   settings   jsonb default '{}'::jsonb,
   created_at timestamptz default now()
