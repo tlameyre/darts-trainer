@@ -34,12 +34,25 @@ const routes = [
   { path: '/warmup/play',         name: 'warmup-game',    component: WarmupGameView,  meta: { hideNav: true } },
 ]
 
+// Route de dev — uniquement en mode développement, accessible sans auth
+if (import.meta.env.DEV) {
+  routes.push({
+    path:      '/dev',
+    name:      'dev',
+    component: () => import('../views/DevView.vue'),
+    meta:      { public: true },
+  })
+}
+
 export const router = createRouter({
   history: createWebHistory('/darts-trainer/'),
   routes,
 })
 
 router.beforeEach(async (to) => {
+  // La route de dev est toujours accessible (mode développement uniquement)
+  if (to.name === 'dev') return
+
   // Attendre la résolution de la session Supabase au premier chargement
   if (loading.value) {
     await new Promise(resolve => {
