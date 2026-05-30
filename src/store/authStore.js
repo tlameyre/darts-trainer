@@ -19,17 +19,14 @@ async function fetchProfile(userId) {
   _profile.value = data
 }
 
-// Initialisation — écoute les changements de session Supabase
-supabase.auth.getSession().then(({ data: { session } }) => {
-  _user.value = session?.user ?? null
-  if (_user.value) fetchProfile(_user.value.id)
-  _loading.value = false
-})
-
+// onAuthStateChange est la source unique de vérité.
+// Il fire un événement INITIAL_SESSION au démarrage (session existante ou null),
+// puis SIGNED_IN après l'échange du code PKCE (OAuth Google).
 supabase.auth.onAuthStateChange((_event, session) => {
   _user.value = session?.user ?? null
   if (_user.value) fetchProfile(_user.value.id)
   else _profile.value = null
+  _loading.value = false
 })
 
 export async function signUp(email, password, username) {
