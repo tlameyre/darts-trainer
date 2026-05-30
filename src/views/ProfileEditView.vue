@@ -2,6 +2,8 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { profile, updateProfile, updateEmail, updatePassword, user } from '../store/authStore.js'
+import { checkProfileBadge } from '../store/badgeStore.js'
+import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import AppHeader from '../components/AppHeader.vue'
 import AppIcon from '../components/AppIcon.vue'
 import ChangeEmailModal from '../components/profile/ChangeEmailModal.vue'
@@ -14,6 +16,7 @@ const lastName    = ref(profile.value?.last_name  ?? '')
 const username    = ref(profile.value?.username   ?? '')
 const saveLoading = ref(false)
 const feedback    = ref('')
+const newBadges   = ref([])
 
 const showEmailModal    = ref(false)
 const showPasswordModal = ref(false)
@@ -35,7 +38,12 @@ async function onSave() {
       last_name:  lastName.value.trim(),
       username:   username.value.trim(),
     })
-    router.back()
+    const badges = await checkProfileBadge(profile.value)
+    if (badges.length) {
+      newBadges.value = badges
+    } else {
+      router.back()
+    }
   } catch (e) {
     feedback.value = e.message
   } finally {
@@ -135,6 +143,8 @@ async function onPasswordSave(newPassword) {
       @close="showPasswordModal = false"
       @save="onPasswordSave"
     />
+
+    <BadgeUnlockOverlay :badges="newBadges" @done="router.back()" />
   </div>
 </template>
 

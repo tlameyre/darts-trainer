@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { gameSettings } from '../store/gameStore.js'
 import { useWarmup } from '../composables/useWarmup.js'
 import { saveWarmupSession, fetchProfileStats } from '../store/dbStore.js'
-import { checkWarmupBadges } from '../store/badgeStore.js'
+import { checkWarmupBadges, checkSpecialThrow } from '../store/badgeStore.js'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import WarmupStatsCard from '../components/warmup/WarmupStatsCard.vue'
 import WarmupDartSlots from '../components/warmup/WarmupDartSlots.vue'
@@ -50,11 +50,14 @@ const newBadges = ref([])
 const justCompleted = ref(false)
 let _justCompletedTimer = null
 
-watch(() => darts.value.length, (newLen, oldLen) => {
+watch(() => darts.value.length, async (newLen, oldLen) => {
   clearTimeout(_justCompletedTimer)
   if (newLen > oldLen && newLen > 0 && newLen % 3 === 0) {
     justCompleted.value = true
     _justCompletedTimer = setTimeout(() => { justCompleted.value = false }, 700)
+    // Vérification des lancers spéciaux à chaque fin de volée
+    const special = await checkSpecialThrow(darts.value)
+    if (special.length) newBadges.value = [...newBadges.value, ...special]
   } else if (newLen < oldLen) {
     justCompleted.value = false
   }

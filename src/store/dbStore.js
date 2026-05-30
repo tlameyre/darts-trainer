@@ -56,7 +56,7 @@ export async function fetchProfileStats() {
   if (!user.value) return null
 
   const [{ data: gameSessions }, { data: warmupSessions }] = await Promise.all([
-    supabase.from('game_sessions').select('id, best_streak').eq('user_id', user.value.id),
+    supabase.from('game_sessions').select('id, best_streak, correct_count').eq('user_id', user.value.id),
     supabase.from('warmup_sessions').select('total_darts, accuracy').eq('user_id', user.value.id),
   ])
 
@@ -71,8 +71,16 @@ export async function fetchProfileStats() {
   const bestStreak    = gameSessions?.length
     ? Math.max(...gameSessions.map(r => r.best_streak ?? 0))
     : 0
+  const totalCorrect  = gameSessions?.reduce((s, r) => s + (r.correct_count ?? 0), 0) ?? 0
 
-  return { totalSessions, totalDarts, avgAccuracy, bestAccuracy, bestStreak }
+  // Moyenne de précision sur les 10 dernières sessions warmup
+  const last10        = warmupSessions?.slice(-10) ?? []
+  const avg80eligible = last10.length >= 10
+  const avgAccuracy10 = avg80eligible
+    ? Math.round(last10.reduce((s, r) => s + Number(r.accuracy), 0) / 10)
+    : 0
+
+  return { totalSessions, totalDarts, avgAccuracy, bestAccuracy, bestStreak, totalCorrect, avgAccuracy10, avg80eligible }
 }
 
 export async function fetchGlobalStats() {
