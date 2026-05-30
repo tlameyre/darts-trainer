@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { profile } from '../store/authStore.js'
+import { profile, user } from '../store/authStore.js'
 import { fetchUserBadges } from '../store/badgeStore.js'
 import { GAME_MODES } from '../data/gameModes.js'
 import { BADGES } from '../data/badges.js'
@@ -20,6 +20,15 @@ const displayName = computed(() => {
   return p.first_name || p.username || 'Joueur'
 })
 
+const initials = computed(() => {
+  const p = profile.value
+  if (!p) return '?'
+  if (p.first_name || p.last_name) {
+    return [(p.first_name?.[0] ?? ''), (p.last_name?.[0] ?? '')].join('').toUpperCase()
+  }
+  return (p.username?.[0] ?? user.value?.email?.[0] ?? '?').toUpperCase()
+})
+
 // 4 derniers badges débloqués
 const recentBadges = computed(() => userBadges.value.slice(0, 4))
 </script>
@@ -27,6 +36,9 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
 <template>
   <div class="home">
     <header class="home__header">
+      <button class="home__avatar" @click="router.push({ name: 'profile' })">
+        {{ initials }}
+      </button>
       <div>
         <p class="home__greeting">Bonjour,</p>
         <h1 class="home__name">{{ displayName }}</h1>
@@ -98,6 +110,27 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
 
   &__header {
     padding-top: $padding-lg;
+    display: flex;
+    align-items: center;
+    gap: $gap-md;
+  }
+
+  &__avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: $radius-pill;
+    background: $orange;
+    color: $white;
+    font-family: $font-title;
+    font-weight: 700;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+
+    &:active { opacity: 0.7; }
   }
 
   &__greeting {
@@ -107,7 +140,7 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
 
   &__name {
     @include title-xl;
-    font-size: 32px;
+    font-size: 28px;
     line-height: 1;
   }
 
