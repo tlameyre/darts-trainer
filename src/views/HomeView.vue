@@ -7,7 +7,7 @@ import { GAME_MODES } from '../data/gameModes.js'
 import { BADGES } from '../data/badges.js'
 import AppIcon from '../components/AppIcon.vue'
 
-const router     = useRouter()
+const router = useRouter()
 const userBadges = ref([])
 
 onMounted(async () => {
@@ -51,13 +51,8 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
       <section class="home__section">
         <h2 class="home__section-title">Jouer</h2>
         <div class="home__modes">
-          <button
-            v-for="mode in GAME_MODES"
-            :key="mode.id"
-            class="home__mode-card"
-            :style="{ '--mode-color': mode.color }"
-            @click="router.push({ name: mode.settingsRoute })"
-          >
+          <button v-for="mode in GAME_MODES" :key="mode.id" class="home__mode-card"
+            :style="{ '--mode-color': mode.color }" @click="router.push({ name: mode.settingsRoute })">
             <AppIcon name="dartboard" :width="22" :height="22" class="home__mode-icon" />
             <span class="home__mode-label">{{ mode.title.replace('\n', ' ') }}</span>
             <AppIcon name="arrow-left" :width="14" :height="14" class="home__mode-arrow" />
@@ -77,12 +72,8 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
         </div>
 
         <div v-if="recentBadges.length" class="home__badges">
-          <button
-            v-for="badge in recentBadges"
-            :key="badge.id"
-            class="home__badge"
-            @click="router.push({ name: 'badges' })"
-          >
+          <button v-for="badge in recentBadges" :key="badge.id" class="home__badge"
+            @click="router.push({ name: 'badges' })">
             <span class="home__badge-icon">{{ badge.icon }}</span>
             <span class="home__badge-label">{{ badge.label }}</span>
           </button>
@@ -130,7 +121,9 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
     flex-shrink: 0;
     transition: opacity 0.15s;
 
-    &:active { opacity: 0.7; }
+    &:active {
+      opacity: 0.7;
+    }
   }
 
   &__greeting {
@@ -198,7 +191,9 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
     padding: $padding-md;
     transition: opacity 0.15s;
 
-    &:active { opacity: 0.8; }
+    &:active {
+      opacity: 0.8;
+    }
   }
 
   &__mode-icon {
@@ -236,7 +231,9 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
     gap: $gap-xxs;
     transition: background 0.15s;
 
-    &:active { background: rgba(255, 255, 255, 0.09); }
+    &:active {
+      background: rgba(255, 255, 255, 0.09);
+    }
   }
 
   &__badge-icon {
@@ -263,7 +260,9 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
     font-size: 13px;
     transition: background 0.15s;
 
-    &:active { background: rgba(255, 255, 255, 0.08); }
+    &:active {
+      background: rgba(255, 255, 255, 0.08);
+    }
   }
 }
 </style>

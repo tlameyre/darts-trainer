@@ -39,17 +39,12 @@ function next() {
         <p class="badge-overlay__desc">{{ badges[current].description }}</p>
 
         <p class="badge-overlay__hint">
-          {{ current < badges.length - 1 ? 'Appuie pour continuer' : 'Appuie pour fermer' }}
-        </p>
+          {{ current < badges.length - 1 ? 'Appuie pour continuer' : 'Appuie pour fermer' }} </p>
 
-        <div v-if="badges.length > 1" class="badge-overlay__dots">
-          <span
-            v-for="(_, i) in badges"
-            :key="i"
-            class="badge-overlay__dot"
-            :class="{ 'badge-overlay__dot--active': i === current }"
-          />
-        </div>
+            <div v-if="badges.length > 1" class="badge-overlay__dots">
+              <span v-for="(_, i) in badges" :key="i" class="badge-overlay__dot"
+                :class="{ 'badge-overlay__dot--active': i === current }" />
+            </div>
       </div>
     </div>
   </Transition>
@@ -101,7 +96,7 @@ function next() {
 
   &__hint {
     @include text-sm;
-    color: rgba(255,255,255,0.3);
+    color: rgba(255, 255, 255, 0.3);
     font-size: 12px;
     margin-top: $gap-sm;
   }
@@ -116,13 +111,22 @@ function next() {
     width: 6px;
     height: 6px;
     border-radius: $radius-pill;
-    background: rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.2);
     transition: background 0.2s;
 
-    &--active { background: $orange; }
+    &--active {
+      background: $orange;
+    }
   }
 }
 
-.overlay-enter-active, .overlay-leave-active { transition: opacity 0.3s; }
-.overlay-enter-from, .overlay-leave-to { opacity: 0; }
+.overlay-enter-active,
+.overlay-leave-active {
+  transition: opacity 0.3s;
+}
+
+.overlay-enter-from,
+.overlay-leave-to {
+  opacity: 0;
+}
 </style>
