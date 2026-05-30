@@ -8,10 +8,11 @@ import { isAuth } from './store/authStore.js'
 const router = useRouter()
 const route  = useRoute()
 
+// Redirige vers /login uniquement lors de la déconnexion.
+// Le router guard gère déjà la redirection vers home à la connexion.
 watch(isAuth, (val) => {
   if (route.meta.dev) return
-  if (val) router.replace({ name: 'home' })
-  else router.replace({ name: 'login' })
+  if (!val) router.replace({ name: 'login' })
 })
 </script>
 
