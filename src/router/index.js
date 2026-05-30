@@ -34,15 +34,14 @@ const routes = [
   { path: '/warmup/play',         name: 'warmup-game',    component: WarmupGameView,  meta: { hideNav: true } },
 ]
 
-// Route de dev — uniquement en mode développement, accessible sans auth
-if (import.meta.env.DEV) {
-  routes.push({
-    path:      '/dev',
-    name:      'dev',
-    component: () => import('../views/DevView.vue'),
-    meta:      { public: true },
-  })
-}
+// Route de dev — playground, accessible sans auth
+// TODO: re-gater derrière import.meta.env.DEV avant la mise en prod
+routes.push({
+  path:      '/dev',
+  name:      'dev',
+  component: () => import('../views/DevView.vue'),
+  meta:      { public: true },
+})
 
 export const router = createRouter({
   history: createWebHistory('/darts-trainer/'),
