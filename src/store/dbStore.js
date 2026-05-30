@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase.js'
 import { user } from './authStore.js'
 
-export async function saveGameSession({ correctCount, totalQuestions, streak, bestStreak, settings }) {
+export async function saveGameSession({ correctCount, totalQuestions, bestStreak, settings }) {
   if (!user.value) return
   const { error } = await supabase.from('game_sessions').insert({
     user_id:         user.value.id,

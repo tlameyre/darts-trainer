@@ -38,7 +38,25 @@ create trigger on_auth_user_created
   for each row execute procedure public.handle_new_user();
 
 
--- 2. Sessions Score Training
+-- 2. Badges utilisateur
+create table public.user_badges (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid references auth.users(id) on delete cascade not null,
+  badge_id    text not null,
+  unlocked_at timestamptz default now(),
+  unique(user_id, badge_id)
+);
+
+alter table public.user_badges enable row level security;
+
+create policy "Lecture propres badges"
+  on public.user_badges for select using (auth.uid() = user_id);
+
+create policy "Insertion propres badges"
+  on public.user_badges for insert with check (auth.uid() = user_id);
+
+
+-- 3. Sessions Score Training
 create table public.game_sessions (
   id              uuid primary key default gen_random_uuid(),
   user_id         uuid references auth.users(id) on delete cascade not null,

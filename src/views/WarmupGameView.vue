@@ -3,7 +3,9 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { gameSettings } from '../store/gameStore.js'
 import { useWarmup } from '../composables/useWarmup.js'
-import { saveWarmupSession } from '../store/dbStore.js'
+import { saveWarmupSession, fetchProfileStats } from '../store/dbStore.js'
+import { checkWarmupBadges } from '../store/badgeStore.js'
+import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import WarmupStatsCard from '../components/warmup/WarmupStatsCard.vue'
 import WarmupDartSlots from '../components/warmup/WarmupDartSlots.vue'
 import WarmupGrid from '../components/warmup/WarmupGrid.vue'
@@ -22,20 +24,28 @@ const {
   darts, recordDart, undoLast, changeZone, startTimer, endSession, cleanup,
 } = useWarmup(gameSettings.value ?? { duration: 5, zone: { sector: 20, type: 'D' } })
 
-watch(gameOver, (val) => {
+watch(gameOver, async (val) => {
   if (val) {
     const duration = gameSettings.value?.duration
-    saveWarmupSession({
+    await saveWarmupSession({
       zone:        currentZone.value,
       totalDarts:  sessionStats.value.total,
       hits:        sessionStats.value.hits,
       durationS:   duration !== null ? duration * 60 : null,
       settings:    gameSettings.value,
     })
+    const stats = await fetchProfileStats()
+    newBadges.value = await checkWarmupBadges({
+      totalDarts:      sessionStats.value.total,
+      accuracy:        sessionStats.value.accuracy,
+      cumulativeStats: stats,
+    })
   }
 })
 
 const showZoneModal = ref(false)
+
+const newBadges = ref([])
 
 const justCompleted = ref(false)
 let _justCompletedTimer = null
@@ -100,6 +110,7 @@ onUnmounted(() => {
     <WarmupZoneModal :show="showZoneModal" :zone="currentZone" @update:show="showZoneModal = $event"
       @confirm="zone => { changeZone(zone); showZoneModal = false }" />
 
+    <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
   </div>
 </template>
 

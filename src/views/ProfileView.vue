@@ -3,16 +3,31 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { user, profile, signOut } from '../store/authStore.js'
 import { fetchProfileStats } from '../store/dbStore.js'
+import { fetchUserBadges } from '../store/badgeStore.js'
+import { BADGES } from '../data/badges.js'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
 import AppIcon from '../components/AppIcon.vue'
 
 const router = useRouter()
-const stats  = ref(null)
+const stats        = ref(null)
+const userBadges   = ref([])
 
 onMounted(async () => {
-  stats.value = await fetchProfileStats()
+  const [s, b] = await Promise.all([fetchProfileStats(), fetchUserBadges()])
+  stats.value      = s
+  userBadges.value = b
 })
+
+function isUnlocked(badgeId) {
+  return userBadges.value.some(b => b.id === badgeId)
+}
+
+function unlockedAt(badgeId) {
+  const b = userBadges.value.find(b => b.id === badgeId)
+  if (!b) return null
+  return new Date(b.unlockedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
 
 const displayName = computed(() => {
   const p = profile.value
@@ -72,6 +87,24 @@ async function onSignOut() {
             {{ stats?.avgAccuracy != null ? stats.avgAccuracy + '%' : '—' }}
           </span>
           <span class="profile__stat-label">Précision</span>
+        </div>
+      </section>
+
+      <!-- Badges -->
+      <section class="profile__badges">
+        <h2 class="profile__badges-title">Badges <span>{{ userBadges.length }}/{{ BADGES.length }}</span></h2>
+        <div class="profile__badges-grid">
+          <div
+            v-for="badge in BADGES"
+            :key="badge.id"
+            class="profile__badge"
+            :class="{ 'profile__badge--locked': !isUnlocked(badge.id) }"
+          >
+            <span class="profile__badge-icon">{{ badge.icon }}</span>
+            <span class="profile__badge-label">{{ badge.label }}</span>
+            <span v-if="isUnlocked(badge.id)" class="profile__badge-date">{{ unlockedAt(badge.id) }}</span>
+            <span v-else class="profile__badge-locked">Verrouillé</span>
+          </div>
         </div>
       </section>
 
@@ -184,6 +217,67 @@ async function onSignOut() {
     letter-spacing: 0.04em;
   }
 
+  // --- Badges ---
+  &__badges {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-sm;
+  }
+
+  &__badges-title {
+    @include title-sm;
+    color: $muted;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    span {
+      color: $orange;
+      margin-left: $gap-xs;
+    }
+  }
+
+  &__badges-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $gap-sm;
+  }
+
+  &__badge {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: $radius-md;
+    padding: $padding-sm $padding-md;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: opacity 0.2s;
+
+    &--locked {
+      opacity: 0.35;
+    }
+  }
+
+  &__badge-icon {
+    font-size: 28px;
+    line-height: 1;
+    margin-bottom: $gap-xxs;
+  }
+
+  &__badge-label {
+    @include title-sm;
+    color: $text-color;
+  }
+
+  &__badge-date {
+    font-size: 11px;
+    color: $accent;
+  }
+
+  &__badge-locked {
+    font-size: 11px;
+    color: $muted;
+  }
+
+  // --- Logout ---
   &__logout {
     color: $error;
     border-color: rgba($error, 0.3);

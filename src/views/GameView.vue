@@ -3,7 +3,9 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDarts } from '../composables/useDarts.js'
 import { gameSettings } from '../store/gameStore.js'
-import { saveGameSession } from '../store/dbStore.js'
+import { saveGameSession, fetchProfileStats } from '../store/dbStore.js'
+import { checkGameBadges } from '../store/badgeStore.js'
+import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 
 import AppHeader from '../components/AppHeader.vue'
 import AnswerInput from '../components/AnswerInput.vue'
@@ -25,18 +27,26 @@ const {
   nextRound, appendDigit, deleteDigit, validate, cleanup,
 } = useDarts(gameSettings.value)
 
-watch(gameOver, (val) => {
+watch(gameOver, async (val) => {
   if (val) {
-    saveGameSession({
+    await saveGameSession({
       correctCount:   correctCount.value,
       totalQuestions: questionIndex.value,
       bestStreak:     best.value,
       settings:       gameSettings.value,
     })
+    const stats = await fetchProfileStats()
+    newBadges.value = await checkGameBadges({
+      correctCount:   correctCount.value,
+      totalQuestions: questionIndex.value,
+      bestStreak:     best.value,
+      cumulativeStats: stats,
+    })
   }
 })
 
-const showMenu = ref(false)
+const showMenu      = ref(false)
+const newBadges     = ref([])
 
 function finishGame() {
   showMenu.value = false
@@ -99,6 +109,7 @@ onUnmounted(() => {
     </main>
 
     <GameMenuModal :show="showMenu" @close="showMenu = false" @finish="finishGame" @quit="quitGame" />
+    <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
   </div>
 </template>
 
