@@ -112,8 +112,8 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
       </button>
     </header>
 
-    <!-- ── Jeu ────────────────────────────────────────────────────────────── -->
-    <div v-if="!isBust && phase === 'playing'" class="x01__game">
+    <!-- ── Jeu + Bust ────────────────────────────────────────────────────── -->
+    <div v-if="phase === 'playing' || isBust" class="x01__game">
       <X01StatsCard
         class="x01__stats-card"
         :remaining="legRemaining"
@@ -121,30 +121,49 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
         :legs-to-win="settings.legsToWin"
         :volley-number="volleyNumber"
         :volleys="volleys"
-        :current-darts="currentDarts"
+        :current-darts="isBust ? [] : currentDarts"
       />
-      <div class="x01__game-main">
-        <X01DartSlots
-          :darts="currentDarts"
-          :volley-number="volleyNumber"
-          :bust="false"
-          :input-mode="inputMode"
-          @toggle-mode="toggleMode"
-        />
 
-        <!-- Mode fléchette par fléchette -->
+      <div class="x01__game-main">
+
+        <!-- ── Mode fléchette par fléchette ──────────────────────────────── -->
         <template v-if="inputMode === 'dart'">
+          <X01DartSlots
+            :darts="isBust ? (volleys[volleys.length - 1]?.darts ?? []) : currentDarts"
+            :volley-number="isBust ? volleyNumber - 1 : volleyNumber"
+            :bust="isBust"
+            :input-mode="inputMode"
+            @toggle-mode="toggleMode"
+          />
           <WarmupGrid :locked="isLocked" @dart="addDart" />
-          <X01BottomBar :locked="isLocked" @undo="handleUndo" @miss="addMiss" @quit="router.push({ name: 'x01-settings' })" />
+          <X01BottomBar
+            :locked="isLocked"
+            @undo="handleUndo"
+            @miss="addMiss"
+            @quit="router.push({ name: 'x01-settings' })"
+          />
         </template>
 
-        <!-- Mode volée totale -->
+        <!-- ── Mode volée totale ──────────────────────────────────────────── -->
         <template v-else>
+          <!-- Ligne de tour + toggle -->
+          <div class="x01__volley-row">
+            <span class="x01__volley-label">TOUR {{ isBust ? volleyNumber - 1 : volleyNumber }}</span>
+            <button class="x01__volley-toggle" :disabled="isBust" @click="toggleMode">
+              <AppIcon name="dartboard" :width="16" :height="16" />
+              <span>Fléchette / fléchette</span>
+            </button>
+          </div>
+
+          <!-- Input : normal ou bust -->
           <AnswerInput
+            v-if="!isBust"
             :value="volleyStr"
             placeholder="Score de la volée"
             @validate="submitVolley"
           />
+          <div v-else class="x01__bust-input">BUST !</div>
+
           <NumPad
             class="x01__numpad"
             @digit="appendDigit"
@@ -159,40 +178,7 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
             @quit="router.push({ name: 'x01-settings' })"
           />
         </template>
-      </div>
-    </div>
 
-    <!-- ── Bust ───────────────────────────────────────────────────────────── -->
-    <div v-else-if="isBust" class="x01__game">
-      <X01StatsCard
-        class="x01__stats-card"
-        :remaining="legRemaining"
-        :leg-number="legNumber"
-        :legs-to-win="settings.legsToWin"
-        :volley-number="volleyNumber"
-        :volleys="volleys"
-        :current-darts="[]"
-      />
-      <div class="x01__game-main">
-        <X01DartSlots
-          :darts="volleys[volleys.length - 1]?.darts ?? []"
-          :volley-number="volleyNumber - 1"
-          :bust="true"
-          :input-mode="inputMode"
-        />
-        <WarmupGrid v-if="inputMode === 'dart'" :locked="true" @dart="addDart" />
-        <template v-else>
-          <AnswerInput :value="''" placeholder="Score de la volée" />
-          <NumPad class="x01__numpad" @digit="appendDigit" @delete="deleteDigit" @validate="submitVolley" />
-        </template>
-        <X01BottomBar
-          :locked="true"
-          :bust-mode="inputMode === 'volley'"
-          @undo="handleUndo"
-          @miss="addMiss"
-          @bust="bustVolley"
-          @quit="router.push({ name: 'x01-settings' })"
-        />
       </div>
     </div>
 
@@ -307,12 +293,58 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
   }
 
   &__game-main {
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: $gap-md;
   }
 
-  // NumPad en mode volée : prend tout l'espace restant comme WarmupGrid
+  // ── Ligne toggle (mode volée) ──────────────────────────────────────────
+  &__volley-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  &__volley-label {
+    @include title-md;
+  }
+
+  &__volley-toggle {
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $muted;
+    background: rgba($white, 0.1);
+    border-radius: $radius-pill;
+    padding: 3px 10px 3px 8px;
+    transition: opacity 0.15s;
+
+    &:active  { opacity: 0.6; }
+    &:disabled { opacity: 0.3; }
+  }
+
+  // Placeholder bust en mode volée
+  &__bust-input {
+    background: $error;
+    border-radius: $radius-pill;
+    padding: $padding-sm $padding-xl;
+    font-family: $font-title;
+    font-weight: 700;
+    font-size: 22px;
+    color: $white;
+    text-align: center;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+  }
+
+  // NumPad : prend tout l'espace restant comme WarmupGrid
   &__numpad {
     flex: 1;
     min-height: 0;
@@ -417,10 +449,6 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
     transition: opacity 0.15s;
     &:active { opacity: 0.8; }
   }
-}
-
-@media (min-width: $bp-tablet) {
-  .x01__game-main { flex: 1; min-height: 0; }
 }
 
 @media (min-width: $bp-laptop) {
