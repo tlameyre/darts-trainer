@@ -4,11 +4,12 @@ import AppIcon from '../AppIcon.vue'
 import AppButton from '../AppButton.vue'
 
 const props = defineProps({
-  locked:   { type: Boolean, default: false },
-  bustMode: { type: Boolean, default: false }, // true → bouton central = BUST
+  locked:    { type: Boolean, default: false },
+  bustMode:  { type: Boolean, default: false }, // true → bouton central = BUST
+  rightIcon: { type: String,  default: 'exit' }, // icône du bouton de droite
 })
 
-const emit = defineEmits(['undo', 'miss', 'bust', 'quit'])
+const emit = defineEmits(['undo', 'miss', 'bust', 'right'])
 
 const pressedCenter = ref(false)
 let _centerTimer = null
@@ -23,26 +24,26 @@ function tapCenter() {
 </script>
 
 <template>
-  <div class="x01-bar">
-    <button class="x01-bar__icon-btn" @click="emit('undo')">
+  <div class="game-bar">
+    <button class="game-bar__icon-btn" @click="emit('undo')">
       <AppIcon name="undo" :width="24" :height="24" />
     </button>
     <AppButton
       variant="secondary"
       size="small"
-      :class="{ 'x01-bar__center--pressed': pressedCenter }"
+      :class="{ 'game-bar__center--pressed': pressedCenter }"
       @click="tapCenter"
     >
       {{ bustMode ? 'BUST' : 'MANQUÉ' }}
     </AppButton>
-    <button class="x01-bar__icon-btn" @click="emit('quit')">
-      <AppIcon name="exit" :width="24" :height="24" />
+    <button class="game-bar__icon-btn" @click="emit('right')">
+      <AppIcon :name="rightIcon" :width="24" :height="24" />
     </button>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.x01-bar {
+.game-bar {
   display: grid;
   grid-template-columns: 1fr 3fr 1fr;
   align-items: center;

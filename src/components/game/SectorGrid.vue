@@ -63,25 +63,25 @@ function tapOuter() {
 </script>
 
 <template>
-  <div class="warmup__grid">
-    <button v-for="tab in TABS" :key="tab.id" class="warmup__gtab"
-      :class="{ 'warmup__gtab--active': activeTab === tab.id }" @click="activeTab = tab.id">{{ tab.label }}</button>
-    <button class="warmup__gtab warmup__gtab--sb" :class="{ 'warmup__gtab--pressed': pressedKey === 'outer' }"
+  <div class="sector-grid">
+    <button v-for="tab in TABS" :key="tab.id" class="sector-grid__tab"
+      :class="{ 'sector-grid__tab--active': activeTab === tab.id }" @click="activeTab = tab.id">{{ tab.label }}</button>
+    <button class="sector-grid__tab sector-grid__tab--sb" :class="{ 'sector-grid__tab--pressed': pressedKey === 'outer' }"
       @click="tapOuter">SB</button>
-    <button class="warmup__gtab warmup__gtab--b" :class="{ 'warmup__gtab--pressed': pressedKey === 'bull' }"
+    <button class="sector-grid__tab sector-grid__tab--b" :class="{ 'sector-grid__tab--pressed': pressedKey === 'bull' }"
       @click="tapBull">B</button>
     <template v-for="row in GRID_ROWS" :key="row[0]">
-      <button v-for="n in row" :key="n" class="warmup__cell"
-        :class="{ 'warmup__cell--pressed': pressedKey === `s-${n}` }" @click="tapSector(n)">
-        <span class="warmup__cell-num">{{ n }}</span>
-        <span v-if="activeTab !== 'single'" class="warmup__cell-pts">{{ n * currentMultiplier }}</span>
+      <button v-for="n in row" :key="n" class="sector-grid__cell"
+        :class="{ 'sector-grid__cell--pressed': pressedKey === `s-${n}` }" @click="tapSector(n)">
+        <span class="sector-grid__cell-num">{{ n }}</span>
+        <span v-if="activeTab !== 'single'" class="sector-grid__cell-pts">{{ n * currentMultiplier }}</span>
       </button>
     </template>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.warmup__grid {
+.sector-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-self: start;
@@ -91,20 +91,20 @@ function tapOuter() {
 }
 
 @media (min-width: $bp-tablet) {
-  .warmup__grid {
+  .sector-grid {
     flex: 1;
     min-height: 0;
     align-self: stretch;
     grid-template-rows: repeat(5, 1fr);
   }
 
-  .warmup__gtab,
-  .warmup__cell {
+  .sector-grid__tab,
+  .sector-grid__cell {
     aspect-ratio: unset;
   }
 }
 
-.warmup__gtab {
+.sector-grid__tab {
   aspect-ratio: 1;
   display: flex;
   align-items: center;
@@ -135,7 +135,7 @@ function tapOuter() {
   }
 }
 
-.warmup__cell {
+.sector-grid__cell {
   aspect-ratio: 1;
   display: flex;
   gap: $gap-xxs;

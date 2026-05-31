@@ -1,27 +1,21 @@
 <script setup>
-import { formatZoneLabel } from '../../composables/useWarmup.js'
-
 defineProps({
-  zone: { type: Object, required: true },
-  stats: { type: Object, required: true },
+  // Couleur de fond de la carte (vert X01, bleu échauffement…)
+  color: { type: String, required: true },
+  // Lignes label / valeur affichées sous l'en-tête
+  rows:  { type: Array, default: () => [] }, // [{ label, value }]
 })
 </script>
 
 <template>
-  <div class="stats-card">
-    <div class="stats-card__zone">{{ formatZoneLabel(zone) }}</div>
+  <div class="stats-card" :style="{ background: color }">
+    <div class="stats-card__header">
+      <slot />
+    </div>
     <div class="stats-card__rows">
-      <div class="stats-card__row">
-        <span class="stats-card__label">Fléchettes jetées</span>
-        <span class="stats-card__value">{{ stats.total }}</span>
-      </div>
-      <div class="stats-card__row">
-        <span class="stats-card__label">Fléchettes touchées</span>
-        <span class="stats-card__value">{{ stats.hits }}</span>
-      </div>
-      <div class="stats-card__row">
-        <span class="stats-card__label">Taux de réussite</span>
-        <span class="stats-card__value">{{ stats.accuracy }}%</span>
+      <div v-for="(row, i) in rows" :key="i" class="stats-card__row">
+        <span class="stats-card__label">{{ row.label }}</span>
+        <span class="stats-card__value">{{ row.value }}</span>
       </div>
     </div>
   </div>
@@ -29,7 +23,6 @@ defineProps({
 
 <style lang="scss" scoped>
 .stats-card {
-  background: $blue;
   border-radius: $radius-lg;
   padding: $padding-md;
   display: flex;
@@ -38,8 +31,9 @@ defineProps({
   flex-shrink: 0;
   flex: 1;
 
-  &__zone {
+  &__header {
     @include title-xxxl;
+    font-weight: 700;
     color: $white;
     line-height: 1;
     text-align: center;
@@ -47,6 +41,8 @@ defineProps({
     display: flex;
     align-items: center;
     justify-content: center;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.3s;
   }
 
   &__rows {

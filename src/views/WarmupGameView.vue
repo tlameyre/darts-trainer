@@ -2,14 +2,14 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { gameSettings } from '../store/gameStore.js'
-import { useWarmup } from '../composables/useWarmup.js'
+import { useWarmup, formatZoneLabel } from '../composables/useWarmup.js'
 import { saveWarmupSession, fetchProfileStats } from '../store/dbStore.js'
 import { checkWarmupBadges, checkSpecialThrow } from '../store/badgeStore.js'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
-import WarmupStatsCard from '../components/warmup/WarmupStatsCard.vue'
+import StatsCard from '../components/game/StatsCard.vue'
 import WarmupDartSlots from '../components/warmup/WarmupDartSlots.vue'
-import WarmupGrid from '../components/warmup/WarmupGrid.vue'
-import WarmupBottomBar from '../components/warmup/WarmupBottomBar.vue'
+import SectorGrid from '../components/game/SectorGrid.vue'
+import GameBottomBar from '../components/game/GameBottomBar.vue'
 import WarmupRecap from '../components/warmup/WarmupRecap.vue'
 import WarmupZoneModal from '../components/warmup/WarmupZoneModal.vue'
 import AppIcon from '../components/AppIcon.vue'
@@ -68,6 +68,12 @@ const tourNumber = computed(() => {
   return Math.floor(darts.value.length / 3) + 1
 })
 
+const statsRows = computed(() => [
+  { label: 'Fléchettes jetées',   value: currentZoneStats.value.total },
+  { label: 'Fléchettes touchées', value: currentZoneStats.value.hits },
+  { label: 'Taux de réussite',    value: `${currentZoneStats.value.accuracy}%` },
+])
+
 const displayedDarts = computed(() => {
   if (darts.value.length === 0) return []
   if (justCompleted.value) return darts.value.slice(-3)
@@ -96,13 +102,15 @@ onUnmounted(() => {
     </header>
 
     <div v-if="!gameOver" class="warmup__game">
-      <WarmupStatsCard class="warmup__stats-card" :zone="currentZone" :stats="currentZoneStats" />
+      <StatsCard class="warmup__stats-card" color="#1D4ED8" :rows="statsRows">
+        {{ formatZoneLabel(currentZone) }}
+      </StatsCard>
       <div class="warmup__game-main">
         <WarmupDartSlots :darts="displayedDarts" :tourNumber="tourNumber" :timeDisplay="timeDisplay"
           :isUnlimited="isUnlimited" :isUrgent="isUrgent" />
-        <WarmupGrid :locked="justCompleted" @dart="recordDart" />
-        <WarmupBottomBar :locked="justCompleted" @undo="undoLast"
-          @miss="recordDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })" @end="endSession" />
+        <SectorGrid :locked="justCompleted" @dart="recordDart" />
+        <GameBottomBar :locked="justCompleted" right-icon="stop" @undo="undoLast"
+          @miss="recordDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })" @right="endSession" />
       </div>
     </div>
 
