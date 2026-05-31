@@ -12,12 +12,14 @@ import { ref, computed } from 'vue'
  */
 export function useX01({ startScore, legsToWin }) {
   // ─── État principal ────────────────────────────────────────────────────────
-  const completedLegs = ref([])     // manches terminées
-  const volleys       = ref([])     // volées de la manche en cours { darts, bust, score }
-  const currentDarts  = ref([])     // fléchettes de la volée en cours (0-2 items)
-  const phase         = ref('playing') // 'playing' | 'bust' | 'leg-recap' | 'game-over'
+  const completedLegs    = ref([])      // manches terminées
+  const volleys          = ref([])      // volées de la manche en cours { darts, bust, score }
+  const currentDarts     = ref([])      // fléchettes de la volée en cours (0-3 items)
+  const phase            = ref('playing') // 'playing' | 'bust' | 'leg-recap' | 'game-over'
+  const volleyCompleting = ref(false)   // true pendant les 700ms après la 3e fléchette
 
-  let _bustTimer = null
+  let _bustTimer     = null
+  let _completeTimer = null
 
   // ─── Calculs ──────────────────────────────────────────────────────────────
   /** Score restant au début de la volée courante (après les volées valides) */
@@ -73,7 +75,7 @@ export function useX01({ startScore, legsToWin }) {
 
   // ─── Actions ──────────────────────────────────────────────────────────────
   function addDart(dart) {
-    if (phase.value !== 'playing') return
+    if (phase.value !== 'playing' || volleyCompleting.value) return
 
     const newDarts  = [...currentDarts.value, dart]
     const volleyPts = newDarts.reduce((sum, d) => sum + d.pts, 0)
@@ -88,9 +90,18 @@ export function useX01({ startScore, legsToWin }) {
     // ── Checkout ────────────────────────────────────────────────────────────
     if (newRem === 0) {
       if (isValidCheckout(dart)) {
-        volleys.value.push({ darts: newDarts, bust: false, score: volleyPts })
-        currentDarts.value = []
-        finishLeg()
+        // Afficher la fléchette 700ms avant de valider la manche
+        currentDarts.value = newDarts
+        volleyCompleting.value = true
+        const score = volleyPts
+        const darts = [...newDarts]
+        clearTimeout(_completeTimer)
+        _completeTimer = setTimeout(() => {
+          volleys.value.push({ darts, bust: false, score })
+          currentDarts.value = []
+          volleyCompleting.value = false
+          finishLeg()
+        }, 700)
       } else {
         // Zéro sans double → bust
         triggerBust(newDarts)
@@ -101,11 +112,17 @@ export function useX01({ startScore, legsToWin }) {
     // ── Fléchette normale ───────────────────────────────────────────────────
     currentDarts.value = newDarts
 
-    // Volée complète (3 fléchettes)
+    // Volée complète (3 fléchettes) : délai avant soustraction, comme le warmup
     if (currentDarts.value.length === 3) {
+      volleyCompleting.value = true
       const score = currentDarts.value.reduce((sum, d) => sum + d.pts, 0)
-      volleys.value.push({ darts: [...currentDarts.value], bust: false, score })
-      currentDarts.value = []
+      const darts = [...currentDarts.value]
+      clearTimeout(_completeTimer)
+      _completeTimer = setTimeout(() => {
+        volleys.value.push({ darts, bust: false, score })
+        currentDarts.value = []
+        volleyCompleting.value = false
+      }, 700)
     }
   }
 
@@ -114,6 +131,14 @@ export function useX01({ startScore, legsToWin }) {
   }
 
   function undo() {
+    if (volleyCompleting.value) {
+      // Annuler pendant le délai de fin de volée
+      clearTimeout(_completeTimer)
+      volleyCompleting.value = false
+      currentDarts.value = currentDarts.value.slice(0, -1)
+      return
+    }
+
     if (phase.value === 'bust') {
       clearTimeout(_bustTimer)
       volleys.value.pop()
@@ -138,9 +163,12 @@ export function useX01({ startScore, legsToWin }) {
   }
 
   function startNextLeg() {
-    volleys.value    = []
+    clearTimeout(_completeTimer)
+    clearTimeout(_bustTimer)
+    volleys.value      = []
     currentDarts.value = []
-    phase.value      = 'playing'
+    volleyCompleting.value = false
+    phase.value        = 'playing'
   }
 
   // ─── Statistiques finales ──────────────────────────────────────────────────
@@ -181,9 +209,8 @@ export function useX01({ startScore, legsToWin }) {
     volleys,
     currentDarts,
     phase,
+    volleyCompleting,
     legRemaining,
-    volleyRemaining,
-    displayRemaining,
     legNumber,
     volleyNumber,
     addDart,

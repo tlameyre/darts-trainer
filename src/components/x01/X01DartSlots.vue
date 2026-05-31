@@ -2,9 +2,9 @@
 import AppIcon from '../AppIcon.vue'
 
 defineProps({
-  darts:        { type: Array,   required: true },   // fléchettes actuelles (0-3)
-  volleyNumber: { type: Number,  required: true },
-  bust:         { type: Boolean, default: false },
+  darts: { type: Array, required: true },   // fléchettes actuelles (0-3)
+  volleyNumber: { type: Number, required: true },
+  bust: { type: Boolean, default: false },
 })
 </script>
 
@@ -22,11 +22,7 @@ defineProps({
       <template v-if="!bust">
         <div v-for="i in 3" :key="i" class="slots__slot">
           <Transition name="slot-pop">
-            <span
-              v-if="darts[i - 1]"
-              :key="darts[i - 1].label + i"
-              class="slots__dart"
-            >
+            <span v-if="darts[i - 1]" :key="darts[i - 1].label + i" class="slots__dart">
               {{ darts[i - 1].label }}
             </span>
           </Transition>
@@ -79,6 +75,7 @@ defineProps({
   }
 
   &__slot {
+    color: $black;
     flex: 1;
     display: flex;
     align-items: center;
@@ -110,6 +107,7 @@ defineProps({
 .slot-pop-enter-active {
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
+
 .slot-pop-enter-from {
   transform: scale(0.5);
   opacity: 0;

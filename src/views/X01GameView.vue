@@ -25,6 +25,7 @@ const {
   legRemaining,
   legNumber,
   volleyNumber,
+  volleyCompleting,
   addDart,
   addMiss,
   undo,
@@ -45,7 +46,7 @@ watch(phase, async (val) => {
 })
 
 const isBust   = computed(() => phase.value === 'bust')
-const isLocked = computed(() => phase.value !== 'playing')
+const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.value)
 
 // Dernière manche terminée (pour le récap)
 const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 1])
