@@ -22,10 +22,17 @@ async function fetchProfile(userId) {
 // onAuthStateChange est la source unique de vérité.
 // Il fire un événement INITIAL_SESSION au démarrage (session existante ou null),
 // puis SIGNED_IN après l'échange du code PKCE (OAuth Google).
-supabase.auth.onAuthStateChange((_event, session) => {
+supabase.auth.onAuthStateChange((event, session) => {
   _user.value = session?.user ?? null
   if (_user.value) fetchProfile(_user.value.id)
   else _profile.value = null
+
+  // Sur mobile (Safari, Arc), INITIAL_SESSION fire avec null pendant l'échange
+  // PKCE, puis SIGNED_IN fire avec l'utilisateur. On maintient _loading = true
+  // tant que le code n'est pas échangé pour que le guard attende le bon état.
+  const hasPkceCode = new URLSearchParams(window.location.search).has('code')
+  if (event === 'INITIAL_SESSION' && hasPkceCode && !session) return
+
   _loading.value = false
 })
 
@@ -49,8 +56,9 @@ export async function signInWithOAuth(provider) {
   const { error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      // Avec WebHashHistory, Supabase redirige vers /#/ après le callback
-      redirectTo: `${window.location.origin}${window.location.pathname}`,
+      // Toujours rediriger vers la racine de l'app, peu importe la page courante.
+      // Évite que /login?code=xxx soit interprété comme une route publique.
+      redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}`,
     },
   })
   if (error) throw error
