@@ -2,30 +2,26 @@
 import AppIcon from '../AppIcon.vue'
 
 defineProps({
-  darts:          { type: Array, required: true },   // fléchettes actuelles (0-3)
-  volleyNumber:   { type: Number, required: true },
-  legNumber:      { type: Number, required: true },
-  legsToWin:      { type: Number, required: true },
-  remaining:      { type: Number, required: true },  // score restant après currentDarts
-  bust:           { type: Boolean, default: false },  // afficher l'animation BUST
+  darts:        { type: Array,   required: true },   // fléchettes actuelles (0-3)
+  volleyNumber: { type: Number,  required: true },
+  bust:         { type: Boolean, default: false },
 })
 
 function dartColor(dart) {
   if (!dart) return 'transparent'
-  if (dart.type === 'miss')   return 'rgba(255,255,255,0.3)'
-  if (dart.type === 'double') return '#36cc86'
-  if (dart.type === 'triple') return '#D64A24'
-  if (dart.type === 'bull' && dart.pts === 50) return '#B21327'
-  if (dart.type === 'bull' && dart.pts === 25) return '#36cc86'
+  if (dart.type === 'miss')                           return 'rgba(255,255,255,0.3)'
+  if (dart.type === 'double')                         return '#36cc86'
+  if (dart.type === 'triple')                         return '#D64A24'
+  if (dart.type === 'bull' && dart.pts === 50)        return '#B21327'
+  if (dart.type === 'bull' && dart.pts === 25)        return '#36cc86'
   return '#ffffff'
 }
 </script>
 
 <template>
   <div class="slots">
-    <div class="slots__info-row">
-      <span class="slots__volley-label">VOLÉE {{ volleyNumber }}</span>
-      <span class="slots__leg-label">Manche {{ Math.min(legNumber, legsToWin) }}/{{ legsToWin }}</span>
+    <div class="slots__tour-row">
+      <span class="slots__tour-label">TOUR {{ volleyNumber }}</span>
     </div>
 
     <div class="slots__bar" :class="{ 'slots__bar--bust': bust }">
@@ -57,26 +53,17 @@ function dartColor(dart) {
 
 <style lang="scss" scoped>
 .slots {
-  display: flex;
-  flex-direction: column;
-  gap: $gap-xs;
   flex-shrink: 0;
 
-  &__info-row {
+  &__tour-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: $gap-xs;
   }
 
-  &__volley-label {
+  &__tour-label {
     @include title-md;
-  }
-
-  &__leg-label {
-    font-size: 13px;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
   }
 
   &__bar {
@@ -114,7 +101,6 @@ function dartColor(dart) {
 
   &__dart {
     @include title-xl;
-    color: $black;
     font-variant-numeric: tabular-nums;
   }
 

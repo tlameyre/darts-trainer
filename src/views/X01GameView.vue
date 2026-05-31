@@ -4,10 +4,12 @@ import { useRouter } from 'vue-router'
 import { gameSettings } from '../store/gameStore.js'
 import { useX01 } from '../composables/useX01.js'
 import { saveX01Session } from '../store/dbStore.js'
+import X01StatsCard from '../components/x01/X01StatsCard.vue'
 import X01DartSlots from '../components/x01/X01DartSlots.vue'
 import X01BottomBar from '../components/x01/X01BottomBar.vue'
 import X01Result from '../components/x01/X01Result.vue'
 import WarmupGrid from '../components/warmup/WarmupGrid.vue'
+import AppIcon from '../components/AppIcon.vue'
 
 const router = useRouter()
 
@@ -43,70 +45,71 @@ watch(phase, async (val) => {
   }
 })
 
-// Couleur du score restant : ambre si checkout possible (≤ 170), blanc sinon
-const scoreColor = computed(() => {
-  if (legRemaining.value <= 170) return '#f59e0b'
-  return '#ffffff'
-})
+const isBust   = computed(() => phase.value === 'bust')
+const isLocked = computed(() => phase.value !== 'playing')
 
 // Dernière manche terminée (pour le récap)
 const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 1])
-
-// Historique des volées de la manche courante (pour affichage sous les slots)
-const legVolleys = computed(() => volleys.value)
-
-const isBust   = computed(() => phase.value === 'bust')
-const isLocked = computed(() => phase.value !== 'playing')
 </script>
 
 <template>
   <div class="x01">
 
-    <!-- ── En jeu ──────────────────────────────────────────────────────── -->
-    <template v-if="phase === 'playing' || phase === 'bust'">
+    <header class="x01__header">
+      <button class="x01__header-btn" @click="router.push({ name: 'x01-settings' })">
+        <AppIcon name="exit" :width="22" :height="22" />
+      </button>
+      <h1 class="x01__header-title">{{ settings.startScore }}</h1>
+      <button class="x01__header-btn" @click="undo">
+        <AppIcon name="undo" :width="22" :height="22" />
+      </button>
+    </header>
 
-      <!-- Score restant -->
-      <div class="x01__score-area">
-        <div class="x01__remaining" :style="{ color: scoreColor }">
-          {{ displayRemaining }}
-        </div>
-        <div v-if="legRemaining <= 170" class="x01__checkout-hint">
-          Checkout possible
-        </div>
-      </div>
-
-      <!-- Historique des volées de la manche -->
-      <div class="x01__history">
-        <span
-          v-for="(v, i) in legVolleys"
-          :key="i"
-          class="x01__history-chip"
-          :class="{ 'x01__history-chip--bust': v.bust }"
-        >
-          {{ v.bust ? 'BUST' : v.score }}
-        </span>
-        <span v-if="!legVolleys.length" class="x01__history-empty">–</span>
-      </div>
-
-      <!-- Slots fléchettes courantes -->
-      <X01DartSlots
-        :darts="currentDarts"
-        :volley-number="volleyNumber"
+    <!-- ── Jeu ────────────────────────────────────────────────────────────── -->
+    <div v-if="!isBust && phase === 'playing'" class="x01__game">
+      <X01StatsCard
+        class="x01__stats-card"
+        :remaining="displayRemaining"
         :leg-number="legNumber"
         :legs-to-win="settings.legsToWin"
-        :remaining="displayRemaining"
-        :bust="isBust"
+        :volley-number="volleyNumber"
+        :volleys="volleys"
+        :current-darts="currentDarts"
       />
+      <div class="x01__game-main">
+        <X01DartSlots
+          :darts="currentDarts"
+          :volley-number="volleyNumber"
+          :bust="false"
+        />
+        <WarmupGrid :locked="false" @dart="addDart" />
+        <X01BottomBar @undo="undo" @miss="addMiss" @quit="router.push({ name: 'x01-settings' })" />
+      </div>
+    </div>
 
-      <!-- Grille de saisie (réutilisée du warmup) -->
-      <WarmupGrid :locked="isLocked" @dart="addDart" />
+    <!-- ── Bust ───────────────────────────────────────────────────────────── -->
+    <div v-else-if="isBust" class="x01__game">
+      <X01StatsCard
+        class="x01__stats-card"
+        :remaining="displayRemaining"
+        :leg-number="legNumber"
+        :legs-to-win="settings.legsToWin"
+        :volley-number="volleyNumber"
+        :volleys="volleys"
+        :current-darts="[]"
+      />
+      <div class="x01__game-main">
+        <X01DartSlots
+          :darts="volleys[volleys.length - 1]?.darts ?? []"
+          :volley-number="volleyNumber - 1"
+          :bust="true"
+        />
+        <WarmupGrid :locked="true" @dart="addDart" />
+        <X01BottomBar :locked="true" @undo="undo" @miss="addMiss" @quit="router.push({ name: 'x01-settings' })" />
+      </div>
+    </div>
 
-      <!-- Barre du bas -->
-      <X01BottomBar :locked="isLocked" @undo="undo" @miss="addMiss" @quit="router.push({ name: 'x01-settings' })" />
-
-    </template>
-
-    <!-- ── Récap entre manches ─────────────────────────────────────────── -->
+    <!-- ── Récap entre manches ────────────────────────────────────────────── -->
     <Transition name="slide-up">
       <div v-if="phase === 'leg-recap'" class="x01__overlay">
         <div class="x01__recap">
@@ -130,7 +133,6 @@ const isLocked = computed(() => phase.value !== 'playing')
             </div>
           </div>
 
-          <!-- Détail des volées -->
           <div class="x01__recap-volleys">
             <span
               v-for="(v, i) in lastLeg?.volleys"
@@ -149,7 +151,7 @@ const isLocked = computed(() => phase.value !== 'playing')
       </div>
     </Transition>
 
-    <!-- ── Résultats finaux ────────────────────────────────────────────── -->
+    <!-- ── Résultats finaux ───────────────────────────────────────────────── -->
     <Transition name="slide-up">
       <div v-if="phase === 'game-over'" class="x01__overlay x01__overlay--result">
         <X01Result
@@ -169,71 +171,53 @@ const isLocked = computed(() => phase.value !== 'playing')
 .x01 {
   display: flex;
   flex-direction: column;
+  gap: $gap-md;
   height: 100dvh;
   overflow: hidden;
   padding: $padding-md;
   max-width: 420px;
   margin: 0 auto;
-  gap: $gap-md;
 
-  // ── Score restant ─────────────────────────────────────────────────────────
-  &__score-area {
+  // ── Header ─────────────────────────────────────────────────────────────
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  &__header-btn {
+    color: $text-color;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.15s;
+
+    &:active { opacity: 0.6; }
+  }
+
+  &__header-title {
+    @include title-sm;
+    color: $text-color;
+    text-align: center;
+  }
+
+  // ── Game layout (identique à warmup) ───────────────────────────────────
+  &__game {
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    flex-shrink: 0;
-    gap: $gap-xxs;
+    gap: $gap-md;
   }
 
-  &__remaining {
-    font-family: $font-title;
-    font-weight: 700;
-    font-size: 72px;
-    line-height: 1;
-    transition: color 0.3s;
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__checkout-hint {
-    font-size: 12px;
-    color: #f59e0b;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-weight: 600;
-  }
-
-  // ── Historique des volées ─────────────────────────────────────────────────
-  &__history {
+  &__game-main {
     display: flex;
-    flex-wrap: wrap;
-    gap: $gap-xs;
-    justify-content: center;
-    min-height: 28px;
-    flex-shrink: 0;
+    flex-direction: column;
+    gap: $gap-md;
   }
 
-  &__history-chip {
-    background: rgba($white, 0.08);
-    border-radius: $radius-pill;
-    padding: 3px 10px;
-    font-family: $font-title;
-    font-size: 13px;
-    font-weight: 700;
-    color: $white;
-
-    &--bust {
-      background: rgba($error, 0.2);
-      color: $error-light;
-    }
-  }
-
-  &__history-empty {
-    font-size: 13px;
-    color: rgba($white, 0.25);
-    align-self: center;
-  }
-
-  // ── Overlay (récap + résultats) ───────────────────────────────────────────
+  // ── Overlay (récap + résultats) ────────────────────────────────────────
   &__overlay {
     position: fixed;
     inset: 0;
@@ -251,7 +235,7 @@ const isLocked = computed(() => phase.value !== 'playing')
     }
   }
 
-  // ── Récap inter-manches ───────────────────────────────────────────────────
+  // ── Récap inter-manches ────────────────────────────────────────────────
   &__recap {
     display: flex;
     flex-direction: column;
@@ -261,10 +245,7 @@ const isLocked = computed(() => phase.value !== 'playing')
     max-width: 380px;
   }
 
-  &__recap-emoji {
-    font-size: 56px;
-    line-height: 1;
-  }
+  &__recap-emoji { font-size: 56px; line-height: 1; }
 
   &__recap-title {
     @include title-xl;
@@ -337,7 +318,37 @@ const isLocked = computed(() => phase.value !== 'playing')
   }
 }
 
-// ── Transitions ───────────────────────────────────────────────────────────────
+// ── Responsive (identique à warmup) ─────────────────────────────────────────
+@media (min-width: $bp-tablet) {
+  .x01__game-main {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .x01 {
+    max-width: none;
+    padding: $padding-xxl;
+  }
+
+  .x01__game {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .x01__stats-card {
+    flex: 1;
+    min-height: 50%;
+  }
+
+  .x01__game-main {
+    flex: 1;
+    margin: auto;
+  }
+}
+
+// ── Transitions ──────────────────────────────────────────────────────────────
 .slide-up-enter-active { transition: transform 0.3s ease, opacity 0.3s; }
 .slide-up-leave-active { transition: transform 0.25s ease, opacity 0.2s; }
 .slide-up-enter-from   { transform: translateY(40px); opacity: 0; }
