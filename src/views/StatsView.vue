@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { fetchGlobalStats, fetchGameSessions, fetchWarmupSessions, fetchX01Sessions } from '../store/dbStore.js'
+import StatsSessionModal from '../components/stats/StatsSessionModal.vue'
 
 // ── Données réelles ───────────────────────────────────────────────────────────
 const globalStats    = ref(null)
@@ -85,6 +86,15 @@ const x01Stats = computed(() => {
   }
 })
 
+// ── Modale de détail ──────────────────────────────────────────────────────────
+const selectedSession = ref(null)
+const showDetail      = ref(false)
+
+function openDetail(session) {
+  selectedSession.value = session
+  showDetail.value      = true
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
@@ -145,7 +155,7 @@ function accuracy(correct, total) {
           <section v-if="gameSessions.length" class="stats__card">
             <h2 class="stats__section-title">Historique</h2>
             <ul class="stats__history">
-              <li v-for="s in gameSessions" :key="s.id" class="stats__history-item">
+              <li v-for="s in gameSessions" :key="s.id" class="stats__history-item stats__history-item--btn" @click="openDetail(s)">
                 <div class="stats__history-left">
                   <span class="stats__history-score">{{ s.correct_count }}/{{ s.total_questions }}</span>
                   <span class="stats__history-badge">série {{ s.best_streak }}</span>
@@ -183,7 +193,7 @@ function accuracy(correct, total) {
           <section v-if="warmupSessions.length" class="stats__card">
             <h2 class="stats__section-title">Historique</h2>
             <ul class="stats__history">
-              <li v-for="s in warmupSessions" :key="s.id" class="stats__history-item">
+              <li v-for="s in warmupSessions" :key="s.id" class="stats__history-item stats__history-item--btn" @click="openDetail(s)">
                 <div class="stats__history-left">
                   <span class="stats__history-score">{{ s.hits }}/{{ s.total_darts }}</span>
                   <span class="stats__history-badge">{{ s.accuracy }}%</span>
@@ -235,7 +245,7 @@ function accuracy(correct, total) {
           <section v-if="x01Sessions.length" class="stats__card">
             <h2 class="stats__section-title">Historique</h2>
             <ul class="stats__history">
-              <li v-for="s in x01Sessions" :key="s.id" class="stats__history-item">
+              <li v-for="s in x01Sessions" :key="s.id" class="stats__history-item stats__history-item--btn" @click="openDetail(s)">
                 <div class="stats__history-left">
                   <span class="stats__history-score">{{ s.start_score }}</span>
                   <span class="stats__history-badge">{{ s.legs_played }} manche{{ s.legs_played > 1 ? 's' : '' }}</span>
@@ -253,6 +263,13 @@ function accuracy(correct, total) {
 
       </template>
     </main>
+
+    <StatsSessionModal
+      :show="showDetail"
+      :session="selectedSession"
+      :mode="selectedMode"
+      @close="showDetail = false"
+    />
   </div>
 </template>
 
@@ -414,6 +431,12 @@ function accuracy(correct, total) {
     border-bottom: 1px solid rgba($white, 0.06);
 
     &:last-child { border-bottom: none; }
+
+    &--btn {
+      cursor: pointer;
+      transition: opacity 0.15s;
+      &:active { opacity: 0.6; }
+    }
   }
 
   &__history-left {
