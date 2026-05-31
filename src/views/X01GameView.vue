@@ -1,11 +1,13 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { gameSettings } from '../store/gameStore.js'
 import { useX01 } from '../composables/useX01.js'
 import { saveX01Session } from '../store/dbStore.js'
+import X01DartSlots from '../components/x01/X01DartSlots.vue'
+import X01BottomBar from '../components/x01/X01BottomBar.vue'
 import X01Result from '../components/x01/X01Result.vue'
-import AppIcon from '../components/AppIcon.vue'
+import WarmupGrid from '../components/warmup/WarmupGrid.vue'
 
 const router = useRouter()
 
@@ -16,182 +18,130 @@ const settings = gameSettings.value ?? { startScore: 501, legsToWin: 2 }
 const {
   completedLegs,
   volleys,
+  currentDarts,
   phase,
-  remaining,
+  legRemaining,
+  displayRemaining,
   legNumber,
-  currentVolleyNumber,
-  inputStr,
-  inputValue,
-  addDigit,
-  removeDigit,
-  confirmVolley,
-  bustDirect,
-  undoLast,
-  confirmCheckout,
+  volleyNumber,
+  addDart,
+  addMiss,
+  undo,
   startNextLeg,
   stats,
 } = useX01(settings)
 
-// Couleur du score restant : vert si checkout possible (≤ 170), rouge si <0 impossible
-const scoreColor = computed(() => {
-  if (remaining.value <= 0) return '#36cc86'
-  if (remaining.value <= 170) return '#f59e0b'
-  return '#ffffff'
-})
-
-// Résumé des volées de la manche courante pour l'affichage
-const legVolleys = computed(() => volleys.value)
-
-// Informations de la dernière manche terminée (pour leg-recap)
-const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 1])
-
-async function onGameOver() {
-  if (stats.value) {
+// Sauvegarde à la fin de la partie
+watch(phase, async (val) => {
+  if (val === 'game-over' && stats.value) {
     await saveX01Session({
-      startScore:      settings.startScore,
-      legsPlayed:      completedLegs.value.length,
-      stats:           stats.value,
+      startScore: settings.startScore,
+      legsPlayed: completedLegs.value.length,
+      stats:      stats.value,
       settings,
     })
   }
-}
-
-// Sauvegarder quand la partie se termine
-import { watch } from 'vue'
-watch(phase, (val) => {
-  if (val === 'game-over') onGameOver()
 })
 
-function quit() {
-  router.push({ name: 'x01-settings' })
-}
+// Couleur du score restant : ambre si checkout possible (≤ 170), blanc sinon
+const scoreColor = computed(() => {
+  if (legRemaining.value <= 170) return '#f59e0b'
+  return '#ffffff'
+})
+
+// Dernière manche terminée (pour le récap)
+const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 1])
+
+// Historique des volées de la manche courante (pour affichage sous les slots)
+const legVolleys = computed(() => volleys.value)
+
+const isBust   = computed(() => phase.value === 'bust')
+const isLocked = computed(() => phase.value !== 'playing')
 </script>
 
 <template>
   <div class="x01">
 
-    <!-- ── Header ──────────────────────────────────────────────────────── -->
-    <header class="x01__header">
-      <button class="x01__header-btn" @click="quit">
-        <AppIcon name="exit" :width="22" :height="22" />
-      </button>
-
-      <div class="x01__header-center">
-        <span class="x01__header-title">{{ settings.startScore }}</span>
-        <span class="x01__header-sub">
-          Manche {{ Math.min(legNumber, settings.legsToWin) }}/{{ settings.legsToWin }}
-        </span>
-      </div>
-
-      <button class="x01__header-btn" @click="undoLast" :disabled="volleys.length === 0 && phase === 'playing'">
-        <AppIcon name="undo" :width="22" :height="22" />
-      </button>
-    </header>
-
-    <!-- ── Jeu en cours ────────────────────────────────────────────────── -->
-    <template v-if="phase === 'playing' || phase === 'checkout-darts'">
+    <!-- ── En jeu ──────────────────────────────────────────────────────── -->
+    <template v-if="phase === 'playing' || phase === 'bust'">
 
       <!-- Score restant -->
       <div class="x01__score-area">
         <div class="x01__remaining" :style="{ color: scoreColor }">
-          {{ remaining }}
+          {{ displayRemaining }}
         </div>
-        <div class="x01__volley-label">Volée {{ currentVolleyNumber }}</div>
+        <div v-if="legRemaining <= 170" class="x01__checkout-hint">
+          Checkout possible
+        </div>
       </div>
 
       <!-- Historique des volées de la manche -->
       <div class="x01__history">
-        <div
+        <span
           v-for="(v, i) in legVolleys"
           :key="i"
           class="x01__history-chip"
           :class="{ 'x01__history-chip--bust': v.bust }"
         >
           {{ v.bust ? 'BUST' : v.score }}
-        </div>
-        <div v-if="legVolleys.length === 0" class="x01__history-empty">
-          Aucune volée encore
-        </div>
+        </span>
+        <span v-if="!legVolleys.length" class="x01__history-empty">–</span>
       </div>
 
-      <!-- Affichage de la saisie -->
-      <div class="x01__input-display" :class="{ 'x01__input-display--empty': !inputStr }">
-        {{ inputStr || '–' }}
-      </div>
+      <!-- Slots fléchettes courantes -->
+      <X01DartSlots
+        :darts="currentDarts"
+        :volley-number="volleyNumber"
+        :leg-number="legNumber"
+        :legs-to-win="settings.legsToWin"
+        :remaining="displayRemaining"
+        :bust="isBust"
+      />
 
-      <!-- Pavé numérique -->
-      <div class="x01__numpad">
-        <div class="x01__numpad-grid">
-          <button v-for="d in [7,8,9,4,5,6,1,2,3]" :key="d" class="x01__key" @click="addDigit(d)">
-            {{ d }}
-          </button>
-          <button class="x01__key x01__key--del" @click="removeDigit">
-            <AppIcon name="delete" :width="20" :height="20" />
-          </button>
-          <button class="x01__key" @click="addDigit(0)">0</button>
-          <button
-            class="x01__key x01__key--ok"
-            :disabled="inputValue === null"
-            @click="confirmVolley"
-          >
-            <AppIcon name="check" :width="20" :height="20" />
-          </button>
-        </div>
-        <button class="x01__bust-btn" @click="bustDirect">BUST</button>
-      </div>
+      <!-- Grille de saisie (réutilisée du warmup) -->
+      <WarmupGrid :locked="isLocked" @dart="addDart" />
+
+      <!-- Barre du bas -->
+      <X01BottomBar :locked="isLocked" @undo="undo" @miss="addMiss" @quit="router.push({ name: 'x01-settings' })" />
 
     </template>
 
-    <!-- ── Modal : combien de fléchettes pour le finish ? ─────────────── -->
-    <Transition name="fade">
-      <div v-if="phase === 'checkout-darts'" class="x01__overlay">
-        <div class="x01__modal">
-          <p class="x01__modal-title">Combien de fléchettes pour finir ?</p>
-          <div class="x01__modal-darts">
-            <button
-              v-for="n in [1, 2, 3]"
-              :key="n"
-              class="x01__modal-dart-btn"
-              @click="confirmCheckout(n)"
-            >
-              {{ n }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-
     <!-- ── Récap entre manches ─────────────────────────────────────────── -->
     <Transition name="slide-up">
-      <div v-if="phase === 'leg-recap'" class="x01__recap">
-        <div class="x01__recap-inner">
+      <div v-if="phase === 'leg-recap'" class="x01__overlay">
+        <div class="x01__recap">
           <div class="x01__recap-emoji">🎯</div>
           <h2 class="x01__recap-title">Manche terminée !</h2>
+
           <div class="x01__recap-stats">
             <div class="x01__recap-stat">
-              <span class="x01__recap-stat-value">{{ lastLeg?.totalDarts }}</span>
-              <span class="x01__recap-stat-label">fléchettes</span>
+              <span class="x01__recap-stat-val">{{ lastLeg?.totalDarts }}</span>
+              <span class="x01__recap-stat-lbl">fléchettes</span>
             </div>
             <div class="x01__recap-stat">
-              <span class="x01__recap-stat-value">{{ lastLeg?.checkoutScore }}</span>
-              <span class="x01__recap-stat-label">finish</span>
+              <span class="x01__recap-stat-val">{{ lastLeg?.checkoutScore }}</span>
+              <span class="x01__recap-stat-lbl">finish</span>
             </div>
             <div class="x01__recap-stat">
-              <span class="x01__recap-stat-value">{{ lastLeg?.volleys.filter(v => !v.bust).length }}</span>
-              <span class="x01__recap-stat-label">volées valides</span>
+              <span class="x01__recap-stat-val">
+                {{ lastLeg?.volleys.filter(v => !v.bust).length }}
+              </span>
+              <span class="x01__recap-stat-lbl">volées valides</span>
             </div>
           </div>
-          <!-- Détail volées -->
+
+          <!-- Détail des volées -->
           <div class="x01__recap-volleys">
-            <div
+            <span
               v-for="(v, i) in lastLeg?.volleys"
               :key="i"
               class="x01__recap-chip"
               :class="{ 'x01__recap-chip--bust': v.bust }"
             >
               {{ v.bust ? 'BUST' : v.score }}
-            </div>
+            </span>
           </div>
+
           <button class="x01__recap-next" @click="startNextLeg">
             Manche suivante →
           </button>
@@ -201,7 +151,7 @@ function quit() {
 
     <!-- ── Résultats finaux ────────────────────────────────────────────── -->
     <Transition name="slide-up">
-      <div v-if="phase === 'game-over'" class="x01__gameover">
+      <div v-if="phase === 'game-over'" class="x01__overlay x01__overlay--result">
         <X01Result
           :stats="stats"
           :legs-played="completedLegs.length"
@@ -226,47 +176,7 @@ function quit() {
   margin: 0 auto;
   gap: $gap-md;
 
-  // ── Header ─────────────────────────────────────────────────────────────
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-  }
-
-  &__header-btn {
-    color: $text-color;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: $padding-xxs;
-    transition: opacity 0.15s;
-
-    &:active  { opacity: 0.6; }
-    &:disabled { opacity: 0.25; }
-  }
-
-  &__header-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-  }
-
-  &__header-title {
-    @include title-lg;
-    color: $text-color;
-    font-size: 20px;
-  }
-
-  &__header-sub {
-    font-size: 12px;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  // ── Score restant ───────────────────────────────────────────────────────
+  // ── Score restant ─────────────────────────────────────────────────────────
   &__score-area {
     display: flex;
     flex-direction: column;
@@ -278,34 +188,36 @@ function quit() {
   &__remaining {
     font-family: $font-title;
     font-weight: 700;
-    font-size: 80px;
+    font-size: 72px;
     line-height: 1;
     transition: color 0.3s;
+    font-variant-numeric: tabular-nums;
   }
 
-  &__volley-label {
-    font-size: 13px;
-    color: $muted;
+  &__checkout-hint {
+    font-size: 12px;
+    color: #f59e0b;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
+    font-weight: 600;
   }
 
-  // ── Historique ──────────────────────────────────────────────────────────
+  // ── Historique des volées ─────────────────────────────────────────────────
   &__history {
     display: flex;
     flex-wrap: wrap;
     gap: $gap-xs;
     justify-content: center;
-    min-height: 32px;
+    min-height: 28px;
     flex-shrink: 0;
   }
 
   &__history-chip {
     background: rgba($white, 0.08);
     border-radius: $radius-pill;
-    padding: 4px 12px;
+    padding: 3px 10px;
     font-family: $font-title;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     color: $white;
 
@@ -317,150 +229,12 @@ function quit() {
 
   &__history-empty {
     font-size: 13px;
-    color: rgba($white, 0.3);
+    color: rgba($white, 0.25);
     align-self: center;
   }
 
-  // ── Saisie ─────────────────────────────────────────────────────────────
-  &__input-display {
-    background: rgba($white, 0.06);
-    border: $border-md solid rgba($white, 0.15);
-    border-radius: $radius-md;
-    text-align: center;
-    font-family: $font-title;
-    font-weight: 700;
-    font-size: 36px;
-    color: $white;
-    padding: $padding-sm $padding-md;
-    flex-shrink: 0;
-    transition: border-color 0.2s;
-
-    &--empty {
-      color: $muted;
-    }
-  }
-
-  // ── Pavé numérique ─────────────────────────────────────────────────────
-  &__numpad {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-xs;
-    flex: 1;
-    min-height: 0;
-  }
-
-  &__numpad-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: $gap-xs;
-    flex: 1;
-  }
-
-  &__key {
-    background: rgba($white, 0.07);
-    border-radius: $radius-md;
-    font-family: $font-title;
-    font-weight: 700;
-    font-size: 24px;
-    color: $white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.1s, transform 0.08s;
-
-    &:active {
-      background: rgba($white, 0.15);
-      transform: scale(0.95);
-    }
-
-    &--del {
-      background: rgba($white, 0.05);
-      color: $muted;
-    }
-
-    &--ok {
-      background: rgba(#16a34a, 0.25);
-      color: #86efac;
-
-      &:disabled {
-        opacity: 0.3;
-      }
-
-      &:not(:disabled):active {
-        background: rgba(#16a34a, 0.45);
-      }
-    }
-  }
-
-  &__bust-btn {
-    background: rgba($error, 0.15);
-    border-radius: $radius-md;
-    font-family: $font-title;
-    font-weight: 700;
-    font-size: $title-md;
-    color: $error-light;
-    padding: $padding-sm;
-    transition: background 0.15s;
-    flex-shrink: 0;
-
-    &:active {
-      background: rgba($error, 0.3);
-    }
-  }
-
-  // ── Overlay : fléchettes checkout ──────────────────────────────────────
+  // ── Overlay (récap + résultats) ───────────────────────────────────────────
   &__overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba($black, 0.7);
-    display: flex;
-    align-items: flex-end;
-    z-index: 100;
-    padding: $padding-md;
-  }
-
-  &__modal {
-    width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
-    background: #1e2b28;
-    border-radius: $radius-lg;
-    padding: $padding-xl;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-lg;
-  }
-
-  &__modal-title {
-    @include title-lg;
-    color: $white;
-    text-align: center;
-  }
-
-  &__modal-darts {
-    display: flex;
-    gap: $gap-sm;
-  }
-
-  &__modal-dart-btn {
-    flex: 1;
-    background: rgba($white, 0.08);
-    border-radius: $radius-md;
-    padding: $padding-lg;
-    font-family: $font-title;
-    font-weight: 700;
-    font-size: 32px;
-    color: $white;
-    transition: background 0.15s, transform 0.1s;
-
-    &:active {
-      background: $orange;
-      transform: scale(0.96);
-    }
-  }
-
-  // ── Récap inter-manches ────────────────────────────────────────────────
-  &__recap {
     position: fixed;
     inset: 0;
     background: $bg;
@@ -469,9 +243,16 @@ function quit() {
     align-items: center;
     justify-content: center;
     padding: $padding-xl $padding-md;
+
+    &--result {
+      align-items: flex-start;
+      overflow-y: auto;
+      padding-bottom: calc($padding-xxl + 16px);
+    }
   }
 
-  &__recap-inner {
+  // ── Récap inter-manches ───────────────────────────────────────────────────
+  &__recap {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -480,9 +261,12 @@ function quit() {
     max-width: 380px;
   }
 
-  &__recap-emoji  { font-size: 56px; line-height: 1; }
+  &__recap-emoji {
+    font-size: 56px;
+    line-height: 1;
+  }
 
-  &__recap-title  {
+  &__recap-title {
     @include title-xl;
     font-size: 28px;
     color: $white;
@@ -501,7 +285,7 @@ function quit() {
     gap: $gap-xxs;
   }
 
-  &__recap-stat-value {
+  &__recap-stat-val {
     font-family: $font-title;
     font-weight: 700;
     font-size: 36px;
@@ -509,7 +293,7 @@ function quit() {
     line-height: 1;
   }
 
-  &__recap-stat-label {
+  &__recap-stat-lbl {
     font-size: 12px;
     color: $muted;
     text-align: center;
@@ -551,26 +335,9 @@ function quit() {
 
     &:active { opacity: 0.8; }
   }
-
-  // ── Game over ──────────────────────────────────────────────────────────
-  &__gameover {
-    position: fixed;
-    inset: 0;
-    background: $bg;
-    z-index: 90;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    padding: $padding-md $padding-md calc($padding-xxl + 16px);
-    max-width: 420px;
-    margin: 0 auto;
-  }
 }
 
-// ── Transitions ─────────────────────────────────────────────────────────────
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
-.fade-enter-from, .fade-leave-to       { opacity: 0; }
-
+// ── Transitions ───────────────────────────────────────────────────────────────
 .slide-up-enter-active { transition: transform 0.3s ease, opacity 0.3s; }
 .slide-up-leave-active { transition: transform 0.25s ease, opacity 0.2s; }
 .slide-up-enter-from   { transform: translateY(40px); opacity: 0; }

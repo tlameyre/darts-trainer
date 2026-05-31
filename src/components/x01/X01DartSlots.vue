@@ -1,0 +1,142 @@
+<script setup>
+import AppIcon from '../AppIcon.vue'
+
+defineProps({
+  darts:          { type: Array, required: true },   // fléchettes actuelles (0-3)
+  volleyNumber:   { type: Number, required: true },
+  legNumber:      { type: Number, required: true },
+  legsToWin:      { type: Number, required: true },
+  remaining:      { type: Number, required: true },  // score restant après currentDarts
+  bust:           { type: Boolean, default: false },  // afficher l'animation BUST
+})
+
+function dartColor(dart) {
+  if (!dart) return 'transparent'
+  if (dart.type === 'miss')   return 'rgba(255,255,255,0.3)'
+  if (dart.type === 'double') return '#36cc86'
+  if (dart.type === 'triple') return '#D64A24'
+  if (dart.type === 'bull' && dart.pts === 50) return '#B21327'
+  if (dart.type === 'bull' && dart.pts === 25) return '#36cc86'
+  return '#ffffff'
+}
+</script>
+
+<template>
+  <div class="slots">
+    <div class="slots__info-row">
+      <span class="slots__volley-label">VOLÉE {{ volleyNumber }}</span>
+      <span class="slots__leg-label">Manche {{ Math.min(legNumber, legsToWin) }}/{{ legsToWin }}</span>
+    </div>
+
+    <div class="slots__bar" :class="{ 'slots__bar--bust': bust }">
+      <div class="slots__icon">
+        <AppIcon name="dartboard" :width="30" :height="30" />
+      </div>
+
+      <template v-if="!bust">
+        <div v-for="i in 3" :key="i" class="slots__slot">
+          <Transition name="slot-pop">
+            <span
+              v-if="darts[i - 1]"
+              :key="darts[i - 1].label + i"
+              class="slots__dart"
+              :style="{ color: dartColor(darts[i - 1]) }"
+            >
+              {{ darts[i - 1].label }}
+            </span>
+          </Transition>
+        </div>
+      </template>
+
+      <template v-else>
+        <div class="slots__bust-label">BUST !</div>
+      </template>
+    </div>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+.slots {
+  display: flex;
+  flex-direction: column;
+  gap: $gap-xs;
+  flex-shrink: 0;
+
+  &__info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__volley-label {
+    @include title-md;
+  }
+
+  &__leg-label {
+    font-size: 13px;
+    color: $muted;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  &__bar {
+    display: flex;
+    align-items: stretch;
+    background: $white;
+    border-radius: $radius-pill;
+    overflow: hidden;
+    padding: $padding-sm;
+    transition: background 0.2s;
+
+    &--bust {
+      background: $error;
+    }
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-right: $padding-md;
+    color: $black;
+    flex-shrink: 0;
+  }
+
+  &__slot {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: $border-md solid $black;
+    overflow: hidden;
+    min-height: 36px;
+  }
+
+  &__dart {
+    @include title-xl;
+    color: $black;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__bust-label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-title;
+    font-weight: 700;
+    font-size: 22px;
+    color: $white;
+    border-left: $border-md solid rgba($white, 0.4);
+    letter-spacing: 0.08em;
+  }
+}
+
+.slot-pop-enter-active {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.slot-pop-enter-from {
+  transform: scale(0.5);
+  opacity: 0;
+}
+</style>
