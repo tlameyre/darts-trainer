@@ -7,7 +7,47 @@ const gameSessions   = ref([])
 const warmupSessions = ref([])
 const loading        = ref(true)
 
+// ── Données fictives pour le stylisme (dev uniquement) ───────────────────────
+const MOCK_STATS = {
+  gameStats: {
+    sessions:       24,
+    totalCorrect:   312,
+    totalQuestions: 360,
+    bestStreak:     18,
+  },
+  warmupStats: {
+    sessions:   31,
+    totalDarts: 1247,
+    totalHits:  893,
+    avgAccuracy: 71,
+  },
+}
+
+const MOCK_GAME_SESSIONS = [
+  { id: 1, correct_count: 17, total_questions: 20, best_streak: 9,  played_at: '2025-05-28T18:32:00Z' },
+  { id: 2, correct_count: 14, total_questions: 20, best_streak: 6,  played_at: '2025-05-27T20:11:00Z' },
+  { id: 3, correct_count: 18, total_questions: 20, best_streak: 18, played_at: '2025-05-26T19:45:00Z' },
+  { id: 4, correct_count: 12, total_questions: 20, best_streak: 5,  played_at: '2025-05-25T17:00:00Z' },
+  { id: 5, correct_count: 15, total_questions: 20, best_streak: 8,  played_at: '2025-05-24T21:30:00Z' },
+]
+
+const MOCK_WARMUP_SESSIONS = [
+  { id: 1, hits: 28, total_darts: 36, accuracy: 78, played_at: '2025-05-28T18:00:00Z' },
+  { id: 2, hits: 22, total_darts: 33, accuracy: 67, played_at: '2025-05-27T19:50:00Z' },
+  { id: 3, hits: 31, total_darts: 39, accuracy: 79, played_at: '2025-05-26T18:20:00Z' },
+  { id: 4, hits: 19, total_darts: 30, accuracy: 63, played_at: '2025-05-25T16:40:00Z' },
+  { id: 5, hits: 26, total_darts: 33, accuracy: 79, played_at: '2025-05-24T21:10:00Z' },
+]
+
 onMounted(async () => {
+  if (import.meta.env.DEV) {
+    stats.value          = MOCK_STATS
+    gameSessions.value   = MOCK_GAME_SESSIONS
+    warmupSessions.value = MOCK_WARMUP_SESSIONS
+    loading.value        = false
+    return
+  }
+
   const [s, gs, ws] = await Promise.all([
     fetchGlobalStats(),
     fetchGameSessions(10),
