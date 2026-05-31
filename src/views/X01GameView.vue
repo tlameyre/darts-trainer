@@ -9,6 +9,7 @@ import X01DartSlots from '../components/x01/X01DartSlots.vue'
 import X01BottomBar from '../components/x01/X01BottomBar.vue'
 import X01Result from '../components/x01/X01Result.vue'
 import X01DoublesModal from '../components/x01/X01DoublesModal.vue'
+import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
 import WarmupGrid from '../components/warmup/WarmupGrid.vue'
 import AppIcon from '../components/AppIcon.vue'
 
@@ -28,10 +29,12 @@ const {
   volleyNumber,
   volleyCompleting,
   pendingDoublesPrompt,
+  pendingCheckout,
   addDart,
   addMiss,
   undo,
   confirmDoublesAttempted,
+  confirmCheckout,
   startNextLeg,
   stats,
 } = useX01(settings)
@@ -154,10 +157,18 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
       </div>
     </Transition>
 
-    <!-- ── Modal : doubles tentés ────────────────────────────────────────── -->
+    <!-- ── Modal : doubles tentés (volée normale en zone checkout) ──────── -->
     <X01DoublesModal
       :show="pendingDoublesPrompt"
       @confirm="confirmDoublesAttempted"
+    />
+
+    <!-- ── Modal : checkout (fléchettes + doubles) ───────────────────────── -->
+    <X01CheckoutModal
+      :show="!!pendingCheckout"
+      :default-darts="pendingCheckout?.defaultDarts ?? 3"
+      :checkout-score="pendingCheckout?.checkoutScore ?? 0"
+      @confirm="confirmCheckout"
     />
 
     <!-- ── Résultats finaux ───────────────────────────────────────────────── -->

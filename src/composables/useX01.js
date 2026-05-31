@@ -13,11 +13,12 @@ import { ref, computed } from 'vue'
 export function useX01({ startScore, legsToWin }) {
   // ─── État principal ────────────────────────────────────────────────────────
   const completedLegs        = ref([])      // manches terminées
-  const volleys              = ref([])      // volées de la manche en cours { darts, bust, score, doublesAttempted? }
+  const volleys              = ref([])      // volées de la manche en cours { darts, bust, score, doublesAttempted?, dartsToFinish?, doublesThrown? }
   const currentDarts         = ref([])      // fléchettes de la volée en cours (0-3 items)
   const phase                = ref('playing') // 'playing' | 'bust' | 'leg-recap' | 'game-over'
   const volleyCompleting     = ref(false)   // true pendant les 700ms après la 3e fléchette
-  const pendingDoublesPrompt = ref(false)   // true → afficher la modal doubles tentés
+  const pendingDoublesPrompt = ref(false)   // true → modal doubles tentés (volée non-checkout)
+  const pendingCheckout      = ref(null)    // { defaultDarts, checkoutScore } → modal checkout
 
   let _bustTimer     = null
   let _completeTimer = null
@@ -97,7 +98,7 @@ export function useX01({ startScore, legsToWin }) {
     // ── Checkout ────────────────────────────────────────────────────────────
     if (newRem === 0) {
       if (isValidCheckout(dart)) {
-        // Afficher la fléchette 700ms avant de valider la manche (pas de modal doubles)
+        // Afficher la fléchette 700ms, puis ouvrir la modale checkout
         currentDarts.value = newDarts
         volleyCompleting.value = true
         const score = volleyPts
@@ -107,7 +108,8 @@ export function useX01({ startScore, legsToWin }) {
           volleys.value.push({ darts, bust: false, score })
           currentDarts.value = []
           volleyCompleting.value = false
-          finishLeg()
+          // Ouvrir la modale avec le nombre de fléchettes pré-rempli
+          pendingCheckout.value = { defaultDarts: darts.length, checkoutScore: score }
         }, 700)
       } else {
         // Zéro sans double → bust
@@ -135,13 +137,23 @@ export function useX01({ startScore, legsToWin }) {
     }
   }
 
-  /** Enregistre le nombre de doubles tentés sur la dernière volée et ferme la modal */
+  /** Enregistre le nombre de doubles tentés sur la dernière volée (hors checkout) */
   function confirmDoublesAttempted(n) {
     if (volleys.value.length > 0) {
       const last = volleys.value[volleys.value.length - 1]
       volleys.value[volleys.value.length - 1] = { ...last, doublesAttempted: n }
     }
     pendingDoublesPrompt.value = false
+  }
+
+  /** Confirmation checkout : enregistre les données puis termine la manche */
+  function confirmCheckout({ dartsToFinish, doublesThrown }) {
+    if (volleys.value.length > 0) {
+      const last = volleys.value[volleys.value.length - 1]
+      volleys.value[volleys.value.length - 1] = { ...last, dartsToFinish, doublesThrown }
+    }
+    pendingCheckout.value = null
+    finishLeg()
   }
 
   function addMiss() {
@@ -183,11 +195,12 @@ export function useX01({ startScore, legsToWin }) {
   function startNextLeg() {
     clearTimeout(_completeTimer)
     clearTimeout(_bustTimer)
-    volleys.value          = []
-    currentDarts.value     = []
-    volleyCompleting.value = false
+    volleys.value              = []
+    currentDarts.value         = []
+    volleyCompleting.value     = false
     pendingDoublesPrompt.value = false
-    phase.value            = 'playing'
+    pendingCheckout.value      = null
+    phase.value                = 'playing'
   }
 
   // ─── Statistiques finales ──────────────────────────────────────────────────
@@ -230,6 +243,7 @@ export function useX01({ startScore, legsToWin }) {
     phase,
     volleyCompleting,
     pendingDoublesPrompt,
+    pendingCheckout,
     legRemaining,
     legNumber,
     volleyNumber,
@@ -237,6 +251,7 @@ export function useX01({ startScore, legsToWin }) {
     addMiss,
     undo,
     confirmDoublesAttempted,
+    confirmCheckout,
     startNextLeg,
     stats,
   }
