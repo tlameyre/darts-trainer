@@ -235,9 +235,8 @@ async function onPasswordSave(newPassword) {
   }
 
   &__account-label {
-    @include text-sm;
+    @include text-xs;
     color: $muted;
-    font-size: 12px;
     margin-bottom: 2px;
   }
 

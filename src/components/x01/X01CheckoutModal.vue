@@ -125,7 +125,7 @@ function confirm() {
     gap: $gap-sm;
   }
 
-  &__trophy { font-size: 28px; line-height: 1; flex-shrink: 0; }
+  &__trophy { @include title-xxl; line-height: 1; flex-shrink: 0; }
 
   &__title {
     @include title-xl;
@@ -167,9 +167,8 @@ function confirm() {
     background: rgba($white, 0.07);
     border-radius: $radius-md;
     padding: $padding-md;
-    font-family: $font-title;
+    @include title-xxl;
     font-weight: 700;
-    font-size: 28px;
     color: $white;
     transition: background 0.12s, transform 0.1s;
 
@@ -191,9 +190,8 @@ function confirm() {
     background: $orange;
     border-radius: $radius-sm;
     padding: $padding-md;
-    font-family: $font-title;
+    @include title-md;
     font-weight: 700;
-    font-size: $title-md;
     text-transform: uppercase;
     color: $white;
     transition: opacity 0.15s;

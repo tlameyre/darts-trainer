@@ -112,9 +112,8 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
     border-radius: $radius-pill;
     background: $orange;
     color: $white;
-    font-family: $font-title;
+    @include title-lg;
     font-weight: 700;
-    font-size: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -132,8 +131,7 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
   }
 
   &__name {
-    @include title-xl;
-    font-size: 28px;
+    @include title-xxl;
     line-height: 1;
   }
 
@@ -170,9 +168,8 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
   }
 
   &__section-link {
-    @include text-sm;
+    @include title-sm;
     color: $orange;
-    font-size: 13px;
   }
 
   // --- Modes ---
@@ -190,6 +187,7 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
     border-radius: $radius-md;
     padding: $padding-md;
     transition: opacity 0.15s;
+    color: $white;
 
     &:active {
       opacity: 0.8;
@@ -237,12 +235,12 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
   }
 
   &__badge-icon {
-    font-size: 28px;
+    @include title-xxl;
     line-height: 1;
   }
 
   &__badge-label {
-    font-size: 10px;
+    @include title-xs;
     color: $muted;
     text-align: center;
     line-height: 1.3;
@@ -255,9 +253,8 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
     background: rgba(255, 255, 255, 0.05);
     border-radius: $radius-md;
     padding: $padding-md;
-    @include text-sm;
+    @include title-sm;
     color: $muted;
-    font-size: 13px;
     transition: background 0.15s;
 
     &:active {

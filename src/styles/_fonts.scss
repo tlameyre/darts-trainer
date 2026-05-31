@@ -78,6 +78,13 @@
   @include _font('xxxl', title);
 }
 
+// display — grandes tailles (scores, icônes, emojis) — font-size uniquement
+@mixin display-xs { font-size: $display-xs; }
+@mixin display-sm { font-size: $display-sm; }
+@mixin display-md { font-size: $display-md; }
+@mixin display-lg { font-size: $display-lg; }
+@mixin display-xl { font-size: $display-xl; }
+
 
 // --- Fonts face ---
 @font-face {

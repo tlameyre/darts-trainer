@@ -166,7 +166,7 @@ const unlockedCount = computed(() => userBadges.value.length)
   }
 
   &__item-icon {
-    font-size: 28px;
+    @include title-xxl;
     line-height: 1;
     margin-bottom: $gap-xxs;
   }
@@ -174,12 +174,12 @@ const unlockedCount = computed(() => userBadges.value.length)
   &__item-label {
     @include title-sm;
     color: $text-color;
-    font-size: 13px;
+    @include title-sm;
     line-height: 1.3;
   }
 
   &__item-check {
-    font-size: 11px;
+    @include title-xs;
     color: $accent;
     margin-top: 2px;
   }

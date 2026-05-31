@@ -36,8 +36,6 @@ defineProps({
   align-items: center;
   justify-content: center;
   width: 100%;
-  font-family: $font-title;
-  font-weight: 700;
   text-transform: uppercase;
   transition: background 0.15s, transform 0.1s;
 
@@ -47,12 +45,14 @@ defineProps({
 
   // --- Tailles ---
   &--big {
-    font-size: $title-md;
+    @include title-md;
+    font-weight: 700;
     padding: $padding-md $padding-xl;
   }
 
   &--small {
-    font-size: $title-sm;
+    @include title-sm;
+    font-weight: 700;
     padding: $padding-xs $padding-md;
   }
 

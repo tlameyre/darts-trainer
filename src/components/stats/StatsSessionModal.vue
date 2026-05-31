@@ -188,7 +188,7 @@ function accuracy(hits, total) {
   }
 
   &__mode-label {
-    font-size: 12px;
+    @include title-xs;
     color: $muted;
     margin-top: 2px;
   }
@@ -232,7 +232,7 @@ function accuracy(hits, total) {
   }
 
   &__stat-label {
-    font-size: 11px;
+    @include title-xs;
     color: $muted;
     text-align: center;
     line-height: 1.3;
@@ -248,7 +248,7 @@ function accuracy(hits, total) {
   }
 
   &__row-label {
-    font-size: 13px;
+    @include title-sm;
     color: $muted;
   }
 
@@ -268,7 +268,7 @@ function accuracy(hits, total) {
   }
 
   &__highlight-label {
-    font-size: 13px;
+    @include title-sm;
     color: $muted;
   }
 

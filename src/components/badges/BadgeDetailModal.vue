@@ -101,7 +101,7 @@ function pct(progress) {
   }
 
   &__icon {
-    font-size: 64px;
+    @include display-md;
     line-height: 1;
     margin-bottom: $gap-xs;
 
@@ -148,9 +148,8 @@ function pct(progress) {
   &__progress-header {
     display: flex;
     justify-content: space-between;
-    @include text-sm;
+    @include title-sm;
     color: $muted;
-    font-size: 13px;
   }
 
   &__progress-values {

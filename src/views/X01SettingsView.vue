@@ -172,9 +172,8 @@ function startGame() {
   }
 
   &__legs-hint {
-    @include text-sm;
+    @include title-sm;
     color: $muted;
-    font-size: 13px;
   }
 
   :deep(.btn:last-child) {

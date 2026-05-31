@@ -72,9 +72,7 @@ const profileRoutes = new Set(['profile', 'profile-edit', 'badges'])
   }
 
   &__label {
-    font-family: $font-title;
-    font-size: $title-xs;
-    font-weight: 600;
+    @include title-xs;
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }

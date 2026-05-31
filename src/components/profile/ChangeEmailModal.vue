@@ -141,9 +141,8 @@ function onClose() {
   }
 
   &__hint {
-    @include text-sm;
+    @include title-sm;
     color: $muted;
-    font-size: 13px;
   }
 }
 

@@ -73,13 +73,13 @@ const scoreColorStreak = computed(() => {
 
   &__score {
     @include title-xxl;
-    font-size: 96px;
+    @include display-xl;
     font-variant-numeric: tabular-nums;
 
     span {
-      @include text-xxl;
+      @include title-xxxl;
+      font-weight: 300;
       color: $white;
-      font-size: 48px;
     }
   }
 

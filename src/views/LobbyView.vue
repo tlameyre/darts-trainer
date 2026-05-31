@@ -79,8 +79,8 @@ function selectMode(mode) {
   }
 
   &__title {
-    @include title-xl;
-    font-size: 32px;
+    @include text-xxl;
+    font-weight: 600;
     line-height: .9;
   }
 

@@ -91,7 +91,7 @@ const overlayClass = computed(() => {
     padding-bottom: $padding-md;
 
     &--phase2 .round-card__score {
-      font-size: $title-xxxl;
+      @include title-xxxl;
     }
   }
 

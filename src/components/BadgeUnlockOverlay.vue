@@ -78,7 +78,7 @@ function next() {
   }
 
   &__icon {
-    font-size: 80px;
+    @include display-lg;
     line-height: 1;
     filter: drop-shadow(0 0 24px rgba($orange, 0.4));
   }
@@ -95,9 +95,8 @@ function next() {
   }
 
   &__hint {
-    @include text-sm;
+    @include text-xs;
     color: rgba(255, 255, 255, 0.3);
-    font-size: 12px;
     margin-top: $gap-sm;
   }
 

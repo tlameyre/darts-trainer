@@ -85,7 +85,7 @@ defineEmits(['confirm'])
   }
 
   &__hint {
-    font-size: 13px;
+    @include title-sm;
     color: $muted;
     text-align: center;
     margin-top: -$gap-xs;
@@ -101,9 +101,8 @@ defineEmits(['confirm'])
     background: rgba($white, 0.08);
     border-radius: $radius-md;
     padding: $padding-lg;
-    font-family: $font-title;
+    @include text-xxl;
     font-weight: 700;
-    font-size: 32px;
     color: $white;
     transition: background 0.15s, transform 0.1s;
 

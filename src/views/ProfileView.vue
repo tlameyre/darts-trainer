@@ -187,8 +187,8 @@ async function onSignOut() {
   }
 
   &__avatar-initials {
-    @include title-xl;
-    font-size: 32px;
+    @include text-xxl;
+    font-weight: 600;
     color: $white;
     line-height: 1;
   }
@@ -228,14 +228,12 @@ async function onSignOut() {
   }
 
   &__stat-value {
-    @include title-xl;
+    @include title-xxl;
     color: $text-color;
-    font-size: $title-xxl;
   }
 
   &__stat-label {
-    font-family: $font-text;
-    font-size: 11px;
+    @include text-xs;
     color: $muted;
     text-align: center;
     text-transform: uppercase;
@@ -265,9 +263,8 @@ async function onSignOut() {
   }
 
   &__badges-more {
-    @include text-sm;
+    @include title-sm;
     color: $orange;
-    font-size: 13px;
   }
 
   &__badges-grid {
@@ -291,21 +288,20 @@ async function onSignOut() {
   }
 
   &__badge-icon {
-    font-size: 28px;
+    @include title-xxl;
     line-height: 1;
   }
 
   &__badge-label {
-    font-size: 10px;
+    @include title-xs;
     color: $muted;
     line-height: 1.3;
   }
 
   &__badges-empty {
-    @include text-sm;
+    @include title-sm;
     color: $muted;
     text-align: center;
-    font-size: 13px;
   }
 
   // --- Logout ---

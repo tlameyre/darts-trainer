@@ -89,14 +89,13 @@ defineEmits(['replay', 'home'])
   }
 
   &__emoji {
-    font-size: 48px;
+    @include title-xxxl;
     line-height: 1;
   }
 
   &__title {
-    @include title-xl;
+    @include title-xxl;
     color: $white;
-    font-size: 28px;
   }
 
   &__subtitle {
@@ -129,14 +128,14 @@ defineEmits(['replay', 'home'])
   }
 
   &__stat-value {
-    @include title-xl;
-    font-size: 32px;
+    @include text-xxl;
+    font-weight: 600;
     color: $white;
     line-height: 1;
   }
 
   &__stat-label {
-    font-size: 12px;
+    @include title-xs;
     color: $muted;
     line-height: 1.3;
   }
@@ -163,9 +162,8 @@ defineEmits(['replay', 'home'])
     flex: 1;
     padding: $padding-md;
     border-radius: $radius-sm;
-    font-family: $font-title;
+    @include title-md;
     font-weight: 700;
-    font-size: $title-md;
     text-transform: uppercase;
     transition: opacity 0.15s;
 

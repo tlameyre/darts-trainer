@@ -59,8 +59,7 @@ defineEmits(['toggle-mode'])
   }
 
   &__mode-badge {
-    font-size: 11px;
-    font-weight: 600;
+    @include title-xs;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     padding: 3px 8px;
@@ -126,9 +125,8 @@ defineEmits(['toggle-mode'])
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: $font-title;
+    @include title-xl;
     font-weight: 700;
-    font-size: 22px;
     color: $white;
     border-left: $border-md solid rgba($white, 0.4);
     letter-spacing: 0.08em;

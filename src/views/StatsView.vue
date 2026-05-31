@@ -293,7 +293,6 @@ function accuracy(correct, total) {
 
   &__title {
     @include title-xl;
-    font-size: 24px;
   }
 
   // ── Tabs ────────────────────────────────────────────────────────────────
@@ -309,9 +308,8 @@ function accuracy(correct, total) {
     flex: 1;
     padding: $padding-xs $padding-sm;
     border-radius: calc($radius-md - 4px);
-    font-family: $font-title;
+    @include title-sm;
     font-weight: 700;
-    font-size: $title-sm;
     text-transform: uppercase;
     color: $muted;
     transition: background 0.2s, color 0.2s;
@@ -385,7 +383,7 @@ function accuracy(correct, total) {
   }
 
   &__stat-label {
-    font-size: 11px;
+    @include title-xs;
     color: $muted;
     text-align: center;
     line-height: 1.3;
@@ -403,9 +401,8 @@ function accuracy(correct, total) {
   }
 
   &__stat-highlight-label {
-    @include text-sm;
+    @include title-sm;
     color: $muted;
-    font-size: 13px;
   }
 
   &__stat-highlight-value {
@@ -452,7 +449,7 @@ function accuracy(correct, total) {
   }
 
   &__history-badge {
-    font-size: 12px;
+    @include title-xs;
     color: $muted;
     background: rgba($white, 0.07);
     border-radius: $radius-pill;
@@ -460,7 +457,7 @@ function accuracy(correct, total) {
   }
 
   &__history-date {
-    font-size: 12px;
+    @include title-xs;
     color: $muted;
     flex-shrink: 0;
   }
