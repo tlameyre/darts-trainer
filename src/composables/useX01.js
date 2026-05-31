@@ -137,6 +137,54 @@ export function useX01({ startScore, legsToWin }) {
     }
   }
 
+  // ─── Mode volée totale ────────────────────────────────────────────────────
+  /** Saisie du total d'une volée d'un coup (mode simplifié) */
+  function confirmVolleyTotal(total) {
+    if (phase.value !== 'playing' || volleyCompleting.value) return
+
+    const remainingAtStart = legRemaining.value
+    const inCheckoutZone   = remainingAtStart <= 50
+    const newRem           = remainingAtStart - total
+    const syntheticDart    = { pts: total, type: 'volley', label: String(total), sector: null }
+
+    if (newRem < 0 || newRem === 1) {
+      triggerBust([syntheticDart], inCheckoutZone)
+      return
+    }
+
+    if (newRem === 0) {
+      // Score exact → checkout possible, ouvrir la modale
+      currentDarts.value     = [syntheticDart]
+      volleyCompleting.value = true
+      clearTimeout(_completeTimer)
+      _completeTimer = setTimeout(() => {
+        volleys.value.push({ darts: [syntheticDart], bust: false, score: total })
+        currentDarts.value     = []
+        volleyCompleting.value = false
+        pendingCheckout.value  = { defaultDarts: 1, checkoutScore: total }
+      }, 700)
+      return
+    }
+
+    // Volée normale
+    currentDarts.value     = [syntheticDart]
+    volleyCompleting.value = true
+    clearTimeout(_completeTimer)
+    _completeTimer = setTimeout(() => {
+      volleys.value.push({ darts: [syntheticDart], bust: false, score: total })
+      currentDarts.value     = []
+      volleyCompleting.value = false
+      if (inCheckoutZone) pendingDoublesPrompt.value = true
+    }, 700)
+  }
+
+  /** Bust explicite (mode volée totale) */
+  function bustVolley() {
+    if (phase.value !== 'playing' || volleyCompleting.value) return
+    const inCheckoutZone = legRemaining.value <= 50
+    triggerBust([{ pts: 0, type: 'miss', label: 'Bust', sector: null }], inCheckoutZone)
+  }
+
   /** Enregistre le nombre de doubles tentés sur la dernière volée (hors checkout) */
   function confirmDoublesAttempted(n) {
     if (volleys.value.length > 0) {
@@ -250,6 +298,8 @@ export function useX01({ startScore, legsToWin }) {
     addDart,
     addMiss,
     undo,
+    confirmVolleyTotal,
+    bustVolley,
     confirmDoublesAttempted,
     confirmCheckout,
     startNextLeg,

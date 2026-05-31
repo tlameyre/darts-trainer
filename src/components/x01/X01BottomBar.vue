@@ -4,20 +4,21 @@ import AppIcon from '../AppIcon.vue'
 import AppButton from '../AppButton.vue'
 
 const props = defineProps({
-  locked: { type: Boolean, default: false },
+  locked:   { type: Boolean, default: false },
+  bustMode: { type: Boolean, default: false }, // true → bouton central = BUST
 })
 
-const emit = defineEmits(['undo', 'miss', 'quit'])
+const emit = defineEmits(['undo', 'miss', 'bust', 'quit'])
 
-const pressedMiss = ref(false)
-let _missTimer = null
+const pressedCenter = ref(false)
+let _centerTimer = null
 
-function tapMiss() {
+function tapCenter() {
   if (props.locked) return
-  clearTimeout(_missTimer)
-  pressedMiss.value = true
-  _missTimer = setTimeout(() => { pressedMiss.value = false }, 160)
-  emit('miss')
+  clearTimeout(_centerTimer)
+  pressedCenter.value = true
+  _centerTimer = setTimeout(() => { pressedCenter.value = false }, 160)
+  emit(props.bustMode ? 'bust' : 'miss')
 }
 </script>
 
@@ -29,10 +30,10 @@ function tapMiss() {
     <AppButton
       variant="secondary"
       size="small"
-      :class="{ 'x01-bar__miss--pressed': pressedMiss }"
-      @click="tapMiss"
+      :class="{ 'x01-bar__center--pressed': pressedCenter }"
+      @click="tapCenter"
     >
-      MANQUÉ
+      {{ bustMode ? 'BUST' : 'MANQUÉ' }}
     </AppButton>
     <button class="x01-bar__icon-btn" @click="emit('quit')">
       <AppIcon name="exit" :width="24" :height="24" />
@@ -57,7 +58,7 @@ function tapMiss() {
     &:active { opacity: 0.6; }
   }
 
-  &__miss--pressed {
+  &__center--pressed {
     background: rgba($error, 0.2) !important;
     color: $error-light !important;
   }

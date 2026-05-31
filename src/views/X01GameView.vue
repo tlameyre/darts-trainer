@@ -11,6 +11,8 @@ import X01Result from '../components/x01/X01Result.vue'
 import X01DoublesModal from '../components/x01/X01DoublesModal.vue'
 import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
 import WarmupGrid from '../components/warmup/WarmupGrid.vue'
+import AnswerInput from '../components/AnswerInput.vue'
+import NumPad from '../components/NumPad.vue'
 import AppIcon from '../components/AppIcon.vue'
 
 const router = useRouter()
@@ -33,11 +35,53 @@ const {
   addDart,
   addMiss,
   undo,
+  confirmVolleyTotal,
+  bustVolley,
   confirmDoublesAttempted,
   confirmCheckout,
   startNextLeg,
   stats,
 } = useX01(settings)
+
+// ── Mode de saisie ────────────────────────────────────────────────────────────
+const inputMode  = ref('dart') // 'dart' | 'volley'
+const volleyStr  = ref('')     // saisie en cours (mode volée)
+
+function toggleMode() {
+  if (isLocked.value) return
+  inputMode.value = inputMode.value === 'dart' ? 'volley' : 'dart'
+  volleyStr.value = ''
+}
+
+function appendDigit(d) {
+  if (volleyStr.value.length >= 3) return
+  const next = volleyStr.value + d
+  if (Number(next) > 180) return
+  volleyStr.value = next
+}
+
+function deleteDigit() {
+  volleyStr.value = volleyStr.value.slice(0, -1)
+}
+
+function submitVolley() {
+  if (!volleyStr.value) return
+  const total = Number(volleyStr.value)
+  volleyStr.value = ''
+  confirmVolleyTotal(total)
+}
+
+function handleUndo() {
+  if (inputMode.value === 'volley' && volleyStr.value.length > 0) {
+    deleteDigit()
+  } else {
+    undo()
+  }
+}
+
+// ── État dérivé ───────────────────────────────────────────────────────────────
+const isBust   = computed(() => phase.value === 'bust')
+const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.value)
 
 // Sauvegarde à la fin de la partie
 watch(phase, async (val) => {
@@ -51,9 +95,6 @@ watch(phase, async (val) => {
   }
 })
 
-const isBust   = computed(() => phase.value === 'bust')
-const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.value)
-
 // Dernière manche terminée (pour le récap)
 const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 1])
 </script>
@@ -66,7 +107,7 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
         <AppIcon name="exit" :width="22" :height="22" />
       </button>
       <h1 class="x01__header-title">{{ settings.startScore }}</h1>
-      <button class="x01__header-btn" @click="undo">
+      <button class="x01__header-btn" @click="handleUndo">
         <AppIcon name="undo" :width="22" :height="22" />
       </button>
     </header>
@@ -87,9 +128,37 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
           :darts="currentDarts"
           :volley-number="volleyNumber"
           :bust="false"
+          :input-mode="inputMode"
+          @toggle-mode="toggleMode"
         />
-        <WarmupGrid :locked="false" @dart="addDart" />
-        <X01BottomBar @undo="undo" @miss="addMiss" @quit="router.push({ name: 'x01-settings' })" />
+
+        <!-- Mode fléchette par fléchette -->
+        <template v-if="inputMode === 'dart'">
+          <WarmupGrid :locked="isLocked" @dart="addDart" />
+          <X01BottomBar :locked="isLocked" @undo="handleUndo" @miss="addMiss" @quit="router.push({ name: 'x01-settings' })" />
+        </template>
+
+        <!-- Mode volée totale -->
+        <template v-else>
+          <AnswerInput
+            :value="volleyStr"
+            placeholder="Score de la volée"
+            @validate="submitVolley"
+          />
+          <NumPad
+            class="x01__numpad"
+            @digit="appendDigit"
+            @delete="deleteDigit"
+            @validate="submitVolley"
+          />
+          <X01BottomBar
+            :locked="isLocked"
+            :bust-mode="true"
+            @undo="handleUndo"
+            @bust="bustVolley"
+            @quit="router.push({ name: 'x01-settings' })"
+          />
+        </template>
       </div>
     </div>
 
@@ -109,9 +178,21 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
           :darts="volleys[volleys.length - 1]?.darts ?? []"
           :volley-number="volleyNumber - 1"
           :bust="true"
+          :input-mode="inputMode"
         />
-        <WarmupGrid :locked="true" @dart="addDart" />
-        <X01BottomBar :locked="true" @undo="undo" @miss="addMiss" @quit="router.push({ name: 'x01-settings' })" />
+        <WarmupGrid v-if="inputMode === 'dart'" :locked="true" @dart="addDart" />
+        <template v-else>
+          <AnswerInput :value="''" placeholder="Score de la volée" />
+          <NumPad class="x01__numpad" @digit="appendDigit" @delete="deleteDigit" @validate="submitVolley" />
+        </template>
+        <X01BottomBar
+          :locked="true"
+          :bust-mode="inputMode === 'volley'"
+          @undo="handleUndo"
+          @miss="addMiss"
+          @bust="bustVolley"
+          @quit="router.push({ name: 'x01-settings' })"
+        />
       </div>
     </div>
 
@@ -157,13 +238,10 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
       </div>
     </Transition>
 
-    <!-- ── Modal : doubles tentés (volée normale en zone checkout) ──────── -->
-    <X01DoublesModal
-      :show="pendingDoublesPrompt"
-      @confirm="confirmDoublesAttempted"
-    />
+    <!-- ── Modal : doubles tentés ────────────────────────────────────────── -->
+    <X01DoublesModal :show="pendingDoublesPrompt" @confirm="confirmDoublesAttempted" />
 
-    <!-- ── Modal : checkout (fléchettes + doubles) ───────────────────────── -->
+    <!-- ── Modal : checkout ──────────────────────────────────────────────── -->
     <X01CheckoutModal
       :show="!!pendingCheckout"
       :default-darts="pendingCheckout?.defaultDarts ?? 3"
@@ -198,7 +276,6 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
   max-width: 420px;
   margin: 0 auto;
 
-  // ── Header ─────────────────────────────────────────────────────────────
   &__header {
     display: flex;
     align-items: center;
@@ -212,7 +289,6 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
     align-items: center;
     justify-content: center;
     transition: opacity 0.15s;
-
     &:active { opacity: 0.6; }
   }
 
@@ -222,7 +298,6 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
     text-align: center;
   }
 
-  // ── Game layout (identique à warmup) ───────────────────────────────────
   &__game {
     flex: 1;
     min-height: 0;
@@ -237,7 +312,14 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
     gap: $gap-md;
   }
 
-  // ── Overlay (récap + résultats) ────────────────────────────────────────
+  // NumPad en mode volée : prend tout l'espace restant comme WarmupGrid
+  &__numpad {
+    flex: 1;
+    min-height: 0;
+    border-top: $border-md solid $white;
+  }
+
+  // ── Overlays ──────────────────────────────────────────────────────────
   &__overlay {
     position: fixed;
     inset: 0;
@@ -255,7 +337,7 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
     }
   }
 
-  // ── Récap inter-manches ────────────────────────────────────────────────
+  // ── Récap ─────────────────────────────────────────────────────────────
   &__recap {
     display: flex;
     flex-direction: column;
@@ -333,17 +415,12 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
     text-transform: uppercase;
     color: $white;
     transition: opacity 0.15s;
-
     &:active { opacity: 0.8; }
   }
 }
 
-// ── Responsive (identique à warmup) ─────────────────────────────────────────
 @media (min-width: $bp-tablet) {
-  .x01__game-main {
-    flex: 1;
-    min-height: 0;
-  }
+  .x01__game-main { flex: 1; min-height: 0; }
 }
 
 @media (min-width: $bp-laptop) {
@@ -351,24 +428,14 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
     max-width: none;
     padding: $padding-xxl;
   }
-
   .x01__game {
     flex-direction: row;
     align-items: stretch;
   }
-
-  .x01__stats-card {
-    flex: 1;
-    min-height: 50%;
-  }
-
-  .x01__game-main {
-    flex: 1;
-    margin: auto;
-  }
+  .x01__stats-card { flex: 1; min-height: 50%; }
+  .x01__game-main  { flex: 1; margin: auto; }
 }
 
-// ── Transitions ──────────────────────────────────────────────────────────────
 .slide-up-enter-active { transition: transform 0.3s ease, opacity 0.3s; }
 .slide-up-leave-active { transition: transform 0.25s ease, opacity 0.2s; }
 .slide-up-enter-from   { transform: translateY(40px); opacity: 0; }

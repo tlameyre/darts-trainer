@@ -2,22 +2,29 @@
 import AppIcon from '../AppIcon.vue'
 
 defineProps({
-  darts: { type: Array, required: true },   // fléchettes actuelles (0-3)
-  volleyNumber: { type: Number, required: true },
-  bust: { type: Boolean, default: false },
+  darts:        { type: Array,   required: true },   // fléchettes actuelles (0-3)
+  volleyNumber: { type: Number,  required: true },
+  bust:         { type: Boolean, default: false },
+  inputMode:    { type: String,  default: 'dart' },  // 'dart' | 'volley'
 })
+
+defineEmits(['toggle-mode'])
 </script>
 
 <template>
   <div class="slots">
     <div class="slots__tour-row">
       <span class="slots__tour-label">TOUR {{ volleyNumber }}</span>
+      <span class="slots__mode-badge" :class="`slots__mode-badge--${inputMode}`">
+        {{ inputMode === 'dart' ? 'Fléchette / fléchette' : 'Volée totale' }}
+      </span>
     </div>
 
     <div class="slots__bar" :class="{ 'slots__bar--bust': bust }">
-      <div class="slots__icon">
+      <!-- Icone dartboard = bouton de toggle -->
+      <button class="slots__icon" @click="$emit('toggle-mode')" :disabled="bust">
         <AppIcon name="dartboard" :width="30" :height="30" />
-      </div>
+      </button>
 
       <template v-if="!bust">
         <div v-for="i in 3" :key="i" class="slots__slot">
@@ -51,6 +58,26 @@ defineProps({
     @include title-md;
   }
 
+  &__mode-badge {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    border-radius: $radius-pill;
+    transition: background 0.2s, color 0.2s;
+
+    &--dart {
+      background: rgba($white, 0.1);
+      color: $muted;
+    }
+
+    &--volley {
+      background: rgba($orange, 0.2);
+      color: $orange;
+    }
+  }
+
   &__bar {
     display: flex;
     align-items: stretch;
@@ -72,6 +99,10 @@ defineProps({
     padding-right: $padding-md;
     color: $black;
     flex-shrink: 0;
+    transition: opacity 0.15s;
+
+    &:active { opacity: 0.5; }
+    &:disabled { opacity: 0.4; }
   }
 
   &__slot {
@@ -107,7 +138,6 @@ defineProps({
 .slot-pop-enter-active {
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
-
 .slot-pop-enter-from {
   transform: scale(0.5);
   opacity: 0;
