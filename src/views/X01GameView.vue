@@ -23,7 +23,6 @@ const {
   currentDarts,
   phase,
   legRemaining,
-  displayRemaining,
   legNumber,
   volleyNumber,
   addDart,
@@ -69,7 +68,7 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
     <div v-if="!isBust && phase === 'playing'" class="x01__game">
       <X01StatsCard
         class="x01__stats-card"
-        :remaining="displayRemaining"
+        :remaining="legRemaining"
         :leg-number="legNumber"
         :legs-to-win="settings.legsToWin"
         :volley-number="volleyNumber"
@@ -91,7 +90,7 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
     <div v-else-if="isBust" class="x01__game">
       <X01StatsCard
         class="x01__stats-card"
-        :remaining="displayRemaining"
+        :remaining="legRemaining"
         :leg-number="legNumber"
         :legs-to-win="settings.legsToWin"
         :volley-number="volleyNumber"

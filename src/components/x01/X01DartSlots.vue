@@ -6,16 +6,6 @@ defineProps({
   volleyNumber: { type: Number,  required: true },
   bust:         { type: Boolean, default: false },
 })
-
-function dartColor(dart) {
-  if (!dart) return 'transparent'
-  if (dart.type === 'miss')                           return 'rgba(255,255,255,0.3)'
-  if (dart.type === 'double')                         return '#36cc86'
-  if (dart.type === 'triple')                         return '#D64A24'
-  if (dart.type === 'bull' && dart.pts === 50)        return '#B21327'
-  if (dart.type === 'bull' && dart.pts === 25)        return '#36cc86'
-  return '#ffffff'
-}
 </script>
 
 <template>
@@ -36,7 +26,6 @@ function dartColor(dart) {
               v-if="darts[i - 1]"
               :key="darts[i - 1].label + i"
               class="slots__dart"
-              :style="{ color: dartColor(darts[i - 1]) }"
             >
               {{ darts[i - 1].label }}
             </span>
