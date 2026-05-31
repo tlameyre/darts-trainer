@@ -8,6 +8,7 @@ import X01StatsCard from '../components/x01/X01StatsCard.vue'
 import X01DartSlots from '../components/x01/X01DartSlots.vue'
 import X01BottomBar from '../components/x01/X01BottomBar.vue'
 import X01Result from '../components/x01/X01Result.vue'
+import X01DoublesModal from '../components/x01/X01DoublesModal.vue'
 import WarmupGrid from '../components/warmup/WarmupGrid.vue'
 import AppIcon from '../components/AppIcon.vue'
 
@@ -26,9 +27,11 @@ const {
   legNumber,
   volleyNumber,
   volleyCompleting,
+  pendingDoublesPrompt,
   addDart,
   addMiss,
   undo,
+  confirmDoublesAttempted,
   startNextLeg,
   stats,
 } = useX01(settings)
@@ -150,6 +153,12 @@ const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 
         </div>
       </div>
     </Transition>
+
+    <!-- ── Modal : doubles tentés ────────────────────────────────────────── -->
+    <X01DoublesModal
+      :show="pendingDoublesPrompt"
+      @confirm="confirmDoublesAttempted"
+    />
 
     <!-- ── Résultats finaux ───────────────────────────────────────────────── -->
     <Transition name="slide-up">

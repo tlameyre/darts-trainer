@@ -2,12 +2,12 @@
 import { computed } from 'vue'
 
 const props = defineProps({
-  remaining:    { type: Number, required: true },
-  legNumber:    { type: Number, required: true },
-  legsToWin:    { type: Number, required: true },
+  remaining: { type: Number, required: true },
+  legNumber: { type: Number, required: true },
+  legsToWin: { type: Number, required: true },
   volleyNumber: { type: Number, required: true },
-  volleys:      { type: Array,  required: true }, // volées de la manche en cours
-  currentDarts: { type: Array,  required: true }, // fléchettes de la volée courante
+  volleys: { type: Array, required: true }, // volées de la manche en cours
+  currentDarts: { type: Array, required: true }, // fléchettes de la volée courante
 })
 
 /** Total de fléchettes lancées dans la manche (y compris volée courante) */
@@ -22,18 +22,11 @@ const avgVolley = computed(() => {
   const avg = Math.round(valid.reduce((s, v) => s + v.score, 0) / valid.length)
   return avg
 })
-
-/** Score restant coloré selon la zone de checkout */
-const remainingColor = computed(() => {
-  if (props.remaining <= 40)  return '#36cc86'   // checkout facile
-  if (props.remaining <= 170) return '#f59e0b'   // checkout possible
-  return '#ffffff'
-})
 </script>
 
 <template>
   <div class="stats-card">
-    <div class="stats-card__score" :style="{ color: remainingColor }">
+    <div class="stats-card__score">
       {{ remaining }}
     </div>
     <div class="stats-card__rows">
@@ -105,8 +98,13 @@ const remainingColor = computed(() => {
 
 @media (min-width: $bp-tablet) {
   .stats-card {
-    &__label  { @include text-lg; }
-    &__value  { @include title-lg; }
+    &__label {
+      @include text-lg;
+    }
+
+    &__value {
+      @include title-lg;
+    }
   }
 }
 </style>
