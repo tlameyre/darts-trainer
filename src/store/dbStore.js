@@ -123,6 +123,18 @@ export async function fetchProfileStats() {
   return { totalSessions, totalDarts, avgAccuracy, bestAccuracy, bestStreak, totalCorrect, avgAccuracy10, avg80eligible }
 }
 
+export async function fetchX01Sessions(limit = 20) {
+  if (!user.value) return []
+  const { data, error } = await supabase
+    .from('x01_sessions')
+    .select('*')
+    .eq('user_id', user.value.id)
+    .order('played_at', { ascending: false })
+    .limit(limit)
+  if (error) return []
+  return data
+}
+
 export async function fetchGlobalStats() {
   if (!user.value) return null
 
