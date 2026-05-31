@@ -13,6 +13,8 @@ import RegisterView from "../views/RegisterView.vue";
 import ProfileView from "../views/ProfileView.vue";
 import ProfileEditView from "../views/ProfileEditView.vue";
 import BadgesView from "../views/BadgesView.vue";
+import X01SettingsView from "../views/X01SettingsView.vue";
+import X01GameView from "../views/X01GameView.vue";
 
 const routes = [
   // Auth
@@ -50,6 +52,13 @@ const routes = [
     path: "/warmup/play",
     name: "warmup-game",
     component: WarmupGameView,
+    meta: { hideNav: true },
+  },
+  { path: "/501", name: "x01-settings", component: X01SettingsView },
+  {
+    path: "/501/play",
+    name: "x01-game",
+    component: X01GameView,
     meta: { hideNav: true },
   },
 ];

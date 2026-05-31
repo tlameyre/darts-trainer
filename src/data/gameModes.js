@@ -17,4 +17,11 @@ export const GAME_MODES = [
     color:         '#1D4ED8',
     settingsRoute: 'warmup-settings',
   },
+  {
+    id:            'x01',
+    title:         '501',
+    description:   'Descends de 501 (ou 301) à 0 en comptant tes volées. Analyse tes moyennes et tes checkouts.',
+    color:         '#047857',
+    settingsRoute: 'x01-settings',
+  },
 ]
