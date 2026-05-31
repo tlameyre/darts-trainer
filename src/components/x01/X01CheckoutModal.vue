@@ -42,6 +42,9 @@ function confirm() {
         <div class="checkout-modal__header">
           <span class="checkout-modal__trophy">🏆</span>
           <p class="checkout-modal__title">Checkout {{ checkoutScore }} !</p>
+          <button class="checkout-modal__close" @click="confirm">
+            <AppIcon name="close" :width="16" :height="16" />
+          </button>
         </div>
 
         <!-- Fléchettes pour finir -->
@@ -119,15 +122,26 @@ function confirm() {
   &__header {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: $gap-sm;
   }
 
-  &__trophy { font-size: 28px; line-height: 1; }
+  &__trophy { font-size: 28px; line-height: 1; flex-shrink: 0; }
 
   &__title {
     @include title-xl;
     color: $white;
+    flex: 1;
+  }
+
+  &__close {
+    color: $muted;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: $padding-xxs;
+    flex-shrink: 0;
+    transition: color 0.15s;
+    &:active { color: $white; }
   }
 
   &__group {

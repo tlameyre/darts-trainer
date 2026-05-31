@@ -15,7 +15,7 @@ defineEmits(['finish', 'quit', 'close'])
         <div class="menu-modal__header">
           <span class="menu-modal__title">Partie en cours</span>
           <button class="menu-modal__close" @click="$emit('close')">
-            <AppIcon name="stop" :width="20" :height="20" />
+            <AppIcon name="close" :width="20" :height="20" />
           </button>
         </div>
 

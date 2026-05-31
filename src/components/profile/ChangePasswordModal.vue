@@ -43,7 +43,7 @@ function onClose() {
         <div class="modal__header">
           <span class="modal__title">Changer de mot de passe</span>
           <button class="modal__close" @click="onClose">
-            <AppIcon name="stop" :width="18" :height="18" />
+            <AppIcon name="close" :width="18" :height="18" />
           </button>
         </div>
 

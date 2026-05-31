@@ -1,9 +1,12 @@
 <script setup>
+import AppIcon from '../AppIcon.vue'
+
 defineProps({
   show: { type: Boolean, default: false },
 })
 
 defineEmits(['confirm'])
+
 </script>
 
 <template>
@@ -11,7 +14,12 @@ defineEmits(['confirm'])
     <div v-if="show" class="doubles-modal">
       <div class="doubles-modal__backdrop" />
       <div class="doubles-modal__sheet">
-        <p class="doubles-modal__title">Combien de doubles tentés ?</p>
+        <div class="doubles-modal__header">
+          <p class="doubles-modal__title">Combien de doubles tentés ?</p>
+          <button class="doubles-modal__close" @click="$emit('confirm', 0)">
+            <AppIcon name="close" :width="16" :height="16" />
+          </button>
+        </div>
         <p class="doubles-modal__hint">Incluant les doubles manqués dans cette volée</p>
         <div class="doubles-modal__options">
           <button
@@ -55,10 +63,25 @@ defineEmits(['confirm'])
     gap: $gap-md;
   }
 
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   &__title {
     @include title-lg;
     color: $white;
-    text-align: center;
+  }
+
+  &__close {
+    color: $muted;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: $padding-xxs;
+    transition: color 0.15s;
+    &:active { color: $white; }
   }
 
   &__hint {

@@ -2,8 +2,8 @@
 import AppIcon from '../AppIcon.vue'
 
 const props = defineProps({
-  show:     { type: Boolean, required: true },
-  badge:    { type: Object, default: null },   // { id, label, description, icon, unlockedAt? }
+  show: { type: Boolean, required: true },
+  badge: { type: Object, default: null },   // { id, label, description, icon, unlockedAt? }
   progress: { type: Object, default: null },   // { current, target, suffix } ou null
 })
 
@@ -25,7 +25,7 @@ function pct(progress) {
       <div class="badge-modal__panel">
 
         <button class="badge-modal__close" @click="$emit('close')">
-          <AppIcon name="stop" :width="18" :height="18" />
+          <AppIcon name="close" :width="24" :height="24" />
         </button>
 
         <div class="badge-modal__icon" :class="{ 'badge-modal__icon--locked': !badge.unlockedAt }">
@@ -50,10 +50,7 @@ function pct(progress) {
             </span>
           </div>
           <div class="badge-modal__progress-bar">
-            <div
-              class="badge-modal__progress-fill"
-              :style="{ width: pct(progress) + '%' }"
-            />
+            <div class="badge-modal__progress-fill" :style="{ width: pct(progress) + '%' }" />
           </div>
         </div>
 
@@ -97,7 +94,10 @@ function pct(progress) {
     right: $padding-md;
     color: $muted;
     display: flex;
-    &:active { color: $text-color; }
+
+    &:active {
+      color: $text-color;
+    }
   }
 
   &__icon {
@@ -173,7 +173,12 @@ function pct(progress) {
 }
 
 .modal-enter-active,
-.modal-leave-active { transition: opacity 0.2s; }
+.modal-leave-active {
+  transition: opacity 0.2s;
+}
+
 .modal-enter-from,
-.modal-leave-to { opacity: 0; }
+.modal-leave-to {
+  opacity: 0;
+}
 </style>
