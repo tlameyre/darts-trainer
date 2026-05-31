@@ -14,18 +14,22 @@ import GameOver from '../components/GameOver.vue'
 import GameMenuModal from '../components/game/GameMenuModal.vue'
 import ChangeEmailModal from '../components/profile/ChangeEmailModal.vue'
 import ChangePasswordModal from '../components/profile/ChangePasswordModal.vue'
+import X01DoublesModal from '../components/x01/X01DoublesModal.vue'
+import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
 
 const router = useRouter()
 
 // --- Overlays / modals ---
-const unlockBadges      = ref([])
-const showBadgeDetail   = ref(false)
-const badgeDetail       = ref(null)
-const badgeProgress     = ref(null)
-const showGameOver      = ref(false)
-const showGameMenu      = ref(false)
-const showEmailModal    = ref(false)
-const showPasswordModal = ref(false)
+const unlockBadges        = ref([])
+const showBadgeDetail     = ref(false)
+const badgeDetail         = ref(null)
+const badgeProgress       = ref(null)
+const showGameOver        = ref(false)
+const showGameMenu        = ref(false)
+const showEmailModal      = ref(false)
+const showPasswordModal   = ref(false)
+const showDoublesModal    = ref(false)
+const showCheckoutModal   = ref(false)
 
 // Mock data
 const mockBadge = { ...BADGES[0], unlockedAt: new Date().toISOString() }
@@ -59,6 +63,8 @@ const views = [
   { name: 'badges',         label: 'Badges' },
   { name: 'score-settings', label: 'Réglages Score' },
   { name: 'warmup-settings',label: 'Réglages Warmup' },
+  { name: 'x01-settings',  label: 'Réglages 501' },
+  { name: 'x01-game',      label: 'Partie 501' },
   { name: 'login',          label: 'Login' },
   { name: 'register',       label: 'Register' },
 ]
@@ -80,6 +86,8 @@ const views = [
         <button class="dev__btn" @click="showGameMenu = true">Menu de partie</button>
         <button class="dev__btn" @click="showEmailModal = true">Changer email</button>
         <button class="dev__btn" @click="showPasswordModal = true">Changer mot de passe</button>
+        <button class="dev__btn" @click="showDoublesModal = true">X01 — Doubles tentés</button>
+        <button class="dev__btn" @click="showCheckoutModal = true">X01 — Checkout</button>
       </div>
     </section>
 
@@ -114,6 +122,9 @@ const views = [
       @close="showEmailModal = false" @save="showEmailModal = false" />
     <ChangePasswordModal :show="showPasswordModal"
       @close="showPasswordModal = false" @save="showPasswordModal = false" />
+    <X01DoublesModal :show="showDoublesModal" @confirm="showDoublesModal = false" />
+    <X01CheckoutModal :show="showCheckoutModal" :default-darts="2" :checkout-score="40"
+      @confirm="showCheckoutModal = false" />
   </div>
 </template>
 
