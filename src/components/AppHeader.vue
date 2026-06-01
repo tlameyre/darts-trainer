@@ -3,6 +3,7 @@ import AppIcon from './AppIcon.vue'
 
 defineProps({
   title: { type: String, default: 'DARTS TRAINER' },
+  backIcon: { type: String, default: 'arrow-left' },
 })
 
 defineEmits(['back'])
@@ -11,7 +12,7 @@ defineEmits(['back'])
 <template>
   <header class="app-header">
     <button class="app-header__back" @click="$emit('back')">
-      <AppIcon name="arrow-left" :width="24" :height="24" />
+      <AppIcon :name="backIcon" :width="24" :height="24" />
     </button>
 
     <h1 class="app-header__title">{{ title }}</h1>
@@ -37,7 +38,9 @@ defineEmits(['back'])
     padding: $padding-xxs;
     transition: opacity 0.15s;
 
-    &:active { opacity: 0.6; }
+    &:active {
+      opacity: 0.6;
+    }
   }
 
   &__title {
@@ -53,6 +56,12 @@ defineEmits(['back'])
     display: flex;
     align-items: center;
     justify-content: flex-end;
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .app-header__title {
+    @include title-xl;
   }
 }
 </style>

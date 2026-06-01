@@ -82,9 +82,7 @@ function startGame() {
     flex: 1;
     display: flex;
     flex-direction: column;
-    max-width: 420px;
     width: 100%;
-    margin: 0 auto;
     gap: $gap-xxl;
     padding: $padding-md 0;
   }
@@ -93,11 +91,6 @@ function startGame() {
     display: flex;
     flex-direction: column;
     gap: $gap-md;
-  }
-
-  .btn {
-    max-width: 420px;
-    margin: 0 auto;
   }
 }
 </style>

@@ -66,7 +66,6 @@ function next() {
     flex-direction: column;
     align-items: center;
     gap: $gap-md;
-    max-width: 320px;
     text-align: center;
   }
 
@@ -127,5 +126,27 @@ function next() {
 .overlay-enter-from,
 .overlay-leave-to {
   opacity: 0;
+}
+
+@media (min-width: $bp-laptop) {
+  .badge-overlay__card {
+    gap: $gap-lg;
+  }
+
+  .badge-overlay__icon {
+    @include display-xl;
+  }
+
+  .badge-overlay__label {
+    @include title-xxl;
+  }
+
+  .badge-overlay__desc {
+    @include text-md;
+  }
+
+  .badge-overlay__hint {
+    @include text-sm;
+  }
 }
 </style>

@@ -125,4 +125,24 @@ function cellSelected(n) {
     }
   }
 }
+
+@media (min-width: $bp-tablet) {
+  .zone-picker {
+    flex: 1;
+
+    &__grid {
+      flex: 1;
+    }
+
+    &__cell {
+      @include title-xxl;
+      aspect-ratio: inherit
+    }
+
+    &__cell--bull {
+      padding: 0;
+      @include title-xl;
+    }
+  }
+}
 </style>

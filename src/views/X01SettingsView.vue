@@ -8,10 +8,10 @@ import { gameSettings } from '../store/gameStore.js'
 const router = useRouter()
 
 const SCORE_OPTIONS = [301, 501]
-const LEGS_OPTIONS  = [1, 2, 3, 5]
+const LEGS_OPTIONS = [1, 2, 3, 5]
 
 const settings = reactive({
-  scoreKey:  501,   // 301 | 501 | 'custom'
+  scoreKey: 501,   // 301 | 501 | 'custom'
   legsToWin: 2,
 })
 const customScore = ref(401)
@@ -25,9 +25,9 @@ const effectiveScore = computed(() => {
 
 function startGame() {
   gameSettings.value = {
-    mode:      'x01',
+    mode: 'x01',
     startScore: effectiveScore.value,
-    legsToWin:  settings.legsToWin,
+    legsToWin: settings.legsToWin,
   }
   router.push({ name: 'x01-game' })
 }
@@ -43,35 +43,18 @@ function startGame() {
       <div class="settings__card">
         <div class="settings__section-label">Score de départ</div>
         <div class="settings__score-row">
-          <AppButton
-            v-for="s in SCORE_OPTIONS"
-            :key="s"
-            size="small"
-            variant="ghost"
-            :active="settings.scoreKey === s"
-            @click="settings.scoreKey = s"
-          >
+          <AppButton v-for="s in SCORE_OPTIONS" :key="s" size="small" variant="ghost" :active="settings.scoreKey === s"
+            @click="settings.scoreKey = s">
             {{ s }}
           </AppButton>
-          <AppButton
-            size="small"
-            variant="ghost"
-            :active="isCustomScore"
-            @click="settings.scoreKey = 'custom'"
-          >
+          <AppButton size="small" variant="ghost" :active="isCustomScore" @click="settings.scoreKey = 'custom'">
             Custom
           </AppButton>
         </div>
         <Transition name="slide-fade">
           <div v-if="isCustomScore" class="settings__custom-field">
-            <input
-              v-model.number="customScore"
-              type="number"
-              min="1"
-              max="9999"
-              class="settings__custom-input"
-              placeholder="ex: 701"
-            />
+            <input v-model.number="customScore" type="number" min="1" max="9999" class="settings__custom-input"
+              placeholder="ex: 701" />
             <span class="settings__custom-label">pts</span>
           </div>
         </Transition>
@@ -81,14 +64,8 @@ function startGame() {
       <div class="settings__card">
         <div class="settings__section-label">Manches à gagner</div>
         <div class="settings__legs-row">
-          <AppButton
-            v-for="l in LEGS_OPTIONS"
-            :key="l"
-            size="small"
-            variant="ghost"
-            :active="settings.legsToWin === l"
-            @click="settings.legsToWin = l"
-          >
+          <AppButton v-for="l in LEGS_OPTIONS" :key="l" size="small" variant="ghost" :active="settings.legsToWin === l"
+            @click="settings.legsToWin = l">
             {{ l }}
           </AppButton>
         </div>
@@ -183,14 +160,27 @@ function startGame() {
     padding: $padding-xl $padding-xl calc($padding-xxl + 64px);
     gap: $gap-lg;
 
-    &__main { gap: $gap-xxl; padding: $padding-lg 0; }
+    &__main {
+      gap: $gap-xxl;
+      padding: $padding-lg 0;
+    }
 
-    &__section-label { @include title-xl; }
+    &__section-label {
+      @include title-xl;
+    }
 
-    &__custom-input { @include title-lg; padding: $padding-sm $padding-md; }
-    &__custom-label { @include title-lg; }
+    &__custom-input {
+      @include title-lg;
+      padding: $padding-sm $padding-md;
+    }
 
-    &__legs-hint { @include title-md; }
+    &__custom-label {
+      @include title-lg;
+    }
+
+    &__legs-hint {
+      @include title-md;
+    }
   }
 }
 
@@ -198,6 +188,7 @@ function startGame() {
 .slide-fade-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
+
 .slide-fade-enter-from,
 .slide-fade-leave-to {
   opacity: 0;

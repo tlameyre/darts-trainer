@@ -118,4 +118,34 @@ const scoreColorStreak = computed(() => {
     }
   }
 }
+
+@media (min-width: $bp-laptop) {
+  .game-over__title {
+    @include title-xxl;
+  }
+
+  .game-over__score {
+    @include display-xl;
+
+    span {
+      @include display-md;
+    }
+  }
+
+  .game-over__label {
+    @include text-xl;
+  }
+
+  .game-over__stat {
+    @include text-xl;
+
+    strong {
+      @include title-xxl;
+    }
+  }
+
+  .game-over__stat-label {
+    @include title-xxl;
+  }
+}
 </style>

@@ -80,7 +80,6 @@ function startGame() {
     flex: 1;
     display: flex;
     flex-direction: column;
-    max-width: 420px;
     width: 100%;
     margin: 0 auto;
     gap: $gap-xxl;
@@ -163,17 +162,18 @@ function startGame() {
     @include title-md;
     white-space: nowrap;
   }
+}
 
-  .btn {
-    max-width: 420px;
-    margin: 0 auto;
-  }
+@media (min-width: $bp-tablet) {
+  .settings {
+    padding: $padding-xl $padding-xl calc($padding-xxl + 64px);
 
-  @media (min-width: $bp-tablet) {
-    padding: $padding-xxl;
+    &__card:last-child {
+      flex: 1;
+    }
 
-    &__main {
-      max-width: none;
+    &__section-label {
+      @include title-xl;
     }
   }
 }

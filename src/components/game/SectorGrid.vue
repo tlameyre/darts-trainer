@@ -66,8 +66,8 @@ function tapOuter() {
   <div class="sector-grid">
     <button v-for="tab in TABS" :key="tab.id" class="sector-grid__tab"
       :class="{ 'sector-grid__tab--active': activeTab === tab.id }" @click="activeTab = tab.id">{{ tab.label }}</button>
-    <button class="sector-grid__tab sector-grid__tab--sb" :class="{ 'sector-grid__tab--pressed': pressedKey === 'outer' }"
-      @click="tapOuter">SB</button>
+    <button class="sector-grid__tab sector-grid__tab--sb"
+      :class="{ 'sector-grid__tab--pressed': pressedKey === 'outer' }" @click="tapOuter">SB</button>
     <button class="sector-grid__tab sector-grid__tab--b" :class="{ 'sector-grid__tab--pressed': pressedKey === 'bull' }"
       @click="tapBull">B</button>
     <template v-for="row in GRID_ROWS" :key="row[0]">
@@ -88,20 +88,6 @@ function tapOuter() {
   width: 100%;
   border-top: $border-md solid $white;
   border-left: $border-md solid $white;
-}
-
-@media (min-width: $bp-tablet) {
-  .sector-grid {
-    flex: 1;
-    min-height: 0;
-    align-self: stretch;
-    grid-template-rows: repeat(5, 1fr);
-  }
-
-  .sector-grid__tab,
-  .sector-grid__cell {
-    aspect-ratio: unset;
-  }
 }
 
 .sector-grid__tab {
@@ -160,5 +146,21 @@ function tapOuter() {
   &-pts {
     @include title-xs;
   }
+}
+
+@media (min-width: $bp-laptop) {
+  .sector-grid {
+    flex: 1;
+  }
+
+  .sector-grid__tab,
+  .sector-grid__cell {
+    flex: 1;
+    aspect-ratio: inherit;
+  }
+
+  .sector-grid__tab { @include title-xxxl; }
+  .sector-grid__cell-num { @include title-xxxl; }
+  .sector-grid__cell-pts { @include title-sm; }
 }
 </style>

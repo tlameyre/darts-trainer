@@ -102,4 +102,16 @@ defineProps({
     color: $white;
   }
 }
+
+@media (min-width: $bp-laptop) {
+  .btn--big {
+    @include title-lg;
+    padding: $padding-lg $padding-xxl;
+  }
+
+  .btn--small {
+    @include title-md;
+    padding: $padding-sm $padding-lg;
+  }
+}
 </style>

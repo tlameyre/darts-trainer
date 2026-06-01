@@ -28,16 +28,16 @@ watch(gameOver, async (val) => {
   if (val) {
     const duration = gameSettings.value?.duration
     await saveWarmupSession({
-      zone:        currentZone.value,
-      totalDarts:  sessionStats.value.total,
-      hits:        sessionStats.value.hits,
-      durationS:   duration !== null ? duration * 60 : null,
-      settings:    gameSettings.value,
+      zone: currentZone.value,
+      totalDarts: sessionStats.value.total,
+      hits: sessionStats.value.hits,
+      durationS: duration !== null ? duration * 60 : null,
+      settings: gameSettings.value,
     })
     const stats = await fetchProfileStats()
     newBadges.value = await checkWarmupBadges({
-      totalDarts:      sessionStats.value.total,
-      accuracy:        sessionStats.value.accuracy,
+      totalDarts: sessionStats.value.total,
+      accuracy: sessionStats.value.accuracy,
       cumulativeStats: stats,
     })
   }
@@ -69,9 +69,9 @@ const tourNumber = computed(() => {
 })
 
 const statsRows = computed(() => [
-  { label: 'Fléchettes jetées',   value: currentZoneStats.value.total },
+  { label: 'Fléchettes jetées', value: currentZoneStats.value.total },
   { label: 'Fléchettes touchées', value: currentZoneStats.value.hits },
-  { label: 'Taux de réussite',    value: `${currentZoneStats.value.accuracy}%` },
+  { label: 'Taux de réussite', value: `${currentZoneStats.value.accuracy}%` },
 ])
 
 const displayedDarts = computed(() => {
@@ -112,14 +112,8 @@ onUnmounted(() => {
             </div>
           </template>
         </DartSlotsHeader>
-        <GameInput
-          :darts="displayedDarts"
-          value-key="pts"
-          :locked="justCompleted"
-          @dart="recordDart"
-          @miss="recordDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })"
-          @undo="undoLast"
-        >
+        <GameInput :darts="displayedDarts" value-key="pts" :locked="justCompleted" @dart="recordDart"
+          @miss="recordDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })" @undo="undoLast">
           <template #right>
             <button class="warmup__stop-btn" @click="endSession">
               <AppIcon name="stop" :width="24" :height="24" />
@@ -130,8 +124,7 @@ onUnmounted(() => {
     </div>
 
     <WarmupRecap v-else :zoneRecapStats="zoneRecapStats" :sessionStats="sessionStats"
-      @restart="router.push({ name: 'warmup-game', query: { t: Date.now() } })"
-      @home="router.push({ name: 'play' })" />
+      @restart="router.push({ name: 'warmup-game', query: { t: Date.now() } })" @home="router.push({ name: 'play' })" />
 
     <WarmupZoneModal :show="showZoneModal" :zone="currentZone" @update:show="showZoneModal = $event"
       @confirm="zone => { changeZone(zone); showZoneModal = false }" />
@@ -158,7 +151,9 @@ onUnmounted(() => {
   justify-content: center;
   transition: opacity 0.15s;
 
-  &:active { opacity: 0.6; }
+  &:active {
+    opacity: 0.6;
+  }
 }
 
 .warmup__game {
@@ -182,7 +177,9 @@ onUnmounted(() => {
   gap: $gap-xs;
   transition: color 0.3s;
 
-  &--urgent { color: $error; }
+  &--urgent {
+    color: $error;
+  }
 }
 
 .warmup__timer-text {
@@ -216,9 +213,10 @@ onUnmounted(() => {
 
   .warmup__game-main {
     flex: 1;
-    margin: auto;
   }
 
-  .warmup__timer { @include title-lg; }
+  .warmup__timer {
+    @include title-lg;
+  }
 }
 </style>
