@@ -153,8 +153,6 @@ async function onPasswordSave(newPassword) {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  max-width: 420px;
-  margin: 0 auto;
   padding: $padding-md;
   gap: $gap-md;
 
@@ -255,6 +253,31 @@ async function onPasswordSave(newPassword) {
     @include text-sm;
     color: $accent;
     text-align: center;
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .profile-edit {
+    padding: $padding-xl;
+    gap: $gap-lg;
+
+    &__save-btn    { @include title-md; }
+
+    &__main { gap: $gap-xl; }
+
+    &__section-title { @include title-md; }
+
+    &__label { @include text-md; }
+    &__input {
+      @include text-md;
+      padding: $padding-md $padding-lg;
+    }
+
+    &__account-item  { padding: $padding-md $padding-lg; }
+    &__account-label { @include text-sm; }
+    &__account-value { @include text-md; }
+
+    &__feedback { @include text-md; }
   }
 }
 </style>

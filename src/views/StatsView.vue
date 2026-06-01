@@ -4,11 +4,11 @@ import { fetchGlobalStats, fetchGameSessions, fetchWarmupSessions, fetchX01Sessi
 import StatsSessionModal from '../components/stats/StatsSessionModal.vue'
 
 // ── Données réelles ───────────────────────────────────────────────────────────
-const globalStats    = ref(null)
-const gameSessions   = ref([])
+const globalStats = ref(null)
+const gameSessions = ref([])
 const warmupSessions = ref([])
-const x01Sessions    = ref([])
-const loading        = ref(true)
+const x01Sessions = ref([])
+const loading = ref(true)
 
 // ── Données fictives (dev uniquement) ────────────────────────────────────────
 const MOCK_GLOBAL = {
@@ -20,11 +20,11 @@ const MOCK_GLOBAL = {
   },
 }
 const MOCK_GAME = [
-  { id: 1, correct_count: 17, total_questions: 20, best_streak: 9,  played_at: '2025-05-28T18:32:00Z' },
-  { id: 2, correct_count: 14, total_questions: 20, best_streak: 6,  played_at: '2025-05-27T20:11:00Z' },
+  { id: 1, correct_count: 17, total_questions: 20, best_streak: 9, played_at: '2025-05-28T18:32:00Z' },
+  { id: 2, correct_count: 14, total_questions: 20, best_streak: 6, played_at: '2025-05-27T20:11:00Z' },
   { id: 3, correct_count: 18, total_questions: 20, best_streak: 18, played_at: '2025-05-26T19:45:00Z' },
-  { id: 4, correct_count: 12, total_questions: 20, best_streak: 5,  played_at: '2025-05-25T17:00:00Z' },
-  { id: 5, correct_count: 15, total_questions: 20, best_streak: 8,  played_at: '2025-05-24T21:30:00Z' },
+  { id: 4, correct_count: 12, total_questions: 20, best_streak: 5, played_at: '2025-05-25T17:00:00Z' },
+  { id: 5, correct_count: 15, total_questions: 20, best_streak: 8, played_at: '2025-05-24T21:30:00Z' },
 ]
 const MOCK_WARMUP = [
   { id: 1, hits: 28, total_darts: 36, accuracy: 78, played_at: '2025-05-28T18:00:00Z' },
@@ -34,40 +34,40 @@ const MOCK_WARMUP = [
   { id: 5, hits: 26, total_darts: 33, accuracy: 79, played_at: '2025-05-24T21:10:00Z' },
 ]
 const MOCK_X01 = [
-  { id: 1, start_score: 501, legs_played: 3, avg_volley: 58, avg_9darts: 71, avg_darts_to_finish: 22, min_darts: 19, max_darts: 26, highest_finish: 96,  highest_volley: 140, played_at: '2025-05-28T19:00:00Z' },
-  { id: 2, start_score: 501, legs_played: 2, avg_volley: 51, avg_9darts: 64, avg_darts_to_finish: 25, min_darts: 24, max_darts: 26, highest_finish: 40,  highest_volley: 121, played_at: '2025-05-27T21:00:00Z' },
-  { id: 3, start_score: 301, legs_played: 4, avg_volley: 47, avg_9darts: 60, avg_darts_to_finish: 18, min_darts: 15, max_darts: 22, highest_finish: 60,  highest_volley: 100, played_at: '2025-05-26T20:00:00Z' },
+  { id: 1, start_score: 501, legs_played: 3, avg_volley: 58, avg_9darts: 71, avg_darts_to_finish: 22, min_darts: 19, max_darts: 26, highest_finish: 96, highest_volley: 140, played_at: '2025-05-28T19:00:00Z' },
+  { id: 2, start_score: 501, legs_played: 2, avg_volley: 51, avg_9darts: 64, avg_darts_to_finish: 25, min_darts: 24, max_darts: 26, highest_finish: 40, highest_volley: 121, played_at: '2025-05-27T21:00:00Z' },
+  { id: 3, start_score: 301, legs_played: 4, avg_volley: 47, avg_9darts: 60, avg_darts_to_finish: 18, min_darts: 15, max_darts: 22, highest_finish: 60, highest_volley: 100, played_at: '2025-05-26T20:00:00Z' },
   { id: 4, start_score: 501, legs_played: 3, avg_volley: 55, avg_9darts: 68, avg_darts_to_finish: 21, min_darts: 18, max_darts: 25, highest_finish: 110, highest_volley: 135, played_at: '2025-05-25T18:00:00Z' },
-  { id: 5, start_score: 501, legs_played: 2, avg_volley: 62, avg_9darts: 74, avg_darts_to_finish: 20, min_darts: 19, max_darts: 21, highest_finish: 72,  highest_volley: 180, played_at: '2025-05-24T22:00:00Z' },
+  { id: 5, start_score: 501, legs_played: 2, avg_volley: 62, avg_9darts: 74, avg_darts_to_finish: 20, min_darts: 19, max_darts: 21, highest_finish: 72, highest_volley: 180, played_at: '2025-05-24T22:00:00Z' },
 ]
 
 onMounted(async () => {
-  if (import.meta.env.DEV) {
-    globalStats.value    = MOCK_GLOBAL
-    gameSessions.value   = MOCK_GAME
-    warmupSessions.value = MOCK_WARMUP
-    x01Sessions.value    = MOCK_X01
-    loading.value        = false
-    return
-  }
+  // if (import.meta.env.DEV) {
+  //   globalStats.value    = MOCK_GLOBAL
+  //   gameSessions.value   = MOCK_GAME
+  //   warmupSessions.value = MOCK_WARMUP
+  //   x01Sessions.value    = MOCK_X01
+  //   loading.value        = false
+  //   return
+  // }
   const [s, gs, ws, x1] = await Promise.all([
     fetchGlobalStats(),
     fetchGameSessions(10),
     fetchWarmupSessions(10),
     fetchX01Sessions(10),
   ])
-  globalStats.value    = s
-  gameSessions.value   = gs
+  globalStats.value = s
+  gameSessions.value = gs
   warmupSessions.value = ws
-  x01Sessions.value    = x1
-  loading.value        = false
+  x01Sessions.value = x1
+  loading.value = false
 })
 
 // ── Sélecteur de mode ─────────────────────────────────────────────────────────
 const MODES = [
-  { id: 'score',  label: 'Score',  color: '#D64A24' },
+  { id: 'score', label: 'Score', color: '#D64A24' },
   { id: 'warmup', label: 'Warmup', color: '#1D4ED8' },
-  { id: 'x01',    label: '501',    color: '#047857' },
+  { id: 'x01', label: '501', color: '#047857' },
 ]
 const selectedMode = ref('score')
 const activeMode = computed(() => MODES.find(m => m.id === selectedMode.value))
@@ -77,22 +77,22 @@ const x01Stats = computed(() => {
   const sessions = x01Sessions.value
   if (!sessions.length) return null
   return {
-    sessions:          sessions.length,
-    avgVolley:         Math.round(sessions.reduce((s, r) => s + Number(r.avg_volley), 0) / sessions.length),
-    avg9darts:         Math.round(sessions.reduce((s, r) => s + Number(r.avg_9darts), 0) / sessions.length),
-    avgDartsToFinish:  Math.round(sessions.reduce((s, r) => s + Number(r.avg_darts_to_finish), 0) / sessions.length),
-    highestFinish:     Math.max(...sessions.map(r => r.highest_finish ?? 0)),
-    highestVolley:     Math.max(...sessions.map(r => r.highest_volley ?? 0)),
+    sessions: sessions.length,
+    avgVolley: Math.round(sessions.reduce((s, r) => s + Number(r.avg_volley), 0) / sessions.length),
+    avg9darts: Math.round(sessions.reduce((s, r) => s + Number(r.avg_9darts), 0) / sessions.length),
+    avgDartsToFinish: Math.round(sessions.reduce((s, r) => s + Number(r.avg_darts_to_finish), 0) / sessions.length),
+    highestFinish: Math.max(...sessions.map(r => r.highest_finish ?? 0)),
+    highestVolley: Math.max(...sessions.map(r => r.highest_volley ?? 0)),
   }
 })
 
 // ── Modale de détail ──────────────────────────────────────────────────────────
 const selectedSession = ref(null)
-const showDetail      = ref(false)
+const showDetail = ref(false)
 
 function openDetail(session) {
   selectedSession.value = session
-  showDetail.value      = true
+  showDetail.value = true
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -112,14 +112,9 @@ function accuracy(correct, total) {
 
       <!-- Sélecteur de mode -->
       <div class="stats__tabs">
-        <button
-          v-for="mode in MODES"
-          :key="mode.id"
-          class="stats__tab"
+        <button v-for="mode in MODES" :key="mode.id" class="stats__tab"
           :class="{ 'stats__tab--active': selectedMode === mode.id }"
-          :style="selectedMode === mode.id ? { '--tab-color': mode.color } : {}"
-          @click="selectedMode = mode.id"
-        >
+          :style="selectedMode === mode.id ? { '--tab-color': mode.color } : {}" @click="selectedMode = mode.id">
           {{ mode.label }}
         </button>
       </div>
@@ -155,7 +150,8 @@ function accuracy(correct, total) {
           <section v-if="gameSessions.length" class="stats__card">
             <h2 class="stats__section-title">Historique</h2>
             <ul class="stats__history">
-              <li v-for="s in gameSessions" :key="s.id" class="stats__history-item stats__history-item--btn" @click="openDetail(s)">
+              <li v-for="s in gameSessions" :key="s.id" class="stats__history-item stats__history-item--btn"
+                @click="openDetail(s)">
                 <div class="stats__history-left">
                   <span class="stats__history-score">{{ s.correct_count }}/{{ s.total_questions }}</span>
                   <span class="stats__history-badge">série {{ s.best_streak }}</span>
@@ -193,7 +189,8 @@ function accuracy(correct, total) {
           <section v-if="warmupSessions.length" class="stats__card">
             <h2 class="stats__section-title">Historique</h2>
             <ul class="stats__history">
-              <li v-for="s in warmupSessions" :key="s.id" class="stats__history-item stats__history-item--btn" @click="openDetail(s)">
+              <li v-for="s in warmupSessions" :key="s.id" class="stats__history-item stats__history-item--btn"
+                @click="openDetail(s)">
                 <div class="stats__history-left">
                   <span class="stats__history-score">{{ s.hits }}/{{ s.total_darts }}</span>
                   <span class="stats__history-badge">{{ s.accuracy }}%</span>
@@ -245,7 +242,8 @@ function accuracy(correct, total) {
           <section v-if="x01Sessions.length" class="stats__card">
             <h2 class="stats__section-title">Historique</h2>
             <ul class="stats__history">
-              <li v-for="s in x01Sessions" :key="s.id" class="stats__history-item stats__history-item--btn" @click="openDetail(s)">
+              <li v-for="s in x01Sessions" :key="s.id" class="stats__history-item stats__history-item--btn"
+                @click="openDetail(s)">
                 <div class="stats__history-left">
                   <span class="stats__history-score">{{ s.start_score }}</span>
                   <span class="stats__history-badge">{{ s.legs_played }} manche{{ s.legs_played > 1 ? 's' : '' }}</span>
@@ -264,12 +262,7 @@ function accuracy(correct, total) {
       </template>
     </main>
 
-    <StatsSessionModal
-      :show="showDetail"
-      :session="selectedSession"
-      :mode="selectedMode"
-      @close="showDetail = false"
-    />
+    <StatsSessionModal :show="showDetail" :session="selectedSession" :mode="selectedMode" @close="showDetail = false" />
   </div>
 </template>
 
@@ -278,8 +271,6 @@ function accuracy(correct, total) {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  max-width: 420px;
-  margin: 0 auto;
   padding: $padding-lg $padding-md calc($padding-xxl + 64px);
   gap: $gap-lg;
 
@@ -358,11 +349,18 @@ function accuracy(correct, total) {
     display: grid;
     gap: $gap-sm;
 
-    &--2 { grid-template-columns: repeat(2, 1fr); }
-    &--3 { grid-template-columns: repeat(3, 1fr); }
+    &--2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    &--3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
 
     // défaut : 3 colonnes
-    &:not([class*='--']) { grid-template-columns: repeat(3, 1fr); }
+    &:not([class*='--']) {
+      grid-template-columns: repeat(3, 1fr);
+    }
   }
 
   &__stat {
@@ -427,12 +425,17 @@ function accuracy(correct, total) {
     padding: $padding-xs 0;
     border-bottom: 1px solid rgba($white, 0.06);
 
-    &:last-child { border-bottom: none; }
+    &:last-child {
+      border-bottom: none;
+    }
 
     &--btn {
       cursor: pointer;
       transition: opacity 0.15s;
-      &:active { opacity: 0.6; }
+
+      &:active {
+        opacity: 0.6;
+      }
     }
   }
 
@@ -460,6 +463,43 @@ function accuracy(correct, total) {
     @include title-xs;
     color: $muted;
     flex-shrink: 0;
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .stats {
+    padding: $padding-xl $padding-xl calc($padding-xxl + 64px);
+    gap: $gap-xl;
+
+    &__header { gap: $gap-lg; padding-top: $padding-xl; }
+    &__title  { @include title-xxl; }
+
+    &__tab { @include title-md; padding: $padding-sm $padding-md; }
+
+    &__main { gap: $gap-lg; }
+
+    &__card {
+      padding: $padding-xl;
+      gap: $gap-lg;
+    }
+
+    &__section-title { @include title-md; }
+
+    &__stat        { padding: $padding-md $padding-sm; }
+    &__stat-value  { @include title-xxl; }
+    &__stat-label  { @include title-sm; }
+
+    &__stat-highlight        { padding: $padding-md $padding-lg; }
+    &__stat-highlight-label  { @include title-md; }
+    &__stat-highlight-value  { @include title-xxl; }
+
+    &__history-item   { padding: $padding-sm 0; }
+    &__history-score  { @include text-md; }
+    &__history-badge  { @include title-sm; }
+    &__history-date   { @include title-sm; }
+
+    &__loading,
+    &__empty { @include text-md; }
   }
 }
 </style>

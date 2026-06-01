@@ -146,8 +146,6 @@ async function onSignOut() {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  max-width: 420px;
-  margin: 0 auto;
   padding: $padding-md;
   gap: $gap-md;
 
@@ -308,6 +306,39 @@ async function onSignOut() {
   &__logout {
     color: $error;
     border-color: rgba($error, 0.3);
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .profile {
+    padding: $padding-xl;
+    gap: $gap-lg;
+
+    &__main { gap: $gap-xl; }
+
+    &__hero { gap: $gap-md; padding: $padding-xxl 0 $padding-lg; }
+
+    &__avatar {
+      width: 120px;
+      height: 120px;
+    }
+
+    &__avatar-initials { @include display-xs; }
+
+    &__name     { @include title-xxl; }
+    &__username { @include text-md; }
+
+    &__stats-card { padding: $padding-xl $padding-lg; }
+    &__stat-value { @include title-xxxl; }
+    &__stat-label { @include text-sm; }
+
+    &__badges-title { @include title-md; }
+    &__badges-more  { @include title-md; }
+    &__badges-grid  { grid-template-columns: repeat(6, 1fr); gap: $gap-md; }
+    &__badge        { padding: $padding-md; }
+    &__badge-icon   { @include title-xxxl; }
+    &__badge-label  { @include title-sm; }
+    &__badges-empty { @include title-md; }
   }
 }
 </style>

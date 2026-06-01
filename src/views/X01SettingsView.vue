@@ -115,9 +115,6 @@ function startGame() {
     flex: 1;
     display: flex;
     flex-direction: column;
-    max-width: 420px;
-    width: 100%;
-    margin: 0 auto;
     gap: $gap-xxl;
     padding: $padding-md 0;
   }
@@ -177,8 +174,23 @@ function startGame() {
   }
 
   :deep(.btn:last-child) {
-    max-width: 420px;
-    margin: 0 auto;
+    align-self: stretch;
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .settings {
+    padding: $padding-xl $padding-xl calc($padding-xxl + 64px);
+    gap: $gap-lg;
+
+    &__main { gap: $gap-xxl; padding: $padding-lg 0; }
+
+    &__section-label { @include title-xl; }
+
+    &__custom-input { @include title-lg; padding: $padding-sm $padding-md; }
+    &__custom-label { @include title-lg; }
+
+    &__legs-hint { @include title-md; }
   }
 }
 
