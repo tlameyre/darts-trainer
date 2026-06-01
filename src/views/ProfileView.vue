@@ -323,20 +323,18 @@ async function onSignOut() {
       height: 120px;
     }
 
-    &__avatar-initials { @include display-xs; }
+    &__avatar-initials { @include text-xxl; }
 
     &__name     { @include title-xxl; }
     &__username { @include text-md; }
 
     &__stats-card { padding: $padding-xl $padding-lg; }
-    &__stat-value { @include title-xxxl; }
     &__stat-label { @include text-sm; }
 
     &__badges-title { @include title-md; }
     &__badges-more  { @include title-md; }
-    &__badges-grid  { grid-template-columns: repeat(6, 1fr); gap: $gap-md; }
+    &__badges-grid  { gap: $gap-md; }
     &__badge        { padding: $padding-md; }
-    &__badge-icon   { @include title-xxxl; }
     &__badge-label  { @include title-sm; }
     &__badges-empty { @include title-md; }
   }
