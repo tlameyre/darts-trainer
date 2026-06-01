@@ -49,4 +49,8 @@ watch(() => props.show, (val) => {
     :deep(.btn) { flex: 1; }
   }
 }
+
+@media (min-width: $bp-laptop) {
+  .wz-modal__title { @include title-xl; }
+}
 </style>

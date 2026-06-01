@@ -82,4 +82,12 @@ defineEmits(['confirm'])
     }
   }
 }
+
+@media (min-width: $bp-laptop) {
+  .db-modal {
+    &__title { @include title-xl; }
+    &__hint  { @include title-md; }
+    &__btn   { @include text-xxl; padding: $padding-xl; }
+  }
+}
 </style>

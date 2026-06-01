@@ -239,4 +239,17 @@ function accuracy(hits, total) {
     font-variant-numeric: tabular-nums;
   }
 }
+
+@media (min-width: $bp-laptop) {
+  .ss-modal {
+    &__date            { @include title-md; }
+    &__mode-label      { @include title-sm; }
+    &__stat-value      { @include title-xxl; }
+    &__stat-label      { @include title-sm; }
+    &__row-label,
+    &__row-value       { @include title-md; }
+    &__highlight-label { @include title-md; }
+    &__highlight-value { @include title-xl; }
+  }
+}
 </style>

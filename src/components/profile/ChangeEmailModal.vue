@@ -93,4 +93,14 @@ function onClose() {
     color: $muted;
   }
 }
+
+@media (min-width: $bp-laptop) {
+  .ce-modal {
+    &__current { @include text-md; }
+    &__label   { @include text-md; }
+    &__input   { @include text-md; padding: $padding-md $padding-lg; }
+    &__error   { @include text-md; }
+    &__hint    { @include title-md; }
+  }
+}
 </style>

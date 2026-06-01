@@ -154,4 +154,13 @@ function confirm() {
     &:active { opacity: 0.8; }
   }
 }
+
+@media (min-width: $bp-laptop) {
+  .co-modal {
+    &__title   { @include title-xxl; }
+    &__label   { @include title-md; }
+    &__btn     { @include title-xxxl; padding: $padding-lg; }
+    &__confirm { @include title-lg; padding: $padding-lg; }
+  }
+}
 </style>

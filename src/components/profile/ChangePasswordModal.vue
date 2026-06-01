@@ -98,4 +98,12 @@ function onClose() {
     color: $error;
   }
 }
+
+@media (min-width: $bp-laptop) {
+  .cp-modal {
+    &__label { @include text-md; }
+    &__input  { @include text-md; padding: $padding-md $padding-lg; }
+    &__error  { @include text-md; }
+  }
+}
 </style>

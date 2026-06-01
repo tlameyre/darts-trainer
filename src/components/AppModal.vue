@@ -2,10 +2,10 @@
 import AppIcon from './AppIcon.vue'
 
 defineProps({
-  show:     { type: Boolean, required: true },
-  title:    { type: String,  default: '' },
-  zIndex:   { type: Number,  default: 100 },
-  size:     { type: String,  default: 'sm' }, // 'sm' | 'lg'
+  show: { type: Boolean, required: true },
+  title: { type: String, default: '' },
+  zIndex: { type: Number, default: 100 },
+  size: { type: String, default: 'sm' }, // 'sm' | 'lg'
   centered: { type: Boolean, default: false },
 })
 
@@ -15,18 +15,13 @@ defineEmits(['close'])
 <template>
   <Teleport to="body">
     <Transition name="app-sheet">
-      <div
-        v-if="show"
-        class="app-modal"
-        :class="{ 'app-modal--centered': centered }"
-        :style="{ zIndex }"
-      >
+      <div v-if="show" class="app-modal" :class="{ 'app-modal--centered': centered }" :style="{ zIndex }">
         <div class="app-modal__backdrop" @click="$emit('close')" />
         <div class="app-modal__sheet" :class="`app-modal__sheet--${size}`">
           <div v-if="title" class="app-modal__header">
             <span class="app-modal__title">{{ title }}</span>
             <button class="app-modal__close" @click="$emit('close')">
-              <AppIcon name="close" :width="18" :height="18" />
+              <AppIcon name="close" :width="24" :height="24" />
             </button>
           </div>
           <slot />
@@ -59,7 +54,6 @@ defineEmits(['close'])
   &__sheet {
     position: relative;
     width: 100%;
-    max-width: 420px;
     margin: 0 auto;
     background: #1e2b28;
     border-radius: $radius-lg $radius-lg 0 0;
@@ -69,11 +63,21 @@ defineEmits(['close'])
     &--sm {
       padding: $padding-md $padding-md $padding-xxl;
       gap: $gap-md;
+
+      @media (min-width: $bp-laptop) {
+        padding: $padding-xl $padding-xl $padding-xxl;
+        gap: $gap-lg;
+      }
     }
 
     &--lg {
       padding: $padding-xl $padding-md calc($padding-xl + env(safe-area-inset-bottom, 0px));
       gap: $gap-lg;
+
+      @media (min-width: $bp-laptop) {
+        padding: $padding-xxl $padding-xl calc($padding-xxl + env(safe-area-inset-bottom, 0px));
+        gap: $gap-xl;
+      }
     }
   }
 
@@ -98,6 +102,8 @@ defineEmits(['close'])
     color: $muted;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+
+    @media (min-width: $bp-laptop) { @include title-md; }
   }
 
   &__close {
@@ -105,7 +111,10 @@ defineEmits(['close'])
     display: flex;
     align-items: center;
     flex-shrink: 0;
-    &:active { color: $text-color; }
+
+    &:active {
+      color: $text-color;
+    }
   }
 }
 

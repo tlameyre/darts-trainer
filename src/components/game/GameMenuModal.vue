@@ -41,4 +41,11 @@ defineEmits(['finish', 'quit', 'close'])
     &--quit   { color: $error; }
   }
 }
+
+@media (min-width: $bp-laptop) {
+  .gm-modal__item {
+    @include text-md;
+    padding: $padding-lg;
+  }
+}
 </style>

@@ -145,19 +145,19 @@ function pct(progress) {
 
 @media (min-width: $bp-laptop) {
   :deep(.app-modal__sheet) {
-    padding: $padding-xxl;
     align-items: center;
     justify-content: center;
     min-height: 50%;
   }
 
-  .bd-modal__icon { @include display-lg; }
-  .bd-modal__label { @include title-xxl; }
-  .bd-modal__desc { @include text-lg; }
-  .bd-modal__unlocked { @include text-lg; }
-  .bd-modal__locked { @include text-lg; }
+  .bd-modal__icon    { @include display-lg; }
+  .bd-modal__label   { @include title-xxl; }
+  .bd-modal__desc    { @include text-lg; }
+  .bd-modal__unlocked { @include text-lg; gap: $gap-sm; }
+  .bd-modal__locked  { @include text-lg; }
   .bd-modal__progress { gap: $gap-md; }
   .bd-modal__progress-header { @include title-xl; }
   .bd-modal__progress-bar { height: 12px; }
+  .bd-modal__progress-values { @include title-xl; }
 }
 </style>
