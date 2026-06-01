@@ -1,4 +1,6 @@
 <script setup>
+import AppIcon from './AppIcon.vue'
+
 defineProps({
   value: { type: String, required: true },
   hasError: { type: Boolean, default: false },
@@ -24,27 +26,32 @@ defineEmits(['validate'])
 <style lang="scss" scoped>
 .answer-input {
   display: flex;
-  align-items: center;
-  gap: $gap-xs;
+  align-items: stretch;
   background: $white;
-  border: $border-md solid transparent;
   border-radius: $radius-pill;
-  padding: $padding-xxs $padding-xxs $padding-xxs $padding-xl;
-  transition: border-color 0.2s;
+  overflow: hidden;
+  padding: $padding-sm;
+  flex-shrink: 0;
+  transition: box-shadow 0.2s;
 
   &--error {
-    border-color: $error;
+    box-shadow: inset 0 0 0 $border-md $error;
   }
 
   &__icon {
-    flex-shrink: 0;
-    color: $black;
     display: flex;
     align-items: center;
+    justify-content: center;
+    padding-right: $padding-md;
+    color: $black;
+    flex-shrink: 0;
   }
 
   &__value {
     flex: 1;
+    display: flex;
+    align-items: center;
+    padding-left: $padding-md;
     @include title-xl;
     color: $black;
     font-variant-numeric: tabular-nums;
@@ -61,6 +68,7 @@ defineEmits(['validate'])
     color: $white;
     @include title-md;
     padding: $padding-xs $padding-xl;
+    margin-left: $gap-xs;
     transition: background 0.15s, transform 0.1s;
     white-space: nowrap;
     flex-shrink: 0;
@@ -68,6 +76,22 @@ defineEmits(['validate'])
     &:active {
       transform: scale(0.95);
       background: $accent-dark;
+    }
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .answer-input {
+    padding: $padding-md;
+
+    &__value {
+      @include title-xxl;
+      &--placeholder { @include text-md; }
+    }
+
+    &__btn {
+      @include title-lg;
+      padding: $padding-sm $padding-xxl;
     }
   }
 }

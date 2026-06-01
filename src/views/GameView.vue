@@ -98,13 +98,15 @@ onUnmounted(() => {
           :volee-total="voleeTotal" :feedback-state="feedbackState" :correct-answer="correctAnswer"
           :show-value="gameSettings.showDartValue" />
 
-        <GameTourRow :question-label="questionLabel" :phase="phase" :show-phase="gameSettings.doubleValidation"
-          :time-left="timeLeft" :show-timer="!!gameSettings.timeLimit" :is-urgent="timeLeft <= 5" />
+        <div class="game__side">
+          <GameTourRow :question-label="questionLabel" :phase="phase" :show-phase="gameSettings.doubleValidation"
+            :time-left="timeLeft" :show-timer="!!gameSettings.timeLimit" :is-urgent="timeLeft <= 5" />
 
-        <AnswerInput :value="inputValue" :placeholder="phaseLabel"
-          :has-error="feedbackState === 'wrong' || feedbackState === 'timeout'" @validate="validate" />
+          <AnswerInput :value="inputValue" :placeholder="phaseLabel"
+            :has-error="feedbackState === 'wrong' || feedbackState === 'timeout'" @validate="validate" />
 
-        <NumPad @digit="appendDigit" @delete="deleteDigit" @validate="validate" />
+          <NumPad @digit="appendDigit" @delete="deleteDigit" @validate="validate" />
+        </div>
       </template>
     </main>
 
@@ -120,7 +122,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   padding: $padding-md;
-  align-items: center;
   gap: $gap-md;
 
   &.gameOver {
@@ -141,10 +142,32 @@ onUnmounted(() => {
     flex: 1;
     min-height: 0;
     width: 100%;
-    max-width: 420px;
     display: flex;
     flex-direction: column;
     gap: $gap-md;
+  }
+
+  &__side {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-md;
+    min-height: 0;
+    flex: 1;
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .game {
+    padding: $padding-xl;
+
+    &__main {
+      flex-direction: row;
+      align-items: stretch;
+    }
+
+    &__side {
+      flex: 1;
+    }
   }
 }
 </style>

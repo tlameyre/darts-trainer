@@ -176,6 +176,13 @@ const overlayClass = computed(() => {
   }
 }
 
+@media (min-width: $bp-laptop) {
+  .round-card {
+    &__label       { @include text-md; }
+    &__overlay-sub { @include text-xxl; }
+  }
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;

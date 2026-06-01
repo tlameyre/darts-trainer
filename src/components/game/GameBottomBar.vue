@@ -4,12 +4,11 @@ import AppIcon from '../AppIcon.vue'
 import AppButton from '../AppButton.vue'
 
 const props = defineProps({
-  locked:    { type: Boolean, default: false },
-  bustMode:  { type: Boolean, default: false }, // true → bouton central = BUST
-  rightIcon: { type: String,  default: 'exit' }, // icône du bouton de droite
+  locked:   { type: Boolean, default: false },
+  bustMode: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['undo', 'miss', 'bust', 'right'])
+const emit = defineEmits(['undo', 'miss', 'bust'])
 
 const pressedCenter = ref(false)
 let _centerTimer = null
@@ -36,9 +35,9 @@ function tapCenter() {
     >
       {{ bustMode ? 'BUST' : 'MANQUÉ' }}
     </AppButton>
-    <button class="game-bar__icon-btn" @click="emit('right')">
-      <AppIcon :name="rightIcon" :width="24" :height="24" />
-    </button>
+    <slot name="right">
+      <div />
+    </slot>
   </div>
 </template>
 
@@ -62,6 +61,13 @@ function tapCenter() {
   &__center--pressed {
     background: rgba($error, 0.2) !important;
     color: $error-light !important;
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .game-bar__icon-btn :deep(svg) {
+    width: 32px;
+    height: 32px;
   }
 }
 </style>

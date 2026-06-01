@@ -1,19 +1,17 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { gameSettings } from '../store/gameStore.js'
 import { useX01 } from '../composables/useX01.js'
 import { saveX01Session } from '../store/dbStore.js'
 import StatsCard from '../components/game/StatsCard.vue'
-import X01DartSlots from '../components/x01/X01DartSlots.vue'
-import GameBottomBar from '../components/game/GameBottomBar.vue'
+import DartSlotsHeader from '../components/game/DartSlotsHeader.vue'
+import GameInput from '../components/game/GameInput.vue'
 import X01Result from '../components/x01/X01Result.vue'
 import X01DoublesModal from '../components/x01/X01DoublesModal.vue'
 import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
-import SectorGrid from '../components/game/SectorGrid.vue'
-import AnswerInput from '../components/AnswerInput.vue'
-import NumPad from '../components/NumPad.vue'
 import AppIcon from '../components/AppIcon.vue'
+import AppHeader from '../components/AppHeader.vue'
 
 const router = useRouter()
 
@@ -43,47 +41,9 @@ const {
   stats,
 } = useX01(settings)
 
-// ── Mode de saisie ────────────────────────────────────────────────────────────
-const inputMode = ref('dart') // 'dart' | 'volley'
-const volleyStr = ref('')     // saisie en cours (mode volée)
-
-function toggleMode() {
-  if (isLocked.value) return
-  inputMode.value = inputMode.value === 'dart' ? 'volley' : 'dart'
-  volleyStr.value = ''
-}
-
-function appendDigit(d) {
-  if (volleyStr.value.length >= 3) return
-  const next = volleyStr.value + d
-  if (Number(next) > 180) return
-  volleyStr.value = next
-}
-
-function deleteDigit() {
-  volleyStr.value = volleyStr.value.slice(0, -1)
-}
-
-function submitVolley() {
-  if (!volleyStr.value) return
-  const total = Number(volleyStr.value)
-  volleyStr.value = ''
-  confirmVolleyTotal(total)
-}
-
-function handleUndo() {
-  if (inputMode.value === 'volley' && volleyStr.value.length > 0) {
-    deleteDigit()
-  } else {
-    undo()
-  }
-}
-
-// ── État dérivé ───────────────────────────────────────────────────────────────
 const isBust = computed(() => phase.value === 'bust')
 const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.value)
 
-// Sauvegarde à la fin de la partie
 watch(phase, async (val) => {
   if (val === 'game-over' && stats.value) {
     await saveX01Session({
@@ -95,10 +55,8 @@ watch(phase, async (val) => {
   }
 })
 
-// Dernière manche terminée (pour le récap)
 const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 1])
 
-// ── Carte de stats ──────────────────────────────────────────────────────────
 const totalDarts = computed(() =>
   volleys.value.reduce((sum, v) => sum + v.darts.length, 0)
   + (isBust.value ? 0 : currentDarts.value.length)
@@ -111,24 +69,26 @@ const avgVolley = computed(() => {
 })
 
 const statsRows = computed(() => [
-  { label: 'Manche',             value: `${Math.min(legNumber.value, settings.legsToWin)} / ${settings.legsToWin}` },
+  { label: 'Manche', value: `${Math.min(legNumber.value, settings.legsToWin)} / ${settings.legsToWin}` },
   { label: 'Fléchettes lancées', value: totalDarts.value },
-  { label: 'Moy. volée',         value: avgVolley.value },
+  { label: 'Moy. volée', value: avgVolley.value },
 ])
+
+const currentVolleyDarts = computed(() =>
+  isBust.value ? (volleys.value[volleys.value.length - 1]?.darts ?? []) : currentDarts.value
+)
 </script>
 
 <template>
   <div class="x01">
 
-    <header class="x01__header">
-      <button class="x01__header-btn" @click="router.push({ name: 'x01-settings' })">
-        <AppIcon name="exit" :width="22" :height="22" />
-      </button>
-      <h1 class="x01__header-title">{{ settings.startScore }}</h1>
-      <button class="x01__header-btn" @click="handleUndo">
-        <AppIcon name="undo" :width="22" :height="22" />
-      </button>
-    </header>
+    <AppHeader :title="String(settings.startScore)" back-icon="exit" @back="router.push({ name: 'x01-settings' })">
+      <template #right>
+        <button class="x01__undo-btn" @click="undo">
+          <AppIcon name="undo" :width="22" :height="22" />
+        </button>
+      </template>
+    </AppHeader>
 
     <!-- ── Jeu + Bust ────────────────────────────────────────────────────── -->
     <div v-if="phase === 'playing' || isBust" class="x01__game">
@@ -137,37 +97,9 @@ const statsRows = computed(() => [
       </StatsCard>
 
       <div class="x01__game-main">
-
-        <!-- ── Mode fléchette par fléchette ──────────────────────────────── -->
-        <template v-if="inputMode === 'dart'">
-          <X01DartSlots :darts="isBust ? (volleys[volleys.length - 1]?.darts ?? []) : currentDarts"
-            :volley-number="isBust ? volleyNumber - 1 : volleyNumber" :bust="isBust" :input-mode="inputMode"
-            @toggle-mode="toggleMode" />
-          <SectorGrid :locked="isLocked" @dart="addDart" />
-          <GameBottomBar :locked="isLocked" @undo="handleUndo" @miss="addMiss"
-            @right="router.push({ name: 'x01-settings' })" />
-        </template>
-
-        <!-- ── Mode volée totale ──────────────────────────────────────────── -->
-        <template v-else>
-          <!-- Ligne de tour + toggle -->
-          <div class="x01__volley-row">
-            <span class="x01__volley-label">TOUR {{ isBust ? volleyNumber - 1 : volleyNumber }}</span>
-            <button class="x01__volley-toggle" :disabled="isBust" @click="toggleMode">
-              <AppIcon name="dartboard" :width="16" :height="16" />
-              <span>Fléchette / fléchette</span>
-            </button>
-          </div>
-
-          <!-- Input : normal ou bust -->
-          <AnswerInput v-if="!isBust" :value="volleyStr" placeholder="Score de la volée" @validate="submitVolley" />
-          <div v-else class="x01__bust-input">BUST !</div>
-
-          <NumPad class="x01__numpad" @digit="appendDigit" @delete="deleteDigit" @validate="submitVolley" />
-          <GameBottomBar :locked="isLocked" :bust-mode="true" @undo="handleUndo" @bust="bustVolley"
-            @right="router.push({ name: 'x01-settings' })" />
-        </template>
-
+        <DartSlotsHeader :tour-number="isBust ? volleyNumber - 1 : volleyNumber" />
+        <GameInput :darts="currentVolleyDarts" value-key="label" :bust="isBust" :locked="isLocked" toggleable
+          @dart="addDart" @miss="addMiss" @bust="bustVolley" @validate="confirmVolleyTotal" @undo="undo" />
       </div>
     </div>
 
@@ -188,9 +120,7 @@ const statsRows = computed(() => [
               <span class="x01__recap-stat-lbl">finish</span>
             </div>
             <div class="x01__recap-stat">
-              <span class="x01__recap-stat-val">
-                {{lastLeg?.volleys.filter(v => !v.bust).length}}
-              </span>
+              <span class="x01__recap-stat-val">{{lastLeg?.volleys.filter(v => !v.bust).length}}</span>
               <span class="x01__recap-stat-lbl">volées valides</span>
             </div>
           </div>
@@ -235,32 +165,17 @@ const statsRows = computed(() => [
   height: 100dvh;
   overflow: hidden;
   padding: $padding-md;
-  max-width: 420px;
-  margin: 0 auto;
 
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-  }
-
-  &__header-btn {
+  &__undo-btn {
     color: $text-color;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     transition: opacity 0.15s;
 
     &:active {
       opacity: 0.6;
     }
-  }
-
-  &__header-title {
-    @include title-sm;
-    color: $text-color;
-    text-align: center;
   }
 
   &__game {
@@ -272,64 +187,11 @@ const statsRows = computed(() => [
   }
 
   &__game-main {
+    flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
     gap: $gap-md;
-  }
-
-  // ── Ligne toggle (mode volée) ──────────────────────────────────────────
-  &__volley-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-  }
-
-  &__volley-label {
-    @include title-md;
-  }
-
-  &__volley-toggle {
-    display: flex;
-    align-items: center;
-    gap: $gap-xs;
-    @include title-xs;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: $muted;
-    background: rgba($white, 0.1);
-    border-radius: $radius-pill;
-    padding: 3px 10px 3px 8px;
-    transition: opacity 0.15s;
-
-    &:active {
-      opacity: 0.6;
-    }
-
-    &:disabled {
-      opacity: 0.3;
-    }
-  }
-
-  // Placeholder bust en mode volée
-  &__bust-input {
-    background: $error;
-    border-radius: $radius-pill;
-    padding: $padding-sm $padding-xl;
-    @include title-xl;
-    font-weight: 700;
-    color: $white;
-    text-align: center;
-    letter-spacing: 0.08em;
-    flex-shrink: 0;
-  }
-
-  // NumPad : prend tout l'espace restant comme SectorGrid
-  &__numpad {
-    flex: 1;
-    min-height: 0;
-    border-top: $border-md solid $white;
   }
 
   // ── Overlays ──────────────────────────────────────────────────────────
@@ -384,7 +246,6 @@ const statsRows = computed(() => [
   }
 
   &__recap-stat-val {
-    @include title-xxl;
     @include display-xs;
     font-weight: 700;
     color: $white;
@@ -437,8 +298,7 @@ const statsRows = computed(() => [
 
 @media (min-width: $bp-laptop) {
   .x01 {
-    max-width: none;
-    padding: $padding-xxl;
+    padding: $padding-xl;
   }
 
   .x01__game {
@@ -448,13 +308,18 @@ const statsRows = computed(() => [
 
   .x01__stats-card {
     flex: 1;
-    min-height: 50%;
   }
 
   .x01__game-main {
     flex: 1;
-    margin: auto;
   }
+
+  .x01__recap-emoji { @include display-md; }
+  .x01__recap-title { @include title-xxxl; }
+  .x01__recap-stat-val { @include display-sm; }
+  .x01__recap-stat-lbl { @include title-sm; }
+  .x01__recap-chip { @include title-md; }
+  .x01__recap-next { @include title-lg; }
 }
 
 .slide-up-enter-active {

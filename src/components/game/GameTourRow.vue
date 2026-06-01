@@ -69,4 +69,10 @@ defineProps({
   @include title-md;
   color: $accent-light;
 }
+
+@media (min-width: $bp-laptop) {
+  .game__tour-label  { @include title-lg; }
+  .game__timer-badge { @include title-lg; padding: $padding-xs $padding-md; }
+  .game__phase-badge { @include title-lg; padding: $padding-xs $padding-md; }
+}
 </style>

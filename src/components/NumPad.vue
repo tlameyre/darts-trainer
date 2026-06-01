@@ -89,7 +89,10 @@ const rows = [
     &--validate {
       color: $accent;
     }
-
   }
+}
+
+@media (min-width: $bp-laptop) {
+  .numpad__key { @include title-xxxl; }
 }
 </style>

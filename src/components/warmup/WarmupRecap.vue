@@ -285,10 +285,23 @@ const totalDurationMs = computed(() =>
     gap: $gap-xs;
     width: 100%;
 
-    :deep(.btn) {
-      flex: 1;
-    }
+    :deep(.btn) { flex: 1; }
   }
+}
 
+@media (min-width: $bp-laptop) {
+  .recap {
+    &__title         { @include title-xxxl; }
+    &__zone-card     { padding: $padding-md; gap: $gap-sm; }
+    &__zone-name     { @include title-xl; }
+    &__zone-acc      { @include title-xxl; }
+    &__zone-stat-val { @include title-xl; }
+    &__zone-stat-lbl { @include text-md; }
+    &__zone-sep      { height: 48px; }
+    &__total-title   { @include title-xxl; }
+    &__total-cell    { padding: $padding-lg; }
+    &__total-val     { @include title-xxl; }
+    &__total-lbl     { @include text-md; }
+  }
 }
 </style>

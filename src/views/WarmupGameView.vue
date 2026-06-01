@@ -7,12 +7,12 @@ import { saveWarmupSession, fetchProfileStats } from '../store/dbStore.js'
 import { checkWarmupBadges, checkSpecialThrow } from '../store/badgeStore.js'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import StatsCard from '../components/game/StatsCard.vue'
-import WarmupDartSlots from '../components/warmup/WarmupDartSlots.vue'
-import SectorGrid from '../components/game/SectorGrid.vue'
-import GameBottomBar from '../components/game/GameBottomBar.vue'
+import DartSlotsHeader from '../components/game/DartSlotsHeader.vue'
+import GameInput from '../components/game/GameInput.vue'
 import WarmupRecap from '../components/warmup/WarmupRecap.vue'
 import WarmupZoneModal from '../components/warmup/WarmupZoneModal.vue'
 import AppIcon from '../components/AppIcon.vue'
+import AppHeader from '../components/AppHeader.vue'
 
 const router = useRouter()
 
@@ -91,26 +91,41 @@ onUnmounted(() => {
 <template>
   <div class="warmup">
 
-    <header class="warmup__header">
-      <button class="warmup__header-btn" @click="router.push({ name: 'warmup-settings' })">
-        <AppIcon name="exit" :width="22" :height="22" />
-      </button>
-      <h1 class="warmup__header-title">ECHAUFFEMENT</h1>
-      <button class="warmup__header-btn" @click="showZoneModal = true">
-        <AppIcon name="gear" :width="22" :height="22" />
-      </button>
-    </header>
+    <AppHeader title="ECHAUFFEMENT" back-icon="exit" @back="router.push({ name: 'warmup-settings' })">
+      <template #right>
+        <button class="warmup__gear-btn" @click="showZoneModal = true">
+          <AppIcon name="gear" :width="22" :height="22" />
+        </button>
+      </template>
+    </AppHeader>
 
     <div v-if="!gameOver" class="warmup__game">
       <StatsCard class="warmup__stats-card" color="#1D4ED8" :rows="statsRows">
         {{ formatZoneLabel(currentZone) }}
       </StatsCard>
       <div class="warmup__game-main">
-        <WarmupDartSlots :darts="displayedDarts" :tourNumber="tourNumber" :timeDisplay="timeDisplay"
-          :isUnlimited="isUnlimited" :isUrgent="isUrgent" />
-        <SectorGrid :locked="justCompleted" @dart="recordDart" />
-        <GameBottomBar :locked="justCompleted" right-icon="stop" @undo="undoLast"
-          @miss="recordDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })" @right="endSession" />
+        <DartSlotsHeader :tour-number="tourNumber">
+          <template #right>
+            <div v-if="!isUnlimited" class="warmup__timer" :class="{ 'warmup__timer--urgent': isUrgent }">
+              <AppIcon name="clock" :width="24" :height="24" />
+              <span class="warmup__timer-text">{{ timeDisplay }}</span>
+            </div>
+          </template>
+        </DartSlotsHeader>
+        <GameInput
+          :darts="displayedDarts"
+          value-key="pts"
+          :locked="justCompleted"
+          @dart="recordDart"
+          @miss="recordDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })"
+          @undo="undoLast"
+        >
+          <template #right>
+            <button class="warmup__stop-btn" @click="endSession">
+              <AppIcon name="stop" :width="24" :height="24" />
+            </button>
+          </template>
+        </GameInput>
       </div>
     </div>
 
@@ -133,33 +148,17 @@ onUnmounted(() => {
   height: 100dvh;
   overflow: hidden;
   padding: $padding-md;
-  max-width: 420px;
-  margin: 0 auto;
 }
 
-.warmup__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-
-.warmup__header-btn {
+.warmup__gear-btn,
+.warmup__stop-btn {
   color: $text-color;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: opacity 0.15s;
 
-  &:active {
-    opacity: 0.6;
-  }
-}
-
-.warmup__header-title {
-  @include title-sm;
-  color: $text-color;
-  text-align: center;
+  &:active { opacity: 0.6; }
 }
 
 .warmup__game {
@@ -176,6 +175,23 @@ onUnmounted(() => {
   gap: $gap-md;
 }
 
+.warmup__timer {
+  @include title-md;
+  display: flex;
+  align-items: center;
+  gap: $gap-xs;
+  transition: color 0.3s;
+
+  &--urgent { color: $error; }
+}
+
+.warmup__timer-text {
+  display: inline-block;
+  min-width: 4ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 @media (min-width: $bp-tablet) {
   .warmup__game-main {
     flex: 1;
@@ -185,8 +201,7 @@ onUnmounted(() => {
 
 @media (min-width: $bp-laptop) {
   .warmup {
-    max-width: none;
-    padding: $padding-xxl;
+    padding: $padding-xl;
   }
 
   .warmup__game {
@@ -203,5 +218,7 @@ onUnmounted(() => {
     flex: 1;
     margin: auto;
   }
+
+  .warmup__timer { @include title-lg; }
 }
 </style>

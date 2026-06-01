@@ -3,7 +3,7 @@ defineProps({
   // Couleur de fond de la carte (vert X01, bleu échauffement…)
   color: { type: String, required: true },
   // Lignes label / valeur affichées sous l'en-tête
-  rows:  { type: Array, default: () => [] }, // [{ label, value }]
+  rows: { type: Array, default: () => [] }, // [{ label, value }]
 })
 </script>
 
@@ -29,7 +29,6 @@ defineProps({
   flex-direction: column;
   gap: $gap-xs;
   flex-shrink: 0;
-  flex: 1;
 
   &__header {
     @include title-xxxl;
@@ -69,15 +68,13 @@ defineProps({
   }
 }
 
-@media (min-width: $bp-tablet) {
+@media (min-width: $bp-laptop) {
   .stats-card {
-    &__label {
-      @include text-lg;
-    }
+    padding: $padding-lg;
+    gap: $gap-sm;
 
-    &__value {
-      @include title-lg;
-    }
+    &__label { @include text-md; }
+    &__value { @include title-md; }
   }
 }
 </style>
