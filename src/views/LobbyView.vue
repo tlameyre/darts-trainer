@@ -38,16 +38,12 @@ function selectMode(mode) {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  max-width: 420px;
   margin: 0 auto;
   padding: $padding-lg $padding-md calc($padding-xxl + 64px);
   gap: $padding-xl;
 
-  &__header {
-    padding-top: $padding-lg;
-  }
-
   &__header-top {
+    padding-top: $padding-lg;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -60,7 +56,9 @@ function selectMode(mode) {
     color: $muted;
     transition: color 0.15s;
 
-    &:active { color: $text-color; }
+    &:active {
+      color: $text-color;
+    }
   }
 
   &__profile-name {
@@ -117,6 +115,26 @@ function selectMode(mode) {
   &__desc {
     @include text-sm;
     color: rgba($white, 0.75);
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .lobby {
+    padding: $padding-xxl;
+
+    &__title {
+      @include display-xs;
+    }
+
+    &__profile-name { @include text-md; }
+
+    .mode-card {
+      gap: $gap-lg;
+      padding: $padding-xxl;
+
+      &__title { @include title-xl; }
+      &__desc  { @include text-md; }
+    }
   }
 }
 </style>

@@ -109,8 +109,6 @@ const unlockedCount = computed(() => userBadges.value.length)
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  max-width: 420px;
-  margin: 0 auto;
   padding: $padding-md;
   gap: $gap-md;
 
@@ -197,6 +195,31 @@ const unlockedCount = computed(() => userBadges.value.length)
     height: 100%;
     background: $orange;
     border-radius: $radius-pill;
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .badges {
+    padding: $padding-xl;
+    gap: $gap-lg;
+
+    &__count          { @include title-md; }
+
+    &__main           { gap: $gap-xxl; }
+
+    &__category-title { @include title-md; }
+
+    &__grid {
+      grid-template-columns: repeat(4, 1fr);
+      gap: $gap-md;
+    }
+
+    &__item       { padding: $padding-md $padding-lg $padding-sm; gap: $gap-xs; }
+    &__item-icon  { @include title-xxxl; }
+    &__item-label { @include title-md; }
+    &__item-check { @include title-sm; }
+
+    &__item-progress { height: 6px; margin-top: $gap-xs; }
   }
 }
 </style>

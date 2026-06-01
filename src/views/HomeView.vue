@@ -94,8 +94,6 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  max-width: 420px;
-  margin: 0 auto;
   padding: $padding-lg $padding-md calc($padding-xxl + 64px);
   gap: $padding-xl;
 
@@ -259,6 +257,65 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
 
     &:active {
       background: rgba(255, 255, 255, 0.08);
+    }
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .home {
+    padding: $padding-xxl;
+    gap: $padding-xxl;
+
+    &__header {
+      padding-top: 0;
+    }
+
+    &__avatar {
+      width: 64px;
+      height: 64px;
+      @include title-xl;
+    }
+
+    &__greeting {
+      @include text-md;
+    }
+
+    &__name {
+      @include display-xs;
+    }
+
+    &__section-title {
+      @include title-md;
+    }
+
+    &__main {
+      gap: $gap-xl;
+    }
+
+    &__mode-card {
+      gap: $gap-md;
+      padding: $padding-xl;
+    }
+
+    &__mode-label {
+      @include title-lg;
+    }
+
+    &__section-link {
+      @include title-lg;
+    }
+
+    &__badge {
+      padding: $padding-md;
+      gap: $gap-xs;
+    }
+
+    &__badge-icon {
+      @include title-xxl;
+    }
+
+    &__badge-label {
+      @include title-sm;
     }
   }
 }
