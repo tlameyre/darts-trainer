@@ -1,4 +1,5 @@
 <script setup>
+import AppModal from '../AppModal.vue'
 import AppIcon from '../AppIcon.vue'
 
 defineProps({
@@ -6,63 +7,32 @@ defineProps({
 })
 
 defineEmits(['confirm'])
-
 </script>
 
 <template>
-  <Transition name="sheet">
-    <div v-if="show" class="doubles-modal">
-      <div class="doubles-modal__backdrop" />
-      <div class="doubles-modal__sheet">
-        <div class="doubles-modal__header">
-          <p class="doubles-modal__title">Combien de doubles tentés ?</p>
-          <button class="doubles-modal__close" @click="$emit('confirm', 0)">
-            <AppIcon name="close" :width="16" :height="16" />
-          </button>
-        </div>
-        <p class="doubles-modal__hint">Incluant les doubles manqués dans cette volée</p>
-        <div class="doubles-modal__options">
-          <button
-            v-for="n in [0, 1, 2, 3]"
-            :key="n"
-            class="doubles-modal__btn"
-            @click="$emit('confirm', n)"
-          >
-            {{ n }}
-          </button>
-        </div>
-      </div>
+  <AppModal :show :z-index="110" size="lg" @close="$emit('confirm', 0)">
+    <div class="db-modal__header">
+      <p class="db-modal__title">Combien de doubles tentés ?</p>
+      <button class="db-modal__close" @click="$emit('confirm', 0)">
+        <AppIcon name="close" :width="16" :height="16" />
+      </button>
     </div>
-  </Transition>
+    <p class="db-modal__hint">Incluant les doubles manqués dans cette volée</p>
+    <div class="db-modal__options">
+      <button
+        v-for="n in [0, 1, 2, 3]"
+        :key="n"
+        class="db-modal__btn"
+        @click="$emit('confirm', n)"
+      >
+        {{ n }}
+      </button>
+    </div>
+  </AppModal>
 </template>
 
 <style lang="scss" scoped>
-.doubles-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 110;
-  display: flex;
-  align-items: flex-end;
-
-  &__backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba($black, 0.6);
-  }
-
-  &__sheet {
-    position: relative;
-    width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
-    background: #1e2b28;
-    border-radius: $radius-lg $radius-lg 0 0;
-    padding: $padding-xl $padding-md calc($padding-xl + env(safe-area-inset-bottom, 0px));
-    display: flex;
-    flex-direction: column;
-    gap: $gap-md;
-  }
-
+.db-modal {
   &__header {
     display: flex;
     align-items: center;
@@ -110,24 +80,6 @@ defineEmits(['confirm'])
       background: $orange;
       transform: scale(0.96);
     }
-  }
-}
-
-.sheet-enter-active,
-.sheet-leave-active {
-  transition: opacity 0.25s;
-
-  .doubles-modal__sheet {
-    transition: transform 0.25s ease;
-  }
-}
-
-.sheet-enter-from,
-.sheet-leave-to {
-  opacity: 0;
-
-  .doubles-modal__sheet {
-    transform: translateY(100%);
   }
 }
 </style>

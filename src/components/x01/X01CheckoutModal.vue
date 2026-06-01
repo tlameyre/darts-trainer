@@ -1,18 +1,19 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
+import AppModal from '../AppModal.vue'
+import AppIcon from '../AppIcon.vue'
 
 const props = defineProps({
   show:          { type: Boolean, required: true },
-  defaultDarts:  { type: Number,  default: 3 },   // pré-rempli depuis le tracking
+  defaultDarts:  { type: Number,  default: 3 },
   checkoutScore: { type: Number,  default: 0 },
 })
 
 const emit = defineEmits(['confirm'])
 
-const dartsToFinish  = ref(props.defaultDarts)
-const doublesThrown  = ref(1)
+const dartsToFinish = ref(props.defaultDarts)
+const doublesThrown = ref(1)
 
-// Quand la modale s'ouvre → reset avec les valeurs par défaut
 watch(() => props.show, (val) => {
   if (val) {
     dartsToFinish.value = props.defaultDarts
@@ -20,7 +21,6 @@ watch(() => props.show, (val) => {
   }
 })
 
-// Contrainte : doublesThrown ≤ dartsToFinish
 watch(dartsToFinish, (val) => {
   if (doublesThrown.value > val) doublesThrown.value = val
 })
@@ -34,91 +34,55 @@ function confirm() {
 </script>
 
 <template>
-  <Transition name="sheet">
-    <div v-if="show" class="checkout-modal">
-      <div class="checkout-modal__backdrop" />
-      <div class="checkout-modal__sheet">
+  <AppModal :show :z-index="110" size="lg" @close="confirm">
+    <div class="co-modal__header">
+      <span class="co-modal__trophy">🏆</span>
+      <p class="co-modal__title">Checkout {{ checkoutScore }} !</p>
+      <button class="co-modal__close" @click="confirm">
+        <AppIcon name="close" :width="16" :height="16" />
+      </button>
+    </div>
 
-        <div class="checkout-modal__header">
-          <span class="checkout-modal__trophy">🏆</span>
-          <p class="checkout-modal__title">Checkout {{ checkoutScore }} !</p>
-          <button class="checkout-modal__close" @click="confirm">
-            <AppIcon name="close" :width="16" :height="16" />
-          </button>
-        </div>
-
-        <!-- Fléchettes pour finir -->
-        <div class="checkout-modal__group">
-          <p class="checkout-modal__label">Fléchettes pour finir</p>
-          <div class="checkout-modal__options">
-            <button
-              v-for="n in [1, 2, 3]"
-              :key="n"
-              class="checkout-modal__btn"
-              :class="{ 'checkout-modal__btn--active': dartsToFinish === n }"
-              @click="dartsToFinish = n"
-            >
-              {{ n }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Dont sur un double -->
-        <div class="checkout-modal__group">
-          <p class="checkout-modal__label">Dont sur un double</p>
-          <div class="checkout-modal__options">
-            <button
-              v-for="n in [1, 2, 3]"
-              :key="n"
-              class="checkout-modal__btn"
-              :class="{
-                'checkout-modal__btn--active':   doublesThrown === n,
-                'checkout-modal__btn--disabled': n > dartsToFinish,
-              }"
-              :disabled="n > dartsToFinish"
-              @click="doublesThrown = n"
-            >
-              {{ n }}
-            </button>
-          </div>
-        </div>
-
-        <button class="checkout-modal__confirm" @click="confirm">
-          Confirmer
+    <div class="co-modal__group">
+      <p class="co-modal__label">Fléchettes pour finir</p>
+      <div class="co-modal__options">
+        <button
+          v-for="n in [1, 2, 3]"
+          :key="n"
+          class="co-modal__btn"
+          :class="{ 'co-modal__btn--active': dartsToFinish === n }"
+          @click="dartsToFinish = n"
+        >
+          {{ n }}
         </button>
-
       </div>
     </div>
-  </Transition>
+
+    <div class="co-modal__group">
+      <p class="co-modal__label">Dont sur un double</p>
+      <div class="co-modal__options">
+        <button
+          v-for="n in [1, 2, 3]"
+          :key="n"
+          class="co-modal__btn"
+          :class="{
+            'co-modal__btn--active':   doublesThrown === n,
+            'co-modal__btn--disabled': n > dartsToFinish,
+          }"
+          :disabled="n > dartsToFinish"
+          @click="doublesThrown = n"
+        >
+          {{ n }}
+        </button>
+      </div>
+    </div>
+
+    <button class="co-modal__confirm" @click="confirm">Confirmer</button>
+  </AppModal>
 </template>
 
 <style lang="scss" scoped>
-.checkout-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 110;
-  display: flex;
-  align-items: flex-end;
-
-  &__backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba($black, 0.65);
-  }
-
-  &__sheet {
-    position: relative;
-    width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
-    background: #1e2b28;
-    border-radius: $radius-lg $radius-lg 0 0;
-    padding: $padding-xl $padding-md calc($padding-xl + env(safe-area-inset-bottom, 0px));
-    display: flex;
-    flex-direction: column;
-    gap: $gap-lg;
-  }
-
+.co-modal {
   &__header {
     display: flex;
     align-items: center;
@@ -172,18 +136,9 @@ function confirm() {
     color: $white;
     transition: background 0.12s, transform 0.1s;
 
-    &:active:not(:disabled) {
-      transform: scale(0.96);
-    }
-
-    &--active {
-      background: $orange;
-    }
-
-    &--disabled {
-      opacity: 0.2;
-      cursor: default;
-    }
+    &:active:not(:disabled) { transform: scale(0.96); }
+    &--active   { background: $orange; }
+    &--disabled { opacity: 0.2; cursor: default; }
   }
 
   &__confirm {
@@ -198,16 +153,5 @@ function confirm() {
 
     &:active { opacity: 0.8; }
   }
-}
-
-.sheet-enter-active,
-.sheet-leave-active {
-  transition: opacity 0.25s;
-  .checkout-modal__sheet { transition: transform 0.25s ease; }
-}
-.sheet-enter-from,
-.sheet-leave-to {
-  opacity: 0;
-  .checkout-modal__sheet { transform: translateY(100%); }
 }
 </style>

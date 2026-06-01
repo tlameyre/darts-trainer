@@ -1,10 +1,11 @@
 <script setup>
+import AppModal from '../AppModal.vue'
 import AppIcon from '../AppIcon.vue'
 
 const props = defineProps({
   show:    { type: Boolean, required: true },
-  session: { type: Object,  default: null  },
-  mode:    { type: String,  required: true }, // 'score' | 'warmup' | 'x01'
+  session: { type: Object,  default: null },
+  mode:    { type: String,  required: true },
 })
 
 defineEmits(['close'])
@@ -17,8 +18,7 @@ function formatDate(iso) {
 
 function formatDuration(s) {
   if (!s) return 'Infini'
-  const m = Math.floor(s / 60)
-  return `${m} min`
+  return `${Math.floor(s / 60)} min`
 }
 
 function formatZone(zone) {
@@ -33,147 +33,111 @@ function accuracy(hits, total) {
 </script>
 
 <template>
-  <Transition name="sheet">
-    <div v-if="show && session" class="session-modal">
-      <div class="session-modal__backdrop" @click="$emit('close')" />
-      <div class="session-modal__sheet">
-
-        <!-- Header -->
-        <div class="session-modal__header">
-          <div>
-            <p class="session-modal__date">{{ formatDate(session.played_at) }}</p>
-            <p class="session-modal__mode-label">
-              {{ mode === 'score' ? 'Score Training' : mode === 'warmup' ? 'Échauffement' : '501' }}
-            </p>
-          </div>
-          <button class="session-modal__close" @click="$emit('close')">
-            <AppIcon name="close" :width="16" :height="16" />
-          </button>
-        </div>
-
-        <!-- ── Score Training ──────────────────────────────────────────── -->
-        <template v-if="mode === 'score'">
-          <div class="session-modal__grid">
-            <div class="session-modal__stat">
-              <span class="session-modal__stat-value">
-                {{ session.correct_count }}/{{ session.total_questions }}
-              </span>
-              <span class="session-modal__stat-label">Score</span>
-            </div>
-            <div class="session-modal__stat">
-              <span class="session-modal__stat-value">
-                {{ accuracy(session.correct_count, session.total_questions) }}%
-              </span>
-              <span class="session-modal__stat-label">Précision</span>
-            </div>
-            <div class="session-modal__stat">
-              <span class="session-modal__stat-value">{{ session.best_streak }}</span>
-              <span class="session-modal__stat-label">Meilleure série</span>
-            </div>
-          </div>
-        </template>
-
-        <!-- ── Échauffement ────────────────────────────────────────────── -->
-        <template v-else-if="mode === 'warmup'">
-          <div class="session-modal__row">
-            <span class="session-modal__row-label">Zone</span>
-            <span class="session-modal__row-value">{{ formatZone(session.zone) }}</span>
-          </div>
-          <div class="session-modal__grid">
-            <div class="session-modal__stat">
-              <span class="session-modal__stat-value">{{ session.hits }}/{{ session.total_darts }}</span>
-              <span class="session-modal__stat-label">Touches</span>
-            </div>
-            <div class="session-modal__stat">
-              <span class="session-modal__stat-value">{{ session.accuracy }}%</span>
-              <span class="session-modal__stat-label">Précision</span>
-            </div>
-            <div class="session-modal__stat">
-              <span class="session-modal__stat-value">{{ formatDuration(session.duration_s) }}</span>
-              <span class="session-modal__stat-label">Durée</span>
-            </div>
-          </div>
-        </template>
-
-        <!-- ── 501 ────────────────────────────────────────────────────── -->
-        <template v-else-if="mode === 'x01'">
-          <div class="session-modal__row">
-            <span class="session-modal__row-label">Score de départ</span>
-            <span class="session-modal__row-value">{{ session.start_score }}</span>
-          </div>
-          <div class="session-modal__row">
-            <span class="session-modal__row-label">Manches jouées</span>
-            <span class="session-modal__row-value">{{ session.legs_played }}</span>
-          </div>
-
-          <div class="session-modal__grid session-modal__grid--2">
-            <div class="session-modal__stat">
-              <span class="session-modal__stat-value">{{ Math.round(session.avg_volley) }}</span>
-              <span class="session-modal__stat-label">Moy. volée</span>
-            </div>
-            <div class="session-modal__stat">
-              <span class="session-modal__stat-value">{{ Math.round(session.avg_9darts) }}</span>
-              <span class="session-modal__stat-label">Moy. 9 darts</span>
-            </div>
-          </div>
-
-          <div class="session-modal__grid session-modal__grid--3">
-            <div class="session-modal__stat">
-              <span class="session-modal__stat-value">{{ Math.round(session.avg_darts_to_finish) }}</span>
-              <span class="session-modal__stat-label">Moy. fléch. / manche</span>
-            </div>
-            <div class="session-modal__stat">
-              <span class="session-modal__stat-value">{{ session.min_darts }}</span>
-              <span class="session-modal__stat-label">Min fléchettes</span>
-            </div>
-            <div class="session-modal__stat">
-              <span class="session-modal__stat-value">{{ session.max_darts }}</span>
-              <span class="session-modal__stat-label">Max fléchettes</span>
-            </div>
-          </div>
-
-          <div class="session-modal__highlight">
-            <span class="session-modal__highlight-label">Plus haut finish</span>
-            <span class="session-modal__highlight-value">{{ session.highest_finish }}</span>
-          </div>
-          <div class="session-modal__highlight">
-            <span class="session-modal__highlight-label">Meilleure volée</span>
-            <span class="session-modal__highlight-value">{{ session.highest_volley }}</span>
-          </div>
-        </template>
-
+  <AppModal :show="show && !!session" :z-index="120" size="lg" @close="$emit('close')">
+    <!-- Header -->
+    <div class="ss-modal__header">
+      <div>
+        <p class="ss-modal__date">{{ formatDate(session.played_at) }}</p>
+        <p class="ss-modal__mode-label">
+          {{ mode === 'score' ? 'Score Training' : mode === 'warmup' ? 'Échauffement' : '501' }}
+        </p>
       </div>
+      <button class="ss-modal__close" @click="$emit('close')">
+        <AppIcon name="close" :width="16" :height="16" />
+      </button>
     </div>
-  </Transition>
+
+    <!-- Score Training -->
+    <template v-if="mode === 'score'">
+      <div class="ss-modal__grid">
+        <div class="ss-modal__stat">
+          <span class="ss-modal__stat-value">{{ session.correct_count }}/{{ session.total_questions }}</span>
+          <span class="ss-modal__stat-label">Score</span>
+        </div>
+        <div class="ss-modal__stat">
+          <span class="ss-modal__stat-value">{{ accuracy(session.correct_count, session.total_questions) }}%</span>
+          <span class="ss-modal__stat-label">Précision</span>
+        </div>
+        <div class="ss-modal__stat">
+          <span class="ss-modal__stat-value">{{ session.best_streak }}</span>
+          <span class="ss-modal__stat-label">Meilleure série</span>
+        </div>
+      </div>
+    </template>
+
+    <!-- Échauffement -->
+    <template v-else-if="mode === 'warmup'">
+      <div class="ss-modal__row">
+        <span class="ss-modal__row-label">Zone</span>
+        <span class="ss-modal__row-value">{{ formatZone(session.zone) }}</span>
+      </div>
+      <div class="ss-modal__grid">
+        <div class="ss-modal__stat">
+          <span class="ss-modal__stat-value">{{ session.hits }}/{{ session.total_darts }}</span>
+          <span class="ss-modal__stat-label">Touches</span>
+        </div>
+        <div class="ss-modal__stat">
+          <span class="ss-modal__stat-value">{{ session.accuracy }}%</span>
+          <span class="ss-modal__stat-label">Précision</span>
+        </div>
+        <div class="ss-modal__stat">
+          <span class="ss-modal__stat-value">{{ formatDuration(session.duration_s) }}</span>
+          <span class="ss-modal__stat-label">Durée</span>
+        </div>
+      </div>
+    </template>
+
+    <!-- 501 -->
+    <template v-else-if="mode === 'x01'">
+      <div class="ss-modal__row">
+        <span class="ss-modal__row-label">Score de départ</span>
+        <span class="ss-modal__row-value">{{ session.start_score }}</span>
+      </div>
+      <div class="ss-modal__row">
+        <span class="ss-modal__row-label">Manches jouées</span>
+        <span class="ss-modal__row-value">{{ session.legs_played }}</span>
+      </div>
+
+      <div class="ss-modal__grid ss-modal__grid--2">
+        <div class="ss-modal__stat">
+          <span class="ss-modal__stat-value">{{ Math.round(session.avg_volley) }}</span>
+          <span class="ss-modal__stat-label">Moy. volée</span>
+        </div>
+        <div class="ss-modal__stat">
+          <span class="ss-modal__stat-value">{{ Math.round(session.avg_9darts) }}</span>
+          <span class="ss-modal__stat-label">Moy. 9 darts</span>
+        </div>
+      </div>
+
+      <div class="ss-modal__grid ss-modal__grid--3">
+        <div class="ss-modal__stat">
+          <span class="ss-modal__stat-value">{{ Math.round(session.avg_darts_to_finish) }}</span>
+          <span class="ss-modal__stat-label">Moy. fléch. / manche</span>
+        </div>
+        <div class="ss-modal__stat">
+          <span class="ss-modal__stat-value">{{ session.min_darts }}</span>
+          <span class="ss-modal__stat-label">Min fléchettes</span>
+        </div>
+        <div class="ss-modal__stat">
+          <span class="ss-modal__stat-value">{{ session.max_darts }}</span>
+          <span class="ss-modal__stat-label">Max fléchettes</span>
+        </div>
+      </div>
+
+      <div class="ss-modal__highlight">
+        <span class="ss-modal__highlight-label">Plus haut finish</span>
+        <span class="ss-modal__highlight-value">{{ session.highest_finish }}</span>
+      </div>
+      <div class="ss-modal__highlight">
+        <span class="ss-modal__highlight-label">Meilleure volée</span>
+        <span class="ss-modal__highlight-value">{{ session.highest_volley }}</span>
+      </div>
+    </template>
+  </AppModal>
 </template>
 
 <style lang="scss" scoped>
-.session-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 120;
-  display: flex;
-  align-items: flex-end;
-
-  &__backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba($black, 0.6);
-  }
-
-  &__sheet {
-    position: relative;
-    width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
-    background: #1e2b28;
-    border-radius: $radius-lg $radius-lg 0 0;
-    padding: $padding-lg $padding-md calc($padding-lg + env(safe-area-inset-bottom, 0px));
-    display: flex;
-    flex-direction: column;
-    gap: $gap-md;
-  }
-
+.ss-modal {
   &__header {
     display: flex;
     align-items: flex-start;
@@ -204,7 +168,6 @@ function accuracy(hits, total) {
     &:active { color: $white; }
   }
 
-  // ── Grilles ───────────────────────────────────────────────────────────
   &__grid {
     display: grid;
     gap: $gap-sm;
@@ -238,7 +201,6 @@ function accuracy(hits, total) {
     line-height: 1.3;
   }
 
-  // ── Ligne simple ──────────────────────────────────────────────────────
   &__row {
     display: flex;
     justify-content: space-between;
@@ -257,7 +219,6 @@ function accuracy(hits, total) {
     color: $white;
   }
 
-  // ── Highlight ────────────────────────────────────────────────────────
   &__highlight {
     display: flex;
     align-items: center;
@@ -277,16 +238,5 @@ function accuracy(hits, total) {
     color: $white;
     font-variant-numeric: tabular-nums;
   }
-}
-
-.sheet-enter-active,
-.sheet-leave-active {
-  transition: opacity 0.25s;
-  .session-modal__sheet { transition: transform 0.25s ease; }
-}
-.sheet-enter-from,
-.sheet-leave-to {
-  opacity: 0;
-  .session-modal__sheet { transform: translateY(100%); }
 }
 </style>

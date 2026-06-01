@@ -1,11 +1,11 @@
 <script setup>
 import { ref } from 'vue'
 import AppButton from '../AppButton.vue'
-import AppIcon from '../AppIcon.vue'
+import AppModal from '../AppModal.vue'
 
 defineProps({
   show:         { type: Boolean, required: true },
-  currentEmail: { type: String, default: '' },
+  currentEmail: { type: String,  default: '' },
 })
 
 const emit = defineEmits(['close', 'save'])
@@ -28,82 +28,30 @@ function onClose() {
 </script>
 
 <template>
-  <Transition name="modal">
-    <div v-if="show" class="modal" @click.self="onClose">
-      <div class="modal__panel">
-        <div class="modal__header">
-          <span class="modal__title">Changer d'adresse email</span>
-          <button class="modal__close" @click="onClose">
-            <AppIcon name="close" :width="18" :height="18" />
-          </button>
-        </div>
+  <AppModal :show title="Changer d'adresse email" @close="onClose">
+    <p class="ce-modal__current">Actuel : <strong>{{ currentEmail }}</strong></p>
 
-        <p class="modal__current">Actuel : <strong>{{ currentEmail }}</strong></p>
-
-        <div class="modal__field">
-          <label class="modal__label">Nouvel email</label>
-          <input
-            v-model="newEmail"
-            class="modal__input"
-            type="email"
-            placeholder="nouveau@email.com"
-            autocomplete="email"
-          />
-        </div>
-
-        <p v-if="error" class="modal__error">{{ error }}</p>
-
-        <p class="modal__hint">Un email de confirmation sera envoyé à la nouvelle adresse.</p>
-
-        <AppButton variant="primary" @click="onSave">Envoyer la confirmation</AppButton>
-      </div>
+    <div class="ce-modal__field">
+      <label class="ce-modal__label">Nouvel email</label>
+      <input
+        v-model="newEmail"
+        class="ce-modal__input"
+        type="email"
+        placeholder="nouveau@email.com"
+        autocomplete="email"
+      />
     </div>
-  </Transition>
+
+    <p v-if="error" class="ce-modal__error">{{ error }}</p>
+
+    <p class="ce-modal__hint">Un email de confirmation sera envoyé à la nouvelle adresse.</p>
+
+    <AppButton variant="primary" @click="onSave">Envoyer la confirmation</AppButton>
+  </AppModal>
 </template>
 
 <style lang="scss" scoped>
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: flex-end;
-  z-index: 100;
-
-  &__panel {
-    width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
-    background: #1e2a26;
-    border-radius: $radius-lg $radius-lg 0 0;
-    padding: $padding-md $padding-md $padding-xxl;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-md;
-  }
-
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: $gap-sm;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  &__title {
-    @include title-sm;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  &__close {
-    color: $muted;
-    display: flex;
-    align-items: center;
-    &:active { color: $text-color; }
-  }
-
+.ce-modal {
   &__current {
     @include text-sm;
     color: $muted;
@@ -123,16 +71,16 @@ function onClose() {
 
   &__input {
     @include text-sm;
-    background: rgba(255, 255, 255, 0.07);
-    border: $border-sm solid rgba(255, 255, 255, 0.15);
+    background: rgba($white, 0.07);
+    border: $border-sm solid rgba($white, 0.15);
     border-radius: $radius-md;
     color: $text-color;
     padding: $padding-sm $padding-md;
     outline: none;
     transition: border-color 0.15s;
 
-    &::placeholder { color: rgba(255,255,255,0.2); }
-    &:focus { border-color: rgba(255, 255, 255, 0.4); }
+    &::placeholder { color: rgba($white, 0.2); }
+    &:focus { border-color: rgba($white, 0.4); }
   }
 
   &__error {
@@ -145,9 +93,4 @@ function onClose() {
     color: $muted;
   }
 }
-
-.modal-enter-active,
-.modal-leave-active { transition: opacity 0.2s; }
-.modal-enter-from,
-.modal-leave-to { opacity: 0; }
 </style>
