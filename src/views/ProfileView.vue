@@ -4,8 +4,10 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/authStore.js'
 import { useDbStore } from '../store/dbStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
+import { useFriendStore } from '../store/friendStore.js'
 import { BADGES } from '../data/badges.js'
 import BadgeDetailModal from '../components/badges/BadgeDetailModal.vue'
+import ProfileFriendsSection from '../components/friends/ProfileFriendsSection.vue'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
 import AppIcon from '../components/AppIcon.vue'
@@ -14,8 +16,8 @@ const router      = useRouter()
 const authStore   = useAuthStore()
 const dbStore     = useDbStore()
 const badgeStore  = useBadgeStore()
-const { user, profile, signOut } = authStore
-const { getBadgeProgress }       = badgeStore
+const friendStore = useFriendStore()
+const { getBadgeProgress } = badgeStore
 
 const stats          = ref(null)
 const userBadges     = ref([])
@@ -23,7 +25,11 @@ const selectedBadge  = ref(null)
 const showBadgeModal = ref(false)
 
 onMounted(async () => {
-  const [s, b] = await Promise.all([dbStore.fetchProfileStats(), badgeStore.fetchUserBadges()])
+  const [s, b] = await Promise.all([
+    dbStore.fetchProfileStats(),
+    badgeStore.fetchUserBadges(),
+    friendStore.fetchFriends(),
+  ])
   stats.value      = s
   userBadges.value = b
 })
@@ -102,6 +108,12 @@ async function onSignOut() {
           <span class="profile__stat-label">Précision</span>
         </div>
       </section>
+
+      <!-- Amis -->
+      <ProfileFriendsSection
+        :friends="friendStore.friends"
+        @see-all="router.push({ name: 'friends' })"
+      />
 
       <!-- Badges -->
       <section class="profile__badges">
