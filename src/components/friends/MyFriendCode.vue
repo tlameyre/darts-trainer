@@ -53,6 +53,7 @@ async function copyCode() {
     border: $border-sm solid rgba(255, 255, 255, 0.15);
     border-radius: $radius-pill;
     transition: background 0.15s, border-color 0.15s;
+    color: $white;
 
     &:active { background: rgba(255, 255, 255, 0.12); }
 

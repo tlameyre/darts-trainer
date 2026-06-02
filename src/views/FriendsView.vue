@@ -1,12 +1,22 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '../store/authStore.js'
 import { useFriendStore } from '../store/friendStore.js'
 import AppHeader from '../components/AppHeader.vue'
 import FriendCard from '../components/friends/FriendCard.vue'
 import MyFriendCode from '../components/friends/MyFriendCode.vue'
 
-const authStore  = useAuthStore()
+// Props mock optionnelles — utilisées uniquement dans /dev pour prévisualiser sans auth
+const props = defineProps({
+  mockFriends:    { type: Array,  default: null },
+  mockReceived:   { type: Array,  default: null },
+  mockSent:       { type: Array,  default: null },
+  mockFriendCode: { type: String, default: null },
+})
+
+const isMock = computed(() => props.mockFriends !== null)
+
+const authStore   = useAuthStore()
 const friendStore = useFriendStore()
 
 const activeTab   = ref('friends')
@@ -14,15 +24,24 @@ const addInput    = ref('')
 const addLoading  = ref(false)
 const addFeedback = ref({ message: '', isError: false })
 
-onMounted(() => friendStore.fetchFriends())
+onMounted(() => { if (!isMock.value) friendStore.fetchFriends() })
+
+const friends         = computed(() => isMock.value ? props.mockFriends         : friendStore.friends)
+const pendingReceived = computed(() => isMock.value ? props.mockReceived         : friendStore.pendingReceived)
+const pendingSent     = computed(() => isMock.value ? props.mockSent             : friendStore.pendingSent)
+const friendCode      = computed(() => isMock.value ? props.mockFriendCode       : authStore.profile?.friend_code)
+const isLoading       = computed(() => isMock.value ? false                      : friendStore.loading)
 
 async function onAddFriend() {
   if (!addInput.value.trim()) return
+  if (isMock.value) {
+    addFeedback.value = { message: 'Demande envoyée à Pro180 !', isError: false }
+    addInput.value    = ''
+    return
+  }
   addLoading.value  = true
   addFeedback.value = { message: '', isError: false }
-
   const result = await friendStore.sendRequest(addInput.value)
-
   if (result.success) {
     addFeedback.value = { message: `Demande envoyée à ${result.name} !`, isError: false }
     addInput.value    = ''
@@ -44,8 +63,8 @@ const tabs = [
     <AppHeader title="AMIS" />
 
     <!-- Mon code ami -->
-    <div class="friends__my-code" v-if="authStore.profile?.friend_code">
-      <MyFriendCode :code="authStore.profile.friend_code" />
+    <div class="friends__my-code" v-if="friendCode">
+      <MyFriendCode :code="friendCode" />
     </div>
 
     <!-- Onglets -->
@@ -59,9 +78,9 @@ const tabs = [
       >
         {{ tab.label }}
         <span
-          v-if="tab.key === 'requests' && friendStore.pendingReceived.length"
+          v-if="tab.key === 'requests' && pendingReceived.length"
           class="friends__badge"
-        >{{ friendStore.pendingReceived.length }}</span>
+        >{{ pendingReceived.length }}</span>
       </button>
     </div>
 
@@ -70,13 +89,13 @@ const tabs = [
 
       <!-- Onglet Amis -->
       <template v-if="activeTab === 'friends'">
-        <div v-if="friendStore.loading" class="friends__empty">Chargement…</div>
-        <div v-else-if="!friendStore.friends.length" class="friends__empty">
+        <div v-if="isLoading" class="friends__empty">Chargement…</div>
+        <div v-else-if="!friends.length" class="friends__empty">
           Aucun ami pour l'instant.<br>Utilise l'onglet "Ajouter" pour en trouver.
         </div>
         <div v-else class="friends__list">
           <FriendCard
-            v-for="f in friendStore.friends"
+            v-for="f in friends"
             :key="f.friendshipId"
             :friend="f"
             variant="friend"
@@ -87,11 +106,11 @@ const tabs = [
 
       <!-- Onglet Demandes -->
       <template v-else-if="activeTab === 'requests'">
-        <template v-if="friendStore.pendingReceived.length">
+        <template v-if="pendingReceived.length">
           <p class="friends__section-title">Reçues</p>
           <div class="friends__list">
             <FriendCard
-              v-for="f in friendStore.pendingReceived"
+              v-for="f in pendingReceived"
               :key="f.friendshipId"
               :friend="f"
               variant="received"
@@ -101,11 +120,11 @@ const tabs = [
           </div>
         </template>
 
-        <template v-if="friendStore.pendingSent.length">
+        <template v-if="pendingSent.length">
           <p class="friends__section-title">Envoyées</p>
           <div class="friends__list">
             <FriendCard
-              v-for="f in friendStore.pendingSent"
+              v-for="f in pendingSent"
               :key="f.friendshipId"
               :friend="f"
               variant="sent"
@@ -115,7 +134,7 @@ const tabs = [
         </template>
 
         <div
-          v-if="!friendStore.pendingReceived.length && !friendStore.pendingSent.length"
+          v-if="!pendingReceived.length && !pendingSent.length"
           class="friends__empty"
         >
           Aucune demande en cours.

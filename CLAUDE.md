@@ -153,6 +153,14 @@ Le router est une exception : Pinia n'est pas disponible au top-level du fichier
 - Committer après chaque tâche terminée avec un message clair
 - Ne **jamais** pusher sans demande explicite de l'utilisateur
 
+## Vue /dev (playground)
+
+`src/views/DevView.vue` est un playground accessible uniquement en mode dev via `/dev`. **Chaque nouvelle vue doit y être référencée.**
+
+- L'ajouter dans la liste `views` (section "Vues") pour y accéder en un clic
+- Si la vue dépend de données réelles (store, auth, BDD), ajouter aussi une **preview plein écran avec données fictives** — via des props mock optionnelles sur la vue, court-circuitant le store uniquement quand elles sont présentes
+- Le bouton "Fermer" de la preview est positionné en `position: fixed` avec la classe `dev__close-preview`
+
 ## Ce qu'il ne faut pas faire
 
 - Ne pas utiliser l'Options API Vue

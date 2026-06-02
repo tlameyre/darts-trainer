@@ -16,8 +16,12 @@ import ChangeEmailModal from '../components/profile/ChangeEmailModal.vue'
 import ChangePasswordModal from '../components/profile/ChangePasswordModal.vue'
 import X01DoublesModal from '../components/x01/X01DoublesModal.vue'
 import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
+import FriendsView from './FriendsView.vue'
 
 const router = useRouter()
+
+// --- Preview FriendsView ---
+const showFriendsPreview = ref(false)
 
 // --- Overlays / modals ---
 const unlockBadges        = ref([])
@@ -61,12 +65,25 @@ const views = [
   { name: 'profile',        label: 'Profil' },
   { name: 'profile-edit',   label: 'Édition profil' },
   { name: 'badges',         label: 'Badges' },
+  { name: 'friends',        label: 'Amis' },
   { name: 'score-settings', label: 'Réglages Score' },
   { name: 'warmup-settings',label: 'Réglages Warmup' },
   { name: 'x01-settings',  label: 'Réglages 501' },
   { name: 'x01-game',      label: 'Partie 501' },
   { name: 'login',          label: 'Login' },
   { name: 'register',       label: 'Register' },
+]
+
+// --- Mock data FriendsView ---
+const mockFriends = [
+  { friendshipId: '1', id: 'u1', first_name: 'Lucas',  username: 'luca92',   friend_code: 'DMC-A4X7' },
+  { friendshipId: '2', id: 'u2', first_name: null,      username: 'dartking', friend_code: 'DMC-B8K2' },
+]
+const mockReceived = [
+  { friendshipId: '3', id: 'u3', first_name: 'Emma',   username: 'emma_d',   friend_code: 'DMC-C1Z9' },
+]
+const mockSent = [
+  { friendshipId: '4', id: 'u4', first_name: null,      username: 'pro180',   friend_code: 'DMC-D5P3' },
 ]
 </script>
 
@@ -106,6 +123,14 @@ const views = [
       </div>
     </section>
 
+    <!-- FriendsView — aperçu plein écran avec données fictives -->
+    <section class="dev__section">
+      <h2 class="dev__section-title">Vue Amis (preview)</h2>
+      <div class="dev__buttons">
+        <button class="dev__btn" @click="showFriendsPreview = true">Ouvrir la vue Amis</button>
+      </div>
+    </section>
+
     <!-- Game Over en aperçu (a besoin d'un conteneur) -->
     <div v-if="showGameOver" class="dev__gameover-preview">
       <GameOver :correct-count="14" :max-questions="20" :best="9"
@@ -125,6 +150,17 @@ const views = [
     <X01DoublesModal :show="showDoublesModal" @confirm="showDoublesModal = false" />
     <X01CheckoutModal :show="showCheckoutModal" :default-darts="2" :checkout-score="40"
       @confirm="showCheckoutModal = false" />
+
+    <!-- FriendsView plein écran -->
+    <div v-if="showFriendsPreview" class="dev__fullscreen-preview">
+      <FriendsView
+        :mock-friends="mockFriends"
+        :mock-received="mockReceived"
+        :mock-sent="mockSent"
+        :mock-friend-code="'DMC-X7K2'"
+      />
+      <button class="dev__close-preview" @click="showFriendsPreview = false">✕ Fermer</button>
+    </div>
   </div>
 </template>
 
@@ -184,6 +220,27 @@ const views = [
     display: flex;
     flex-direction: column;
     z-index: 90;
+  }
+
+  &__fullscreen-preview {
+    position: fixed;
+    inset: 0;
+    background: $bg;
+    overflow-y: auto;
+    z-index: 90;
+  }
+
+  &__close-preview {
+    @include title-sm;
+    position: fixed;
+    bottom: calc($padding-lg + env(safe-area-inset-bottom));
+    right: $padding-md;
+    background: $orange;
+    color: $white;
+    padding: $padding-sm $padding-md;
+    border-radius: $radius-pill;
+    z-index: 100;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
   }
 }
 </style>
