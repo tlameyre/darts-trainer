@@ -10,7 +10,6 @@ const friendStore = useFriendStore()
 const tabs = [
   { name: 'home',    label: 'Accueil', icon: 'home' },
   { name: 'play',    label: 'Jouer',   icon: 'dartboard' },
-  { name: 'friends', label: 'Amis',    icon: 'friends' },
   { name: 'stats',   label: 'Stats',   icon: 'chart' },
   { name: 'profile', label: 'Profil',  icon: 'user' },
 ]
@@ -37,7 +36,7 @@ const pendingCount = computed(() => friendStore.pendingReceived.length)
     >
       <div class="bottom-nav__icon-wrap">
         <AppIcon :name="tab.icon" :width="22" :height="22" />
-        <span v-if="tab.name === 'friends' && pendingCount" class="bottom-nav__dot" />
+        <span v-if="tab.name === 'profile' && pendingCount" class="bottom-nav__dot" />
       </div>
       <span class="bottom-nav__label">{{ tab.label }}</span>
     </router-link>
