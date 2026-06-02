@@ -167,18 +167,21 @@ const tabs = [
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  margin: 0 auto;
+  padding: $padding-lg $padding-md calc($padding-xxl + 64px);
+  gap: $gap-md;
 
   &__my-code {
-    padding: $padding-lg $padding-md $padding-md;
     display: flex;
     justify-content: center;
+    padding-bottom: $padding-md;
     border-bottom: $border-sm solid rgba(255, 255, 255, 0.07);
   }
 
   &__tabs {
     display: flex;
     border-bottom: $border-sm solid rgba(255, 255, 255, 0.07);
+    margin: 0 (-$padding-md);
     padding: 0 $padding-md;
   }
 
@@ -214,7 +217,6 @@ const tabs = [
 
   &__content {
     flex: 1;
-    padding: $padding-md;
     display: flex;
     flex-direction: column;
     gap: $gap-sm;
@@ -302,12 +304,14 @@ const tabs = [
 
 @media (min-width: $bp-laptop) {
   .friends {
-    max-width: 600px;
-    margin: 0 auto;
-    padding-top: $padding-xl;
+    padding: $padding-xxl;
 
-    &__content { padding: $padding-lg; }
-    &__add-input { @include title-lg; }
+    &__tab         { @include title-md; }
+    &__section-title { @include text-sm; }
+    &__empty       { @include text-md; }
+    &__add-hint    { @include text-md; }
+    &__add-input   { @include title-lg; }
+    &__add-feedback { @include text-md; }
   }
 }
 </style>

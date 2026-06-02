@@ -96,6 +96,34 @@ Toujours utiliser ces variables dans les media queries, jamais de valeurs brutes
 
 Le responsive est **mobile-first** : styles de base pour mobile, overrides dans `@media (min-width: $bp-laptop)`. Les media queries sont placées à la fin du bloc `<style scoped>`, regroupées en un seul bloc par breakpoint.
 
+### Structure des vues — layout de base
+
+Toutes les vues pleine page suivent ce patron (inspiré de `LobbyView`) :
+
+```scss
+.ma-vue {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: $padding-lg $padding-md calc($padding-xxl + 64px); // 64px = hauteur BottomNav
+  gap: $gap-md; // ou $gap-lg selon le contenu
+}
+
+@media (min-width: $bp-laptop) {
+  .ma-vue {
+    padding: $padding-xxl; // padding uniforme sur grand écran
+
+    // Monter d'un niveau tous les mixins de typo présents dans la vue :
+    // text-sm → text-md, title-sm → title-md, title-md → title-lg, etc.
+    &__label  { @include text-md; }
+    &__title  { @include title-lg; }
+  }
+}
+```
+
+**Règle typo responsive** : dans le bloc `@media (min-width: $bp-laptop)`, chaque élément texte monte d'un échelon dans sa famille de mixin (`text-sm` → `text-md`, `title-md` → `title-lg`, `display-sm` → `display-md`, etc.).
+
 ## Store et données
 
 Tous les stores utilisent Pinia avec la **setup syntax**. Dans les composants, toujours appeler `useXxxStore()` dans `<script setup>`, jamais en dehors.
