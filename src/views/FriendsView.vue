@@ -2,7 +2,9 @@
 import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '../store/authStore.js'
 import { useFriendStore } from '../store/friendStore.js'
+import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
+import AppIcon from '../components/AppIcon.vue'
 import FriendCard from '../components/friends/FriendCard.vue'
 import MyFriendCode from '../components/friends/MyFriendCode.vue'
 
@@ -17,6 +19,7 @@ const props = defineProps({
 const isMock = computed(() => props.mockFriends !== null)
 
 const authStore   = useAuthStore()
+const router = useRouter()
 const friendStore = useFriendStore()
 
 const activeTab   = ref('friends')
@@ -60,7 +63,7 @@ const tabs = [
 
 <template>
   <div class="friends">
-    <AppHeader title="AMIS" />
+    <AppHeader title="AMIS" @back="router.back()"/>
 
     <!-- Mon code ami -->
     <div class="friends__my-code" v-if="friendCode">

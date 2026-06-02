@@ -4,18 +4,20 @@ import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
 import { useGameStore } from '../store/gameStore.js'
+import { AI_PROFILES } from '../composables/useX01AI.js'
 
 const router    = useRouter()
 const gameStore = useGameStore()
 
 const SCORE_OPTIONS = [301, 501]
-const LEGS_OPTIONS = [1, 2, 3, 5]
+const LEGS_OPTIONS  = [1, 2, 3, 5]
 
 const settings = reactive({
-  scoreKey: 501,   // 301 | 501 | 'custom'
+  scoreKey:  501,
   legsToWin: 2,
 })
 const customScore = ref(401)
+const aiProfileId = ref(null)   // null = solo, sinon id du profil IA
 
 const isCustomScore = computed(() => settings.scoreKey === 'custom')
 
@@ -24,11 +26,18 @@ const effectiveScore = computed(() => {
   return settings.scoreKey
 })
 
+function toggleAI(id) {
+  aiProfileId.value = aiProfileId.value === id ? null : id
+}
+
 function startGame() {
   gameStore.gameSettings = {
-    mode: 'x01',
+    mode:       'x01',
     startScore: effectiveScore.value,
-    legsToWin: settings.legsToWin,
+    legsToWin:  settings.legsToWin,
+    aiProfile:  aiProfileId.value
+      ? AI_PROFILES.find(p => p.id === aiProfileId.value)
+      : null,
   }
   router.push({ name: 'x01-game' })
 }
@@ -72,6 +81,30 @@ function startGame() {
         </div>
         <p class="settings__legs-hint">
           La partie se termine après {{ settings.legsToWin }} manche{{ settings.legsToWin > 1 ? 's' : '' }}.
+        </p>
+      </div>
+
+      <!-- Adversaire IA -->
+      <div class="settings__card">
+        <div class="settings__section-label">Adversaire</div>
+        <div class="settings__ai-row">
+          <AppButton size="small" variant="ghost" :active="aiProfileId === null" @click="aiProfileId = null">
+            Solo
+          </AppButton>
+          <AppButton
+            v-for="p in AI_PROFILES"
+            :key="p.id"
+            size="small"
+            variant="ghost"
+            :active="aiProfileId === p.id"
+            @click="toggleAI(p.id)"
+          >
+            {{ p.label }}
+          </AppButton>
+        </div>
+        <p v-if="aiProfileId" class="settings__ai-hint">
+          Moy. {{ AI_PROFILES.find(p => p.id === aiProfileId).avgVolley }} pts/volée
+          · {{ Math.round(AI_PROFILES.find(p => p.id === aiProfileId).checkoutRate * 100) }}% aux checkouts
         </p>
       </div>
 
@@ -151,6 +184,19 @@ function startGame() {
     color: $muted;
   }
 
+  &__ai-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $gap-xs;
+
+    :deep(.btn) { flex: 1; min-width: 72px; }
+  }
+
+  &__ai-hint {
+    @include title-sm;
+    color: $muted;
+  }
+
   :deep(.btn:last-child) {
     align-self: stretch;
   }
@@ -182,6 +228,8 @@ function startGame() {
     &__legs-hint {
       @include title-md;
     }
+
+    &__ai-hint { @include title-md; }
   }
 }
 

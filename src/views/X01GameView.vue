@@ -1,15 +1,17 @@
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, watch, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '../store/gameStore.js'
 import { useX01 } from '../composables/useX01.js'
 import { useDbStore } from '../store/dbStore.js'
+import { simulateAIVolley } from '../composables/useX01AI.js'
 import StatsCard from '../components/game/StatsCard.vue'
 import DartSlotsHeader from '../components/game/DartSlotsHeader.vue'
 import GameInput from '../components/game/GameInput.vue'
 import X01Result from '../components/x01/X01Result.vue'
 import X01DoublesModal from '../components/x01/X01DoublesModal.vue'
 import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
+import X01AIScorePanel from '../components/x01/X01AIScorePanel.vue'
 import AppIcon from '../components/AppIcon.vue'
 import AppHeader from '../components/AppHeader.vue'
 
@@ -19,7 +21,8 @@ const dbStore   = useDbStore()
 
 if (!gameStore.gameSettings) router.replace({ name: 'x01-settings' })
 
-const settings = gameStore.gameSettings ?? { startScore: 501, legsToWin: 2 }
+const settings   = gameStore.gameSettings ?? { startScore: 501, legsToWin: 2 }
+const aiProfile  = settings.aiProfile ?? null
 
 const {
   completedLegs,
@@ -43,8 +46,53 @@ const {
   stats,
 } = useX01(settings)
 
-const isBust = computed(() => phase.value === 'bust')
+const isBust   = computed(() => phase.value === 'bust')
 const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.value)
+
+// ── IA ───────────────────────────────────────────────────────────────────────
+const aiRemaining   = ref(settings.startScore)
+const aiLegsWon     = ref(0)
+const aiLastVolley  = ref(null)
+const aiTurn        = ref(false)   // true pendant que l'IA "joue"
+let _aiTimer        = null
+
+// L'IA joue après chaque volée humaine (quand la volée est enregistrée)
+watch(() => volleys.value.length, (newLen, oldLen) => {
+  if (!aiProfile) return
+  if (newLen <= oldLen) return
+  if (phase.value === 'leg-recap' || phase.value === 'game-over') return
+
+  // Déclencher le tour IA avec un délai pour simuler la "réflexion"
+  aiTurn.value = true
+  clearTimeout(_aiTimer)
+  _aiTimer = setTimeout(() => {
+    const result = simulateAIVolley(aiRemaining.value, aiProfile)
+    aiLastVolley.value = result
+
+    if (result.isCheckout) {
+      aiRemaining.value = 0
+      aiLegsWon.value  += 1
+      aiTurn.value      = false
+      // L'IA a gagné la manche
+      if (aiLegsWon.value >= settings.legsToWin) {
+        phase.value = 'game-over'
+      } else {
+        // Reset IA pour la manche suivante — on laisse la vue afficher le récap humain
+        aiRemaining.value = settings.startScore
+      }
+    } else {
+      aiRemaining.value = Math.max(0, aiRemaining.value - result.score)
+      aiTurn.value      = false
+    }
+  }, 900)
+})
+
+// Reset IA au démarrage de chaque manche
+const _origStartNextLeg = startNextLeg
+function startNextLegWithAI() {
+  if (aiProfile) aiRemaining.value = settings.startScore
+  _origStartNextLeg()
+}
 
 watch(phase, async (val) => {
   if (val === 'game-over' && stats.value) {
@@ -92,6 +140,17 @@ const currentVolleyDarts = computed(() =>
       </template>
     </AppHeader>
 
+    <!-- ── Panneau IA ────────────────────────────────────────────────────── -->
+    <X01AIScorePanel
+      v-if="aiProfile && (phase === 'playing' || isBust)"
+      :remaining="aiRemaining"
+      :legs-won="aiLegsWon"
+      :legs-to-win="settings.legsToWin"
+      :profile-label="aiProfile.label"
+      :last-volley="aiLastVolley"
+      :is-playing="aiTurn"
+    />
+
     <!-- ── Jeu + Bust ────────────────────────────────────────────────────── -->
     <div v-if="phase === 'playing' || isBust" class="x01__game">
       <StatsCard class="x01__stats-card" color="#047857" :rows="statsRows">
@@ -111,6 +170,9 @@ const currentVolleyDarts = computed(() =>
         <div class="x01__recap">
           <div class="x01__recap-emoji">🎯</div>
           <h2 class="x01__recap-title">Manche terminée !</h2>
+          <p v-if="aiProfile" class="x01__recap-ai-score">
+            IA : <strong>{{ aiRemaining }}</strong> restants
+          </p>
 
           <div class="x01__recap-stats">
             <div class="x01__recap-stat">
@@ -134,7 +196,7 @@ const currentVolleyDarts = computed(() =>
             </span>
           </div>
 
-          <button class="x01__recap-next" @click="startNextLeg">
+          <button class="x01__recap-next" @click="startNextLegWithAI">
             Manche suivante →
           </button>
         </div>
@@ -279,6 +341,13 @@ const currentVolleyDarts = computed(() =>
       background: rgba($error, 0.2);
       color: $error-light;
     }
+  }
+
+  &__recap-ai-score {
+    @include text-sm;
+    color: $muted;
+
+    strong { color: $orange; }
   }
 
   &__recap-next {
