@@ -53,17 +53,13 @@ const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.va
 const aiRemaining   = ref(settings.startScore)
 const aiLegsWon     = ref(0)
 const aiLastVolley  = ref(null)
-const aiTurn        = ref(false)   // true pendant que l'IA "joue"
+const aiTurn        = ref(false)
+const aiPending     = ref(false)  // l'IA attend que les modales soient fermées
 let _aiTimer        = null
 
-// L'IA joue après chaque volée humaine (quand la volée est enregistrée)
-watch(() => volleys.value.length, (newLen, oldLen) => {
-  if (!aiProfile) return
-  if (newLen <= oldLen) return
-  if (phase.value === 'leg-recap' || phase.value === 'game-over') return
-
-  // Déclencher le tour IA avec un délai pour simuler la "réflexion"
-  aiTurn.value = true
+function triggerAIVolley() {
+  aiTurn.value    = true
+  aiPending.value = false
   clearTimeout(_aiTimer)
   _aiTimer = setTimeout(() => {
     const result = simulateAIVolley(aiRemaining.value, aiProfile)
@@ -73,11 +69,9 @@ watch(() => volleys.value.length, (newLen, oldLen) => {
       aiRemaining.value = 0
       aiLegsWon.value  += 1
       aiTurn.value      = false
-      // L'IA a gagné la manche
       if (aiLegsWon.value >= settings.legsToWin) {
         phase.value = 'game-over'
       } else {
-        // Reset IA pour la manche suivante — on laisse la vue afficher le récap humain
         aiRemaining.value = settings.startScore
       }
     } else {
@@ -85,6 +79,32 @@ watch(() => volleys.value.length, (newLen, oldLen) => {
       aiTurn.value      = false
     }
   }, 900)
+}
+
+// L'IA joue après chaque volée humaine — mais attend si une modale est ouverte
+watch(() => volleys.value.length, (newLen, oldLen) => {
+  if (!aiProfile) return
+  if (newLen <= oldLen) return
+  if (phase.value === 'leg-recap' || phase.value === 'game-over') return
+
+  // Si une modale est ouverte, on mémorise et on attendra
+  if (pendingDoublesPrompt.value || pendingCheckout.value) {
+    aiPending.value = true
+    return
+  }
+  triggerAIVolley()
+})
+
+// Déclenche le tour IA dès que la modale doubles est fermée
+watch(pendingDoublesPrompt, (val) => {
+  if (!aiProfile || val) return
+  if (aiPending.value) triggerAIVolley()
+})
+
+// Déclenche le tour IA dès que la modale checkout est fermée
+watch(pendingCheckout, (val) => {
+  if (!aiProfile || val) return
+  if (aiPending.value) triggerAIVolley()
 })
 
 // Reset IA au démarrage de chaque manche
