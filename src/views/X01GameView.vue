@@ -81,18 +81,27 @@ function triggerAIVolley() {
   }, 900)
 }
 
-// L'IA joue après chaque volée humaine — mais attend si une modale est ouverte
+// L'IA joue après chaque volée humaine — mais attend si une modale ou un bust est en cours
 watch(() => volleys.value.length, (newLen, oldLen) => {
   if (!aiProfile) return
   if (newLen <= oldLen) return
   if (phase.value === 'leg-recap' || phase.value === 'game-over') return
 
-  // Si une modale est ouverte, on mémorise et on attendra
-  if (pendingDoublesPrompt.value || pendingCheckout.value) {
+  if (phase.value === 'bust' || pendingDoublesPrompt.value || pendingCheckout.value) {
     aiPending.value = true
     return
   }
   triggerAIVolley()
+})
+
+// Bust terminé → phase repasse à 'playing'
+watch(phase, (val, old) => {
+  if (!aiProfile) return
+  if (val === 'playing' && old === 'bust' && aiPending.value) {
+    // Si une modale s'ouvre juste après le bust (checkout zone), on laisse son watch prendre le relais
+    if (pendingDoublesPrompt.value || pendingCheckout.value) return
+    triggerAIVolley()
+  }
 })
 
 // Déclenche le tour IA dès que la modale doubles est fermée
