@@ -33,6 +33,69 @@ src/
 - **Composants** : découper en sous-composants dès qu'une section est significative ou réutilisable
 - **Imports** : chemins relatifs explicites (pas d'alias `@`)
 
+## SCSS — variables, typographie et responsive
+
+Toutes les variables et mixins sont disponibles globalement dans les `<style scoped>` (injectés via `vite.config.js`). Ne jamais définir de valeurs brutes pour les couleurs, espacements, tailles de police ou rayons — utiliser exclusivement les variables de `_variables.scss`.
+
+### Variables disponibles
+
+```scss
+// Couleurs
+$bg, $orange, $accent, $error, $muted, $text-color, $white, $blue ...
+
+// Espacements (padding et gap)
+$padding-xxs / xs / sm / md / lg / xl / xxl
+$gap-xxs / xs / sm / md / lg / xl / xxl
+
+// Rayons
+$radius-sm / md / lg / pill
+
+// Bordures
+$border-sm / md / lg
+```
+
+### Typographie — mixins obligatoires
+
+Ne jamais écrire `font-size`, `font-weight` ou `font-family` directement. Utiliser les mixins de `_fonts.scss` :
+
+```scss
+// Corps de texte (Outfit light)
+@include text-xxs / xs / sm / md / lg / xl / xxl
+
+// Titres (Outfit semibold)
+@include title-xxs / xs / sm / md / lg / xl / xxl / xxxl
+
+// Grands affichages (scores, chiffres)
+@include display-xs / sm / md / lg / xl
+```
+
+### Responsive — media queries
+
+Les breakpoints sont définis dans `_variables.scss` :
+
+```scss
+$bp-mobile: 480px;
+$bp-tablet: 768px;
+$bp-laptop: 1025px;
+$bp-desktop: 1280px;
+```
+
+Toujours utiliser ces variables dans les media queries, jamais de valeurs brutes :
+
+```scss
+// ✅ correct
+@media (min-width: $bp-laptop) {
+  .block { @include title-lg; }
+}
+
+// ❌ interdit
+@media (min-width: 1024px) {
+  .block { font-size: 18px; }
+}
+```
+
+Le responsive est **mobile-first** : styles de base pour mobile, overrides dans `@media (min-width: $bp-laptop)`. Les media queries sont placées à la fin du bloc `<style scoped>`, regroupées en un seul bloc par breakpoint.
+
 ## Store et données
 
 Tous les stores utilisent Pinia avec la **setup syntax**. Dans les composants, toujours appeler `useXxxStore()` dans `<script setup>`, jamais en dehors.
