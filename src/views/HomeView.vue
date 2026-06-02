@@ -1,32 +1,34 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { profile, user } from '../store/authStore.js'
-import { fetchUserBadges } from '../store/badgeStore.js'
+import { useAuthStore } from '../store/authStore.js'
+import { useBadgeStore } from '../store/badgeStore.js'
 import { GAME_MODES } from '../data/gameModes.js'
 import { BADGES } from '../data/badges.js'
 import AppIcon from '../components/AppIcon.vue'
 
-const router = useRouter()
+const router     = useRouter()
+const authStore  = useAuthStore()
+const badgeStore = useBadgeStore()
 const userBadges = ref([])
 
 onMounted(async () => {
-  userBadges.value = await fetchUserBadges()
+  userBadges.value = await badgeStore.fetchUserBadges()
 })
 
 const displayName = computed(() => {
-  const p = profile.value
+  const p = authStore.profile
   if (!p) return 'Joueur'
   return p.first_name || p.username || 'Joueur'
 })
 
 const initials = computed(() => {
-  const p = profile.value
+  const p = authStore.profile
   if (!p) return '?'
   if (p.first_name || p.last_name) {
     return [(p.first_name?.[0] ?? ''), (p.last_name?.[0] ?? '')].join('').toUpperCase()
   }
-  return (p.username?.[0] ?? user.value?.email?.[0] ?? '?').toUpperCase()
+  return (p.username?.[0] ?? authStore.user?.email?.[0] ?? '?').toUpperCase()
 })
 
 // 4 derniers badges débloqués

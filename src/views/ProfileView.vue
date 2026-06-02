@@ -1,24 +1,29 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { user, profile, signOut } from '../store/authStore.js'
-import { fetchProfileStats } from '../store/dbStore.js'
-import { fetchUserBadges } from '../store/badgeStore.js'
+import { useAuthStore } from '../store/authStore.js'
+import { useDbStore } from '../store/dbStore.js'
+import { useBadgeStore } from '../store/badgeStore.js'
 import { BADGES } from '../data/badges.js'
 import BadgeDetailModal from '../components/badges/BadgeDetailModal.vue'
-import { getBadgeProgress } from '../store/badgeStore.js'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
 import AppIcon from '../components/AppIcon.vue'
 
-const router = useRouter()
+const router      = useRouter()
+const authStore   = useAuthStore()
+const dbStore     = useDbStore()
+const badgeStore  = useBadgeStore()
+const { user, profile, signOut } = authStore
+const { getBadgeProgress }       = badgeStore
+
 const stats          = ref(null)
 const userBadges     = ref([])
 const selectedBadge  = ref(null)
 const showBadgeModal = ref(false)
 
 onMounted(async () => {
-  const [s, b] = await Promise.all([fetchProfileStats(), fetchUserBadges()])
+  const [s, b] = await Promise.all([dbStore.fetchProfileStats(), badgeStore.fetchUserBadges()])
   stats.value      = s
   userBadges.value = b
 })
@@ -38,23 +43,23 @@ function openBadge(badge) {
 }
 
 const displayName = computed(() => {
-  const p = profile.value
+  const p = authStore.profile
   if (!p) return '—'
   const full = [p.first_name, p.last_name].filter(Boolean).join(' ')
-  return full || p.username || user.value?.email || '—'
+  return full || p.username || authStore.user?.email || '—'
 })
 
 const initials = computed(() => {
-  const p = profile.value
+  const p = authStore.profile
   if (!p) return '?'
   if (p.first_name || p.last_name) {
     return [(p.first_name?.[0] ?? ''), (p.last_name?.[0] ?? '')].join('').toUpperCase()
   }
-  return (p.username?.[0] ?? user.value?.email?.[0] ?? '?').toUpperCase()
+  return (p.username?.[0] ?? authStore.user?.email?.[0] ?? '?').toUpperCase()
 })
 
 async function onSignOut() {
-  await signOut()
+  await authStore.signOut()
   router.replace({ name: 'login' })
 }
 </script>
@@ -76,7 +81,7 @@ async function onSignOut() {
           <span class="profile__avatar-initials">{{ initials }}</span>
         </div>
         <h1 class="profile__name">{{ displayName }}</h1>
-        <p v-if="profile?.username" class="profile__username">{{ profile.username }}</p>
+        <p v-if="authStore.profile?.username" class="profile__username">{{ authStore.profile.username }}</p>
       </section>
 
       <section class="profile__stats-card">

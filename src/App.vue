@@ -3,12 +3,13 @@ import { watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import AppIconDefs from './components/AppIconDefs.vue'
 import BottomNav from './components/BottomNav.vue'
-import { isAuth } from './store/authStore.js'
+import { useAuthStore } from './store/authStore.js'
 
-const router = useRouter()
-const route  = useRoute()
+const router    = useRouter()
+const route     = useRoute()
+const authStore = useAuthStore()
 
-watch(isAuth, (val) => {
+watch(() => authStore.isAuth, (val) => {
   if (route.meta.dev) return
   if (!val) {
     // Déconnexion → login

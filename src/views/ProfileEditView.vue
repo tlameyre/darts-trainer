@@ -1,19 +1,21 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { profile, updateProfile, updateEmail, updatePassword, user } from '../store/authStore.js'
-import { checkProfileBadge } from '../store/badgeStore.js'
+import { useAuthStore } from '../store/authStore.js'
+import { useBadgeStore } from '../store/badgeStore.js'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import AppHeader from '../components/AppHeader.vue'
 import AppIcon from '../components/AppIcon.vue'
 import ChangeEmailModal from '../components/profile/ChangeEmailModal.vue'
 import ChangePasswordModal from '../components/profile/ChangePasswordModal.vue'
 
-const router = useRouter()
+const router     = useRouter()
+const authStore  = useAuthStore()
+const badgeStore = useBadgeStore()
 
-const firstName   = ref(profile.value?.first_name ?? '')
-const lastName    = ref(profile.value?.last_name  ?? '')
-const username    = ref(profile.value?.username   ?? '')
+const firstName   = ref(authStore.profile?.first_name ?? '')
+const lastName    = ref(authStore.profile?.last_name  ?? '')
+const username    = ref(authStore.profile?.username   ?? '')
 const saveLoading = ref(false)
 const feedback    = ref('')
 const newBadges   = ref([])
@@ -22,7 +24,7 @@ const showEmailModal    = ref(false)
 const showPasswordModal = ref(false)
 
 // Sync si le profil se charge après le montage
-watch(() => profile.value, (p) => {
+watch(() => authStore.profile, (p) => {
   if (!p) return
   firstName.value = p.first_name ?? ''
   lastName.value  = p.last_name  ?? ''
@@ -33,12 +35,12 @@ async function onSave() {
   saveLoading.value = true
   feedback.value    = ''
   try {
-    await updateProfile({
+    await authStore.updateProfile({
       first_name: firstName.value.trim(),
       last_name:  lastName.value.trim(),
       username:   username.value.trim(),
     })
-    const badges = await checkProfileBadge(profile.value)
+    const badges = await badgeStore.checkProfileBadge(authStore.profile)
     if (badges.length) {
       newBadges.value = badges
     } else {
@@ -53,7 +55,7 @@ async function onSave() {
 
 async function onEmailSave(newEmail) {
   try {
-    await updateEmail(newEmail)
+    await authStore.updateEmail(newEmail)
     showEmailModal.value = false
     feedback.value = 'Un email de confirmation a été envoyé.'
     setTimeout(() => { feedback.value = '' }, 4000)
@@ -64,7 +66,7 @@ async function onEmailSave(newEmail) {
 
 async function onPasswordSave(newPassword) {
   try {
-    await updatePassword(newPassword)
+    await authStore.updatePassword(newPassword)
     showPasswordModal.value = false
     feedback.value = 'Mot de passe mis à jour.'
     setTimeout(() => { feedback.value = '' }, 4000)
@@ -113,7 +115,7 @@ async function onPasswordSave(newPassword) {
         <button class="profile-edit__account-item" @click="showEmailModal = true">
           <div>
             <p class="profile-edit__account-label">Adresse email</p>
-            <p class="profile-edit__account-value">{{ user?.email }}</p>
+            <p class="profile-edit__account-value">{{ authStore.user?.email }}</p>
           </div>
           <AppIcon name="arrow-left" :width="16" :height="16" class="profile-edit__arrow" />
         </button>
@@ -133,7 +135,7 @@ async function onPasswordSave(newPassword) {
 
     <ChangeEmailModal
       :show="showEmailModal"
-      :current-email="user?.email ?? ''"
+      :current-email="authStore.user?.email ?? ''"
       @close="showEmailModal = false"
       @save="onEmailSave"
     />

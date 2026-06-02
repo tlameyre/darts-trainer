@@ -1,10 +1,11 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { signUp, signInWithOAuth } from '../store/authStore.js'
+import { useAuthStore } from '../store/authStore.js'
 import AppButton from '../components/AppButton.vue'
 
-const router = useRouter()
+const router    = useRouter()
+const authStore = useAuthStore()
 
 const username     = ref('')
 const email        = ref('')
@@ -18,7 +19,7 @@ async function onSubmit() {
   error.value   = ''
   loading.value = true
   try {
-    const data = await signUp(email.value, password.value, username.value)
+    const data = await authStore.signUp(email.value, password.value, username.value)
     // Si confirmation email désactivée → session dispo directement
     if (data?.session) {
       router.replace({ name: 'play' })
@@ -36,7 +37,7 @@ async function onGoogle() {
   error.value = ''
   oauthLoading.value = true
   try {
-    await signInWithOAuth('google')
+    await authStore.signInWithOAuth('google')
   } catch (e) {
     error.value = e.message
     oauthLoading.value = false

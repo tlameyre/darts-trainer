@@ -3,9 +3,10 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
-import { gameSettings } from '../store/gameStore.js'
+import { useGameStore } from '../store/gameStore.js'
 
-const router = useRouter()
+const router    = useRouter()
+const gameStore = useGameStore()
 
 const SCORE_OPTIONS = [301, 501]
 const LEGS_OPTIONS = [1, 2, 3, 5]
@@ -24,7 +25,7 @@ const effectiveScore = computed(() => {
 })
 
 function startGame() {
-  gameSettings.value = {
+  gameStore.gameSettings = {
     mode: 'x01',
     startScore: effectiveScore.value,
     legsToWin: settings.legsToWin,

@@ -1,9 +1,9 @@
 <script setup>
 import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { gameSettings } from '../store/gameStore.js'
+import { useGameStore } from '../store/gameStore.js'
 import { useX01 } from '../composables/useX01.js'
-import { saveX01Session } from '../store/dbStore.js'
+import { useDbStore } from '../store/dbStore.js'
 import StatsCard from '../components/game/StatsCard.vue'
 import DartSlotsHeader from '../components/game/DartSlotsHeader.vue'
 import GameInput from '../components/game/GameInput.vue'
@@ -13,11 +13,13 @@ import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
 import AppIcon from '../components/AppIcon.vue'
 import AppHeader from '../components/AppHeader.vue'
 
-const router = useRouter()
+const router    = useRouter()
+const gameStore = useGameStore()
+const dbStore   = useDbStore()
 
-if (!gameSettings.value) router.replace({ name: 'x01-settings' })
+if (!gameStore.gameSettings) router.replace({ name: 'x01-settings' })
 
-const settings = gameSettings.value ?? { startScore: 501, legsToWin: 2 }
+const settings = gameStore.gameSettings ?? { startScore: 501, legsToWin: 2 }
 
 const {
   completedLegs,
@@ -46,7 +48,7 @@ const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.va
 
 watch(phase, async (val) => {
   if (val === 'game-over' && stats.value) {
-    await saveX01Session({
+    await dbStore.saveX01Session({
       startScore: settings.startScore,
       legsPlayed: completedLegs.value.length,
       stats: stats.value,

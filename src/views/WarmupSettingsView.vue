@@ -3,10 +3,11 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import ZonePicker from '../components/ZonePicker.vue'
-import { gameSettings } from '../store/gameStore.js'
+import { useGameStore } from '../store/gameStore.js'
 import AppButton from '../components/AppButton.vue'
 
-const router = useRouter()
+const router    = useRouter()
+const gameStore = useGameStore()
 
 const settings = reactive({
   duration: 15,
@@ -28,7 +29,7 @@ function startGame() {
   const duration = settings.duration === 'custom'
     ? (Number(customMinutes.value) > 0 ? Number(customMinutes.value) : 5)
     : settings.duration
-  gameSettings.value = { mode: 'warmup', duration, zone: settings.zone }
+  gameStore.gameSettings = { mode: 'warmup', duration, zone: settings.zone }
   router.push({ name: 'warmup-game' })
 }
 </script>

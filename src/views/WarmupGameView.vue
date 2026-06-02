@@ -1,10 +1,10 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { gameSettings } from '../store/gameStore.js'
+import { useGameStore } from '../store/gameStore.js'
 import { useWarmup, formatZoneLabel } from '../composables/useWarmup.js'
-import { saveWarmupSession, fetchProfileStats } from '../store/dbStore.js'
-import { checkWarmupBadges, checkSpecialThrow } from '../store/badgeStore.js'
+import { useDbStore } from '../store/dbStore.js'
+import { useBadgeStore } from '../store/badgeStore.js'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import StatsCard from '../components/game/StatsCard.vue'
 import DartSlotsHeader from '../components/game/DartSlotsHeader.vue'
@@ -14,28 +14,31 @@ import WarmupZoneModal from '../components/warmup/WarmupZoneModal.vue'
 import AppIcon from '../components/AppIcon.vue'
 import AppHeader from '../components/AppHeader.vue'
 
-const router = useRouter()
+const router     = useRouter()
+const gameStore  = useGameStore()
+const dbStore    = useDbStore()
+const badgeStore = useBadgeStore()
 
-if (!gameSettings.value) router.replace({ name: 'warmup-settings' })
+if (!gameStore.gameSettings) router.replace({ name: 'warmup-settings' })
 
 const {
   timeDisplay, isUnlimited, isUrgent, gameOver,
   currentZone, currentZoneStats, zoneRecapStats, sessionStats,
   darts, recordDart, undoLast, changeZone, startTimer, endSession, cleanup,
-} = useWarmup(gameSettings.value ?? { duration: 5, zone: { sector: 20, type: 'D' } })
+} = useWarmup(gameStore.gameSettings ?? { duration: 5, zone: { sector: 20, type: 'D' } })
 
 watch(gameOver, async (val) => {
   if (val) {
-    const duration = gameSettings.value?.duration
-    await saveWarmupSession({
+    const duration = gameStore.gameSettings?.duration
+    await dbStore.saveWarmupSession({
       zone: currentZone.value,
       totalDarts: sessionStats.value.total,
       hits: sessionStats.value.hits,
       durationS: duration !== null ? duration * 60 : null,
-      settings: gameSettings.value,
+      settings: gameStore.gameSettings,
     })
-    const stats = await fetchProfileStats()
-    newBadges.value = await checkWarmupBadges({
+    const stats = await dbStore.fetchProfileStats()
+    newBadges.value = await badgeStore.checkWarmupBadges({
       totalDarts: sessionStats.value.total,
       accuracy: sessionStats.value.accuracy,
       cumulativeStats: stats,
@@ -56,7 +59,7 @@ watch(() => darts.value.length, async (newLen, oldLen) => {
     justCompleted.value = true
     _justCompletedTimer = setTimeout(() => { justCompleted.value = false }, 700)
     // Vérification des lancers spéciaux à chaque fin de volée
-    const special = await checkSpecialThrow(darts.value)
+    const special = await badgeStore.checkSpecialThrow(darts.value)
     if (special.length) newBadges.value = [...newBadges.value, ...special]
   } else if (newLen < oldLen) {
     justCompleted.value = false

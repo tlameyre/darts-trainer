@@ -1,10 +1,11 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { GAME_MODES } from '../data/gameModes.js'
-import { profile } from '../store/authStore.js'
+import { useAuthStore } from '../store/authStore.js'
 import AppIcon from '../components/AppIcon.vue'
 
-const router = useRouter()
+const router    = useRouter()
+const authStore = useAuthStore()
 
 function selectMode(mode) {
   router.push({ name: mode.settingsRoute })
@@ -18,7 +19,7 @@ function selectMode(mode) {
         <h1 class="lobby__title">DARTS<br>TRAINER</h1>
         <button class="lobby__profile-btn" @click="router.push({ name: 'profile' })">
           <AppIcon name="user" :width="22" :height="22" />
-          <span v-if="profile?.username" class="lobby__profile-name">{{ profile.username }}</span>
+          <span v-if="authStore.profile?.username" class="lobby__profile-name">{{ authStore.profile.username }}</span>
         </button>
       </div>
     </header>

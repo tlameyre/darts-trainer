@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { fetchGlobalStats, fetchGameSessions, fetchWarmupSessions, fetchX01Sessions } from '../store/dbStore.js'
+import { useDbStore } from '../store/dbStore.js'
 import StatsSessionModal from '../components/stats/StatsSessionModal.vue'
+
+const dbStore = useDbStore()
 
 // ── Données réelles ───────────────────────────────────────────────────────────
 const globalStats = ref(null)
@@ -51,10 +53,10 @@ onMounted(async () => {
   //   return
   // }
   const [s, gs, ws, x1] = await Promise.all([
-    fetchGlobalStats(),
-    fetchGameSessions(10),
-    fetchWarmupSessions(10),
-    fetchX01Sessions(10),
+    dbStore.fetchGlobalStats(),
+    dbStore.fetchGameSessions(10),
+    dbStore.fetchWarmupSessions(10),
+    dbStore.fetchX01Sessions(10),
   ])
   globalStats.value = s
   gameSessions.value = gs

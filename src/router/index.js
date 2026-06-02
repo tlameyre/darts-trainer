@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { isAuth, loading } from "../store/authStore.js";
+import { useAuthStore } from "../store/authStore.js";
 
 import HomeView from "../views/HomeView.vue";
 import LobbyView from "../views/LobbyView.vue";
@@ -82,11 +82,13 @@ export const router = createRouter({
 router.beforeEach(async (to) => {
   if (to.meta.dev) return;
 
+  const auth = useAuthStore();
+
   // Attendre la résolution de la session Supabase au premier chargement
-  if (loading.value) {
+  if (auth.loading) {
     await new Promise((resolve) => {
       const stop = setInterval(() => {
-        if (!loading.value) {
+        if (!auth.loading) {
           clearInterval(stop);
           resolve();
         }
@@ -94,11 +96,11 @@ router.beforeEach(async (to) => {
     });
   }
 
-  if (!to.meta.public && !isAuth.value) {
+  if (!to.meta.public && !auth.isAuth) {
     return { name: "login" };
   }
 
-  if (to.meta.public && isAuth.value) {
+  if (to.meta.public && auth.isAuth) {
     return { name: "home" };
   }
 });

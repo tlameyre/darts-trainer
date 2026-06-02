@@ -2,19 +2,23 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { BADGES } from '../data/badges.js'
-import { fetchUserBadges, getBadgeProgress } from '../store/badgeStore.js'
-import { fetchProfileStats } from '../store/dbStore.js'
+import { useBadgeStore } from '../store/badgeStore.js'
+import { useDbStore } from '../store/dbStore.js'
 import AppHeader from '../components/AppHeader.vue'
 import BadgeDetailModal from '../components/badges/BadgeDetailModal.vue'
 
-const router       = useRouter()
-const userBadges   = ref([])
-const stats        = ref(null)
+const router      = useRouter()
+const badgeStore  = useBadgeStore()
+const dbStore     = useDbStore()
+const { getBadgeProgress } = badgeStore
+
+const userBadges    = ref([])
+const stats         = ref(null)
 const selectedBadge = ref(null)
-const showModal    = ref(false)
+const showModal     = ref(false)
 
 onMounted(async () => {
-  const [b, s] = await Promise.all([fetchUserBadges(), fetchProfileStats()])
+  const [b, s] = await Promise.all([badgeStore.fetchUserBadges(), dbStore.fetchProfileStats()])
   userBadges.value = b
   stats.value      = s
 })

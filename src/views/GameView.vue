@@ -2,9 +2,9 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDarts } from '../composables/useDarts.js'
-import { gameSettings } from '../store/gameStore.js'
-import { saveGameSession, fetchProfileStats } from '../store/dbStore.js'
-import { checkGameBadges } from '../store/badgeStore.js'
+import { useGameStore } from '../store/gameStore.js'
+import { useDbStore } from '../store/dbStore.js'
+import { useBadgeStore } from '../store/badgeStore.js'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 
 import AppHeader from '../components/AppHeader.vue'
@@ -15,8 +15,11 @@ import GameTourRow from '../components/game/GameTourRow.vue'
 import GameRoundCard from '../components/game/GameRoundCard.vue'
 import GameMenuModal from '../components/game/GameMenuModal.vue'
 
-const route = useRoute()
-const router = useRouter()
+const route      = useRoute()
+const router     = useRouter()
+const gameStore  = useGameStore()
+const dbStore    = useDbStore()
+const badgeStore = useBadgeStore()
 
 const {
   currentScore, currentVolee, inputValue,
@@ -25,18 +28,18 @@ const {
   phase, voleeTotal,
   correctAnswer, questionLabel, phaseLabel,
   nextRound, appendDigit, deleteDigit, validate, cleanup,
-} = useDarts(gameSettings.value)
+} = useDarts(gameStore.gameSettings)
 
 watch(gameOver, async (val) => {
   if (val) {
-    await saveGameSession({
+    await dbStore.saveGameSession({
       correctCount:   correctCount.value,
       totalQuestions: questionIndex.value,
       bestStreak:     best.value,
-      settings:       gameSettings.value,
+      settings:       gameStore.gameSettings,
     })
-    const stats = await fetchProfileStats()
-    newBadges.value = await checkGameBadges({
+    const stats = await dbStore.fetchProfileStats()
+    newBadges.value = await badgeStore.checkGameBadges({
       correctCount:   correctCount.value,
       totalQuestions: questionIndex.value,
       bestStreak:     best.value,
@@ -89,18 +92,18 @@ onUnmounted(() => {
 
     <main class="game__main">
       <GameOver v-if="gameOver" :correct-count="correctCount"
-        :max-questions="gameSettings.maxQuestions ?? questionLabel" :best="best"
+        :max-questions="gameStore.gameSettings.maxQuestions ?? questionLabel" :best="best"
         @replay="router.push({ name: 'score-game', query: { t: Date.now() } })"
         @home="router.push({ name: 'play' })" />
 
       <template v-else>
         <GameRoundCard :phase="phase" :current-score="currentScore" :current-volee="currentVolee"
           :volee-total="voleeTotal" :feedback-state="feedbackState" :correct-answer="correctAnswer"
-          :show-value="gameSettings.showDartValue" />
+          :show-value="gameStore.gameSettings.showDartValue" />
 
         <div class="game__side">
-          <GameTourRow :question-label="questionLabel" :phase="phase" :show-phase="gameSettings.doubleValidation"
-            :time-left="timeLeft" :show-timer="!!gameSettings.timeLimit" :is-urgent="timeLeft <= 5" />
+          <GameTourRow :question-label="questionLabel" :phase="phase" :show-phase="gameStore.gameSettings.doubleValidation"
+            :time-left="timeLeft" :show-timer="!!gameStore.gameSettings.timeLimit" :is-urgent="timeLeft <= 5" />
 
           <AnswerInput :value="inputValue" :placeholder="phaseLabel"
             :has-error="feedbackState === 'wrong' || feedbackState === 'timeout'" @validate="validate" />

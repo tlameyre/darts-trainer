@@ -1,10 +1,11 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { signIn, signInWithOAuth } from '../store/authStore.js'
+import { useAuthStore } from '../store/authStore.js'
 import AppButton from '../components/AppButton.vue'
 
-const router = useRouter()
+const router    = useRouter()
+const authStore = useAuthStore()
 
 const email    = ref('')
 const password = ref('')
@@ -16,7 +17,7 @@ async function onSubmit() {
   error.value   = ''
   loading.value = true
   try {
-    await signIn(email.value, password.value)
+    await authStore.signIn(email.value, password.value)
     router.replace({ name: 'play' })
   } catch (e) {
     error.value = e.message
@@ -29,7 +30,7 @@ async function onGoogle() {
   error.value = ''
   oauthLoading.value = true
   try {
-    await signInWithOAuth('google')
+    await authStore.signInWithOAuth('google')
   } catch (e) {
     error.value = e.message
     oauthLoading.value = false

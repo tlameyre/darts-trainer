@@ -6,10 +6,11 @@ import OptionSelector from '../components/OptionSelector.vue'
 import ToggleSwitch from '../components/ToggleSwitch.vue'
 import AppButton from '../components/AppButton.vue'
 import { GAME_MODES } from '../data/gameModes.js'
-import { gameSettings } from '../store/gameStore.js'
+import { useGameStore } from '../store/gameStore.js'
 
-const route = useRoute()
-const router = useRouter()
+const route     = useRoute()
+const router    = useRouter()
+const gameStore = useGameStore()
 
 const mode = computed(() => GAME_MODES.find(m => m.id === 'score-training'))
 
@@ -40,7 +41,7 @@ const timeOptions = [
 ]
 
 function startGame() {
-  gameSettings.value = { ...settings }
+  gameStore.gameSettings = { ...settings }
   router.push({ name: 'score-game' })
 }
 </script>
