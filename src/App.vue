@@ -24,5 +24,5 @@ watch(() => authStore.isAuth, (val) => {
 <template>
   <AppIconDefs />
   <RouterView />
-  <BottomNav v-if="isAuth && !route.meta.hideNav && !route.meta.public" />
+  <BottomNav v-if="authStore.isAuth && !route.meta.hideNav && !route.meta.public" />
 </template>
