@@ -15,6 +15,7 @@ import ProfileEditView from "../views/ProfileEditView.vue";
 import BadgesView from "../views/BadgesView.vue";
 import X01SettingsView from "../views/X01SettingsView.vue";
 import X01GameView from "../views/X01GameView.vue";
+import FriendsView from "../views/FriendsView.vue";
 
 const routes = [
   // Auth
@@ -35,6 +36,7 @@ const routes = [
   { path: "/", name: "home", component: HomeView },
   { path: "/play", name: "play", component: LobbyView },
   { path: "/stats", name: "stats", component: StatsView },
+  { path: "/friends", name: "friends", component: FriendsView },
 
   // App — autres
   { path: "/profile", name: "profile", component: ProfileView },

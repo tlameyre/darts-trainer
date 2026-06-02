@@ -1,19 +1,24 @@
 <script setup>
+import { computed } from 'vue'
 import AppIcon from './AppIcon.vue'
-
 import { useRoute } from 'vue-router'
+import { useFriendStore } from '../store/friendStore.js'
 
-const route = useRoute()
+const route       = useRoute()
+const friendStore = useFriendStore()
 
 const tabs = [
   { name: 'home',    label: 'Accueil', icon: 'home' },
   { name: 'play',    label: 'Jouer',   icon: 'dartboard' },
+  { name: 'friends', label: 'Amis',    icon: 'friends' },
   { name: 'stats',   label: 'Stats',   icon: 'chart' },
   { name: 'profile', label: 'Profil',  icon: 'user' },
 ]
 
 // L'onglet profil est actif sur /profile, /profile/edit et /profile/badges
 const profileRoutes = new Set(['profile', 'profile-edit', 'badges'])
+
+const pendingCount = computed(() => friendStore.pendingReceived.length)
 </script>
 
 <template>
@@ -30,7 +35,10 @@ const profileRoutes = new Set(['profile', 'profile-edit', 'badges'])
             : route.name === tab.name
       }"
     >
-      <AppIcon :name="tab.icon" :width="24" :height="24" />
+      <div class="bottom-nav__icon-wrap">
+        <AppIcon :name="tab.icon" :width="22" :height="22" />
+        <span v-if="tab.name === 'friends' && pendingCount" class="bottom-nav__dot" />
+      </div>
       <span class="bottom-nav__label">{{ tab.label }}</span>
     </router-link>
   </nav>
@@ -62,13 +70,26 @@ const profileRoutes = new Set(['profile', 'profile-edit', 'badges'])
     text-decoration: none;
     transition: color 0.15s;
 
-    &--active {
-      color: $orange;
-    }
+    &--active { color: $orange; }
+    &:active   { opacity: 0.7; }
+  }
 
-    &:active {
-      opacity: 0.7;
-    }
+  &__icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__dot {
+    position: absolute;
+    top: -2px;
+    right: -4px;
+    width: 8px;
+    height: 8px;
+    border-radius: $radius-pill;
+    background: $orange;
+    border: 1.5px solid $bg;
   }
 
   &__label {

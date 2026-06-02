@@ -12,12 +12,27 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = computed(() => _loading.value)
   const isAuth  = computed(() => !!_user.value)
 
+  function generateFriendCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    let code = 'DMC-'
+    for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)]
+    return code
+  }
+
   async function fetchProfile(userId) {
     const { data } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single()
+
+    // Génère un friend_code si absent (utilisateurs existants)
+    if (data && !data.friend_code) {
+      const code = generateFriendCode()
+      await supabase.from('profiles').update({ friend_code: code }).eq('id', userId)
+      data.friend_code = code
+    }
+
     _profile.value = data
   }
 

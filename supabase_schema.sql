@@ -5,12 +5,13 @@
 
 -- 1. Profiles (1 par utilisateur)
 create table public.profiles (
-  id         uuid primary key references auth.users(id) on delete cascade,
-  first_name text,
-  last_name  text,
-  username   text,
-  settings   jsonb default '{}'::jsonb,
-  created_at timestamptz default now()
+  id          uuid primary key references auth.users(id) on delete cascade,
+  first_name  text,
+  last_name   text,
+  username    text,
+  friend_code text unique,
+  settings    jsonb default '{}'::jsonb,
+  created_at  timestamptz default now()
 );
 
 alter table public.profiles enable row level security;
@@ -19,16 +20,37 @@ create policy "Lecture du propre profil"
   on public.profiles for select
   using (auth.uid() = id);
 
+create policy "Insertion du propre profil"
+  on public.profiles for insert
+  with check (auth.uid() = id);
+
 create policy "Mise à jour du propre profil"
   on public.profiles for update
   using (auth.uid() = id);
 
+-- Lecture partielle pour la recherche par friend_code (ajout d'amis)
+create policy "Lecture publique par friend_code"
+  on public.profiles for select
+  using (true);
+
 -- Créer automatiquement un profil à l'inscription
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer as $$
+declare
+  new_code text;
+  code_exists boolean;
 begin
-  insert into public.profiles (id, username)
-  values (new.id, new.raw_user_meta_data->>'username');
+  -- Génère un friend_code unique au format DMC-XXXX
+  loop
+    new_code := 'DMC-' || substring(md5(random()::text) from 1 for 4);
+    new_code := upper(new_code);
+    select exists(select 1 from public.profiles where friend_code = new_code) into code_exists;
+    exit when not code_exists;
+  end loop;
+
+  insert into public.profiles (id, username, friend_code)
+  values (new.id, new.raw_user_meta_data->>'username', new_code)
+  on conflict (id) do nothing;
   return new;
 end;
 $$;
@@ -78,7 +100,7 @@ create policy "Insertion propres sessions game"
   with check (auth.uid() = user_id);
 
 
--- 3. Sessions Échauffement
+-- 4. Sessions Échauffement
 create table public.warmup_sessions (
   id           uuid primary key default gen_random_uuid(),
   user_id      uuid references auth.users(id) on delete cascade not null,
@@ -100,3 +122,36 @@ create policy "Lecture propres sessions warmup"
 create policy "Insertion propres sessions warmup"
   on public.warmup_sessions for insert
   with check (auth.uid() = user_id);
+
+
+-- 5. Amitiés
+create table public.friendships (
+  id           uuid primary key default gen_random_uuid(),
+  requester_id uuid references auth.users(id) on delete cascade not null,
+  addressee_id uuid references auth.users(id) on delete cascade not null,
+  status       text not null default 'pending' check (status in ('pending', 'accepted')),
+  created_at   timestamptz default now(),
+  unique(requester_id, addressee_id)
+);
+
+alter table public.friendships enable row level security;
+
+-- Lecture : visible si on est l'un des deux participants
+create policy "Lecture propres amitiés"
+  on public.friendships for select
+  using (auth.uid() = requester_id or auth.uid() = addressee_id);
+
+-- Insertion : seulement en tant que requester
+create policy "Envoi demande d'ami"
+  on public.friendships for insert
+  with check (auth.uid() = requester_id);
+
+-- Mise à jour : seulement l'addressee peut accepter
+create policy "Acceptation demande d'ami"
+  on public.friendships for update
+  using (auth.uid() = addressee_id);
+
+-- Suppression : les deux participants peuvent supprimer
+create policy "Suppression amitié"
+  on public.friendships for delete
+  using (auth.uid() = requester_id or auth.uid() = addressee_id);
