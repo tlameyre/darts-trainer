@@ -155,3 +155,37 @@ create policy "Acceptation demande d'ami"
 create policy "Suppression amitié"
   on public.friendships for delete
   using (auth.uid() = requester_id or auth.uid() = addressee_id);
+
+
+-- ============================================================
+-- Sessions X01 (501 / 301)
+-- ============================================================
+
+create table public.x01_sessions (
+  id                  uuid primary key default gen_random_uuid(),
+  user_id             uuid references auth.users on delete cascade not null,
+  played_at           timestamptz default now(),
+  start_score         int not null,
+  legs_played         int not null,
+  avg_volley          numeric,
+  avg_9darts          numeric,
+  avg_darts_to_finish numeric,
+  min_darts           int,
+  max_darts           int,
+  highest_finish      int,
+  highest_volley      int,
+  doubles_hit         int,
+  doubles_attempted   int,
+  settings            jsonb
+);
+
+alter table public.x01_sessions enable row level security;
+
+create policy "Users manage own x01_sessions"
+  on public.x01_sessions for all
+  using (auth.uid() = user_id);
+
+-- Migration si la table existe déjà sans les colonnes doubles :
+-- alter table public.x01_sessions
+--   add column if not exists doubles_hit       int,
+--   add column if not exists doubles_attempted  int;

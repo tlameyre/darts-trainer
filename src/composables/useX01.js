@@ -256,32 +256,52 @@ export function useX01({ startScore, legsToWin }) {
     const legs = completedLegs.value
     if (!legs.length) return null
 
-    // Toutes les volées valides (non bust)
-    const validVolleys = legs.flatMap(l => l.volleys.filter(v => !v.bust))
+    const allVolleys   = legs.flatMap(l => l.volleys)
+    const validVolleys = allVolleys.filter(v => !v.bust)
     const volleyScores = validVolleys.map(v => v.score)
 
     const avgVolley = volleyScores.length
       ? Math.round(volleyScores.reduce((a, b) => a + b, 0) / volleyScores.length)
       : 0
 
-    // 3 premières volées valides par manche (= 9 premières fléchettes)
-    const first3Scores = legs.flatMap(l => {
-      const valid = l.volleys.filter(v => !v.bust).slice(0, 3).map(v => v.score)
-      return valid
-    })
+    // 3 premières volées valides par manche (≈ 9 premières fléchettes)
+    const first3Scores = legs.flatMap(l =>
+      l.volleys.filter(v => !v.bust).slice(0, 3).map(v => v.score)
+    )
     const avg9darts = first3Scores.length
       ? Math.round(first3Scores.reduce((a, b) => a + b, 0) / first3Scores.length)
       : 0
 
-    const dartsPerLeg      = legs.map(l => l.totalDarts)
+    // Doubles : tentatives = doublesAttempted (volées hors checkout) + doublesThrown (checkout)
+    const doublesHit      = legs.length
+    const doublesAttempted = allVolleys.reduce((sum, v) => {
+      if (v.doublesThrown != null)   return sum + v.doublesThrown
+      if (v.doublesAttempted != null) return sum + v.doublesAttempted
+      return sum
+    }, 0)
+
+    const dartsPerLeg     = legs.map(l => l.totalDarts)
     const avgDartsToFinish = Math.round(dartsPerLeg.reduce((a, b) => a + b, 0) / dartsPerLeg.length)
-    const minDarts         = Math.min(...dartsPerLeg)
-    const maxDarts         = Math.max(...dartsPerLeg)
 
-    const highestFinish  = Math.max(...legs.map(l => l.checkoutScore), 0)
-    const highestVolley  = volleyScores.length ? Math.max(...volleyScores) : 0
+    // Meilleure et pire manche (par nb de fléchettes)
+    const legsSorted = [...legs].sort((a, b) => a.totalDarts - b.totalDarts)
+    const bestLeg  = { darts: legsSorted[0].totalDarts,                              checkoutScore: legsSorted[0].checkoutScore }
+    const worstLeg = { darts: legsSorted[legsSorted.length - 1].totalDarts, checkoutScore: legsSorted[legsSorted.length - 1].checkoutScore }
 
-    return { avgVolley, avg9darts, avgDartsToFinish, minDarts, maxDarts, highestFinish, highestVolley }
+    const highestFinish = Math.max(...legs.map(l => l.checkoutScore), 0)
+    const highestVolley = volleyScores.length ? Math.max(...volleyScores) : 0
+
+    return {
+      avgVolley,
+      avg9darts,
+      avgDartsToFinish,
+      doublesHit,
+      doublesAttempted,
+      highestFinish,
+      highestVolley,
+      bestLeg,
+      worstLeg,
+    }
   })
 
   return {

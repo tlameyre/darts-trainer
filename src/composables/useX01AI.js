@@ -9,13 +9,27 @@
  * obtenir des parties naturelles (pas toujours la même volée).
  */
 
-// ─── Profils de difficulté ────────────────────────────────────────────────────
-export const AI_PROFILES = [
-  { id: 'beginner',     label: 'Débutant',      avgVolley: 32,  checkoutRate: 0.18 },
-  { id: 'intermediate', label: 'Intermédiaire', avgVolley: 57,  checkoutRate: 0.42 },
-  { id: 'advanced',     label: 'Avancé',        avgVolley: 81,  checkoutRate: 0.68 },
-  { id: 'expert',       label: 'Expert',        avgVolley: 100, checkoutRate: 0.85 },
-]
+// ─── 10 niveaux de difficulté (interpolation linéaire) ───────────────────────
+// Niveau 1 : avgVolley 20, checkout 8%
+// Niveau 10 : avgVolley 115, checkout 90%
+function _levelLabel(n) {
+  if (n <= 2)  return 'Débutant'
+  if (n <= 4)  return 'Amateur'
+  if (n <= 6)  return 'Intermédiaire'
+  if (n <= 8)  return 'Avancé'
+  if (n === 9) return 'Expert'
+  return 'Pro'
+}
+
+export const AI_LEVELS = Array.from({ length: 10 }, (_, i) => {
+  const t = i / 9
+  return {
+    level:        i + 1,
+    label:        _levelLabel(i + 1),
+    avgVolley:    Math.round(20 + t * 95),
+    checkoutRate: Math.round((0.08 + t * 0.82) * 100) / 100,
+  }
+})
 
 // ─── Checkouts optimaux (score → nb de fléchettes pour finir) ─────────────────
 // Table simplifiée : les finishes classiques utilisés pour guider le checkout IA

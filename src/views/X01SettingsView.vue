@@ -3,8 +3,8 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
+import X01BotSettings from '../components/x01/X01BotSettings.vue'
 import { useGameStore } from '../store/gameStore.js'
-import { AI_PROFILES } from '../composables/useX01AI.js'
 
 const router    = useRouter()
 const gameStore = useGameStore()
@@ -17,27 +17,19 @@ const settings = reactive({
   legsToWin: 2,
 })
 const customScore = ref(401)
-const aiProfileId = ref(null)   // null = solo, sinon id du profil IA
+const aiProfile   = ref(null)
 
-const isCustomScore = computed(() => settings.scoreKey === 'custom')
-
-const effectiveScore = computed(() => {
-  if (isCustomScore.value) return Math.max(1, Number(customScore.value) || 501)
-  return settings.scoreKey
-})
-
-function toggleAI(id) {
-  aiProfileId.value = aiProfileId.value === id ? null : id
-}
+const isCustomScore  = computed(() => settings.scoreKey === 'custom')
+const effectiveScore = computed(() =>
+  isCustomScore.value ? Math.max(1, Number(customScore.value) || 501) : settings.scoreKey
+)
 
 function startGame() {
   gameStore.gameSettings = {
     mode:       'x01',
     startScore: effectiveScore.value,
     legsToWin:  settings.legsToWin,
-    aiProfile:  aiProfileId.value
-      ? AI_PROFILES.find(p => p.id === aiProfileId.value)
-      : null,
+    aiProfile:  aiProfile.value,
   }
   router.push({ name: 'x01-game' })
 }
@@ -52,60 +44,47 @@ function startGame() {
       <!-- Score de départ -->
       <div class="settings__card">
         <div class="settings__section-label">Score de départ</div>
-        <div class="settings__score-row">
-          <AppButton v-for="s in SCORE_OPTIONS" :key="s" size="small" variant="ghost" :active="settings.scoreKey === s"
-            @click="settings.scoreKey = s">
-            {{ s }}
-          </AppButton>
+        <div class="settings__row">
+          <AppButton
+            v-for="s in SCORE_OPTIONS" :key="s"
+            size="small" variant="ghost" :active="settings.scoreKey === s"
+            @click="settings.scoreKey = s"
+          >{{ s }}</AppButton>
           <AppButton size="small" variant="ghost" :active="isCustomScore" @click="settings.scoreKey = 'custom'">
             Custom
           </AppButton>
         </div>
         <Transition name="slide-fade">
           <div v-if="isCustomScore" class="settings__custom-field">
-            <input v-model.number="customScore" type="number" min="1" max="9999" class="settings__custom-input"
-              placeholder="ex: 701" />
+            <input
+              v-model.number="customScore"
+              type="number" min="1" max="9999"
+              class="settings__custom-input"
+              placeholder="ex: 701"
+            />
             <span class="settings__custom-label">pts</span>
           </div>
         </Transition>
       </div>
 
-      <!-- Nombre de manches -->
+      <!-- Manches à gagner -->
       <div class="settings__card">
         <div class="settings__section-label">Manches à gagner</div>
-        <div class="settings__legs-row">
-          <AppButton v-for="l in LEGS_OPTIONS" :key="l" size="small" variant="ghost" :active="settings.legsToWin === l"
-            @click="settings.legsToWin = l">
-            {{ l }}
-          </AppButton>
+        <div class="settings__row">
+          <AppButton
+            v-for="l in LEGS_OPTIONS" :key="l"
+            size="small" variant="ghost" :active="settings.legsToWin === l"
+            @click="settings.legsToWin = l"
+          >{{ l }}</AppButton>
         </div>
-        <p class="settings__legs-hint">
+        <p class="settings__hint">
           La partie se termine après {{ settings.legsToWin }} manche{{ settings.legsToWin > 1 ? 's' : '' }}.
         </p>
       </div>
 
-      <!-- Adversaire IA -->
+      <!-- Adversaire DartBot -->
       <div class="settings__card">
-        <div class="settings__section-label">Adversaire</div>
-        <div class="settings__ai-row">
-          <AppButton size="small" variant="ghost" :active="aiProfileId === null" @click="aiProfileId = null">
-            Solo
-          </AppButton>
-          <AppButton
-            v-for="p in AI_PROFILES"
-            :key="p.id"
-            size="small"
-            variant="ghost"
-            :active="aiProfileId === p.id"
-            @click="toggleAI(p.id)"
-          >
-            {{ p.label }}
-          </AppButton>
-        </div>
-        <p v-if="aiProfileId" class="settings__ai-hint">
-          Moy. {{ AI_PROFILES.find(p => p.id === aiProfileId).avgVolley }} pts/volée
-          · {{ Math.round(AI_PROFILES.find(p => p.id === aiProfileId).checkoutRate * 100) }}% aux checkouts
-        </p>
+        <X01BotSettings v-model="aiProfile" />
       </div>
 
     </main>
@@ -141,14 +120,11 @@ function startGame() {
     color: $white;
   }
 
-  &__score-row,
-  &__legs-row {
+  &__row {
     display: flex;
     gap: $gap-xs;
 
-    :deep(.btn) {
-      flex: 1;
-    }
+    :deep(.btn) { flex: 1; }
   }
 
   &__custom-field {
@@ -179,26 +155,9 @@ function startGame() {
     white-space: nowrap;
   }
 
-  &__legs-hint {
+  &__hint {
     @include title-sm;
     color: $muted;
-  }
-
-  &__ai-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: $gap-xs;
-
-    :deep(.btn) { flex: 1; min-width: 72px; }
-  }
-
-  &__ai-hint {
-    @include title-sm;
-    color: $muted;
-  }
-
-  :deep(.btn:last-child) {
-    align-self: stretch;
   }
 }
 
@@ -212,24 +171,10 @@ function startGame() {
       padding: $padding-lg 0;
     }
 
-    &__section-label {
-      @include title-xl;
-    }
-
-    &__custom-input {
-      @include title-lg;
-      padding: $padding-sm $padding-md;
-    }
-
-    &__custom-label {
-      @include title-lg;
-    }
-
-    &__legs-hint {
-      @include title-md;
-    }
-
-    &__ai-hint { @include title-md; }
+    &__section-label  { @include title-xl; }
+    &__custom-input   { @include title-lg; padding: $padding-sm $padding-md; }
+    &__custom-label   { @include title-lg; }
+    &__hint           { @include title-md; }
   }
 }
 
@@ -237,7 +182,6 @@ function startGame() {
 .slide-fade-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
-
 .slide-fade-enter-from,
 .slide-fade-leave-to {
   opacity: 0;

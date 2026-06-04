@@ -2,22 +2,23 @@
 import { computed, watch, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '../store/gameStore.js'
+import { useAuthStore } from '../store/authStore.js'
 import { useX01 } from '../composables/useX01.js'
 import { useDbStore } from '../store/dbStore.js'
 import { simulateAIVolley } from '../composables/useX01AI.js'
-import StatsCard from '../components/game/StatsCard.vue'
 import DartSlotsHeader from '../components/game/DartSlotsHeader.vue'
 import GameInput from '../components/game/GameInput.vue'
 import X01Result from '../components/x01/X01Result.vue'
 import X01DoublesModal from '../components/x01/X01DoublesModal.vue'
 import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
-import X01AIScorePanel from '../components/x01/X01AIScorePanel.vue'
+import X01PlayerSplitCard from '../components/x01/X01PlayerSplitCard.vue'
 import AppIcon from '../components/AppIcon.vue'
 import AppHeader from '../components/AppHeader.vue'
 
-const router    = useRouter()
-const gameStore = useGameStore()
-const dbStore   = useDbStore()
+const router     = useRouter()
+const gameStore  = useGameStore()
+const authStore  = useAuthStore()
+const dbStore    = useDbStore()
 
 if (!gameStore.gameSettings) router.replace({ name: 'x01-settings' })
 
@@ -50,12 +51,27 @@ const isBust   = computed(() => phase.value === 'bust')
 const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.value)
 
 // ── IA ───────────────────────────────────────────────────────────────────────
-const aiRemaining   = ref(settings.startScore)
-const aiLegsWon     = ref(0)
-const aiLastVolley  = ref(null)
-const aiTurn        = ref(false)
-const aiPending     = ref(false)  // l'IA attend que les modales soient fermées
-let _aiTimer        = null
+const aiRemaining      = ref(settings.startScore)
+const aiLegsWon        = ref(0)
+const aiLastVolley     = ref(null)
+const aiTurn           = ref(false)
+const aiPending        = ref(false)  // l'IA attend que les modales soient fermées
+const aiWonLeg         = ref(false)  // l'IA a remporté une manche (pas encore la partie)
+const aiWonGame        = ref(false)  // l'IA a remporté la partie
+const aiTotalDarts     = ref(0)      // total fléchettes IA lancées
+const aiVolleysScores  = ref([])     // scores des volées valides IA (pour la moyenne)
+let _aiTimer           = null
+
+// Snapshot des volées humaines au moment où l'IA gagne une manche
+const aiLegHumanSnapshot = ref(null)
+
+const aiLevel = computed(() => aiProfile?.level ?? null)
+
+const aiAvgVolley = computed(() => {
+  if (!aiVolleysScores.value.length) return '–'
+  const sum = aiVolleysScores.value.reduce((a, b) => a + b, 0)
+  return Math.round(sum / aiVolleysScores.value.length)
+})
 
 function triggerAIVolley() {
   aiTurn.value    = true
@@ -65,20 +81,46 @@ function triggerAIVolley() {
     const result = simulateAIVolley(aiRemaining.value, aiProfile)
     aiLastVolley.value = result
 
+    aiTotalDarts.value += result.dartsUsed
+    if (!result.bust) aiVolleysScores.value.push(result.score)
+
     if (result.isCheckout) {
       aiRemaining.value = 0
       aiLegsWon.value  += 1
       aiTurn.value      = false
       if (aiLegsWon.value >= settings.legsToWin) {
+        aiWonGame.value = true
+        // Capturer l'état humain avant de passer en game-over
+        aiLegHumanSnapshot.value = {
+          volleys:   [...volleys.value],
+          remaining: legRemaining.value,
+        }
         phase.value = 'game-over'
       } else {
-        aiRemaining.value = settings.startScore
+        // Capturer les volées humaines avant le reset pour l'affichage du récap
+        aiLegHumanSnapshot.value = {
+          volleys:   [...volleys.value],
+          remaining: legRemaining.value,
+        }
+        aiWonLeg.value = true
       }
     } else {
       aiRemaining.value = Math.max(0, aiRemaining.value - result.score)
       aiTurn.value      = false
     }
   }, 900)
+}
+
+function handleAILegContinue() {
+  aiWonLeg.value           = false
+  aiLegHumanSnapshot.value = null
+  aiRemaining.value        = settings.startScore
+  startNextLeg()
+}
+
+function resetAILegStats() {
+  aiTotalDarts.value    = 0
+  aiVolleysScores.value = []
 }
 
 // L'IA joue après chaque volée humaine — mais attend si une modale ou un bust est en cours
@@ -107,20 +149,20 @@ watch(phase, (val, old) => {
 // Déclenche le tour IA dès que la modale doubles est fermée
 watch(pendingDoublesPrompt, (val) => {
   if (!aiProfile || val) return
-  if (aiPending.value) triggerAIVolley()
+  if (aiPending.value && phase.value === 'playing') triggerAIVolley()
 })
 
 // Déclenche le tour IA dès que la modale checkout est fermée
 watch(pendingCheckout, (val) => {
   if (!aiProfile || val) return
-  if (aiPending.value) triggerAIVolley()
+  if (aiPending.value && phase.value === 'playing') triggerAIVolley()
 })
 
-// Reset IA au démarrage de chaque manche
-const _origStartNextLeg = startNextLeg
+// Reset IA au démarrage de chaque manche (quand le joueur humain remporte une manche)
 function startNextLegWithAI() {
-  if (aiProfile) aiRemaining.value = settings.startScore
-  _origStartNextLeg()
+  aiRemaining.value = settings.startScore
+  resetAILegStats()
+  startNextLeg()
 }
 
 watch(phase, async (val) => {
@@ -134,24 +176,69 @@ watch(phase, async (val) => {
   }
 })
 
-const lastLeg = computed(() => completedLegs.value[completedLegs.value.length - 1])
+const lastLeg       = computed(() => completedLegs.value[completedLegs.value.length - 1])
+const showLegRecap  = computed(() => phase.value === 'leg-recap' || aiWonLeg.value)
+const legWinner     = computed(() => aiWonLeg.value ? 'ai' : 'human')
 
-const totalDarts = computed(() =>
+const recapVolleys    = computed(() =>
+  legWinner.value === 'ai'
+    ? (aiLegHumanSnapshot.value?.volleys ?? [])
+    : (lastLeg.value?.volleys ?? [])
+)
+const recapTotalDarts = computed(() =>
+  legWinner.value === 'ai'
+    ? recapVolleys.value.reduce((sum, v) => sum + v.darts.length, 0)
+    : (lastLeg.value?.totalDarts ?? 0)
+)
+const recapValidVolleys = computed(() =>
+  recapVolleys.value.filter(v => !v.bust).length
+)
+
+// ── Données carte joueurs ─────────────────────────────────────────────────
+const lastHumanDarts = computed(() => {
+  const last = volleys.value[volleys.value.length - 1]
+  return last ? last.darts : []
+})
+
+const humanTotalDarts = computed(() =>
   volleys.value.reduce((sum, v) => sum + v.darts.length, 0)
   + (isBust.value ? 0 : currentDarts.value.length)
 )
 
-const avgVolley = computed(() => {
+const humanAvgVolley = computed(() => {
   const valid = volleys.value.filter(v => !v.bust)
   if (!valid.length) return '–'
   return Math.round(valid.reduce((s, v) => s + v.score, 0) / valid.length)
 })
 
-const statsRows = computed(() => [
-  { label: 'Manche', value: `${Math.min(legNumber.value, settings.legsToWin)} / ${settings.legsToWin}` },
-  { label: 'Fléchettes lancées', value: totalDarts.value },
-  { label: 'Moy. volée', value: avgVolley.value },
-])
+const humanLastScore = computed(() => {
+  const validVolleys = volleys.value.filter(v => !v.bust)
+  if (!validVolleys.length) return null
+  return validVolleys[validVolleys.length - 1].score
+})
+
+const humanCardData = computed(() => ({
+  name:       authStore.profile?.username ?? 'Toi',
+  remaining:  legRemaining.value,
+  legsWon:    completedLegs.value.length,
+  legsToWin:  settings.legsToWin,
+  lastDarts:  lastHumanDarts.value,
+  avgVolley:  humanAvgVolley.value,
+  lastScore:  humanLastScore.value,
+  totalDarts: humanTotalDarts.value,
+}))
+
+const aiCardData = computed(() => ({
+  profileLabel: aiProfile?.label ?? '',
+  level:        aiLevel.value,
+  remaining:    aiRemaining.value,
+  legsWon:      aiLegsWon.value,
+  legsToWin:    settings.legsToWin,
+  lastScore:    aiLastVolley.value?.isCheckout ? aiLastVolley.value.score : (aiLastVolley.value?.bust ? null : aiLastVolley.value?.score ?? null),
+  avgVolley:    aiAvgVolley.value,
+  totalDarts:   aiTotalDarts.value,
+  isThinking:   aiTurn.value,
+}))
 
 const currentVolleyDarts = computed(() =>
   isBust.value ? (volleys.value[volleys.value.length - 1]?.darts ?? []) : currentDarts.value
@@ -169,63 +256,77 @@ const currentVolleyDarts = computed(() =>
       </template>
     </AppHeader>
 
-    <!-- ── Panneau IA ────────────────────────────────────────────────────── -->
-    <X01AIScorePanel
-      v-if="aiProfile && (phase === 'playing' || isBust)"
-      :remaining="aiRemaining"
-      :legs-won="aiLegsWon"
-      :legs-to-win="settings.legsToWin"
-      :profile-label="aiProfile.label"
-      :last-volley="aiLastVolley"
-      :is-playing="aiTurn"
-    />
-
     <!-- ── Jeu + Bust ────────────────────────────────────────────────────── -->
     <div v-if="phase === 'playing' || isBust" class="x01__game">
-      <StatsCard class="x01__stats-card" color="#047857" :rows="statsRows">
-        {{ legRemaining }}
-      </StatsCard>
+
+      <div class="x01__game-left">
+        <X01PlayerSplitCard
+          :human="humanCardData"
+          :ai="aiCardData"
+          :active-player="aiTurn ? 'ai' : 'human'"
+          :solo="!aiProfile"
+        />
+      </div>
 
       <div class="x01__game-main">
-        <DartSlotsHeader :tour-number="isBust ? volleyNumber - 1 : volleyNumber" />
+        <DartSlotsHeader :tour-number="isBust ? volleyNumber - 1 : volleyNumber">
+          <template #right>
+            <span class="x01__turn-label" :class="{ 'x01__turn-label--ai': aiTurn }">
+              {{ aiTurn ? 'DartBot...' : 'À toi !' }}
+            </span>
+          </template>
+        </DartSlotsHeader>
         <GameInput :darts="currentVolleyDarts" value-key="label" :bust="isBust" :locked="isLocked" toggleable
           @dart="addDart" @miss="addMiss" @bust="bustVolley" @validate="confirmVolleyTotal" @undo="undo" />
       </div>
     </div>
 
-    <!-- ── Récap entre manches ────────────────────────────────────────────── -->
+    <!-- ── Récap de manche (humain ou IA) ──────────────────────────────────── -->
     <Transition name="slide-up">
-      <div v-if="phase === 'leg-recap'" class="x01__overlay">
+      <div v-if="showLegRecap" class="x01__overlay">
         <div class="x01__recap">
-          <div class="x01__recap-emoji">🎯</div>
-          <h2 class="x01__recap-title">Manche terminée !</h2>
-          <p v-if="aiProfile" class="x01__recap-ai-score">
-            IA : <strong>{{ aiRemaining }}</strong> restants
-          </p>
+
+          <div class="x01__recap-winner" :class="legWinner === 'ai' ? 'x01__recap-winner--ai' : 'x01__recap-winner--human'">
+            {{ legWinner === 'ai' ? '🤖 L\'IA a remporté cette manche' : '🎯 Tu as remporté cette manche !' }}
+          </div>
+
+          <div v-if="aiProfile" class="x01__recap-score-line">
+            <span>
+              Toi : <strong>{{ legWinner === 'human' ? 0 : (aiLegHumanSnapshot?.remaining ?? legRemaining) }}</strong>
+            </span>
+            <span>·</span>
+            <span>
+              IA : <strong>{{ legWinner === 'ai' ? 0 : aiRemaining }}</strong>
+            </span>
+          </div>
 
           <div class="x01__recap-stats">
             <div class="x01__recap-stat">
-              <span class="x01__recap-stat-val">{{ lastLeg?.totalDarts }}</span>
+              <span class="x01__recap-stat-val">{{ recapTotalDarts }}</span>
               <span class="x01__recap-stat-lbl">fléchettes</span>
             </div>
-            <div class="x01__recap-stat">
+            <div v-if="legWinner === 'human'" class="x01__recap-stat">
               <span class="x01__recap-stat-val">{{ lastLeg?.checkoutScore }}</span>
               <span class="x01__recap-stat-lbl">finish</span>
             </div>
+            <div v-if="legWinner === 'ai'" class="x01__recap-stat">
+              <span class="x01__recap-stat-val">{{ aiLastVolley?.dartsUsed ?? '–' }}</span>
+              <span class="x01__recap-stat-lbl">fléchettes IA</span>
+            </div>
             <div class="x01__recap-stat">
-              <span class="x01__recap-stat-val">{{lastLeg?.volleys.filter(v => !v.bust).length}}</span>
+              <span class="x01__recap-stat-val">{{ recapValidVolleys }}</span>
               <span class="x01__recap-stat-lbl">volées valides</span>
             </div>
           </div>
 
           <div class="x01__recap-volleys">
-            <span v-for="(v, i) in lastLeg?.volleys" :key="i" class="x01__recap-chip"
+            <span v-for="(v, i) in recapVolleys" :key="i" class="x01__recap-chip"
               :class="{ 'x01__recap-chip--bust': v.bust }">
               {{ v.bust ? 'BUST' : v.score }}
             </span>
           </div>
 
-          <button class="x01__recap-next" @click="startNextLegWithAI">
+          <button class="x01__recap-next" @click="legWinner === 'ai' ? handleAILegContinue() : startNextLegWithAI()">
             Manche suivante →
           </button>
         </div>
@@ -242,8 +343,15 @@ const currentVolleyDarts = computed(() =>
     <!-- ── Résultats finaux ───────────────────────────────────────────────── -->
     <Transition name="slide-up">
       <div v-if="phase === 'game-over'" class="x01__overlay x01__overlay--result">
-        <X01Result :stats="stats" :legs-played="completedLegs.length" :start-score="settings.startScore"
-          @replay="router.push({ name: 'x01-game', query: { t: Date.now() } })" @home="router.push({ name: 'play' })" />
+        <X01Result
+          :stats="stats"
+          :legs-played="completedLegs.length"
+          :start-score="settings.startScore"
+          :ai-won="aiWonGame"
+          :ai-legs-won="aiLegsWon"
+          @replay="router.push({ name: 'x01-game', query: { t: Date.now() } })"
+          @home="router.push({ name: 'play' })"
+        />
       </div>
     </Transition>
 
@@ -279,9 +387,26 @@ const currentVolleyDarts = computed(() =>
     gap: $gap-md;
   }
 
-  &__game-main {
+  &__game-left {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-sm;
     flex: 1;
     min-height: 0;
+  }
+
+  &__turn-label {
+    @include title-sm;
+    font-weight: 700;
+    color: $orange;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    &--ai { color: $muted; }
+  }
+
+  &__game-main {
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     gap: $gap-md;
@@ -315,14 +440,24 @@ const currentVolleyDarts = computed(() =>
     max-width: 380px;
   }
 
-  &__recap-emoji {
-    @include display-sm;
-    line-height: 1;
+  &__recap-winner {
+    @include title-lg;
+    font-weight: 700;
+    color: $white;
+    text-align: center;
+
+    &--ai    { color: $orange; }
+    &--human { color: $accent; }
   }
 
-  &__recap-title {
-    @include title-xxl;
-    color: $white;
+  &__recap-score-line {
+    display: flex;
+    gap: $gap-sm;
+    align-items: center;
+    @include text-sm;
+    color: $muted;
+
+    strong { color: $white; }
   }
 
   &__recap-stats {
@@ -372,12 +507,7 @@ const currentVolleyDarts = computed(() =>
     }
   }
 
-  &__recap-ai-score {
-    @include text-sm;
-    color: $muted;
-
-    strong { color: $orange; }
-  }
+  &__recap-score-line strong { color: $white; }
 
   &__recap-next {
     width: 100%;
@@ -396,26 +526,36 @@ const currentVolleyDarts = computed(() =>
   }
 }
 
-@media (min-width: $bp-laptop) {
-  .x01 {
-    padding: $padding-xl;
-  }
-
+@media (min-width: $bp-tablet) {
   .x01__game {
     flex-direction: row;
     align-items: stretch;
+    gap: $gap-lg;
   }
 
-  .x01__stats-card {
+  .x01__game-left {
     flex: 1;
   }
 
   .x01__game-main {
     flex: 1;
   }
+}
 
-  .x01__recap-emoji { @include display-md; }
-  .x01__recap-title { @include title-xxxl; }
+@media (min-width: $bp-laptop) {
+  .x01 {
+    padding: $padding-xl;
+  }
+
+  .x01__game {
+    gap: $gap-xl;
+  }
+
+  .x01__turn-label {
+    @include title-md;
+  }
+
+  .x01__recap-winner { @include title-xl; }
   .x01__recap-stat-val { @include display-sm; }
   .x01__recap-stat-lbl { @include title-sm; }
   .x01__recap-chip { @include title-md; }

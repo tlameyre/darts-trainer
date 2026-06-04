@@ -5,6 +5,7 @@ import { useFriendStore } from '../store/friendStore.js'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import AppIcon from '../components/AppIcon.vue'
+import AppTabs from '../components/AppTabs.vue'
 import FriendCard from '../components/friends/FriendCard.vue'
 import MyFriendCode from '../components/friends/MyFriendCode.vue'
 
@@ -70,22 +71,12 @@ const tabs = [
       <MyFriendCode :code="friendCode" />
     </div>
 
-    <!-- Onglets -->
-    <div class="friends__tabs">
-      <button
-        v-for="tab in tabs"
-        :key="tab.key"
-        class="friends__tab"
-        :class="{ 'friends__tab--active': activeTab === tab.key }"
-        @click="activeTab = tab.key"
-      >
-        {{ tab.label }}
-        <span
-          v-if="tab.key === 'requests' && pendingReceived.length"
-          class="friends__badge"
-        >{{ pendingReceived.length }}</span>
-      </button>
-    </div>
+    <AppTabs variant="underline" :tabs="tabs.map(t => ({ id: t.key, label: t.label }))" v-model="activeTab">
+      <template #requests>
+        Demandes
+        <span v-if="pendingReceived.length" class="friends__badge">{{ pendingReceived.length }}</span>
+      </template>
+    </AppTabs>
 
     <!-- Contenu -->
     <main class="friends__content">
@@ -200,33 +191,6 @@ const tabs = [
     border-bottom: $border-sm solid rgba(255, 255, 255, 0.07);
   }
 
-  &__tabs {
-    display: flex;
-    border-bottom: $border-sm solid rgba(255, 255, 255, 0.07);
-    margin: 0 (-$padding-md);
-    padding: 0 $padding-md;
-  }
-
-  &__tab {
-    @include title-sm;
-    flex: 1;
-    padding: $padding-sm 0;
-    color: $muted;
-    border-bottom: 2px solid transparent;
-    transition: color 0.15s, border-color 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xs;
-
-    &--active {
-      color: $orange;
-      border-bottom-color: $orange;
-    }
-
-    &:active { opacity: 0.7; }
-  }
-
   &__badge {
     @include text-xs;
     background: $orange;
@@ -328,7 +292,6 @@ const tabs = [
   .friends {
     padding: $padding-xxl;
 
-    &__tab         { @include title-md; }
     &__section-title { @include text-sm; }
     &__empty       { @include text-md; }
     &__add-hint    { @include text-md; }

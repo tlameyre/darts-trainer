@@ -52,8 +52,14 @@ export const useDbStore = defineStore('db', () => {
    *   max_darts           int,
    *   highest_finish      int,
    *   highest_volley      int,
+   *   doubles_hit         int,
+   *   doubles_attempted   int,
    *   settings            jsonb
    * );
+   * -- Migration si la table existe déjà :
+   * ALTER TABLE public.x01_sessions
+   *   ADD COLUMN IF NOT EXISTS doubles_hit       int,
+   *   ADD COLUMN IF NOT EXISTS doubles_attempted  int;
    * ALTER TABLE public.x01_sessions ENABLE ROW LEVEL SECURITY;
    * CREATE POLICY "Users manage own x01_sessions"
    *   ON public.x01_sessions FOR ALL USING (auth.uid() = user_id);
@@ -68,10 +74,12 @@ export const useDbStore = defineStore('db', () => {
       avg_volley:          stats.avgVolley,
       avg_9darts:          stats.avg9darts,
       avg_darts_to_finish: stats.avgDartsToFinish,
-      min_darts:           stats.minDarts,
-      max_darts:           stats.maxDarts,
+      min_darts:           stats.bestLeg?.darts  ?? null,
+      max_darts:           stats.worstLeg?.darts ?? null,
       highest_finish:      stats.highestFinish,
       highest_volley:      stats.highestVolley,
+      doubles_hit:         stats.doublesHit      ?? null,
+      doubles_attempted:   stats.doublesAttempted ?? null,
       settings,
     })
     if (error) console.error('[dbStore] saveX01Session:', error.message)
