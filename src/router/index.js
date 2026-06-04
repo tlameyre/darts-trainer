@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHashHistory } from "vue-router";
 import { useAuthStore } from "../store/authStore.js";
 
 import HomeView from "../views/HomeView.vue";
@@ -77,7 +77,7 @@ if (import.meta.env.DEV) {
 }
 
 export const router = createRouter({
-  history: createWebHistory("/darts-trainer/"),
+  history: createWebHashHistory(),
   routes,
 });
 
