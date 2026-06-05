@@ -13,27 +13,26 @@ const emit = defineEmits(['restart', 'home'])
 // Même logique de couleurs que DartChip
 const RED_NUMBERS = new Set([20, 18, 13, 10, 2, 3, 7, 8, 14, 12])
 
-const DARK_STYLE = {
-  '--card-bg':    '#000000',
-  '--card-text':  '#ffffff',
-  '--card-muted': 'rgba(255,255,255,0.55)',
-  '--card-sep':   'rgba(255,255,255,0.12)',
-}
-
-const CREAM_STYLE = {
-  '--card-bg':    'var(--dart-cream)',
-  '--card-text':  'var(--dart-cream-text)',
-  '--card-muted': 'rgba(0,0,0,0.4)',
-  '--card-sep':   'rgba(0,0,0,0.12)',
-}
-
 function cardStyle(zone) {
-  // Zones noires : Tout (A / AB), simples secteurs rouges, Bull noir
-  if (zone.type === 'A' || zone.type === 'AB') return DARK_STYLE
-  if (zone.sector !== null && zone.type === 'S' && RED_NUMBERS.has(zone.sector)) return DARK_STYLE
+  const isRed = RED_NUMBERS.has(zone.sector)
 
-  // Toutes les autres zones (Bull, simples clairs, doubles, triples) → beige
-  return CREAM_STYLE
+  // Zones noires : Tout (A / AB) et simples secteurs rouges
+  if (zone.type === 'A' || zone.type === 'AB') {
+    return { '--card-bg': '#000000', '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.55)', '--card-sep': 'rgba(255,255,255,0.12)' }
+  }
+  if (zone.type === 'S' && isRed) {
+    return { '--card-bg': 'var(--dart-black)', '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.55)', '--card-sep': 'rgba(255,255,255,0.12)' }
+  }
+
+  // Simples clairs et Bull → beige
+  if (zone.type === 'S' || zone.type === 'B' || zone.type === 'SB' || zone.sector === null) {
+    return { '--card-bg': 'var(--dart-cream)', '--card-text': 'var(--dart-cream-text)', '--card-muted': 'rgba(0,0,0,0.4)', '--card-sep': 'rgba(0,0,0,0.12)' }
+  }
+
+  // Doubles et triples → rouge ou vert selon le secteur
+  return isRed
+    ? { '--card-bg': 'var(--dart-red)',   '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.7)', '--card-sep': 'rgba(255,255,255,0.25)' }
+    : { '--card-bg': 'var(--dart-green)', '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.7)', '--card-sep': 'rgba(255,255,255,0.25)' }
 }
 
 function fmtDuration(ms) {
