@@ -251,6 +251,15 @@ export function useX01({ startScore, legsToWin }) {
     phase.value                = 'playing'
   }
 
+  // ─── Moyenne en temps réel (toute la partie, busts = 0) ──────────────────
+  const liveAvgVolley = computed(() => {
+    const pastVolleys = completedLegs.value.flatMap(l => l.volleys)
+    const all         = [...pastVolleys, ...volleys.value]
+    if (!all.length) return '–'
+    const sum = all.reduce((s, v) => s + (v.bust ? 0 : v.score), 0)
+    return (sum / all.length).toFixed(2)
+  })
+
   // ─── Statistiques finales ──────────────────────────────────────────────────
   const stats = computed(() => {
     const legs = completedLegs.value
@@ -324,5 +333,6 @@ export function useX01({ startScore, legsToWin }) {
     confirmCheckout,
     startNextLeg,
     stats,
+    liveAvgVolley,
   }
 }

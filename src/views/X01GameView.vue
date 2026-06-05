@@ -45,6 +45,7 @@ const {
   confirmCheckout,
   startNextLeg,
   stats,
+  liveAvgVolley,
 } = useX01(settings)
 
 const isBust   = computed(() => phase.value === 'bust')
@@ -205,14 +206,6 @@ const humanTotalDarts = computed(() =>
   + (isBust.value ? 0 : currentDarts.value.length)
 )
 
-const humanAvgVolley = computed(() => {
-  const pastAll = completedLegs.value.flatMap(l => l.volleys)
-  const curAll  = volleys.value
-  const all = [...pastAll, ...curAll]
-  if (!all.length) return '–'
-  // Les busts comptent pour 0 (fléchettes jetées, score nul)
-  return (all.reduce((s, v) => s + (v.bust ? 0 : v.score), 0) / all.length).toFixed(2)
-})
 
 const humanLastScore = computed(() => {
   const validVolleys = volleys.value.filter(v => !v.bust)
@@ -226,7 +219,7 @@ const humanCardData = computed(() => ({
   legsWon:    completedLegs.value.length,
   legsToWin:  settings.legsToWin,
   lastDarts:  lastHumanDarts.value,
-  avgVolley:  humanAvgVolley.value,
+  avgVolley:  liveAvgVolley.value,
   lastScore:  humanLastScore.value,
   totalDarts: humanTotalDarts.value,
 }))
