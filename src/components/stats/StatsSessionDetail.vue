@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import AppIcon from '../AppIcon.vue'
 import X01Result from '../x01/X01Result.vue'
 import GameOver from '../GameOver.vue'
+import WarmupRecap from '../warmup/WarmupRecap.vue'
 
 const props = defineProps({
   show:    { type: Boolean, required: true },
@@ -11,6 +12,25 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'delete'])
+
+// Mappe les données DB → format WarmupRecap
+const warmupZoneStats = computed(() => {
+  const s = props.session
+  if (!s) return []
+  return [{
+    zone:       s.zone,
+    accuracy:   s.accuracy,
+    durationMs: (s.duration_s ?? 0) * 1000,
+    total:      s.total_darts,
+    hits:       s.hits,
+  }]
+})
+
+const warmupSessionStats = computed(() => {
+  const s = props.session
+  if (!s) return { total: 0, hits: 0, accuracy: 0 }
+  return { total: s.total_darts, hits: s.hits, accuracy: s.accuracy }
+})
 
 // Mappe les données DB → format attendu par X01Result
 const x01Stats = computed(() => {
@@ -75,22 +95,12 @@ function formatDate(iso) {
 
       <!-- Résultat Échauffement -->
       <template v-else-if="mode === 'warmup'">
-        <div class="session-detail__warmup">
-          <div class="session-detail__warmup-stat">
-            <span class="session-detail__warmup-val">{{ session.hits }}/{{ session.total_darts }}</span>
-            <span class="session-detail__warmup-lbl">Touches</span>
-          </div>
-          <div class="session-detail__warmup-stat">
-            <span class="session-detail__warmup-val">{{ session.accuracy }}%</span>
-            <span class="session-detail__warmup-lbl">Précision</span>
-          </div>
-          <div class="session-detail__warmup-stat">
-            <span class="session-detail__warmup-val">
-              {{ session.duration_s ? Math.floor(session.duration_s / 60) + ' min' : '∞' }}
-            </span>
-            <span class="session-detail__warmup-lbl">Durée</span>
-          </div>
-        </div>
+        <WarmupRecap
+          :zone-recap-stats="warmupZoneStats"
+          :session-stats="warmupSessionStats"
+          @restart="$emit('close')"
+          @home="$emit('close')"
+        />
       </template>
 
     </div>
@@ -147,38 +157,7 @@ function formatDate(iso) {
     white-space: nowrap;
   }
 
-  // ── Warmup ────────────────────────────────────────────────────────────────
-  &__warmup {
-    display: flex;
-    gap: $gap-md;
-    padding-top: $gap-xl;
-    justify-content: center;
-  }
 
-  &__warmup-stat {
-    flex: 1;
-    max-width: 140px;
-    background: rgba($white, 0.06);
-    border-radius: $radius-md;
-    padding: $padding-md;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: $gap-xxs;
-  }
-
-  &__warmup-val {
-    @include title-xxl;
-    font-weight: 700;
-    color: $white;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-  }
-
-  &__warmup-lbl {
-    @include text-xs;
-    color: $muted;
-  }
 }
 
 @media (min-width: $bp-laptop) {
