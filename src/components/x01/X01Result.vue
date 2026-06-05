@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import StatCell from '../StatCell.vue'
 
 const props = defineProps({
   stats:      { type: Object,  default: null },
@@ -40,57 +41,35 @@ const checkoutPct = computed(() => {
 
       <!-- ── Ligne 1 : moyennes ──────────────────────────────────────────── -->
       <div class="result__row">
-        <div class="result__stat result__stat--accent">
-          <span class="result__stat-value">{{ stats.avgVolley }}</span>
-          <span class="result__stat-label">Moy. par volée</span>
-        </div>
-        <div class="result__stat result__stat--accent">
-          <span class="result__stat-value">{{ stats.avg9darts }}</span>
-          <span class="result__stat-label">Moy. 9 fléchettes</span>
-        </div>
+        <StatCell :value="stats.avgVolley" label="Moy. par volée"     highlight />
+        <StatCell :value="stats.avg9darts" label="Moy. 9 fléchettes"  highlight />
       </div>
 
       <!-- ── Ligne 2 : doubles / finish ─────────────────────────────────── -->
       <div class="result__row">
-        <div class="result__stat">
-          <span class="result__stat-value">
-            {{ stats.doublesHit }}/{{ stats.doublesAttempted || '?' }}
-          </span>
-          <span class="result__stat-label">Aux doubles</span>
-        </div>
-        <div class="result__stat">
-          <span class="result__stat-value">
-            {{ checkoutPct != null ? checkoutPct + ' %' : '–' }}
-          </span>
-          <span class="result__stat-label">% de finish</span>
-        </div>
-        <div class="result__stat">
-          <span class="result__stat-value">{{ stats.highestFinish || '–' }}</span>
-          <span class="result__stat-label">Plus haut finish</span>
-        </div>
+        <StatCell :value="`${stats.doublesHit}/${stats.doublesAttempted || '?'}`" label="Aux doubles" />
+        <StatCell :value="checkoutPct != null ? checkoutPct + ' %' : '–'" label="% de finish" />
+        <StatCell :value="stats.highestFinish || '–'" label="Plus haut finish" />
       </div>
 
       <!-- ── Ligne 3 : volée / manches ──────────────────────────────────── -->
       <div class="result__row">
-        <div class="result__stat">
-          <span class="result__stat-value">{{ stats.highestVolley || '–' }}</span>
-          <span class="result__stat-label">Meilleure volée</span>
-        </div>
-        <div class="result__stat result__stat--leg">
+        <StatCell :value="stats.highestVolley || '–'" label="Meilleure volée" />
+        <div class="result__leg-cell">
           <div class="result__leg">
             <span class="result__leg-darts">{{ stats.bestLeg.darts }}</span>
             <span class="result__leg-label">fléchettes</span>
             <span class="result__leg-finish">finish {{ stats.bestLeg.checkoutScore }}</span>
           </div>
-          <span class="result__stat-label">Meilleure manche</span>
+          <span class="result__leg-title">Meilleure manche</span>
         </div>
-        <div class="result__stat result__stat--leg">
+        <div class="result__leg-cell">
           <div class="result__leg">
             <span class="result__leg-darts">{{ stats.worstLeg.darts }}</span>
             <span class="result__leg-label">fléchettes</span>
             <span class="result__leg-finish">finish {{ stats.worstLeg.checkoutScore }}</span>
           </div>
-          <span class="result__stat-label">Pire manche</span>
+          <span class="result__leg-title">Pire manche</span>
         </div>
       </div>
 
@@ -128,10 +107,7 @@ const checkoutPct = computed(() => {
     gap: $gap-xs;
   }
 
-  &__emoji {
-    @include title-xxxl;
-    line-height: 1;
-  }
+  &__emoji  { @include title-xxxl; line-height: 1; }
 
   &__title {
     @include title-xxl;
@@ -153,44 +129,19 @@ const checkoutPct = computed(() => {
     gap: $gap-sm;
   }
 
-  &__stat {
+  // ── Bloc manche (meilleure / pire) ────────────────────────────────────────
+  &__leg-cell {
     flex: 1;
     background: rgba($white, 0.06);
     border-radius: $radius-md;
     padding: $padding-sm $padding-md;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     gap: $gap-xxs;
     min-width: 0;
-
-    &--accent {
-      background: rgba(#16a34a, 0.18);
-      border: $border-sm solid rgba(#16a34a, 0.35);
-    }
-
-    &--leg {
-      justify-content: space-between;
-    }
   }
 
-  &__stat-value {
-    @include title-xl;
-    font-weight: 700;
-    color: $white;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__stat-label {
-    @include text-xxs;
-    color: $muted;
-    line-height: 1.3;
-  }
-
-  // ── Bloc manche ───────────────────────────────────────────────────────────
   &__leg {
     display: flex;
     align-items: baseline;
@@ -206,15 +157,13 @@ const checkoutPct = computed(() => {
     font-variant-numeric: tabular-nums;
   }
 
-  &__leg-label {
-    @include text-xxs;
-    color: rgba($white, 0.6);
-  }
+  &__leg-label  { @include text-xxs; color: rgba($white, 0.6); }
+  &__leg-finish { @include text-xxs; color: $muted; white-space: nowrap; }
 
-  &__leg-finish {
+  &__leg-title {
     @include text-xxs;
     color: $muted;
-    white-space: nowrap;
+    line-height: 1.3;
   }
 
   // ── Actions ───────────────────────────────────────────────────────────────
@@ -242,15 +191,8 @@ const checkoutPct = computed(() => {
 
     &:active { opacity: 0.75; }
 
-    &--primary {
-      background: $orange;
-      color: $white;
-    }
-
-    &--secondary {
-      background: rgba($white, 0.08);
-      color: $white;
-    }
+    &--primary   { background: $orange; color: $white; }
+    &--secondary { background: rgba($white, 0.08); color: $white; }
   }
 }
 
@@ -258,13 +200,12 @@ const checkoutPct = computed(() => {
   .result {
     gap: $gap-xl;
 
-    &__title   { @include title-xxxl; }
+    &__title    { @include title-xxxl; }
     &__subtitle { @include text-md; }
-    &__stat-value { @include title-xxl; }
-    &__stat-label { @include text-xs; }
     &__leg-darts  { @include title-xxl; }
     &__leg-label  { @include text-xs; }
     &__leg-finish { @include text-xs; }
+    &__leg-title  { @include text-xs; }
     &__btn        { @include title-lg; }
   }
 }
