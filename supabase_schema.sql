@@ -99,6 +99,10 @@ create policy "Insertion propres sessions game"
   on public.game_sessions for insert
   with check (auth.uid() = user_id);
 
+create policy "Suppression propres sessions game"
+  on public.game_sessions for delete
+  using (auth.uid() = user_id);
+
 
 -- 4. Sessions Échauffement
 create table public.warmup_sessions (
@@ -122,6 +126,10 @@ create policy "Lecture propres sessions warmup"
 create policy "Insertion propres sessions warmup"
   on public.warmup_sessions for insert
   with check (auth.uid() = user_id);
+
+create policy "Suppression propres sessions warmup"
+  on public.warmup_sessions for delete
+  using (auth.uid() = user_id);
 
 
 -- 5. Amitiés
