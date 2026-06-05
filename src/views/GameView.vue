@@ -8,6 +8,7 @@ import { useBadgeStore } from '../store/badgeStore.js'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 
 import AppHeader from '../components/AppHeader.vue'
+import AppIcon from '../components/AppIcon.vue'
 import AnswerInput from '../components/AnswerInput.vue'
 import NumPad from '../components/NumPad.vue'
 import GameOver from '../components/GameOver.vue'
