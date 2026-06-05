@@ -1,0 +1,196 @@
+<script setup>
+import { computed } from 'vue'
+import AppIcon from '../AppIcon.vue'
+import X01Result from '../x01/X01Result.vue'
+import GameOver from '../GameOver.vue'
+
+const props = defineProps({
+  show:    { type: Boolean, required: true },
+  session: { type: Object,  default: null },
+  mode:    { type: String,  required: true },
+})
+
+const emit = defineEmits(['close', 'delete'])
+
+// Mappe les données DB → format attendu par X01Result
+const x01Stats = computed(() => {
+  const s = props.session
+  if (!s) return null
+  return {
+    avgVolley:        s.avg_volley,
+    avg9darts:        s.avg_9darts,
+    avgDartsToFinish: s.avg_darts_to_finish,
+    doublesHit:       s.doubles_hit,
+    doublesAttempted: s.doubles_attempted,
+    highestFinish:    s.highest_finish,
+    highestVolley:    s.highest_volley,
+    bestLeg:  s.min_darts != null ? { darts: s.min_darts, checkoutScore: null } : null,
+    worstLeg: s.max_darts != null ? { darts: s.max_darts, checkoutScore: null } : null,
+  }
+})
+
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString('fr-FR', {
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+  })
+}
+</script>
+
+<template>
+  <Transition name="slide-up">
+    <div v-if="show && session" class="session-detail">
+
+      <!-- Barre du haut -->
+      <div class="session-detail__topbar">
+        <button class="session-detail__close" @click="$emit('close')">
+          <AppIcon name="arrow-left" :width="20" :height="20" />
+        </button>
+        <span class="session-detail__date">{{ formatDate(session.played_at) }}</span>
+        <button class="session-detail__delete" @click="$emit('delete', session.id)">
+          <AppIcon name="trash" :width="18" :height="18" />
+        </button>
+      </div>
+
+      <!-- Résultat 501 -->
+      <template v-if="mode === 'x01'">
+        <X01Result
+          :stats="x01Stats"
+          :legs-played="session.legs_played"
+          :start-score="session.start_score"
+          @replay="$emit('close')"
+          @home="$emit('close')"
+        />
+      </template>
+
+      <!-- Résultat Score Training -->
+      <template v-else-if="mode === 'score'">
+        <GameOver
+          :correct-count="session.correct_count"
+          :max-questions="session.total_questions"
+          :best="session.best_streak"
+          @replay="$emit('close')"
+          @home="$emit('close')"
+        />
+      </template>
+
+      <!-- Résultat Échauffement -->
+      <template v-else-if="mode === 'warmup'">
+        <div class="session-detail__warmup">
+          <div class="session-detail__warmup-stat">
+            <span class="session-detail__warmup-val">{{ session.hits }}/{{ session.total_darts }}</span>
+            <span class="session-detail__warmup-lbl">Touches</span>
+          </div>
+          <div class="session-detail__warmup-stat">
+            <span class="session-detail__warmup-val">{{ session.accuracy }}%</span>
+            <span class="session-detail__warmup-lbl">Précision</span>
+          </div>
+          <div class="session-detail__warmup-stat">
+            <span class="session-detail__warmup-val">
+              {{ session.duration_s ? Math.floor(session.duration_s / 60) + ' min' : '∞' }}
+            </span>
+            <span class="session-detail__warmup-lbl">Durée</span>
+          </div>
+        </div>
+      </template>
+
+    </div>
+  </Transition>
+</template>
+
+<style lang="scss" scoped>
+.session-detail {
+  position: fixed;
+  inset: 0;
+  background: $bg;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: $padding-md $padding-md calc($padding-xxl + 16px);
+
+  &__topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $gap-sm;
+    margin-bottom: $gap-md;
+    flex-shrink: 0;
+  }
+
+  &__close,
+  &__delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: $radius-sm;
+    background: rgba($white, 0.07);
+    color: $text-color;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+
+    &:active { opacity: 0.6; }
+  }
+
+  &__delete { color: $error; background: rgba($error, 0.1); }
+
+  &__date {
+    @include title-xs;
+    color: $muted;
+    text-transform: capitalize;
+    text-align: center;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // ── Warmup ────────────────────────────────────────────────────────────────
+  &__warmup {
+    display: flex;
+    gap: $gap-md;
+    padding-top: $gap-xl;
+    justify-content: center;
+  }
+
+  &__warmup-stat {
+    flex: 1;
+    max-width: 140px;
+    background: rgba($white, 0.06);
+    border-radius: $radius-md;
+    padding: $padding-md;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $gap-xxs;
+  }
+
+  &__warmup-val {
+    @include title-xxl;
+    font-weight: 700;
+    color: $white;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  &__warmup-lbl {
+    @include text-xs;
+    color: $muted;
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .session-detail {
+    padding: $padding-xl;
+
+    &__date { @include title-sm; }
+  }
+}
+
+.slide-up-enter-active { transition: transform 0.3s ease, opacity 0.3s; }
+.slide-up-leave-active { transition: transform 0.25s ease, opacity 0.2s; }
+.slide-up-enter-from,
+.slide-up-leave-to     { transform: translateY(30px); opacity: 0; }
+</style>

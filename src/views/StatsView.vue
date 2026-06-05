@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useDbStore } from '../store/dbStore.js'
 import AppTabs from '../components/AppTabs.vue'
 import StatCell from '../components/StatCell.vue'
-import StatsSessionModal from '../components/stats/StatsSessionModal.vue'
+import StatsSessionDetail from '../components/stats/StatsSessionDetail.vue'
 
 const dbStore = useDbStore()
 
@@ -53,6 +53,20 @@ const showDetail      = ref(false)
 function openDetail(session) {
   selectedSession.value = session
   showDetail.value      = true
+}
+
+async function deleteSession(id) {
+  if (selectedMode.value === 'score') {
+    await dbStore.deleteGameSession(id)
+    gameSessions.value = gameSessions.value.filter(s => s.id !== id)
+  } else if (selectedMode.value === 'warmup') {
+    await dbStore.deleteWarmupSession(id)
+    warmupSessions.value = warmupSessions.value.filter(s => s.id !== id)
+  } else if (selectedMode.value === 'x01') {
+    await dbStore.deleteX01Session(id)
+    x01Sessions.value = x01Sessions.value.filter(s => s.id !== id)
+  }
+  showDetail.value = false
 }
 
 function formatDate(iso) {
@@ -175,7 +189,13 @@ function accuracy(correct, total) {
       </template>
     </main>
 
-    <StatsSessionModal :show="showDetail" :session="selectedSession" :mode="selectedMode" @close="showDetail = false" />
+    <StatsSessionDetail
+      :show="showDetail"
+      :session="selectedSession"
+      :mode="selectedMode"
+      @close="showDetail = false"
+      @delete="deleteSession"
+    />
   </div>
 </template>
 

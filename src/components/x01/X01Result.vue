@@ -55,19 +55,19 @@ const checkoutPct = computed(() => {
       <!-- ── Ligne 3 : volée / manches ──────────────────────────────────── -->
       <div class="result__row">
         <StatCell :value="stats.highestVolley || '–'" label="Meilleure volée" />
-        <div class="result__leg-cell">
+        <div v-if="stats.bestLeg" class="result__leg-cell">
           <div class="result__leg">
             <span class="result__leg-darts">{{ stats.bestLeg.darts }}</span>
             <span class="result__leg-label">fléchettes</span>
-            <span class="result__leg-finish">finish {{ stats.bestLeg.checkoutScore }}</span>
+            <span v-if="stats.bestLeg.checkoutScore != null" class="result__leg-finish">finish {{ stats.bestLeg.checkoutScore }}</span>
           </div>
           <span class="result__leg-title">Meilleure manche</span>
         </div>
-        <div class="result__leg-cell">
+        <div v-if="stats.worstLeg" class="result__leg-cell">
           <div class="result__leg">
             <span class="result__leg-darts">{{ stats.worstLeg.darts }}</span>
             <span class="result__leg-label">fléchettes</span>
-            <span class="result__leg-finish">finish {{ stats.worstLeg.checkoutScore }}</span>
+            <span v-if="stats.worstLeg.checkoutScore != null" class="result__leg-finish">finish {{ stats.worstLeg.checkoutScore }}</span>
           </div>
           <span class="result__leg-title">Pire manche</span>
         </div>

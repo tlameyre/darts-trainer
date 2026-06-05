@@ -142,6 +142,27 @@ export const useDbStore = defineStore('db', () => {
     return { totalSessions, totalDarts, avgAccuracy, bestAccuracy, bestStreak, totalCorrect, avgAccuracy10, avg80eligible }
   }
 
+  async function deleteGameSession(id) {
+    const user = getUser()
+    if (!user) return
+    const { error } = await supabase.from('game_sessions').delete().eq('id', id).eq('user_id', user.id)
+    if (error) console.error('[dbStore] deleteGameSession:', error.message)
+  }
+
+  async function deleteWarmupSession(id) {
+    const user = getUser()
+    if (!user) return
+    const { error } = await supabase.from('warmup_sessions').delete().eq('id', id).eq('user_id', user.id)
+    if (error) console.error('[dbStore] deleteWarmupSession:', error.message)
+  }
+
+  async function deleteX01Session(id) {
+    const user = getUser()
+    if (!user) return
+    const { error } = await supabase.from('x01_sessions').delete().eq('id', id).eq('user_id', user.id)
+    if (error) console.error('[dbStore] deleteX01Session:', error.message)
+  }
+
   async function fetchX01Sessions(limit = 20) {
     const user = getUser()
     if (!user) return []
@@ -189,6 +210,7 @@ export const useDbStore = defineStore('db', () => {
 
   return {
     saveGameSession, saveWarmupSession, saveX01Session,
+    deleteGameSession, deleteWarmupSession, deleteX01Session,
     fetchGameSessions, fetchWarmupSessions, fetchX01Sessions,
     fetchProfileStats, fetchGlobalStats,
   }
