@@ -67,6 +67,8 @@ async function deleteSession(id) {
     x01Sessions.value = x01Sessions.value.filter(s => s.id !== id)
   }
   showDetail.value = false
+  // Recalcule les stats globales (score + warmup) après suppression
+  globalStats.value = await dbStore.fetchGlobalStats()
 }
 
 function formatDate(iso) {
