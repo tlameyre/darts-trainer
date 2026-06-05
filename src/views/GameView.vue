@@ -84,7 +84,12 @@ onUnmounted(() => {
   <div class="game" :class="{ gameOver: 'game-over' }">
     <AppHeader title="ENTRAINEMENT" @back="router.push({ name: 'score-settings' })">
       <template v-if="!gameOver" #right>
-        <button class="game__menu-btn" @click="showMenu = true">
+        <!-- Mode illimité : bouton stop direct -->
+        <button v-if="!gameStore.gameSettings.maxQuestions" class="game__stop-btn" @click="finishGame">
+          STOP
+        </button>
+        <!-- Mode limité : menu gear -->
+        <button v-else class="game__menu-btn" @click="showMenu = true">
           <AppIcon name="gear" :width="22" :height="22" />
         </button>
       </template>
@@ -139,6 +144,19 @@ onUnmounted(() => {
     transition: opacity 0.15s;
 
     &:active { opacity: 0.6; }
+  }
+
+  &__stop-btn {
+    @include title-xs;
+    font-weight: 700;
+    color: $white;
+    background: $error;
+    border-radius: $radius-sm;
+    padding: 5px 10px;
+    letter-spacing: 0.05em;
+    transition: opacity 0.15s;
+
+    &:active { opacity: 0.7; }
   }
 
   &__main {
