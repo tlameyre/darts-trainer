@@ -131,7 +131,6 @@ const totalDurationMs = computed(() =>
 .recap {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: $gap-md;
@@ -150,6 +149,8 @@ const totalDurationMs = computed(() =>
     flex-direction: column;
     gap: $gap-xs;
     flex: 1;
+    overflow-y: auto;
+    min-height: 0;
   }
 
   &__zone-card {
@@ -199,7 +200,7 @@ const totalDurationMs = computed(() =>
 
     &-lbl {
       @include text-sm;
-      color: $white;
+      color: var(--card-text);
     }
   }
 
