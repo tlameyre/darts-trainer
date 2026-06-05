@@ -1,5 +1,5 @@
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, watch, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '../store/gameStore.js'
 import { useAuthStore } from '../store/authStore.js'
@@ -13,6 +13,7 @@ import X01LegRecap from '../components/x01/X01LegRecap.vue'
 import X01DoublesModal from '../components/x01/X01DoublesModal.vue'
 import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
 import X01PlayerSplitCard from '../components/x01/X01PlayerSplitCard.vue'
+import GameMenuModal from '../components/game/GameMenuModal.vue'
 import AppIcon from '../components/AppIcon.vue'
 import AppHeader from '../components/AppHeader.vue'
 
@@ -71,6 +72,17 @@ const {
 
 const isBust   = computed(() => phase.value === 'bust')
 const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.value)
+const showMenu = ref(false)
+
+function finishGame() {
+  showMenu.value = false
+  phase.value    = 'game-over'
+}
+
+function quitGame() {
+  showMenu.value = false
+  router.push({ name: 'x01-settings' })
+}
 
 // ── Sauvegarde en fin de partie ───────────────────────────────────────────
 watch(phase, async (val) => {
@@ -145,6 +157,9 @@ function startNextLegWithAI() {
 
     <AppHeader :title="String(settings.startScore)" back-icon="exit" @back="router.push({ name: 'x01-settings' })">
       <template #right>
+        <button v-if="phase !== 'game-over'" class="x01__menu-btn" @click="showMenu = true">
+          <AppIcon name="gear" :width="22" :height="22" />
+        </button>
         <button class="x01__undo-btn" @click="undo">
           <AppIcon name="undo" :width="22" :height="22" />
         </button>
@@ -201,6 +216,7 @@ function startNextLegWithAI() {
     />
 
     <!-- ── Modales ────────────────────────────────────────────────────────── -->
+    <GameMenuModal :show="showMenu" @close="showMenu = false" @finish="finishGame" @quit="quitGame" />
     <X01DoublesModal :show="pendingDoublesPrompt" @confirm="confirmDoublesAttempted" />
     <X01CheckoutModal
       :show="!!pendingCheckout"
@@ -236,11 +252,11 @@ function startNextLegWithAI() {
   overflow: hidden;
   padding: $padding-md;
 
+  &__menu-btn,
   &__undo-btn {
     color: $text-color;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     transition: opacity 0.15s;
 
     &:active { opacity: 0.6; }
