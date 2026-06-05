@@ -14,9 +14,16 @@ const emit = defineEmits(['restart', 'home'])
 const RED_NUMBERS = new Set([20, 18, 13, 10, 2, 3, 7, 8, 14, 12])
 
 function cardStyle(zone) {
-  // Tout (A / AB) → noir
-  if (zone.type === 'A' || zone.type === 'AB') {
+  // AB (toutes zones) → noir
+  if (zone.type === 'AB') {
     return { '--card-bg': '#000000', '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.55)', '--card-sep': 'rgba(255,255,255,0.12)' }
+  }
+
+  // A (tous secteurs d'un numéro) → couleur du secteur (noir si secteur rouge, beige sinon)
+  if (zone.type === 'A') {
+    return RED_NUMBERS.has(zone.sector)
+      ? { '--card-bg': 'var(--dart-black)', '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.55)', '--card-sep': 'rgba(255,255,255,0.12)' }
+      : { '--card-bg': 'var(--dart-cream)', '--card-text': 'var(--dart-cream-text)', '--card-muted': 'rgba(0,0,0,0.4)', '--card-sep': 'rgba(0,0,0,0.12)' }
   }
 
   // Bull (inner 50) → rouge / Single Bull (outer 25) → vert
