@@ -82,7 +82,8 @@ function triggerAIVolley() {
     aiLastVolley.value = result
 
     aiTotalDarts.value += result.dartsUsed
-    if (!result.bust) aiVolleysScores.value.push(result.score)
+    // Les busts comptent pour 0 dans la moyenne
+    aiVolleysScores.value.push(result.bust ? 0 : result.score)
 
     if (result.isCheckout) {
       aiRemaining.value = 0
@@ -205,11 +206,12 @@ const humanTotalDarts = computed(() =>
 )
 
 const humanAvgVolley = computed(() => {
-  const pastValid = completedLegs.value.flatMap(l => l.volleys.filter(v => !v.bust))
-  const curValid  = volleys.value.filter(v => !v.bust)
-  const all = [...pastValid, ...curValid]
+  const pastAll = completedLegs.value.flatMap(l => l.volleys)
+  const curAll  = volleys.value
+  const all = [...pastAll, ...curAll]
   if (!all.length) return '–'
-  return (all.reduce((s, v) => s + v.score, 0) / all.length).toFixed(2)
+  // Les busts comptent pour 0 (fléchettes jetées, score nul)
+  return (all.reduce((s, v) => s + (v.bust ? 0 : v.score), 0) / all.length).toFixed(2)
 })
 
 const humanLastScore = computed(() => {
