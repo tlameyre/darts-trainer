@@ -70,7 +70,7 @@ const aiLevel = computed(() => aiProfile?.level ?? null)
 const aiAvgVolley = computed(() => {
   if (!aiVolleysScores.value.length) return '–'
   const sum = aiVolleysScores.value.reduce((a, b) => a + b, 0)
-  return Math.round(sum / aiVolleysScores.value.length)
+  return (sum / aiVolleysScores.value.length).toFixed(2)
 })
 
 function triggerAIVolley() {
@@ -119,8 +119,7 @@ function handleAILegContinue() {
 }
 
 function resetAILegStats() {
-  aiTotalDarts.value    = 0
-  aiVolleysScores.value = []
+  // Ne remet pas à zéro aiTotalDarts ni aiVolleysScores — la moyenne est cumulative sur toute la partie
 }
 
 // L'IA joue après chaque volée humaine — mais attend si une modale ou un bust est en cours
@@ -206,9 +205,11 @@ const humanTotalDarts = computed(() =>
 )
 
 const humanAvgVolley = computed(() => {
-  const valid = volleys.value.filter(v => !v.bust)
-  if (!valid.length) return '–'
-  return Math.round(valid.reduce((s, v) => s + v.score, 0) / valid.length)
+  const pastValid = completedLegs.value.flatMap(l => l.volleys.filter(v => !v.bust))
+  const curValid  = volleys.value.filter(v => !v.bust)
+  const all = [...pastValid, ...curValid]
+  if (!all.length) return '–'
+  return (all.reduce((s, v) => s + v.score, 0) / all.length).toFixed(2)
 })
 
 const humanLastScore = computed(() => {
