@@ -17,6 +17,9 @@ const emit = defineEmits(['close', 'delete'])
 const warmupZoneStats = computed(() => {
   const s = props.session
   if (!s) return []
+  // Utilise zoneRecap sauvegardé dans settings si disponible (sessions récentes)
+  if (s.settings?.zoneRecap?.length) return s.settings.zoneRecap
+  // Fallback : zone unique stockée en DB
   return [{
     zone:       s.zone,
     accuracy:   s.accuracy,

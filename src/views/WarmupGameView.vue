@@ -23,19 +23,21 @@ if (!gameStore.gameSettings) router.replace({ name: 'warmup-settings' })
 
 const {
   timeDisplay, isUnlimited, isUrgent, gameOver,
-  currentZone, currentZoneStats, zoneRecapStats, sessionStats,
+  currentZone, currentZoneStats, zoneRecapStats, sessionStats, totalDurationMs,
   darts, recordDart, undoLast, changeZone, startTimer, endSession, cleanup,
 } = useWarmup(gameStore.gameSettings ?? { duration: 5, zone: { sector: 20, type: 'D' } })
 
 watch(gameOver, async (val) => {
   if (val) {
-    const duration = gameStore.gameSettings?.duration
     await dbStore.saveWarmupSession({
       zone: currentZone.value,
       totalDarts: sessionStats.value.total,
       hits: sessionStats.value.hits,
-      durationS: duration !== null ? duration * 60 : null,
-      settings: gameStore.gameSettings,
+      durationS: Math.round(totalDurationMs.value / 1000),
+      settings: {
+        ...gameStore.gameSettings,
+        zoneRecap: zoneRecapStats.value,  // toutes les zones pour l'historique
+      },
     })
     const stats = await dbStore.fetchProfileStats()
     newBadges.value = await badgeStore.checkWarmupBadges({

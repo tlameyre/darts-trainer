@@ -111,8 +111,10 @@ export function useWarmup({ duration, zone: initialZone }) {
 
   function changeZone(newZone) {
     const now = Date.now();
-    if (periods.value.length > 0)
-      periods.value[periods.value.length - 1].endTs = now;
+    if (periods.value.length > 0) {
+      const last = periods.value[periods.value.length - 1];
+      periods.value[periods.value.length - 1] = { ...last, endTs: now };
+    }
     periods.value.push({ zone: { ...newZone }, startTs: now, endTs: null });
     currentZone.value = { ...newZone };
   }
@@ -144,12 +146,19 @@ export function useWarmup({ duration, zone: initialZone }) {
 
   function _closePeriod() {
     const last = periods.value[periods.value.length - 1];
-    if (last && !last.endTs) last.endTs = Date.now();
+    if (last && !last.endTs) {
+      // Remplace l'objet entier pour garantir la réactivité Vue sur la mutation
+      periods.value[periods.value.length - 1] = { ...last, endTs: Date.now() };
+    }
   }
 
   function cleanup() {
     clearInterval(_timer);
   }
+
+  const totalDurationMs = computed(() =>
+    periods.value.reduce((sum, p) => sum + ((p.endTs ?? Date.now()) - p.startTs), 0)
+  );
 
   return {
     darts,
@@ -161,6 +170,7 @@ export function useWarmup({ duration, zone: initialZone }) {
     currentZoneStats,
     zoneRecapStats,
     sessionStats,
+    totalDurationMs,
     recordDart,
     undoLast,
     changeZone,
