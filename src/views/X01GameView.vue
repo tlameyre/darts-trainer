@@ -156,12 +156,9 @@ function startNextLegWithAI() {
   <div class="x01">
 
     <AppHeader :title="String(settings.startScore)" back-icon="exit" @back="router.push({ name: 'x01-settings' })">
-      <template #right>
-        <button v-if="phase !== 'game-over'" class="x01__menu-btn" @click="showMenu = true">
+      <template v-if="phase !== 'game-over'" #right>
+        <button class="x01__menu-btn" @click="showMenu = true">
           <AppIcon name="gear" :width="22" :height="22" />
-        </button>
-        <button class="x01__undo-btn" @click="undo">
-          <AppIcon name="undo" :width="22" :height="22" />
         </button>
       </template>
     </AppHeader>
@@ -252,8 +249,7 @@ function startNextLegWithAI() {
   overflow: hidden;
   padding: $padding-md;
 
-  &__menu-btn,
-  &__undo-btn {
+  &__menu-btn {
     color: $text-color;
     display: flex;
     align-items: center;
