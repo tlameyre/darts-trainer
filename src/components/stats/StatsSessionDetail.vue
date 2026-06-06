@@ -47,8 +47,10 @@ const x01Stats = computed(() => {
     doublesAttempted: s.doubles_attempted,
     highestFinish:    s.highest_finish,
     highestVolley:    s.highest_volley,
-    bestLeg:  s.min_darts != null ? { darts: s.min_darts, checkoutScore: null } : null,
-    worstLeg: s.max_darts != null ? { darts: s.max_darts, checkoutScore: null } : null,
+    bestLeg:             s.min_darts != null ? { darts: s.min_darts, checkoutScore: null } : null,
+    worstLeg:            s.max_darts != null ? { darts: s.max_darts, checkoutScore: null } : null,
+    volleyDistribution:  s.volley_distribution ?? null,
+    legAverages:         s.leg_averages        ?? null,
   }
 })
 
@@ -119,7 +121,7 @@ function formatDate(iso) {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding: $padding-md $padding-md calc($padding-xxl + 16px);
+  padding: $padding-md $padding-md 0;
 
   &__topbar {
     display: flex;

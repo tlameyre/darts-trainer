@@ -300,6 +300,22 @@ export function useX01({ startScore, legsToWin }) {
     const highestFinish = Math.max(...legs.map(l => l.checkoutScore), 0)
     const highestVolley = volleyScores.length ? Math.max(...volleyScores) : 0
 
+    // Distribution des volées par palier (exclusif : palier le plus haut atteint)
+    const thresholds = [160, 140, 120, 100, 80, 60, 40]
+    const volleyDistribution = { '40': 0, '60': 0, '80': 0, '100': 0, '120': 0, '140': 0, '160': 0, '180': 0 }
+    for (const v of validVolleys) {
+      if (v.score === 180) { volleyDistribution['180']++; continue }
+      const bucket = thresholds.find(t => v.score >= t)
+      if (bucket != null) volleyDistribution[String(bucket)]++
+    }
+
+    // Moyenne par manche (volées valides uniquement)
+    const legAverages = legs.map((leg, i) => {
+      const valid = leg.volleys.filter(v => !v.bust)
+      const avg = valid.length ? Math.round(valid.reduce((s, v) => s + v.score, 0) / valid.length) : 0
+      return { leg: i + 1, avg }
+    })
+
     return {
       avgVolley,
       avg9darts,
@@ -310,6 +326,8 @@ export function useX01({ startScore, legsToWin }) {
       highestVolley,
       bestLeg,
       worstLeg,
+      volleyDistribution,
+      legAverages,
     }
   })
 
