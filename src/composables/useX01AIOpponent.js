@@ -158,6 +158,7 @@ export function useX01AIOpponent({
     aiWonGame,
     aiTotalDarts,
     aiAvgVolley,
+    aiVolleysScores,
     aiLegHumanSnapshot,
     aiLevel,
     aiCardData,

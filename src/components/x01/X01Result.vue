@@ -3,11 +3,13 @@ import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import StatCell from '../StatCell.vue'
 
 const props = defineProps({
-  stats:      { type: Object,  default: null },
-  legsPlayed: { type: Number,  required: true },
-  startScore: { type: Number,  required: true },
-  aiWon:      { type: Boolean, default: false },
-  aiLegsWon:  { type: Number,  default: 0 },
+  stats:       { type: Object,  default: null },
+  legsPlayed:  { type: Number,  required: true },
+  startScore:  { type: Number,  required: true },
+  aiWon:       { type: Boolean, default: false },
+  aiLegsWon:   { type: Number,  default: 0 },
+  aiStats:     { type: Object,  default: null },
+  hideActions: { type: Boolean, default: false },
 })
 
 defineEmits(['replay', 'home'])
@@ -15,19 +17,28 @@ defineEmits(['replay', 'home'])
 const sliderEl   = ref(null)
 const currentTab = ref(0)
 const TAB_COUNT  = 3
-const VOLLEY_BUCKETS = ['40', '60', '80', '100', '120', '140', '160', '180']
+const VOLLEY_BUCKETS = ['180', '160', '140', '120', '100', '80', '60', '40']
 
 const checkoutPct = computed(() => {
   if (!props.stats?.doublesAttempted) return null
   return Math.round((props.stats.doublesHit / props.stats.doublesAttempted) * 100)
 })
 
-const maxBucketCount = computed(() =>
-  Math.max(1, ...VOLLEY_BUCKETS.map(k => props.stats?.volleyDistribution?.[k] ?? 0))
+const totalVolleyCount = computed(() =>
+  Math.max(1, VOLLEY_BUCKETS.reduce((sum, k) => sum + (props.stats?.volleyDistribution?.[k] ?? 0), 0))
 )
 
-const maxLegAvg = computed(() =>
-  Math.max(1, ...(props.stats?.legAverages?.map(l => l.avg) ?? []))
+const totalAiVolleyCount = computed(() =>
+  Math.max(1, VOLLEY_BUCKETS.reduce((sum, k) => sum + (props.aiStats?.volleyDistribution?.[k] ?? 0), 0))
+)
+
+const distribMax = computed(() =>
+  Math.max(1, ...VOLLEY_BUCKETS.map(k =>
+    Math.max(
+      props.stats?.volleyDistribution?.[k] ?? 0,
+      props.aiStats?.volleyDistribution?.[k] ?? 0,
+    )
+  ))
 )
 
 let rafId = null
@@ -67,7 +78,7 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
       </p>
     </div>
 
-    <div v-if="stats" class="result__tabs">
+    <div v-if="stats || aiStats" class="result__tabs">
 
       <div class="result__dots">
         <button
@@ -82,67 +93,94 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
 
       <div class="result__slider" ref="sliderEl">
 
-        <!-- Tab 1 : Stats globales -->
+        <!-- Tab 1 : Stats globales du joueur -->
         <div class="result__slide">
           <p class="result__slide-title">Stats globales</p>
-
-          <div class="result__row">
-            <StatCell :value="stats.avgVolley" label="Moy. par volée"    highlight />
-            <StatCell :value="stats.avg9darts" label="Moy. 9 fléchettes" highlight />
-          </div>
-
-          <div class="result__row">
+          <div v-if="stats" class="result__grid">
+            <StatCell :value="stats.avgVolley" label="Moy. par volée" />
+            <StatCell :value="stats.avg9darts || '–'" label="Moy. 9 fléchettes" />
             <StatCell :value="`${stats.doublesHit}/${stats.doublesAttempted || '?'}`" label="Aux doubles" />
             <StatCell :value="checkoutPct != null ? checkoutPct + ' %' : '–'" label="% de finish" />
             <StatCell :value="stats.highestFinish || '–'" label="Plus haut finish" />
-          </div>
-
-          <div class="result__row">
             <StatCell :value="stats.highestVolley || '–'" label="Meilleure volée" />
-            <div v-if="stats.bestLeg" class="result__leg-cell">
-              <div class="result__leg">
-                <span class="result__leg-darts">{{ stats.bestLeg.darts }}</span>
-                <span class="result__leg-label">fléchettes</span>
-                <span v-if="stats.bestLeg.checkoutScore != null" class="result__leg-finish">finish {{ stats.bestLeg.checkoutScore }}</span>
-              </div>
-              <span class="result__leg-title">Meilleure manche</span>
-            </div>
-            <div v-if="stats.worstLeg" class="result__leg-cell">
-              <div class="result__leg">
-                <span class="result__leg-darts">{{ stats.worstLeg.darts }}</span>
-                <span class="result__leg-label">fléchettes</span>
-                <span v-if="stats.worstLeg.checkoutScore != null" class="result__leg-finish">finish {{ stats.worstLeg.checkoutScore }}</span>
-              </div>
-              <span class="result__leg-title">Pire manche</span>
-            </div>
+            <StatCell v-if="stats.bestLeg" :value="`${stats.bestLeg.darts} fléchettes`" label="Meilleure manche" />
+            <StatCell v-if="stats.worstLeg" :value="`${stats.worstLeg.darts} fléchettes`" label="Pire manche" />
           </div>
+          <p v-else class="result__no-stats result__no-stats--inline">
+            Aucune volée enregistrée.
+          </p>
         </div>
 
         <!-- Tab 2 : Distribution des volées -->
         <div class="result__slide">
           <p class="result__slide-title">Volées</p>
-          <div class="result__distrib">
-            <div
-              v-for="bucket in VOLLEY_BUCKETS"
-              :key="bucket"
-              class="result__distrib-row"
-            >
-              <span class="result__distrib-label">{{ bucket === '180' ? '180' : bucket + '+' }}</span>
-              <div class="result__distrib-track">
-                <div
-                  class="result__distrib-bar"
-                  :style="{ width: ((stats.volleyDistribution?.[bucket] ?? 0) / maxBucketCount * 100) + '%' }"
-                />
-              </div>
-              <span class="result__distrib-count">{{ stats.volleyDistribution?.[bucket] ?? 0 }}</span>
+
+          <!-- Mode comparaison avec le bot -->
+          <template v-if="aiStats">
+            <div class="result__distrib-legend">
+              <span class="result__distrib-legend-item">Toi</span>
+              <span class="result__distrib-legend-item result__distrib-legend-item--ai">DartBot</span>
             </div>
-          </div>
+            <div class="result__distrib">
+              <div
+                v-for="bucket in VOLLEY_BUCKETS"
+                :key="bucket"
+                class="result__distrib-row"
+              >
+                <span class="result__distrib-label">{{ bucket === '180' ? '180' : bucket + '+' }}</span>
+                <div class="result__distrib-tracks">
+                  <div class="result__distrib-track">
+                    <div
+                      class="result__distrib-bar"
+                      :style="{ width: ((stats?.volleyDistribution?.[bucket] ?? 0) / distribMax * 100) + '%' }"
+                    />
+                  </div>
+                  <div class="result__distrib-track">
+                    <div
+                      class="result__distrib-bar result__distrib-bar--ai"
+                      :style="{ width: ((aiStats.volleyDistribution?.[bucket] ?? 0) / distribMax * 100) + '%' }"
+                    />
+                  </div>
+                </div>
+                <div class="result__distrib-counts">
+                  <span class="result__distrib-count">{{ stats?.volleyDistribution?.[bucket] ?? 0 }}</span>
+                  <span class="result__distrib-count result__distrib-count--ai">{{ aiStats.volleyDistribution?.[bucket] ?? 0 }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Mode solo -->
+          <template v-else>
+            <div class="result__distrib">
+              <div
+                v-for="bucket in VOLLEY_BUCKETS"
+                :key="bucket"
+                class="result__distrib-row"
+              >
+                <span class="result__distrib-label">{{ bucket === '180' ? '180' : bucket + '+' }}</span>
+                <div class="result__distrib-track">
+                  <div
+                    class="result__distrib-bar"
+                    :style="{ width: ((stats.volleyDistribution?.[bucket] ?? 0) / totalVolleyCount * 100) + '%' }"
+                  />
+                </div>
+                <span class="result__distrib-count">{{ stats.volleyDistribution?.[bucket] ?? 0 }}</span>
+              </div>
+            </div>
+          </template>
         </div>
 
         <!-- Tab 3 : Progression par manche -->
         <div class="result__slide">
           <p class="result__slide-title">Par manche</p>
-          <div class="result__legs">
+
+          <div v-if="aiStats" class="result__ai-summary">
+            <span class="result__ai-summary-label">DartBot — moy.</span>
+            <span class="result__ai-summary-val">{{ aiStats.avgVolley }}/volée</span>
+          </div>
+
+          <div v-if="stats?.legAverages?.length" class="result__legs">
             <div
               v-for="item in stats.legAverages"
               :key="item.leg"
@@ -152,7 +190,7 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
               <div class="result__leg-track">
                 <div
                   class="result__leg-bar"
-                  :style="{ width: (item.avg / maxLegAvg * 100) + '%' }"
+                  :style="{ width: (item.avg / 180 * 100) + '%' }"
                 />
               </div>
               <span class="result__leg-avg">{{ item.avg }}</span>
@@ -168,7 +206,7 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
       Tu n'as pas terminé de manche cette partie.
     </p>
 
-    <div class="result__actions">
+    <div v-if="!hideActions" class="result__actions">
       <button class="result__btn result__btn--secondary" @click="$emit('home')">
         Retour au lobby
       </button>
@@ -265,7 +303,6 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
     display: flex;
     flex-direction: column;
     gap: $gap-md;
-    padding: 0 $padding-md;
   }
 
   &__slide-title {
@@ -276,37 +313,30 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
     text-align: center;
   }
 
-  // ── Tab 1 : stats rows ────────────────────────────────────────────────────
-  &__row {
-    display: flex;
+  // ── Tab 1 : stats grid ────────────────────────────────────────────────────
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: $gap-sm;
   }
 
-  &__leg-cell {
-    flex: 1;
-    background: rgba($white, 0.06);
-    border-radius: $radius-md;
-    padding: $padding-sm $padding-md;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: $gap-xxs;
-    min-width: 0;
-  }
-
-  &__leg {
-    display: flex;
-    align-items: baseline;
-    gap: $gap-xs;
-    flex-wrap: wrap;
-  }
-
-  &__leg-darts  { @include title-xl; font-weight: 700; color: $white; line-height: 1; font-variant-numeric: tabular-nums; }
-  &__leg-label  { @include text-xxs; color: rgba($white, 0.6); }
-  &__leg-finish { @include text-xxs; color: $muted; white-space: nowrap; }
-  &__leg-title  { @include text-xxs; color: $muted; line-height: 1.3; }
-
   // ── Tab 2 : distribution des volées ──────────────────────────────────────
+  &__distrib-legend {
+    display: flex;
+    justify-content: flex-end;
+    gap: $gap-lg;
+    padding-right: $padding-xs;
+  }
+
+  &__distrib-legend-item {
+    @include title-xs;
+    color: $orange;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+
+    &--ai { color: $blue; }
+  }
+
   &__distrib {
     display: flex;
     flex-direction: column;
@@ -327,6 +357,13 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
     flex-shrink: 0;
   }
 
+  &__distrib-tracks {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
   &__distrib-track {
     flex: 1;
     height: 8px;
@@ -341,6 +378,15 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
     border-radius: $radius-pill;
     transition: width 0.4s ease;
     min-width: 0;
+
+    &--ai { background: $blue; }
+  }
+
+  &__distrib-counts {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex-shrink: 0;
   }
 
   &__distrib-count {
@@ -350,9 +396,34 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
     width: 24px;
     text-align: right;
     flex-shrink: 0;
+    line-height: 8px;
+
+    &--ai { color: $blue; }
   }
 
   // ── Tab 3 : par manche ────────────────────────────────────────────────────
+  &__ai-summary {
+    display: flex;
+    align-items: center;
+    gap: $gap-sm;
+    padding: $padding-xs $padding-sm;
+    background: rgba($blue, 0.12);
+    border-radius: $radius-sm;
+    border-left: 3px solid $blue;
+  }
+
+  &__ai-summary-label {
+    @include text-sm;
+    color: $blue;
+    flex: 1;
+  }
+
+  &__ai-summary-val {
+    @include title-sm;
+    color: $blue;
+    font-variant-numeric: tabular-nums;
+  }
+
   &__legs {
     display: flex;
     flex-direction: column;
@@ -403,6 +474,8 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
     color: $muted;
     text-align: center;
     padding: $padding-lg 0;
+
+    &--inline { padding: $padding-md 0; }
   }
 
   // ── Actions ───────────────────────────────────────────────────────────────
@@ -439,15 +512,12 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
     &__slide    { padding: 0 $padding-xxl; }
     &__actions  { padding: 0 $padding-xxl; }
 
+    &__grid { grid-template-columns: repeat(4, 1fr); gap: $gap-md; }
+
     &__slide-title { @include title-sm; }
 
-    &__leg-darts   { @include title-xxl; }
-    &__leg-label   { @include text-xs; }
-    &__leg-finish  { @include text-xs; }
-    &__leg-title   { @include text-xs; }
-
     &__distrib-label { @include title-md; width: 44px; }
-    &__distrib-count { @include title-md; width: 32px; }
+    &__distrib-count { @include title-md; width: 32px; line-height: 12px; }
     &__distrib-track { height: 12px; }
 
     &__leg-avg   { @include title-md; width: 36px; }

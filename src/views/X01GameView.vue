@@ -45,6 +45,7 @@ const {
   confirmDoublesAttempted,
   confirmCheckout,
   startNextLeg,
+  addLostLegVolleys,
   stats,
   liveAvgVolley,
 } = useX01(settings)
@@ -56,6 +57,7 @@ const {
   aiTurn,
   aiWonLeg,
   aiWonGame,
+  aiVolleysScores,
   aiLegHumanSnapshot,
   aiCardData,
   handleAILegContinue,
@@ -68,6 +70,31 @@ const {
   pendingDoublesPrompt,
   pendingCheckout,
   startNextLeg,
+})
+
+const AI_VOLLEY_BUCKETS = ['180', '160', '140', '120', '100', '80', '60', '40']
+
+const aiStats = computed(() => {
+  if (!aiProfile || !aiVolleysScores.value.length) return null
+  const scores = aiVolleysScores.value
+  const dist = Object.fromEntries(AI_VOLLEY_BUCKETS.map(k => [k, 0]))
+  for (const s of scores) {
+    if (s >= 180)      dist['180']++
+    else if (s >= 160) dist['160']++
+    else if (s >= 140) dist['140']++
+    else if (s >= 120) dist['120']++
+    else if (s >= 100) dist['100']++
+    else if (s >= 80)  dist['80']++
+    else if (s >= 60)  dist['60']++
+    else if (s >= 40)  dist['40']++
+  }
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length
+  return {
+    avgVolley:          parseFloat(avg.toFixed(2)),
+    highestVolley:      Math.max(...scores),
+    doublesHit:         aiLegsWon.value,
+    volleyDistribution: dist,
+  }
 })
 
 const isBust   = computed(() => phase.value === 'bust')
@@ -84,10 +111,17 @@ function quitGame() {
   router.push({ name: 'x01-settings' })
 }
 
+// Accumule les volées des manches perdues pour les inclure dans les stats
+watch(aiWonLeg, (val) => {
+  if (val && aiLegHumanSnapshot.value?.volleys?.length) {
+    addLostLegVolleys(aiLegHumanSnapshot.value.volleys)
+  }
+})
+
 // ── Sauvegarde en fin de partie ───────────────────────────────────────────
 watch(phase, async (val) => {
   if (val === 'game-over' && stats.value) {
-    const humanLegsWon = completedLegs.value.length - (aiProfile ? aiLegsWon.value : 0)
+    const humanLegsWon = Math.max(0, completedLegs.value.length - (aiProfile ? aiLegsWon.value : 0))
     await dbStore.saveX01Session({
       startScore: settings.startScore,
       legsPlayed: completedLegs.value.length,
@@ -240,8 +274,9 @@ function startNextLegWithAI() {
           :start-score="settings.startScore"
           :ai-won="aiWonGame"
           :ai-legs-won="aiLegsWon"
-          @replay="router.push({ name: 'x01-game', query: { t: Date.now() } })"
-          @home="router.push({ name: 'play' })"
+          :ai-stats="aiStats"
+          @replay="router.push({ name: 'x01-settings' })"
+          @home="router.push({ name: 'home' })"
         />
       </div>
     </Transition>
@@ -306,9 +341,7 @@ function startNextLegWithAI() {
     background: $bg;
     z-index: 90;
     display: flex;
-    align-items: flex-start;
-    overflow-y: auto;
-    padding: $padding-xl $padding-md calc($padding-xxl + 16px);
+    padding: $padding-md;
   }
 }
 

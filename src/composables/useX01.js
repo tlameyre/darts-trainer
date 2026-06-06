@@ -12,7 +12,8 @@ import { ref, computed } from 'vue'
  */
 export function useX01({ startScore, legsToWin }) {
   // ─── État principal ────────────────────────────────────────────────────────
-  const completedLegs        = ref([])      // manches terminées
+  const completedLegs        = ref([])      // manches terminées (checkout humain)
+  const lostLegsVolleys      = ref([])      // volées des manches gagnées par l'IA
   const volleys              = ref([])      // volées de la manche en cours { darts, bust, score, doublesAttempted?, dartsToFinish?, doublesThrown? }
   const currentDarts         = ref([])      // fléchettes de la volée en cours (0-3 items)
   const phase                = ref('playing') // 'playing' | 'bust' | 'leg-recap' | 'game-over'
@@ -260,12 +261,17 @@ export function useX01({ startScore, legsToWin }) {
     return (sum / all.length).toFixed(2)
   })
 
+  function addLostLegVolleys(volleys) {
+    lostLegsVolleys.value.push(...volleys)
+  }
+
   // ─── Statistiques finales ──────────────────────────────────────────────────
   const stats = computed(() => {
     const legs = completedLegs.value
-    if (!legs.length) return null
+    if (!legs.length && !lostLegsVolleys.value.length) return null
 
-    const allVolleys   = legs.flatMap(l => l.volleys)
+    // Agrégats sur toutes les volées (manches gagnées + perdues)
+    const allVolleys   = [...legs.flatMap(l => l.volleys), ...lostLegsVolleys.value]
     const validVolleys = allVolleys.filter(v => !v.bust)
     const volleyScores = validVolleys.map(v => v.score)
 
@@ -273,7 +279,7 @@ export function useX01({ startScore, legsToWin }) {
       ? Math.round(volleyScores.reduce((a, b) => a + b, 0) / volleyScores.length)
       : 0
 
-    // 3 premières volées valides par manche (≈ 9 premières fléchettes)
+    // 3 premières volées valides par manche gagnée uniquement (≈ 9 premières fléchettes)
     const first3Scores = legs.flatMap(l =>
       l.volleys.filter(v => !v.bust).slice(0, 3).map(v => v.score)
     )
@@ -281,23 +287,29 @@ export function useX01({ startScore, legsToWin }) {
       ? Math.round(first3Scores.reduce((a, b) => a + b, 0) / first3Scores.length)
       : 0
 
-    // Doubles : tentatives = doublesAttempted (volées hors checkout) + doublesThrown (checkout)
-    const doublesHit      = legs.length
+    // Doubles : tentatives sur toutes les volées (manches gagnées + perdues)
+    const doublesHit       = legs.length
     const doublesAttempted = allVolleys.reduce((sum, v) => {
       if (v.doublesThrown != null)   return sum + v.doublesThrown
       if (v.doublesAttempted != null) return sum + v.doublesAttempted
       return sum
     }, 0)
 
-    const dartsPerLeg     = legs.map(l => l.totalDarts)
-    const avgDartsToFinish = Math.round(dartsPerLeg.reduce((a, b) => a + b, 0) / dartsPerLeg.length)
+    // Éléments basés sur les manches gagnées uniquement
+    const dartsPerLeg      = legs.map(l => l.totalDarts)
+    const avgDartsToFinish = dartsPerLeg.length
+      ? Math.round(dartsPerLeg.reduce((a, b) => a + b, 0) / dartsPerLeg.length)
+      : 0
 
-    // Meilleure et pire manche (par nb de fléchettes)
-    const legsSorted = [...legs].sort((a, b) => a.totalDarts - b.totalDarts)
-    const bestLeg  = { darts: legsSorted[0].totalDarts,                              checkoutScore: legsSorted[0].checkoutScore }
-    const worstLeg = { darts: legsSorted[legsSorted.length - 1].totalDarts, checkoutScore: legsSorted[legsSorted.length - 1].checkoutScore }
+    let bestLeg  = null
+    let worstLeg = null
+    if (legs.length) {
+      const legsSorted = [...legs].sort((a, b) => a.totalDarts - b.totalDarts)
+      bestLeg  = { darts: legsSorted[0].totalDarts, checkoutScore: legsSorted[0].checkoutScore }
+      worstLeg = { darts: legsSorted[legsSorted.length - 1].totalDarts, checkoutScore: legsSorted[legsSorted.length - 1].checkoutScore }
+    }
 
-    const highestFinish = Math.max(...legs.map(l => l.checkoutScore), 0)
+    const highestFinish = legs.length ? Math.max(...legs.map(l => l.checkoutScore), 0) : 0
     const highestVolley = volleyScores.length ? Math.max(...volleyScores) : 0
 
     // Distribution des volées par palier (exclusif : palier le plus haut atteint)
@@ -350,6 +362,7 @@ export function useX01({ startScore, legsToWin }) {
     confirmDoublesAttempted,
     confirmCheckout,
     startNextLeg,
+    addLostLegVolleys,
     stats,
     liveAvgVolley,
   }
