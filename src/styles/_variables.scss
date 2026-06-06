@@ -7,7 +7,7 @@ $bg: #121A18;
 $black: #000000;
 
 // Brand — orange
-$orange: #D64A24;
+$orange: #EB6343;
 $orange-dark: #B83D1C;
 
 // Brand — blue (sélection / échauffement)
@@ -57,10 +57,11 @@ $title-md: 16px;
 $title-lg: 18px;
 $title-xl: 24px;
 $title-xxl: 28px;
-$title-xxxl: 48px;
+$title-xxxl: 36px;
+
 
 // Font sizes — display (scores, icons, emojis)
-$display-xs: 36px;
+$display-xs: 48px;
 $display-sm: 56px;
 $display-md: 64px;
 $display-lg: 80px;
@@ -86,6 +87,7 @@ $gap-xl: 24px;
 $gap-xxl: 32px;
 
 // Border radius
+$radius-xs: 4px;
 $radius-sm: 8px;
 $radius-md: 14px;
 $radius-lg: 20px;

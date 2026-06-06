@@ -219,7 +219,7 @@ const unlockedCount = computed(() => userBadges.value.length)
     }
 
     &__item       { padding: $padding-md $padding-lg $padding-sm; gap: $gap-xs; }
-    &__item-icon  { @include title-xxxl; }
+    &__item-icon  { @include display-xs; }
     &__item-label { @include title-md; }
     &__item-check { @include title-sm; }
 

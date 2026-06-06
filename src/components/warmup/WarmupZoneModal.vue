@@ -43,7 +43,7 @@ watch(() => props.show, (val) => {
 
   &__actions {
     display: flex;
-    gap: $gap-xs;
+    gap: $gap-md;
     margin-top: $padding-xxs;
 
     :deep(.btn) { flex: 1; }

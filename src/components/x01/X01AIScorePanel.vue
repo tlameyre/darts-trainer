@@ -79,7 +79,7 @@ defineProps({
   }
 
   &__score {
-    @include display-xs;
+    @include title-xxxl;
     color: $text-color;
     line-height: 1;
     flex-shrink: 0;

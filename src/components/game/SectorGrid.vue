@@ -159,8 +159,8 @@ function tapOuter() {
     aspect-ratio: inherit;
   }
 
-  .sector-grid__tab { @include title-xxxl; }
-  .sector-grid__cell-num { @include title-xxxl; }
+  .sector-grid__tab { @include display-xs; }
+  .sector-grid__cell-num { @include display-xs; }
   .sector-grid__cell-pts { @include title-sm; }
 }
 </style>

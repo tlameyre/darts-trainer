@@ -30,7 +30,7 @@ defineEmits(['validate'])
   background: $white;
   border-radius: $radius-pill;
   overflow: hidden;
-  padding: $padding-sm;
+  padding: $padding-xs ;
   flex-shrink: 0;
   transition: box-shadow 0.2s;
 
@@ -51,7 +51,7 @@ defineEmits(['validate'])
     flex: 1;
     display: flex;
     align-items: center;
-    padding-left: $padding-md;
+    padding-left: $padding-sm;
     @include title-xl;
     color: $black;
     font-variant-numeric: tabular-nums;
@@ -67,7 +67,7 @@ defineEmits(['validate'])
     border-radius: $radius-pill;
     color: $white;
     @include title-md;
-    padding: $padding-xs $padding-xl;
+    padding: $padding-xs $padding-md;
     margin-left: $gap-xs;
     transition: background 0.15s, transform 0.1s;
     white-space: nowrap;

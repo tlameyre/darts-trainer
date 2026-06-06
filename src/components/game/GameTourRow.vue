@@ -20,7 +20,7 @@ defineProps({
       Phase {{ phase }}/2
     </div>
     <div v-if="showTimer" class="game__timer-badge" :class="isUrgent && 'game__timer-badge--urgent'">
-      <AppIcon name="clock" :width="13" :height="13" />
+      <AppIcon name="clock" :width="20" :height="20" />
       {{ timeLeft }}S
     </div>
   </div>
@@ -43,15 +43,15 @@ defineProps({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $gap-xxs;
+  gap: $gap-xs;
   background: $bg;
-  border: 1px solid $white;
+  border: 2px solid $white;
   border-radius: $radius-pill;
   padding: $padding-xxs $padding-sm;
   @include title-md;
   color: $text-color;
   font-variant-numeric: tabular-nums;
-  min-width: 75px;
+  min-width: 84px;
   transition: background 0.3s, border-color 0.3s;
 
   &--urgent {
@@ -63,7 +63,7 @@ defineProps({
 
 .game__phase-badge {
   background: rgba($accent, 0.15);
-  border: 1px solid rgba($accent, 0.3);
+  border: 2px solid rgba($accent, 0.3);
   border-radius: $radius-pill;
   padding: $padding-xxs $padding-sm;
   @include title-md;

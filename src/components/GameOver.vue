@@ -29,7 +29,6 @@ const scoreColorStreak = computed(() => {
 </script>
 
 <template>
-  <div class="game-over__title">FIN DE PARTIE</div>
   <div class="game-over">
     <div class="game-over__result">
       <div class="game-over__score" :style="{ color: scoreColor }">{{ correctCount }}<span>/{{ maxQuestions }}</span>
@@ -59,11 +58,6 @@ const scoreColorStreak = computed(() => {
   justify-content: center;
   gap: $gap-xxl;
 
-  &__title {
-    @include title-xl;
-    margin: 0 auto;
-  }
-
   &__result {
     text-align: center;
     display: flex;
@@ -77,7 +71,7 @@ const scoreColorStreak = computed(() => {
     font-variant-numeric: tabular-nums;
 
     span {
-      @include title-xxxl;
+      @include display-xs;
       font-weight: 300;
       color: $white;
     }
@@ -110,7 +104,7 @@ const scoreColorStreak = computed(() => {
 
   &__actions {
     display: flex;
-    gap: $gap-xs;
+    gap: $gap-md;
     width: 100%;
 
     :deep(.btn) {

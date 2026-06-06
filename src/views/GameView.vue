@@ -82,8 +82,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="game" :class="{ gameOver: 'game-over' }">
-    <AppHeader title="ENTRAINEMENT" @back="router.push({ name: 'score-settings' })">
+  <div class="game" :class="{ gameOver: gameOver }">
+    <AppHeader :title="gameOver ? 'FIN DE PARTIE' : 'ENTRAINEMENT'" @back="router.push({ name: 'score-settings' })">
       <template v-if="!gameOver" #right>
         <button class="game__menu-btn" @click="showMenu = true">
           <AppIcon name="gear" :width="22" :height="22" />

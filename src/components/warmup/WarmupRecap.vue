@@ -66,7 +66,7 @@ const totalDurationMs = computed(() =>
 <template>
   <div class="recap">
     <!-- Titre -->
-    <h1 class="recap__title">SESSION TERMINÉE</h1>
+    <h1 class="recap__title">RECAP PAR ZONES</h1>
 
     <!-- Cards par zone -->
     <div class="recap__zones">
@@ -202,13 +202,10 @@ const totalDurationMs = computed(() =>
       @include text-sm;
       color: var(--card-text);
     }
-  }
 
-  &__zone-sep {
-    width: 1px;
-    height: 32px;
-    background: var(--card-sep);
-    flex-shrink: 0;
+    &:not(:last-child) {
+      border-right: 1px solid var(--card-sep);
+    }
   }
 
   // ── Total session ────────────────────────────────
@@ -259,7 +256,7 @@ const totalDurationMs = computed(() =>
   // ── Boutons ──────────────────────────────────────
   &__actions {
     display: flex;
-    gap: $gap-xs;
+    gap: $gap-md;
     width: 100%;
 
     :deep(.btn) { flex: 1; }
@@ -268,7 +265,7 @@ const totalDurationMs = computed(() =>
 
 @media (min-width: $bp-laptop) {
   .recap {
-    &__title         { @include title-xxxl; }
+    &__title         { @include display-xs; }
     &__zone-card     { padding: $padding-md; gap: $gap-sm; }
     &__zone-name     { @include title-xl; }
     &__zone-acc      { @include title-xxl; }

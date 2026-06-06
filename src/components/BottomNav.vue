@@ -35,7 +35,7 @@ const pendingCount = computed(() => friendStore.pendingReceived.length)
       }"
     >
       <div class="bottom-nav__icon-wrap">
-        <AppIcon :name="tab.icon" :width="22" :height="22" />
+        <AppIcon :name="tab.icon" :width="24" :height="24" />
         <span v-if="tab.name === 'profile' && pendingCount" class="bottom-nav__dot" />
       </div>
       <span class="bottom-nav__label">{{ tab.label }}</span>
@@ -49,10 +49,7 @@ const pendingCount = computed(() => friendStore.pendingReceived.length)
   bottom: 0;
   left: 0;
   right: 0;
-  height: 64px;
-  background: rgba($bg, 0.92);
-  backdrop-filter: blur(12px);
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 2px solid white;
   display: flex;
   align-items: stretch;
   z-index: 50;
@@ -64,13 +61,13 @@ const pendingCount = computed(() => friendStore.pendingReceived.length)
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    color: $muted;
+    padding: $padding-sm 0;
+    gap: $gap-xxs;
+    color: $white;
     text-decoration: none;
     transition: color 0.15s;
 
     &--active { color: $orange; }
-    &:active   { opacity: 0.7; }
   }
 
   &__icon-wrap {

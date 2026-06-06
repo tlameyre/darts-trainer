@@ -124,7 +124,7 @@ function selectMode(mode) {
     padding: $padding-xxl;
 
     &__title {
-      @include display-xs;
+      @include title-xxxl;
     }
 
     &__profile-name { @include text-md; }

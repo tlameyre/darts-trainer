@@ -93,6 +93,6 @@ const rows = [
 }
 
 @media (min-width: $bp-laptop) {
-  .numpad__key { @include title-xxxl; }
+  .numpad__key { @include display-xs; }
 }
 </style>

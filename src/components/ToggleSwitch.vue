@@ -49,10 +49,10 @@ defineEmits(['update:modelValue'])
   }
 
   &__switch {
-    width: 44px;
-    height: 26px;
+    width: 52px;
+    height: 32px;
     background: $bg;
-    border: 1px solid $white;
+    border: 2px solid $white;
     border-radius: $radius-pill;
     position: relative;
     flex-shrink: 0;
@@ -66,16 +66,16 @@ defineEmits(['update:modelValue'])
 
   &__knob {
     position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 18px;
-    height: 18px;
+    top: 6px;
+    left: 6px;
+    width: 16px;
+    height: 16px;
     background: $white;
     border-radius: 50%;
     transition: transform 0.2s;
 
     .toggle__switch--on & {
-      transform: translateX(18px);
+      transform: translateX(22px);
     }
   }
 }

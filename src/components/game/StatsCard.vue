@@ -29,9 +29,10 @@ defineProps({
   flex-direction: column;
   gap: $gap-xs;
   flex-shrink: 0;
+  flex: 1;
 
   &__header {
-    @include title-xxxl;
+    @include display-xs;
     font-weight: 700;
     color: $white;
     line-height: 1;
@@ -62,7 +63,7 @@ defineProps({
   }
 
   &__value {
-    @include title-sm;
+    @include title-md;
     color: $white;
     font-variant-numeric: tabular-nums;
   }
@@ -74,7 +75,7 @@ defineProps({
     gap: $gap-sm;
 
     &__label { @include text-md; }
-    &__value { @include title-md; }
+    &__value { @include title-lg; }
   }
 }
 </style>

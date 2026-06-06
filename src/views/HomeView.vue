@@ -283,7 +283,7 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
     }
 
     &__name {
-      @include display-xs;
+      @include title-xxxl;
     }
 
     &__section-title {

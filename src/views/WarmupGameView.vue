@@ -96,9 +96,9 @@ onUnmounted(() => {
 <template>
   <div class="warmup">
 
-    <AppHeader title="ECHAUFFEMENT" back-icon="exit" @back="router.push({ name: 'warmup-settings' })">
+    <AppHeader :title="gameOver ? 'FIN DE PARTIE' : 'ECHAUFFEMENT'" back-icon="exit" @back="router.push({ name: 'warmup-settings' })">
       <template #right>
-        <button class="warmup__gear-btn" @click="showZoneModal = true">
+        <button v-if="!gameOver" class="warmup__gear-btn" @click="showZoneModal = true">
           <AppIcon name="gear" :width="22" :height="22" />
         </button>
       </template>

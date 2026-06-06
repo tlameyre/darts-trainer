@@ -91,7 +91,7 @@ const overlayClass = computed(() => {
     padding-bottom: $padding-md;
 
     &--phase2 .round-card__score {
-      @include title-xxxl;
+      @include display-xs;
     }
   }
 
@@ -108,14 +108,14 @@ const overlayClass = computed(() => {
   }
 
   &__score {
-    @include title-xxxl;
+    @include display-xs;
     line-height: 1;
     color: $white;
     font-variant-numeric: tabular-nums;
   }
 
   &__volee-total {
-    @include title-xxxl;
+    @include display-xs;
     color: $white;
     font-variant-numeric: tabular-nums;
   }
@@ -160,7 +160,7 @@ const overlayClass = computed(() => {
   }
 
   &__overlay-title {
-    @include title-xxxl;
+    @include display-xs;
     color: $white;
   }
 

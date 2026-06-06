@@ -3,13 +3,19 @@
 
 // --- Typography mixins ---
 @mixin _font($size, $type) {
-  @if $type ==title {
+  @if $type == display {
+    font-size: map.get(('xs': $display-xs, 'sm': $display-sm, 'md': $display-md, 'lg': $display-lg, 'xl': $display-xl), $size);
+    font-weight: 600;
+    font-family: $font-title;
+  }
+
+  @else if $type == title {
     font-size: map.get(('xxs': $title-xxs, 'xs': $title-xs, 'sm': $title-sm, 'md': $title-md, 'lg': $title-lg, 'xl': $title-xl, 'xxl': $title-xxl, 'xxxl': $title-xxxl), $size);
     font-weight: 600;
     font-family: $font-title;
   }
 
-  @else {
+  @else if $type == text {
     font-size: map.get(('xxs': $text-xxs, 'xs': $text-xs, 'sm': $text-sm, 'md': $text-md, 'lg': $text-lg, 'xl': $text-xl, 'xxl': $text-xxl), $size);
     font-weight: 300;
     font-family: $font-text;
@@ -79,11 +85,11 @@
 }
 
 // display — grandes tailles (scores, icônes, emojis) — font-size uniquement
-@mixin display-xs { font-size: $display-xs; }
-@mixin display-sm { font-size: $display-sm; }
-@mixin display-md { font-size: $display-md; }
-@mixin display-lg { font-size: $display-lg; }
-@mixin display-xl { font-size: $display-xl; }
+@mixin display-xs { @include _font('xs', display);}
+@mixin display-sm { @include _font('sm', display); }
+@mixin display-md { @include _font('md', display); }
+@mixin display-lg { @include _font('lg', display); }
+@mixin display-xl { @include _font('xl', display); }
 
 
 // --- Fonts face ---

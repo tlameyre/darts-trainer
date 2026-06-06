@@ -102,7 +102,7 @@ function initials(f) {
   &__actions {
     display: flex;
     align-items: center;
-    gap: $gap-xs;
+    gap: $gap-md;
     flex-shrink: 0;
   }
 

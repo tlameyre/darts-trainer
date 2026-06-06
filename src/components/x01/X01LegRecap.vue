@@ -123,7 +123,7 @@ defineEmits(['next'])
   }
 
   &__stat-val {
-    @include display-xs;
+    @include title-xxxl;
     font-weight: 700;
     color: $white;
     line-height: 1;
