@@ -87,11 +87,20 @@ function quitGame() {
 // ── Sauvegarde en fin de partie ───────────────────────────────────────────
 watch(phase, async (val) => {
   if (val === 'game-over' && stats.value) {
+    const humanLegsWon = completedLegs.value.length - (aiProfile ? aiLegsWon.value : 0)
     await dbStore.saveX01Session({
       startScore: settings.startScore,
       legsPlayed: completedLegs.value.length,
       stats:      stats.value,
-      settings,
+      settings: {
+        ...settings,
+        humanName:    authStore.profile?.username ?? null,
+        humanLegsWon,
+        ...(aiProfile ? {
+          aiLegsWon:   aiLegsWon.value,
+          aiAvgVolley: aiCardData.value.avgVolley,
+        } : {}),
+      },
     })
   }
 })
