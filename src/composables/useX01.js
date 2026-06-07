@@ -16,9 +16,10 @@ export function useX01({ startScore, legsToWin, players = null }) {
   const isMulti     = playerCount > 1
 
   // ─── Per-player state ──────────────────────────────────────────────────────
-  const allVolleys         = Array.from({ length: playerCount }, () => ref([]))
-  const allCompletedLegs   = Array.from({ length: playerCount }, () => ref([]))
-  const allLostLegsVolleys = Array.from({ length: playerCount }, () => ref([]))
+  const allVolleys       = Array.from({ length: playerCount }, () => ref([]))
+  const allCompletedLegs = Array.from({ length: playerCount }, () => ref([]))
+  // All legs in chronological order per player: { volleys, won, totalDarts, checkoutScore? }
+  const allLegsOrdered   = Array.from({ length: playerCount }, () => ref([]))
   const lastLegWinnerIndex = ref(null)
 
   const currentPlayerIndex = ref(0)
@@ -31,10 +32,6 @@ export function useX01({ startScore, legsToWin, players = null }) {
   const completedLegs = computed({
     get: () => allCompletedLegs[currentPlayerIndex.value].value,
     set: (v) => { allCompletedLegs[currentPlayerIndex.value].value = v },
-  })
-  const lostLegsVolleys = computed({
-    get: () => allLostLegsVolleys[currentPlayerIndex.value].value,
-    set: (v) => { allLostLegsVolleys[currentPlayerIndex.value].value = v },
   })
 
   // ─── État principal ────────────────────────────────────────────────────────
@@ -94,20 +91,24 @@ export function useX01({ startScore, legsToWin, players = null }) {
     const winnerIndex   = currentPlayerIndex.value
 
     lastLegWinnerIndex.value = winnerIndex
+
+    // Record this leg for ALL players in chronological order
+    for (let i = 0; i < playerCount; i++) {
+      const legVolleys = [...allVolleys[i].value]
+      const won        = i === winnerIndex
+      allLegsOrdered[i].value.push({
+        volleys: legVolleys,
+        won,
+        totalDarts: won ? totalDarts : legVolleys.reduce((s, v) => s + v.darts.length, 0),
+        checkoutScore: won ? checkoutScore : null,
+      })
+    }
+
     allCompletedLegs[winnerIndex].value.push({
       volleys:      [...volleys.value],
       totalDarts,
       checkoutScore,
     })
-
-    // Save the losing players' volleys for their stats
-    if (isMulti) {
-      for (let i = 0; i < playerCount; i++) {
-        if (i !== winnerIndex && allVolleys[i].value.length) {
-          allLostLegsVolleys[i].value.push(...allVolleys[i].value)
-        }
-      }
-    }
 
     const maxLegsWon = Math.max(...allCompletedLegs.map(r => r.value.length))
     if (maxLegsWon >= legsToWin) {
@@ -286,60 +287,66 @@ export function useX01({ startScore, legsToWin, players = null }) {
 
   // ─── Moyenne en temps réel (joueur courant) ───────────────────────────────
   const liveAvgVolley = computed(() => {
-    const idx        = currentPlayerIndex.value
-    const pastVolleys = allCompletedLegs[idx].value.flatMap(l => l.volleys)
+    const idx         = currentPlayerIndex.value
+    const pastVolleys = allLegsOrdered[idx].value.flatMap(l => l.volleys)
     const all         = [...pastVolleys, ...allVolleys[idx].value]
     if (!all.length) return '–'
     const sum = all.reduce((s, v) => s + (v.bust ? 0 : v.score), 0)
     return (sum / all.length).toFixed(2)
   })
 
+  // Called from view when AI wins a leg (single-player vs AI mode)
   function addLostLegVolleys(legVolleys) {
-    allLostLegsVolleys[currentPlayerIndex.value].value.push(...legVolleys)
+    allLegsOrdered[0].value.push({
+      volleys:    [...legVolleys],
+      won:        false,
+      totalDarts: legVolleys.reduce((s, v) => s + v.darts.length, 0),
+      checkoutScore: null,
+    })
   }
 
   // ─── Statistiques finales (joueur 0 = utilisateur connecté) ──────────────
   function computeStatsForPlayer(idx) {
-    const legs        = allCompletedLegs[idx].value
-    const lostVolleys = allLostLegsVolleys[idx].value
-    if (!legs.length && !lostVolleys.length) return null
+    const orderedLegs = allLegsOrdered[idx].value
+    const wonLegs     = allCompletedLegs[idx].value
+    if (!orderedLegs.length) return null
 
-    const allVs      = [...legs.flatMap(l => l.volleys), ...lostVolleys]
-    const validVs    = allVs.filter(v => !v.bust)
-    const scores     = validVs.map(v => v.score)
+    const allVs   = orderedLegs.flatMap(l => l.volleys)
+    const validVs = allVs.filter(v => !v.bust)
+    const scores  = validVs.map(v => v.score)
 
-    const avgVolley  = scores.length
+    const avgVolley = scores.length
       ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
       : 0
 
-    const first3Scores = legs.flatMap(l =>
+    const first3Scores = wonLegs.flatMap(l =>
       l.volleys.filter(v => !v.bust).slice(0, 3).map(v => v.score)
     )
     const avg9darts = first3Scores.length
       ? Math.round(first3Scores.reduce((a, b) => a + b, 0) / first3Scores.length)
       : 0
 
-    const doublesHit       = legs.length
+    const doublesHit       = wonLegs.length
     const doublesAttempted = allVs.reduce((sum, v) => {
       if (v.doublesThrown != null)    return sum + v.doublesThrown
       if (v.doublesAttempted != null) return sum + v.doublesAttempted
       return sum
     }, 0)
 
-    const dartsPerLeg      = legs.map(l => l.totalDarts)
-    const avgDartsToFinish = dartsPerLeg.length
-      ? Math.round(dartsPerLeg.reduce((a, b) => a + b, 0) / dartsPerLeg.length)
+    const dartsPerWonLeg   = wonLegs.map(l => l.totalDarts)
+    const avgDartsToFinish = dartsPerWonLeg.length
+      ? Math.round(dartsPerWonLeg.reduce((a, b) => a + b, 0) / dartsPerWonLeg.length)
       : 0
 
     let bestLeg  = null
     let worstLeg = null
-    if (legs.length) {
-      const sorted = [...legs].sort((a, b) => a.totalDarts - b.totalDarts)
+    if (wonLegs.length) {
+      const sorted = [...wonLegs].sort((a, b) => a.totalDarts - b.totalDarts)
       bestLeg  = { darts: sorted[0].totalDarts, checkoutScore: sorted[0].checkoutScore }
       worstLeg = { darts: sorted[sorted.length - 1].totalDarts, checkoutScore: sorted[sorted.length - 1].checkoutScore }
     }
 
-    const highestFinish = legs.length ? Math.max(...legs.map(l => l.checkoutScore), 0) : 0
+    const highestFinish = wonLegs.length ? Math.max(...wonLegs.map(l => l.checkoutScore), 0) : 0
     const highestVolley = scores.length ? Math.max(...scores) : 0
 
     const thresholds = [160, 140, 120, 100, 80, 60, 40]
@@ -350,10 +357,11 @@ export function useX01({ startScore, legsToWin, players = null }) {
       if (bucket != null) volleyDistribution[String(bucket)]++
     }
 
-    const legAverages = legs.map((leg, i) => {
+    // All legs in chronological order (won + lost)
+    const legAverages = orderedLegs.map((leg, i) => {
       const valid = leg.volleys.filter(v => !v.bust)
-      const avg = valid.length ? Math.round(valid.reduce((s, v) => s + v.score, 0) / valid.length) : 0
-      return { leg: i + 1, avg }
+      const avg   = valid.length ? Math.round(valid.reduce((s, v) => s + v.score, 0) / valid.length) : 0
+      return { leg: i + 1, avg, won: leg.won }
     })
 
     return {

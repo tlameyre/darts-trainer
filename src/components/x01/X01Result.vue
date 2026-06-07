@@ -185,6 +185,7 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
               v-for="item in stats.legAverages"
               :key="item.leg"
               class="result__leg-row"
+              :class="{ 'result__leg-row--lost': item.won === false }"
             >
               <span class="result__leg-num">M{{ item.leg }}</span>
               <div class="result__leg-track">
@@ -435,6 +436,12 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
     display: flex;
     align-items: center;
     gap: $gap-sm;
+
+    &--lost {
+      opacity: 0.55;
+
+      .result__leg-bar { background: $muted; }
+    }
   }
 
   &__leg-num {
