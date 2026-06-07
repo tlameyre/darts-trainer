@@ -184,7 +184,11 @@ create table public.x01_sessions (
   highest_volley      int,
   doubles_hit         int,
   doubles_attempted   int,
-  settings            jsonb
+  settings            jsonb,
+  volley_distribution jsonb,
+  leg_averages        jsonb,
+  opponent_data       jsonb,
+  linked_friend_id    uuid references public.profiles(id) on delete set null
 );
 
 alter table public.x01_sessions enable row level security;

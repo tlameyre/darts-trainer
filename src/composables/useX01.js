@@ -8,45 +8,68 @@ import { ref, computed } from 'vue'
  * - Bust si : score résultant < 0 | = 1 | = 0 sans double
  * - Bust annule toute la volée (score revient à la valeur avant la volée)
  *
- * @param {{ startScore: number, legsToWin: number }} settings
+ * @param {{ startScore: number, legsToWin: number, players?: Array }} settings
+ *   players: tableau de joueurs humains (optionnel, défaut = 1 joueur)
  */
-export function useX01({ startScore, legsToWin }) {
+export function useX01({ startScore, legsToWin, players = null }) {
+  const playerCount = players?.length ?? 1
+  const isMulti     = playerCount > 1
+
+  // ─── Per-player state ──────────────────────────────────────────────────────
+  const allVolleys         = Array.from({ length: playerCount }, () => ref([]))
+  const allCompletedLegs   = Array.from({ length: playerCount }, () => ref([]))
+  const allLostLegsVolleys = Array.from({ length: playerCount }, () => ref([]))
+
+  const currentPlayerIndex = ref(0)
+
+  // Writable computed aliases → current player's arrays
+  const volleys = computed({
+    get: () => allVolleys[currentPlayerIndex.value].value,
+    set: (v) => { allVolleys[currentPlayerIndex.value].value = v },
+  })
+  const completedLegs = computed({
+    get: () => allCompletedLegs[currentPlayerIndex.value].value,
+    set: (v) => { allCompletedLegs[currentPlayerIndex.value].value = v },
+  })
+  const lostLegsVolleys = computed({
+    get: () => allLostLegsVolleys[currentPlayerIndex.value].value,
+    set: (v) => { allLostLegsVolleys[currentPlayerIndex.value].value = v },
+  })
+
   // ─── État principal ────────────────────────────────────────────────────────
-  const completedLegs        = ref([])      // manches terminées (checkout humain)
-  const lostLegsVolleys      = ref([])      // volées des manches gagnées par l'IA
-  const volleys              = ref([])      // volées de la manche en cours { darts, bust, score, doublesAttempted?, dartsToFinish?, doublesThrown? }
-  const currentDarts         = ref([])      // fléchettes de la volée en cours (0-3 items)
-  const phase                = ref('playing') // 'playing' | 'bust' | 'leg-recap' | 'game-over'
-  const volleyCompleting     = ref(false)   // true pendant les 700ms après la 3e fléchette
-  const pendingDoublesPrompt = ref(false)   // true → modal doubles tentés (volée non-checkout)
-  const pendingCheckout      = ref(null)    // { defaultDarts, checkoutScore } → modal checkout
+  const currentDarts         = ref([])
+  const phase                = ref('playing')
+  const volleyCompleting     = ref(false)
+  const pendingDoublesPrompt = ref(false)
+  const pendingCheckout      = ref(null)
 
   let _bustTimer     = null
   let _completeTimer = null
 
   // ─── Calculs ──────────────────────────────────────────────────────────────
-  /** Score restant au début de la volée courante (après les volées valides) */
   const legRemaining = computed(() =>
     volleys.value
       .filter(v => !v.bust)
       .reduce((acc, v) => acc - v.score, startScore)
   )
 
-  /** Score restant après les fléchettes déjà lancées dans la volée courante */
   const volleyRemaining = computed(() =>
     currentDarts.value.reduce((acc, d) => acc - d.pts, legRemaining.value)
   )
 
-  /** Valeur affichée (toujours >= 0) */
   const displayRemaining = computed(() => Math.max(0, volleyRemaining.value))
 
-  const legNumber    = computed(() => completedLegs.value.length + 1)
+  const legNumber    = computed(() => allCompletedLegs[0].value.length + 1)
   const volleyNumber = computed(() => volleys.value.length + 1)
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
-  /** Un finish est valide uniquement sur un double ou le bull (50) */
   function isValidCheckout(dart) {
     return dart.type === 'double' || (dart.type === 'bull' && dart.pts === 50)
+  }
+
+  function advancePlayer() {
+    if (!isMulti) return
+    currentPlayerIndex.value = (currentPlayerIndex.value + 1) % playerCount
   }
 
   function triggerBust(newDarts, wasInCheckoutZone = false) {
@@ -56,22 +79,36 @@ export function useX01({ startScore, legsToWin }) {
     phase.value = 'bust'
     _bustTimer = setTimeout(() => {
       if (phase.value === 'bust') phase.value = 'playing'
-      // Demander le nombre de doubles tentés si on était en zone de checkout
-      if (wasInCheckoutZone) pendingDoublesPrompt.value = true
+      if (wasInCheckoutZone) {
+        pendingDoublesPrompt.value = true
+      } else {
+        advancePlayer()
+      }
     }, 900)
   }
 
   function finishLeg() {
     const totalDarts    = volleys.value.reduce((sum, v) => sum + v.darts.length, 0)
     const checkoutScore = volleys.value[volleys.value.length - 1].score
+    const winnerIndex   = currentPlayerIndex.value
 
-    completedLegs.value.push({
+    allCompletedLegs[winnerIndex].value.push({
       volleys:      [...volleys.value],
       totalDarts,
       checkoutScore,
     })
 
-    if (completedLegs.value.length >= legsToWin) {
+    // Save the losing players' volleys for their stats
+    if (isMulti) {
+      for (let i = 0; i < playerCount; i++) {
+        if (i !== winnerIndex && allVolleys[i].value.length) {
+          allLostLegsVolleys[i].value.push(...allVolleys[i].value)
+        }
+      }
+    }
+
+    const maxLegsWon = Math.max(...allCompletedLegs.map(r => r.value.length))
+    if (maxLegsWon >= legsToWin) {
       phase.value = 'game-over'
     } else {
       phase.value = 'leg-recap'
@@ -82,7 +119,6 @@ export function useX01({ startScore, legsToWin }) {
   function addDart(dart) {
     if (phase.value !== 'playing' || volleyCompleting.value) return
 
-    // Capturer le score avant la volée pour savoir si on était en zone de checkout
     const remainingAtStart = legRemaining.value
     const inCheckoutZone   = remainingAtStart <= 50
 
@@ -90,16 +126,13 @@ export function useX01({ startScore, legsToWin }) {
     const volleyPts = newDarts.reduce((sum, d) => sum + d.pts, 0)
     const newRem    = remainingAtStart - volleyPts
 
-    // ── Bust ────────────────────────────────────────────────────────────────
     if (newRem < 0 || newRem === 1) {
       triggerBust(newDarts, inCheckoutZone)
       return
     }
 
-    // ── Checkout ────────────────────────────────────────────────────────────
     if (newRem === 0) {
       if (isValidCheckout(dart)) {
-        // Afficher la fléchette 700ms, puis ouvrir la modale checkout
         currentDarts.value = newDarts
         volleyCompleting.value = true
         const score = volleyPts
@@ -109,20 +142,16 @@ export function useX01({ startScore, legsToWin }) {
           volleys.value.push({ darts, bust: false, score })
           currentDarts.value = []
           volleyCompleting.value = false
-          // Ouvrir la modale avec le nombre de fléchettes pré-rempli
           pendingCheckout.value = { defaultDarts: darts.length, checkoutScore: score }
         }, 700)
       } else {
-        // Zéro sans double → bust
         triggerBust(newDarts, inCheckoutZone)
       }
       return
     }
 
-    // ── Fléchette normale ───────────────────────────────────────────────────
     currentDarts.value = newDarts
 
-    // Volée complète (3 fléchettes) : délai avant soustraction, comme le warmup
     if (currentDarts.value.length === 3) {
       volleyCompleting.value = true
       const score = currentDarts.value.reduce((sum, d) => sum + d.pts, 0)
@@ -132,14 +161,16 @@ export function useX01({ startScore, legsToWin }) {
         volleys.value.push({ darts, bust: false, score })
         currentDarts.value = []
         volleyCompleting.value = false
-        // Demander le nombre de doubles tentés si on était en zone de checkout
-        if (inCheckoutZone) pendingDoublesPrompt.value = true
+        if (inCheckoutZone) {
+          pendingDoublesPrompt.value = true
+        } else {
+          advancePlayer()
+        }
       }, 700)
     }
   }
 
   // ─── Mode volée totale ────────────────────────────────────────────────────
-  /** Saisie du total d'une volée d'un coup (mode simplifié) */
   function confirmVolleyTotal(total) {
     if (phase.value !== 'playing' || volleyCompleting.value) return
 
@@ -154,7 +185,6 @@ export function useX01({ startScore, legsToWin }) {
     }
 
     if (newRem === 0) {
-      // Score exact → checkout possible, ouvrir la modale
       currentDarts.value     = [syntheticDart]
       volleyCompleting.value = true
       clearTimeout(_completeTimer)
@@ -167,7 +197,6 @@ export function useX01({ startScore, legsToWin }) {
       return
     }
 
-    // Volée normale
     currentDarts.value     = [syntheticDart]
     volleyCompleting.value = true
     clearTimeout(_completeTimer)
@@ -175,27 +204,29 @@ export function useX01({ startScore, legsToWin }) {
       volleys.value.push({ darts: [syntheticDart], bust: false, score: total })
       currentDarts.value     = []
       volleyCompleting.value = false
-      if (inCheckoutZone) pendingDoublesPrompt.value = true
+      if (inCheckoutZone) {
+        pendingDoublesPrompt.value = true
+      } else {
+        advancePlayer()
+      }
     }, 700)
   }
 
-  /** Bust explicite (mode volée totale) */
   function bustVolley() {
     if (phase.value !== 'playing' || volleyCompleting.value) return
     const inCheckoutZone = legRemaining.value <= 50
     triggerBust([{ pts: 0, type: 'miss', label: 'Bust', sector: null }], inCheckoutZone)
   }
 
-  /** Enregistre le nombre de doubles tentés sur la dernière volée (hors checkout) */
   function confirmDoublesAttempted(n) {
     if (volleys.value.length > 0) {
       const last = volleys.value[volleys.value.length - 1]
       volleys.value[volleys.value.length - 1] = { ...last, doublesAttempted: n }
     }
     pendingDoublesPrompt.value = false
+    advancePlayer()
   }
 
-  /** Confirmation checkout : enregistre les données puis termine la manche */
   function confirmCheckout({ dartsToFinish, doublesThrown }) {
     if (volleys.value.length > 0) {
       const last = volleys.value[volleys.value.length - 1]
@@ -211,7 +242,6 @@ export function useX01({ startScore, legsToWin }) {
 
   function undo() {
     if (volleyCompleting.value) {
-      // Annuler pendant le délai de fin de volée
       clearTimeout(_completeTimer)
       volleyCompleting.value = false
       currentDarts.value = currentDarts.value.slice(0, -1)
@@ -233,53 +263,53 @@ export function useX01({ startScore, legsToWin }) {
 
     if (volleys.value.length > 0) {
       const last = volleys.value.pop()
-      // Pour une volée valide : restaurer toutes les fléchettes sauf la dernière
       if (!last.bust) {
         currentDarts.value = last.darts.slice(0, -1)
       }
-      // Pour un bust : on repart d'une volée vide
     }
   }
 
   function startNextLeg() {
     clearTimeout(_completeTimer)
     clearTimeout(_bustTimer)
-    volleys.value              = []
+    // Reset all players' current leg state
+    for (const pVolleys of allVolleys) pVolleys.value = []
     currentDarts.value         = []
     volleyCompleting.value     = false
     pendingDoublesPrompt.value = false
     pendingCheckout.value      = null
+    currentPlayerIndex.value   = 0
     phase.value                = 'playing'
   }
 
-  // ─── Moyenne en temps réel (toute la partie, busts = 0) ──────────────────
+  // ─── Moyenne en temps réel (joueur courant) ───────────────────────────────
   const liveAvgVolley = computed(() => {
-    const pastVolleys = completedLegs.value.flatMap(l => l.volleys)
-    const all         = [...pastVolleys, ...volleys.value]
+    const idx        = currentPlayerIndex.value
+    const pastVolleys = allCompletedLegs[idx].value.flatMap(l => l.volleys)
+    const all         = [...pastVolleys, ...allVolleys[idx].value]
     if (!all.length) return '–'
     const sum = all.reduce((s, v) => s + (v.bust ? 0 : v.score), 0)
     return (sum / all.length).toFixed(2)
   })
 
-  function addLostLegVolleys(volleys) {
-    lostLegsVolleys.value.push(...volleys)
+  function addLostLegVolleys(legVolleys) {
+    allLostLegsVolleys[currentPlayerIndex.value].value.push(...legVolleys)
   }
 
-  // ─── Statistiques finales ──────────────────────────────────────────────────
-  const stats = computed(() => {
-    const legs = completedLegs.value
-    if (!legs.length && !lostLegsVolleys.value.length) return null
+  // ─── Statistiques finales (joueur 0 = utilisateur connecté) ──────────────
+  function computeStatsForPlayer(idx) {
+    const legs        = allCompletedLegs[idx].value
+    const lostVolleys = allLostLegsVolleys[idx].value
+    if (!legs.length && !lostVolleys.length) return null
 
-    // Agrégats sur toutes les volées (manches gagnées + perdues)
-    const allVolleys   = [...legs.flatMap(l => l.volleys), ...lostLegsVolleys.value]
-    const validVolleys = allVolleys.filter(v => !v.bust)
-    const volleyScores = validVolleys.map(v => v.score)
+    const allVs      = [...legs.flatMap(l => l.volleys), ...lostVolleys]
+    const validVs    = allVs.filter(v => !v.bust)
+    const scores     = validVs.map(v => v.score)
 
-    const avgVolley = volleyScores.length
-      ? Math.round(volleyScores.reduce((a, b) => a + b, 0) / volleyScores.length)
+    const avgVolley  = scores.length
+      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
       : 0
 
-    // 3 premières volées valides par manche gagnée uniquement (≈ 9 premières fléchettes)
     const first3Scores = legs.flatMap(l =>
       l.volleys.filter(v => !v.bust).slice(0, 3).map(v => v.score)
     )
@@ -287,15 +317,13 @@ export function useX01({ startScore, legsToWin }) {
       ? Math.round(first3Scores.reduce((a, b) => a + b, 0) / first3Scores.length)
       : 0
 
-    // Doubles : tentatives sur toutes les volées (manches gagnées + perdues)
     const doublesHit       = legs.length
-    const doublesAttempted = allVolleys.reduce((sum, v) => {
-      if (v.doublesThrown != null)   return sum + v.doublesThrown
+    const doublesAttempted = allVs.reduce((sum, v) => {
+      if (v.doublesThrown != null)    return sum + v.doublesThrown
       if (v.doublesAttempted != null) return sum + v.doublesAttempted
       return sum
     }, 0)
 
-    // Éléments basés sur les manches gagnées uniquement
     const dartsPerLeg      = legs.map(l => l.totalDarts)
     const avgDartsToFinish = dartsPerLeg.length
       ? Math.round(dartsPerLeg.reduce((a, b) => a + b, 0) / dartsPerLeg.length)
@@ -304,24 +332,22 @@ export function useX01({ startScore, legsToWin }) {
     let bestLeg  = null
     let worstLeg = null
     if (legs.length) {
-      const legsSorted = [...legs].sort((a, b) => a.totalDarts - b.totalDarts)
-      bestLeg  = { darts: legsSorted[0].totalDarts, checkoutScore: legsSorted[0].checkoutScore }
-      worstLeg = { darts: legsSorted[legsSorted.length - 1].totalDarts, checkoutScore: legsSorted[legsSorted.length - 1].checkoutScore }
+      const sorted = [...legs].sort((a, b) => a.totalDarts - b.totalDarts)
+      bestLeg  = { darts: sorted[0].totalDarts, checkoutScore: sorted[0].checkoutScore }
+      worstLeg = { darts: sorted[sorted.length - 1].totalDarts, checkoutScore: sorted[sorted.length - 1].checkoutScore }
     }
 
     const highestFinish = legs.length ? Math.max(...legs.map(l => l.checkoutScore), 0) : 0
-    const highestVolley = volleyScores.length ? Math.max(...volleyScores) : 0
+    const highestVolley = scores.length ? Math.max(...scores) : 0
 
-    // Distribution des volées par palier (exclusif : palier le plus haut atteint)
     const thresholds = [160, 140, 120, 100, 80, 60, 40]
     const volleyDistribution = { '40': 0, '60': 0, '80': 0, '100': 0, '120': 0, '140': 0, '160': 0, '180': 0 }
-    for (const v of validVolleys) {
+    for (const v of validVs) {
       if (v.score === 180) { volleyDistribution['180']++; continue }
       const bucket = thresholds.find(t => v.score >= t)
       if (bucket != null) volleyDistribution[String(bucket)]++
     }
 
-    // Moyenne par manche (volées valides uniquement)
     const legAverages = legs.map((leg, i) => {
       const valid = leg.volleys.filter(v => !v.bust)
       const avg = valid.length ? Math.round(valid.reduce((s, v) => s + v.score, 0) / valid.length) : 0
@@ -329,21 +355,15 @@ export function useX01({ startScore, legsToWin }) {
     })
 
     return {
-      avgVolley,
-      avg9darts,
-      avgDartsToFinish,
-      doublesHit,
-      doublesAttempted,
-      highestFinish,
-      highestVolley,
-      bestLeg,
-      worstLeg,
-      volleyDistribution,
-      legAverages,
+      avgVolley, avg9darts, avgDartsToFinish, doublesHit, doublesAttempted,
+      highestFinish, highestVolley, bestLeg, worstLeg, volleyDistribution, legAverages,
     }
-  })
+  }
+
+  const stats = computed(() => computeStatsForPlayer(0))
 
   return {
+    // State
     completedLegs,
     volleys,
     currentDarts,
@@ -351,9 +371,11 @@ export function useX01({ startScore, legsToWin }) {
     volleyCompleting,
     pendingDoublesPrompt,
     pendingCheckout,
+    // Computed
     legRemaining,
     legNumber,
     volleyNumber,
+    // Actions
     addDart,
     addMiss,
     undo,
@@ -365,5 +387,11 @@ export function useX01({ startScore, legsToWin }) {
     addLostLegVolleys,
     stats,
     liveAvgVolley,
+    // Multi-player
+    currentPlayerIndex,
+    playerCount,
+    allCompletedLegs,
+    allVolleys,
+    computeStatsForPlayer,
   }
 }

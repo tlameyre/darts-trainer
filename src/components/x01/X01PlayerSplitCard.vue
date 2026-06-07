@@ -1,35 +1,56 @@
 <script setup>
 defineProps({
-  // { name, remaining, legsWon, legsToWin, lastDarts, avgVolley, lastScore, totalDarts }
-  human: { type: Object, required: true },
-  // { profileLabel, level, remaining, legsWon, legsToWin, lastScore, avgVolley, totalDarts, isThinking }
-  ai:           { type: Object,  default: null },
-  activePlayer: { type: String,  default: 'human' }, // 'human' | 'ai'
-  solo:         { type: Boolean, default: false },
+  // Array of player card data:
+  // Human: { name, remaining, legsWon, legsToWin, lastDarts, avgVolley, lastScore, totalDarts }
+  // AI:    { name, profileLabel, level, remaining, legsWon, legsToWin, lastScore, avgVolley, totalDarts, isThinking, isAI }
+  players:     { type: Array,   required: true },
+  activeIndex: { type: Number,  default: 0 },
 })
 </script>
 
 <template>
-  <div class="split-card" :class="{ 'split-card--solo': solo }">
-
-    <!-- ── Joueur humain ──────────────────────────────────────────────────── -->
-    <div class="split-card__half split-card__half--human"
-         :class="{ 'split-card__half--active': activePlayer === 'human' }">
-
+  <div class="split-card" :class="[`split-card--count-${players.length}`]">
+    <div
+      v-for="(player, i) in players"
+      :key="i"
+      class="split-card__half"
+      :class="{
+        'split-card__half--active': i === activeIndex,
+        'split-card__half--ai':    player.isAI,
+      }"
+    >
       <div class="split-card__header">
-        <span class="split-card__active-dot" :class="{ 'split-card__active-dot--on': activePlayer === 'human' }" />
-        <div class="split-card__avatar">{{ human.name?.[0]?.toUpperCase() ?? '?' }}</div>
-        <span class="split-card__name">{{ human.name }}</span>
+        <span class="split-card__active-dot" :class="{ 'split-card__active-dot--on': i === activeIndex }" />
+        <div class="split-card__avatar" :class="{ 'split-card__avatar--ai': player.isAI }">
+          {{ player.isAI ? '🤖' : (player.name?.[0]?.toUpperCase() ?? '?') }}
+        </div>
+        <span class="split-card__name">{{ player.isAI ? 'DartBot' : player.name }}</span>
+        <span v-if="player.isAI" class="split-card__level-badge">
+          {{ player.level != null ? 'Lv. ' + player.level : 'Custom' }}
+        </span>
       </div>
 
       <div class="split-card__score-row">
-        <span class="split-card__score">{{ human.remaining }}</span>
-        <span class="split-card__legs-badge">{{ human.legsWon }}</span>
+        <span class="split-card__score">{{ player.remaining }}</span>
+        <span class="split-card__legs-badge">{{ player.legsWon }}</span>
       </div>
 
       <div class="split-card__darts">
-        <template v-if="human.lastDarts?.length">
-          <span v-for="(d, i) in human.lastDarts" :key="i" class="split-card__dart-chip">
+        <!-- AI thinking animation -->
+        <template v-if="player.isAI && player.isThinking">
+          <span class="split-card__dart-chip split-card__dart-chip--thinking">
+            <span class="split-card__think-dot" />
+            <span class="split-card__think-dot" />
+            <span class="split-card__think-dot" />
+          </span>
+        </template>
+        <!-- AI last score -->
+        <template v-else-if="player.isAI && player.lastScore != null">
+          <span class="split-card__dart-chip">{{ player.lastScore > 0 ? player.lastScore : 'MISS' }}</span>
+        </template>
+        <!-- Human last darts -->
+        <template v-else-if="!player.isAI && player.lastDarts?.length">
+          <span v-for="(d, j) in player.lastDarts" :key="j" class="split-card__dart-chip">
             {{ d.label }}
           </span>
         </template>
@@ -39,65 +60,18 @@ defineProps({
       <div class="split-card__stats">
         <div class="split-card__stat-row">
           <span class="split-card__stat-label">Moyenne</span>
-          <span class="split-card__stat-val">{{ human.avgVolley ?? '–' }}</span>
+          <span class="split-card__stat-val">{{ player.avgVolley ?? '–' }}</span>
         </div>
         <div class="split-card__stat-row">
           <span class="split-card__stat-label">Score précédent</span>
-          <span class="split-card__stat-val">{{ human.lastScore != null ? human.lastScore : '–' }}</span>
+          <span class="split-card__stat-val">{{ player.lastScore != null ? player.lastScore : '–' }}</span>
         </div>
         <div class="split-card__stat-row">
-          <span class="split-card__stat-label">Fléchettes jetées</span>
-          <span class="split-card__stat-val">{{ human.totalDarts }}</span>
+          <span class="split-card__stat-label">Fléchettes</span>
+          <span class="split-card__stat-val">{{ player.totalDarts }}</span>
         </div>
       </div>
     </div>
-
-    <!-- ── IA ────────────────────────────────────────────────────────────── -->
-    <div v-if="!solo" class="split-card__half split-card__half--ai"
-         :class="{ 'split-card__half--active': activePlayer === 'ai' }">
-
-      <div class="split-card__header">
-        <span class="split-card__active-dot" :class="{ 'split-card__active-dot--on': activePlayer === 'ai' }" />
-        <div class="split-card__avatar split-card__avatar--ai">🤖</div>
-        <span class="split-card__name">DartBot</span>
-        <span class="split-card__level-badge">{{ ai.level != null ? 'Lv. ' + ai.level : 'Custom' }}</span>
-      </div>
-
-      <div class="split-card__score-row">
-        <span class="split-card__score">{{ ai.remaining }}</span>
-        <span class="split-card__legs-badge">{{ ai.legsWon }}</span>
-      </div>
-
-      <div class="split-card__darts">
-        <template v-if="ai.isThinking">
-          <span class="split-card__dart-chip split-card__dart-chip--thinking">
-            <span class="split-card__think-dot" />
-            <span class="split-card__think-dot" />
-            <span class="split-card__think-dot" />
-          </span>
-        </template>
-        <template v-else-if="ai.lastScore != null">
-          <span class="split-card__dart-chip">{{ ai.lastScore > 0 ? ai.lastScore : 'MISS' }}</span>
-        </template>
-        <span v-else class="split-card__dart-chip split-card__dart-chip--empty">–</span>
-      </div>
-
-      <div class="split-card__stats">
-        <div class="split-card__stat-row">
-          <span class="split-card__stat-label">Moyenne</span>
-          <span class="split-card__stat-val">{{ ai.avgVolley ?? '–' }}</span>
-        </div>
-        <div class="split-card__stat-row">
-          <span class="split-card__stat-label">Score précédent</span>
-          <span class="split-card__stat-val">{{ ai.lastScore != null ? ai.lastScore : '–' }}</span>
-        </div>
-        <div class="split-card__stat-row">
-          <span class="split-card__stat-label">Fléchettes jetées</span>
-          <span class="split-card__stat-val">{{ ai.totalDarts }}</span>
-        </div>
-      </div>
-    </div>
-
   </div>
 </template>
 
@@ -117,16 +91,14 @@ defineProps({
     background: $orange;
     transition: background 0.25s;
 
-    &--human { border-radius: $radius-lg 0 0 $radius-lg; }
-    .split-card--solo &--human { border-radius: $radius-lg; }
-    &--ai    {
-      border-radius: 0 $radius-lg $radius-lg 0;
-      background: color-mix(in srgb, $orange 85%, #f5a623 15%);
-    }
-
     &--active { background: $orange; }
     &:not(&--active) { background: color-mix(in srgb, $orange 78%, #000 22%); }
   }
+
+  // First/last half border radii
+  &__half:first-child { border-radius: $radius-lg 0 0 $radius-lg; }
+  &__half:last-child  { border-radius: 0 $radius-lg $radius-lg 0; }
+  &--count-1 &__half  { border-radius: $radius-lg; }
 
   // ── Header ───────────────────────────────────────────────────────────────
   &__header {
@@ -226,8 +198,7 @@ defineProps({
     font-weight: 700;
     color: $white;
 
-    &--empty { color: rgba($white, 0.4); background: rgba($black, 0.3); }
-
+    &--empty    { color: rgba($white, 0.4); background: rgba($black, 0.3); }
     &--thinking {
       display: flex;
       gap: 3px;
@@ -283,12 +254,9 @@ defineProps({
   .split-card {
     flex-direction: column;
 
-    &__half {
-      gap: $gap-sm;
-
-      &--human { border-radius: $radius-lg $radius-lg 0 0; }
-      &--ai    { border-radius: 0 0 $radius-lg $radius-lg; background: color-mix(in srgb, $orange 85%, #f5a623 15%); }
-    }
+    &__half:first-child { border-radius: $radius-lg $radius-lg 0 0; }
+    &__half:last-child  { border-radius: 0 0 $radius-lg $radius-lg; }
+    &--count-1 &__half  { border-radius: $radius-lg; }
 
     &__name       { @include text-md; }
     &__score      { @include display-md; }
@@ -300,10 +268,7 @@ defineProps({
 
 @media (min-width: $bp-laptop) {
   .split-card {
-    &__half {
-      padding: $padding-md $padding-lg;
-    }
-
+    &__half       { padding: $padding-md $padding-lg; }
     &__avatar     { width: 40px; height: 40px; }
     &__name       { @include text-lg; }
     &__score      { @include display-lg; }
