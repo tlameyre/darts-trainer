@@ -19,6 +19,7 @@ export function useX01({ startScore, legsToWin, players = null }) {
   const allVolleys         = Array.from({ length: playerCount }, () => ref([]))
   const allCompletedLegs   = Array.from({ length: playerCount }, () => ref([]))
   const allLostLegsVolleys = Array.from({ length: playerCount }, () => ref([]))
+  const lastLegWinnerIndex = ref(null)
 
   const currentPlayerIndex = ref(0)
 
@@ -92,6 +93,7 @@ export function useX01({ startScore, legsToWin, players = null }) {
     const checkoutScore = volleys.value[volleys.value.length - 1].score
     const winnerIndex   = currentPlayerIndex.value
 
+    lastLegWinnerIndex.value = winnerIndex
     allCompletedLegs[winnerIndex].value.push({
       volleys:      [...volleys.value],
       totalDarts,
@@ -392,6 +394,7 @@ export function useX01({ startScore, legsToWin, players = null }) {
     playerCount,
     allCompletedLegs,
     allVolleys,
+    lastLegWinnerIndex,
     computeStatsForPlayer,
   }
 }

@@ -35,6 +35,14 @@ function formatDate(iso) {
 function hasBot(s) {
   return !!s.settings?.aiProfile
 }
+
+function humanOpponents(s) {
+  return s.settings?.opponents ?? []
+}
+
+function legsToWin(s) {
+  return s.settings?.legsToWin ?? 0
+}
 </script>
 
 <template>
@@ -75,17 +83,35 @@ function hasBot(s) {
               <span class="tab__player-avg">{{ Number(s.avg_volley).toFixed(2) }}</span>
             </div>
           </div>
+          <!-- DartBot opponent -->
           <div v-if="hasBot(s)" class="tab__player-row"
-            :class="{ winner: s.settings?.aiLegsWon >= (s.settings?.legsToWin ?? 0) }">
+            :class="{ winner: s.settings?.aiLegsWon >= legsToWin(s) }">
             <div class="tab__player-infos">
               <span class="tab__player-name">Dartbot</span>
-              <AppIcon v-if="s.settings?.aiLegsWon != null && s.settings.aiLegsWon >= (s.settings?.legsToWin ?? 0)"
+              <AppIcon v-if="s.settings?.aiLegsWon != null && s.settings.aiLegsWon >= legsToWin(s)"
                 name="trophy" :width="20" :height="20" class="tab__player-trophy" />
             </div>
             <div class="tab__player-stats">
               <span class="tab__player-legs">{{ s.settings?.aiLegsWon ?? '–' }}</span>
               <span class="tab__player-avg">{{ s.settings?.aiAvgVolley != null ?
                 Number(s.settings.aiAvgVolley).toFixed(2) : '–' }}</span>
+            </div>
+          </div>
+          <!-- Human opponents (multi-player) -->
+          <div
+            v-for="(opp, oi) in humanOpponents(s)"
+            :key="oi"
+            class="tab__player-row"
+            :class="{ winner: opp.legsWon >= legsToWin(s) }"
+          >
+            <div class="tab__player-infos">
+              <span class="tab__player-name">{{ opp.name }}</span>
+              <AppIcon v-if="opp.legsWon >= legsToWin(s)"
+                name="trophy" :width="20" :height="20" class="tab__player-trophy" />
+            </div>
+            <div class="tab__player-stats">
+              <span class="tab__player-legs">{{ opp.legsWon }}</span>
+              <span class="tab__player-avg">{{ opp.avgVolley != null ? Number(opp.avgVolley).toFixed(2) : '–' }}</span>
             </div>
           </div>
         </div>

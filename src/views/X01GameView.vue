@@ -55,6 +55,7 @@ const {
   playerCount,
   allCompletedLegs,
   allVolleys,
+  lastLegWinnerIndex,
   computeStatsForPlayer,
 } = useX01(settings)
 
@@ -282,18 +283,13 @@ const recapTotalDarts = computed(() =>
     : (lastLeg.value?.totalDarts ?? 0)
 )
 
-// Multi-player leg recap: find the winner's last leg
+// Multi-player leg recap: use tracked winner index from useX01
 const multiLegWinner = computed(() => {
-  if (!isMulti) return null
-  // The player whose completedLegs just grew
-  for (let i = 0; i < playerCount; i++) {
-    const legs = allCompletedLegs[i].value
-    if (legs.length && phase.value === 'leg-recap') {
-      const last = legs[legs.length - 1]
-      if (last) return { playerIndex: i, leg: last }
-    }
-  }
-  return null
+  if (!isMulti || lastLegWinnerIndex.value == null) return null
+  const i    = lastLegWinnerIndex.value
+  const legs = allCompletedLegs[i].value
+  const last = legs[legs.length - 1] ?? null
+  return last ? { playerIndex: i, name: players[i]?.name, leg: last } : null
 })
 
 function startNextLegWithAI() {
