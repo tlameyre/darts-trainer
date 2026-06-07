@@ -1,14 +1,15 @@
 <script setup>
 defineProps({
-  show:         { type: Boolean, required: true },
-  legWinner:    { type: String,  required: true },  // 'human' | 'ai'
-  hasAI:        { type: Boolean, default: false },
-  humanRemaining: { type: Number, default: 0 },
-  aiRemaining:  { type: Number,  default: 0 },
-  totalDarts:   { type: Number,  required: true },
-  checkoutScore: { type: Number, default: null },
-  aiDartsUsed:  { type: Number,  default: null },
-  volleys:      { type: Array,   required: true },
+  show:           { type: Boolean, required: true },
+  legWinner:      { type: String,  required: true },   // 'human' | 'ai'
+  winnerName:     { type: String,  default: null },     // override display name (multi-player)
+  hasAI:          { type: Boolean, default: false },
+  humanRemaining: { type: Number,  default: 0 },
+  aiRemaining:    { type: Number,  default: 0 },
+  totalDarts:     { type: Number,  required: true },
+  checkoutScore:  { type: Number,  default: null },
+  aiDartsUsed:    { type: Number,  default: null },
+  volleys:        { type: Array,   required: true },
 })
 
 defineEmits(['next'])
@@ -21,7 +22,9 @@ defineEmits(['next'])
 
         <div class="leg-recap__winner"
           :class="legWinner === 'ai' ? 'leg-recap__winner--ai' : 'leg-recap__winner--human'">
-          {{ legWinner === 'ai' ? '🤖 L\'IA a remporté cette manche' : '🎯 Tu as remporté cette manche !' }}
+          <template v-if="legWinner === 'ai'">🤖 L'IA a remporté cette manche</template>
+        <template v-else-if="winnerName">🎯 {{ winnerName }} a remporté cette manche !</template>
+        <template v-else>🎯 Tu as remporté cette manche !</template>
         </div>
 
         <div v-if="hasAI" class="leg-recap__score-line">

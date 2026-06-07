@@ -378,6 +378,7 @@ const multiWinnerName = computed(() =>
       v-if="isMulti"
       :show="phase === 'leg-recap'"
       leg-winner="human"
+      :winner-name="multiLegWinner?.name ?? null"
       :has-a-i="false"
       :human-remaining="0"
       :ai-remaining="0"
