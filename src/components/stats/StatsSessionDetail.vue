@@ -82,8 +82,7 @@ function formatDate(iso) {
           :stats="x01Stats"
           :legs-played="session.legs_played"
           :start-score="session.start_score"
-          @replay="$emit('close')"
-          @home="$emit('close')"
+          hide-actions
         />
       </template>
 
@@ -93,8 +92,7 @@ function formatDate(iso) {
           :correct-count="session.correct_count"
           :max-questions="session.total_questions"
           :best="session.best_streak"
-          @replay="$emit('close')"
-          @home="$emit('close')"
+          hide-actions
         />
       </template>
 
@@ -103,8 +101,7 @@ function formatDate(iso) {
         <WarmupRecap
           :zone-recap-stats="warmupZoneStats"
           :session-stats="warmupSessionStats"
-          @restart="$emit('close')"
-          @home="$emit('close')"
+          hide-actions
         />
       </template>
 

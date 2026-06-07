@@ -4,19 +4,22 @@ import { useRouter, useRoute } from 'vue-router'
 import AppIconDefs from './components/AppIconDefs.vue'
 import BottomNav from './components/BottomNav.vue'
 import { useAuthStore } from './store/authStore.js'
+import { useFriendStore } from './store/friendStore.js'
 
-const router    = useRouter()
-const route     = useRoute()
-const authStore = useAuthStore()
+const router      = useRouter()
+const route       = useRoute()
+const authStore   = useAuthStore()
+const friendStore = useFriendStore()
 
 watch(() => authStore.isAuth, (val) => {
   if (route.meta.dev) return
   if (!val) {
-    // Déconnexion → login
+    friendStore.unsubscribeFromFriendships()
     router.replace({ name: 'login' })
-  } else if (route.meta.public) {
-    // Connexion OAuth : l'utilisateur est sur login/register → home
-    router.replace({ name: 'home' })
+  } else {
+    friendStore.fetchFriends()
+    friendStore.subscribeToFriendships()
+    if (route.meta.public) router.replace({ name: 'home' })
   }
 })
 </script>

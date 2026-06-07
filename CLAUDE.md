@@ -150,8 +150,7 @@ Le router est une exception : Pinia n'est pas disponible au top-level du fichier
 
 ## Git
 
-- Committer après chaque tâche terminée avec un message clair
-- Ne **jamais** pusher sans demande explicite de l'utilisateur
+- Committer et push après chaque tâche terminée avec un message clair
 
 ## Vue /dev (playground)
 

@@ -10,7 +10,7 @@ import StatsCard from '../components/game/StatsCard.vue'
 import DartSlotsHeader from '../components/game/DartSlotsHeader.vue'
 import GameInput from '../components/game/GameInput.vue'
 import WarmupRecap from '../components/warmup/WarmupRecap.vue'
-import WarmupZoneModal from '../components/warmup/WarmupZoneModal.vue'
+import WarmupMenuModal from '../components/warmup/WarmupMenuModal.vue'
 import AppIcon from '../components/AppIcon.vue'
 import AppHeader from '../components/AppHeader.vue'
 
@@ -24,7 +24,7 @@ if (!gameStore.gameSettings) router.replace({ name: 'warmup-settings' })
 const {
   timeDisplay, isUnlimited, isUrgent, gameOver,
   currentZone, currentZoneStats, zoneRecapStats, sessionStats, totalDurationMs,
-  darts, recordDart, undoLast, changeZone, startTimer, endSession, cleanup,
+  darts, recordDart, undoLast, changeZone, startTimer, pauseTimer, resumeTimer, endSession, cleanup,
 } = useWarmup(gameStore.gameSettings ?? { duration: 5, zone: { sector: 20, type: 'D' } })
 
 watch(gameOver, async (val) => {
@@ -48,7 +48,22 @@ watch(gameOver, async (val) => {
   }
 })
 
-const showZoneModal = ref(false)
+const showMenuModal = ref(false)
+
+function openMenu() {
+  pauseTimer()
+  showMenuModal.value = true
+}
+
+function closeMenu() {
+  showMenuModal.value = false
+  resumeTimer()
+}
+
+function handleQuit() {
+  showMenuModal.value = false
+  router.push({ name: 'warmup-settings' })
+}
 
 const newBadges = ref([])
 
@@ -98,7 +113,7 @@ onUnmounted(() => {
 
     <AppHeader :title="gameOver ? 'FIN DE PARTIE' : 'ECHAUFFEMENT'" back-icon="exit" @back="router.push({ name: 'warmup-settings' })">
       <template #right>
-        <button v-if="!gameOver" class="warmup__gear-btn" @click="showZoneModal = true">
+        <button v-if="!gameOver" class="warmup__gear-btn" @click="openMenu">
           <AppIcon name="gear" :width="22" :height="22" />
         </button>
       </template>
@@ -120,19 +135,16 @@ onUnmounted(() => {
         <GameInput :darts="displayedDarts" value-key="pts" :locked="justCompleted" @dart="recordDart"
           @miss="recordDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })" @undo="undoLast">
           <template #right>
-            <button class="warmup__stop-btn" @click="endSession">
-              <AppIcon name="stop" :width="24" :height="24" />
-            </button>
           </template>
         </GameInput>
       </div>
     </div>
 
     <WarmupRecap v-else :zoneRecapStats="zoneRecapStats" :sessionStats="sessionStats"
-      @restart="router.push({ name: 'warmup-game', query: { t: Date.now() } })" @home="router.push({ name: 'play' })" />
+      @restart="router.push({ name: 'warmup-settings' })" @home="router.push({ name: 'home' })" />
 
-    <WarmupZoneModal :show="showZoneModal" :zone="currentZone" @update:show="showZoneModal = $event"
-      @confirm="zone => { changeZone(zone); showZoneModal = false }" />
+    <WarmupMenuModal :show="showMenuModal" :zone="currentZone" @close="closeMenu"
+      @zone-change="changeZone" @finish="endSession" @quit="handleQuit" />
 
     <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
   </div>
@@ -148,8 +160,7 @@ onUnmounted(() => {
   padding: $padding-md;
 }
 
-.warmup__gear-btn,
-.warmup__stop-btn {
+.warmup__gear-btn {
   color: $text-color;
   display: flex;
   align-items: center;

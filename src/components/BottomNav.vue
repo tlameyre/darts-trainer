@@ -49,11 +49,12 @@ const pendingCount = computed(() => friendStore.pendingReceived.length)
   bottom: 0;
   left: 0;
   right: 0;
-  border-top: 2px solid white;
+  border-top: 2px solid $white;
   display: flex;
   align-items: stretch;
   z-index: 50;
   padding-bottom: env(safe-area-inset-bottom);
+  background: $bg;
 
   &__tab {
     flex: 1;

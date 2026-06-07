@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useAuthStore } from '../store/authStore.js'
 import { useFriendStore } from '../store/friendStore.js'
 import { useRouter } from 'vue-router'
@@ -8,6 +8,7 @@ import AppIcon from '../components/AppIcon.vue'
 import AppTabs from '../components/AppTabs.vue'
 import FriendCard from '../components/friends/FriendCard.vue'
 import MyFriendCode from '../components/friends/MyFriendCode.vue'
+import UserSearchResult from '../components/friends/UserSearchResult.vue'
 
 // Props mock optionnelles — utilisées uniquement dans /dev pour prévisualiser sans auth
 const props = defineProps({
@@ -28,6 +29,14 @@ const addInput    = ref('')
 const addLoading  = ref(false)
 const addFeedback = ref({ message: '', isError: false })
 
+// Search state
+const searchResults  = ref([])
+const searchLoading  = ref(false)
+const sentUserIds    = ref(new Set())
+let   searchTimeout  = null
+
+const isDmcCode = computed(() => /^DMC-/i.test(addInput.value.trim()))
+
 onMounted(() => { if (!isMock.value) friendStore.fetchFriends() })
 
 const friends         = computed(() => isMock.value ? props.mockFriends         : friendStore.friends)
@@ -35,6 +44,27 @@ const pendingReceived = computed(() => isMock.value ? props.mockReceived        
 const pendingSent     = computed(() => isMock.value ? props.mockSent             : friendStore.pendingSent)
 const friendCode      = computed(() => isMock.value ? props.mockFriendCode       : authStore.profile?.friend_code)
 const isLoading       = computed(() => isMock.value ? false                      : friendStore.loading)
+
+watch(addInput, (val) => {
+  clearTimeout(searchTimeout)
+  addFeedback.value = { message: '', isError: false }
+
+  const q = val.trim()
+  if (!q || isDmcCode.value || isMock.value) {
+    searchResults.value = []
+    return
+  }
+  if (q.length < 2) {
+    searchResults.value = []
+    return
+  }
+
+  searchTimeout = setTimeout(async () => {
+    searchLoading.value = true
+    searchResults.value = await friendStore.searchUsers(q)
+    searchLoading.value = false
+  }, 400)
+})
 
 async function onAddFriend() {
   if (!addInput.value.trim()) return
@@ -49,10 +79,22 @@ async function onAddFriend() {
   if (result.success) {
     addFeedback.value = { message: `Demande envoyée à ${result.name} !`, isError: false }
     addInput.value    = ''
+    searchResults.value = []
   } else {
     addFeedback.value = { message: result.error, isError: true }
   }
   addLoading.value = false
+}
+
+async function onAddFromSearch(user) {
+  sentUserIds.value.add(user.id)
+  const result = await friendStore.sendRequest(user.friend_code)
+  if (result.success) {
+    addFeedback.value = { message: `Demande envoyée à ${result.name} !`, isError: false }
+  } else {
+    sentUserIds.value.delete(user.id)
+    addFeedback.value = { message: result.error, isError: true }
+  }
 }
 
 const tabs = [
@@ -139,20 +181,21 @@ const tabs = [
       <template v-else-if="activeTab === 'add'">
         <div class="friends__add">
           <p class="friends__add-hint">
-            Entre le code ami de la personne que tu veux ajouter.
+            Recherche par prénom ou pseudo, ou entre directement un code ami (DMC-XXXX).
           </p>
           <div class="friends__add-row">
             <input
               v-model="addInput"
               class="friends__add-input"
+              :class="{ 'friends__add-input--code': isDmcCode }"
               type="text"
-              placeholder="Ex : DMC-A4X7"
-              maxlength="12"
+              placeholder="Prénom, pseudo ou DMC-XXXX"
               autocomplete="off"
-              autocapitalize="characters"
-              @keyup.enter="onAddFriend"
+              :autocapitalize="isDmcCode ? 'characters' : 'none'"
+              @keyup.enter="isDmcCode ? onAddFriend() : null"
             />
             <button
+              v-if="isDmcCode"
               class="friends__add-btn"
               :disabled="addLoading || !addInput.trim()"
               @click="onAddFriend"
@@ -161,6 +204,25 @@ const tabs = [
               <span v-else>…</span>
             </button>
           </div>
+
+          <!-- Résultats de recherche -->
+          <div v-if="searchLoading" class="friends__search-hint">Recherche…</div>
+          <div
+            v-else-if="!isDmcCode && addInput.trim().length >= 2 && searchResults.length === 0 && !searchLoading"
+            class="friends__search-hint"
+          >
+            Aucun résultat pour « {{ addInput.trim() }} »
+          </div>
+          <div v-else-if="searchResults.length" class="friends__list">
+            <UserSearchResult
+              v-for="u in searchResults"
+              :key="u.id"
+              :user="u"
+              :sent="sentUserIds.has(u.id)"
+              @add="onAddFromSearch"
+            />
+          </div>
+
           <p
             v-if="addFeedback.message"
             class="friends__add-feedback"
@@ -256,12 +318,22 @@ const tabs = [
     color: $text-color;
     padding: $padding-sm $padding-md;
     outline: none;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
     transition: border-color 0.15s;
 
-    &::placeholder { color: rgba(255, 255, 255, 0.2); text-transform: none; letter-spacing: 0; }
+    &::placeholder { color: rgba(255, 255, 255, 0.2); }
     &:focus { border-color: rgba(255, 255, 255, 0.4); }
+
+    &--code {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+  }
+
+  &__search-hint {
+    @include text-sm;
+    color: $muted;
+    text-align: center;
+    padding: $padding-sm 0;
   }
 
   &__add-btn {
@@ -297,6 +369,7 @@ const tabs = [
     &__add-hint    { @include text-md; }
     &__add-input   { @include title-lg; }
     &__add-feedback { @include text-md; }
+    &__search-hint { @include text-md; }
   }
 }
 </style>

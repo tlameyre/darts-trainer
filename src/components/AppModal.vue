@@ -7,6 +7,7 @@ defineProps({
   zIndex: { type: Number, default: 100 },
   size: { type: String, default: 'sm' }, // 'sm' | 'lg'
   centered: { type: Boolean, default: false },
+  minHeight: { type: String, default: null },
 })
 
 defineEmits(['close'])
@@ -17,7 +18,7 @@ defineEmits(['close'])
     <Transition name="app-sheet">
       <div v-if="show" class="app-modal" :class="{ 'app-modal--centered': centered }" :style="{ zIndex }">
         <div class="app-modal__backdrop" @click="$emit('close')" />
-        <div class="app-modal__sheet" :class="`app-modal__sheet--${size}`">
+        <div class="app-modal__sheet" :class="`app-modal__sheet--${size}`" :style="minHeight ? { minHeight } : undefined">
           <div v-if="title" class="app-modal__header">
             <span class="app-modal__title">{{ title }}</span>
             <button class="app-modal__close" @click="$emit('close')">

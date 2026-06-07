@@ -4,8 +4,9 @@ import { formatZoneLabel } from '../../composables/useWarmup.js'
 import AppButton from '../AppButton.vue'
 
 const props = defineProps({
-  zoneRecapStats: { type: Array, required: true },
-  sessionStats: { type: Object, required: true },
+  zoneRecapStats: { type: Array,    required: true },
+  sessionStats:   { type: Object,   required: true },
+  hideActions:    { type: Boolean,  default: false },
 })
 
 const emit = defineEmits(['restart', 'home'])
@@ -120,7 +121,7 @@ const totalDurationMs = computed(() =>
     </div>
 
     <!-- Actions -->
-    <div class="recap__actions">
+    <div v-if="!hideActions" class="recap__actions">
       <AppButton @click="emit('restart')">Recommencer</AppButton>
       <AppButton variant="secondary" @click="emit('home')">Accueil</AppButton>
     </div>

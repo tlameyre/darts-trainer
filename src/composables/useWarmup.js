@@ -119,14 +119,8 @@ export function useWarmup({ duration, zone: initialZone }) {
     currentZone.value = { ...newZone };
   }
 
-  function startTimer() {
-    const now = Date.now();
-    periods.value.push({
-      zone: { ...currentZone.value },
-      startTs: now,
-      endTs: null,
-    });
-    if (timeLeft.value === null) return;
+  function _startInterval() {
+    if (timeLeft.value === null || gameOver.value) return;
     clearInterval(_timer);
     _timer = setInterval(() => {
       timeLeft.value--;
@@ -136,6 +130,24 @@ export function useWarmup({ duration, zone: initialZone }) {
         gameOver.value = true;
       }
     }, 1000);
+  }
+
+  function startTimer() {
+    const now = Date.now();
+    periods.value.push({
+      zone: { ...currentZone.value },
+      startTs: now,
+      endTs: null,
+    });
+    _startInterval();
+  }
+
+  function pauseTimer() {
+    clearInterval(_timer);
+  }
+
+  function resumeTimer() {
+    _startInterval();
   }
 
   function endSession() {
@@ -175,6 +187,8 @@ export function useWarmup({ duration, zone: initialZone }) {
     undoLast,
     changeZone,
     startTimer,
+    pauseTimer,
+    resumeTimer,
     endSession,
     cleanup,
   };

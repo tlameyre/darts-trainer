@@ -94,8 +94,8 @@ onUnmounted(() => {
     <main class="game__main">
       <GameOver v-if="gameOver" :correct-count="correctCount"
         :max-questions="gameStore.gameSettings.maxQuestions ?? questionLabel" :best="best"
-        @replay="router.push({ name: 'score-game', query: { t: Date.now() } })"
-        @home="router.push({ name: 'play' })" />
+        @replay="router.push({ name: 'score-settings' })"
+        @home="router.push({ name: 'home' })" />
 
       <template v-else>
         <GameRoundCard :phase="phase" :current-score="currentScore" :current-volee="currentVolee"

@@ -135,8 +135,8 @@ create policy "Suppression propres sessions warmup"
 -- 5. Amitiés
 create table public.friendships (
   id           uuid primary key default gen_random_uuid(),
-  requester_id uuid references auth.users(id) on delete cascade not null,
-  addressee_id uuid references auth.users(id) on delete cascade not null,
+  requester_id uuid references public.profiles(id) on delete cascade not null,
+  addressee_id uuid references public.profiles(id) on delete cascade not null,
   status       text not null default 'pending' check (status in ('pending', 'accepted')),
   created_at   timestamptz default now(),
   unique(requester_id, addressee_id)

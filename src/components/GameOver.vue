@@ -5,7 +5,8 @@ import AppButton from './AppButton.vue'
 const props = defineProps({
   correctCount: { type: Number, required: true },
   maxQuestions: { type: Number, required: true },
-  best: { type: Number, required: true },
+  best:         { type: Number, required: true },
+  hideActions:  { type: Boolean, default: false },
 })
 
 defineEmits(['replay', 'home'])
@@ -43,7 +44,7 @@ const scoreColorStreak = computed(() => {
     </div>
 
   </div>
-  <div class="game-over__actions">
+  <div v-if="!hideActions" class="game-over__actions">
     <AppButton @click="$emit('replay')">Rejouer</AppButton>
     <AppButton variant="secondary" @click="$emit('home')">Accueil</AppButton>
   </div>

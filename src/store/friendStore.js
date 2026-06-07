@@ -9,6 +9,8 @@ export const useFriendStore = defineStore('friend', () => {
   const pendingSent     = ref([])
   const loading         = ref(false)
 
+  let channel = null
+
   function getUser() {
     return useAuthStore().user
   }
@@ -103,6 +105,27 @@ export const useFriendStore = defineStore('friend', () => {
     return { success: true, name: target.first_name || target.username || code }
   }
 
+  // ── Search users by username or first_name ───────────────────────────────
+
+  async function searchUsers(query) {
+    const user = getUser()
+    if (!user || !query.trim()) return []
+
+    const q = query.trim()
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, username, first_name, friend_code')
+      .or(`username.ilike.%${q}%,first_name.ilike.%${q}%`)
+      .neq('id', user.id)
+      .limit(10)
+
+    if (error) {
+      console.error('[friendStore] searchUsers:', error.message)
+      return []
+    }
+    return data ?? []
+  }
+
   // ── Accept a received request ─────────────────────────────────────────────
 
   async function acceptRequest(friendshipId) {
@@ -125,8 +148,30 @@ export const useFriendStore = defineStore('friend', () => {
     else await fetchFriends()
   }
 
+  // ── Realtime subscription ─────────────────────────────────────────────────
+
+  function subscribeToFriendships() {
+    const user = getUser()
+    if (!user || channel) return
+
+    channel = supabase
+      .channel('friendships-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, () => {
+        fetchFriends()
+      })
+      .subscribe()
+  }
+
+  function unsubscribeFromFriendships() {
+    if (channel) {
+      supabase.removeChannel(channel)
+      channel = null
+    }
+  }
+
   return {
     friends, pendingReceived, pendingSent, loading,
-    fetchFriends, sendRequest, acceptRequest, removeFriendship,
+    fetchFriends, sendRequest, acceptRequest, removeFriendship, searchUsers,
+    subscribeToFriendships, unsubscribeFromFriendships,
   }
 })
