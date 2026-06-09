@@ -81,6 +81,7 @@ defineProps({
   border-radius: $radius-lg;
   overflow: hidden;
   flex: 1;
+  overflow-y: auto;
 
   &__half {
     flex: 1;
@@ -90,6 +91,7 @@ defineProps({
     padding: $padding-md;
     background: $orange;
     transition: background 0.25s;
+    height: fit-content;
 
     &--active { background: $orange; }
     &:not(&--active) { background: color-mix(in srgb, $orange 78%, #000 22%); }

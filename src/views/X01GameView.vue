@@ -472,8 +472,8 @@ const multiWinnerName = computed(() =>
     display: flex;
     flex-direction: column;
     gap: $gap-sm;
-    flex: 1;
     min-height: 0;
+    overflow-y: auto;
   }
 
   &__game-main {
@@ -481,6 +481,7 @@ const multiWinnerName = computed(() =>
     display: flex;
     flex-direction: column;
     gap: $gap-md;
+    flex: 1;
   }
 
   &__turn-label {

@@ -84,14 +84,15 @@ function tapOuter() {
 .sector-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  align-self: start;
+  grid-template-rows: repeat(5, 1fr);
+  flex: 1;
+  min-height: 0;
   width: 100%;
   border-top: $border-md solid $white;
   border-left: $border-md solid $white;
 }
 
 .sector-grid__tab {
-  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -122,7 +123,6 @@ function tapOuter() {
 }
 
 .sector-grid__cell {
-  aspect-ratio: 1;
   display: flex;
   gap: $gap-xxs;
   align-items: center;
