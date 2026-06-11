@@ -6,20 +6,25 @@ import ZonePicker from '../ZonePicker.vue'
 
 const props = defineProps({
   show:  { type: Boolean, required: true },
-  zone:  { type: Object,  required: true },
+  zones: { type: Array,   required: true },
 })
 
 const emit = defineEmits(['finish', 'quit', 'close', 'zone-change'])
 
-const tempZone = ref({ ...props.zone })
+const tempZones = ref(props.zones.map(z => ({ ...z })))
 
 watch(() => props.show, (val) => {
-  if (val) tempZone.value = { ...props.zone }
+  if (val) tempZones.value = props.zones.map(z => ({ ...z }))
 })
 
+function zonesChanged(a, b) {
+  if (a.length !== b.length) return true
+  return a.some((z, i) => z.sector !== b[i].sector || z.type !== b[i].type)
+}
+
 function handleClose() {
-  if (tempZone.value.sector !== props.zone.sector || tempZone.value.type !== props.zone.type) {
-    emit('zone-change', { ...tempZone.value })
+  if (zonesChanged(tempZones.value, props.zones)) {
+    emit('zone-change', tempZones.value.map(z => ({ ...z })))
   }
   emit('close')
 }
@@ -27,7 +32,7 @@ function handleClose() {
 
 <template>
   <AppModal :show size="lg" title="Échauffement en cours" min-height="50dvh" @close="handleClose">
-    <ZonePicker v-model="tempZone" />
+    <ZonePicker :multiple="true" v-model="tempZones" />
 
     <div class="wm-modal__divider" />
 

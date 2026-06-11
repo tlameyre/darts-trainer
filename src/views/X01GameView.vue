@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/authStore.js'
 import { useX01 } from '../composables/useX01.js'
 import { useX01AIOpponent } from '../composables/useX01AIOpponent.js'
 import { useDbStore } from '../store/dbStore.js'
+import { useBadgeStore } from '../store/badgeStore.js'
 import DartSlotsHeader from '../components/game/DartSlotsHeader.vue'
 import GameInput from '../components/game/GameInput.vue'
 import X01Result from '../components/x01/X01Result.vue'
@@ -14,13 +15,17 @@ import X01DoublesModal from '../components/x01/X01DoublesModal.vue'
 import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
 import X01PlayerSplitCard from '../components/x01/X01PlayerSplitCard.vue'
 import GameMenuModal from '../components/game/GameMenuModal.vue'
+import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import AppIcon from '../components/AppIcon.vue'
 import AppHeader from '../components/AppHeader.vue'
 
-const router    = useRouter()
-const gameStore = useGameStore()
-const authStore = useAuthStore()
-const dbStore   = useDbStore()
+const router     = useRouter()
+const gameStore  = useGameStore()
+const authStore  = useAuthStore()
+const dbStore    = useDbStore()
+const badgeStore = useBadgeStore()
+
+const newBadges  = ref([])
 
 if (!gameStore.gameSettings) router.replace({ name: 'x01-settings' })
 
@@ -126,6 +131,19 @@ watch(aiWonLeg, (val) => {
   }
 })
 
+// ── Lancers spéciaux en temps réel (joueur 0 = utilisateur connecté) ──────
+watch(() => allVolleys[0].value.length, async (newLen, oldLen) => {
+  if (newLen <= oldLen) return
+  const v = allVolleys[0].value[newLen - 1]
+  if (v.bust) return
+  const isTotal = v.darts.length === 1 && v.darts[0].type === 'volley'
+  const special = await badgeStore.checkSpecialThrow(
+    isTotal ? [] : v.darts,
+    isTotal ? v.score : null,
+  )
+  if (special.length) newBadges.value = [...newBadges.value, ...special]
+})
+
 // ── Sauvegarde en fin de partie ────────────────────────────────────────────
 watch(phase, async (val) => {
   if (val !== 'game-over' || !stats.value) return
@@ -170,6 +188,10 @@ watch(phase, async (val) => {
       },
     })
   }
+
+  const profileStats  = await dbStore.fetchProfileStats()
+  const volumeBadges  = await badgeStore.checkX01Badges(profileStats)
+  if (volumeBadges.length) newBadges.value = [...newBadges.value, ...volumeBadges]
 })
 
 // ── Données carte joueurs ──────────────────────────────────────────────────
@@ -390,6 +412,7 @@ const multiWinnerName = computed(() =>
     />
 
     <!-- ── Modales ──────────────────────────────────────────────────────────── -->
+    <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
     <GameMenuModal :show="showMenu" @close="showMenu = false" @finish="finishGame" @quit="quitGame" />
     <X01DoublesModal :show="pendingDoublesPrompt" @confirm="confirmDoublesAttempted" />
     <X01CheckoutModal

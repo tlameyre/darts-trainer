@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { formatZoneLabel } from '../../composables/useWarmup.js'
+import { formatZonesLabel } from '../../composables/useWarmup.js'
 import AppButton from '../AppButton.vue'
 
 const props = defineProps({
@@ -14,20 +14,22 @@ const emit = defineEmits(['restart', 'home'])
 // Même logique de couleurs que DartChip
 const RED_NUMBERS = new Set([20, 18, 13, 10, 2, 3, 7, 8, 14, 12])
 
-function cardStyle(zone) {
-  // AB (toutes zones) → noir
+function cardStyle(zones) {
+  if (zones.length > 1) {
+    return { '--card-bg': 'rgba(255,255,255,0.07)', '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.55)', '--card-sep': 'rgba(255,255,255,0.12)' }
+  }
+  const zone = zones[0]
+
   if (zone.type === 'AB') {
     return { '--card-bg': '#000000', '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.55)', '--card-sep': 'rgba(255,255,255,0.12)' }
   }
 
-  // A (tous secteurs d'un numéro) → couleur du secteur (noir si secteur rouge, beige sinon)
   if (zone.type === 'A') {
     return RED_NUMBERS.has(zone.sector)
       ? { '--card-bg': 'var(--dart-black)', '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.55)', '--card-sep': 'rgba(255,255,255,0.12)' }
       : { '--card-bg': 'var(--dart-cream)', '--card-text': 'var(--dart-cream-text)', '--card-muted': 'rgba(0,0,0,0.4)', '--card-sep': 'rgba(0,0,0,0.12)' }
   }
 
-  // Bull (inner 50) → rouge / Single Bull (outer 25) → vert
   if (zone.sector === null) {
     const bg = zone.type === 'B' ? 'var(--dart-red)' : 'var(--dart-green)'
     return { '--card-bg': bg, '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.7)', '--card-sep': 'rgba(255,255,255,0.25)' }
@@ -35,14 +37,12 @@ function cardStyle(zone) {
 
   const isRed = RED_NUMBERS.has(zone.sector)
 
-  // Simples : secteurs rouges → noir, secteurs clairs → beige
   if (zone.type === 'S') {
     return isRed
       ? { '--card-bg': 'var(--dart-black)', '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.55)', '--card-sep': 'rgba(255,255,255,0.12)' }
       : { '--card-bg': 'var(--dart-cream)', '--card-text': 'var(--dart-cream-text)', '--card-muted': 'rgba(0,0,0,0.4)', '--card-sep': 'rgba(0,0,0,0.12)' }
   }
 
-  // Doubles et triples → rouge ou vert selon le secteur
   return isRed
     ? { '--card-bg': 'var(--dart-red)',   '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.7)', '--card-sep': 'rgba(255,255,255,0.25)' }
     : { '--card-bg': 'var(--dart-green)', '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.7)', '--card-sep': 'rgba(255,255,255,0.25)' }
@@ -55,8 +55,8 @@ function fmtDuration(ms) {
   return m > 0 ? `${m} min ${sec}s` : `${sec}s`
 }
 
-function zoneLabel(zone) {
-  return formatZoneLabel(zone).trim()
+function zoneLabel(zones) {
+  return formatZonesLabel(zones)
 }
 
 const totalDurationMs = computed(() =>
@@ -71,10 +71,10 @@ const totalDurationMs = computed(() =>
 
     <!-- Cards par zone -->
     <div class="recap__zones">
-      <div v-for="zs in zoneRecapStats" :key="`${zs.zone.sector}-${zs.zone.type}`" class="recap__zone-card"
-        :style="cardStyle(zs.zone)">
+      <div v-for="zs in zoneRecapStats" :key="JSON.stringify(zs.zones)" class="recap__zone-card"
+        :style="cardStyle(zs.zones)">
         <div class="recap__zone-header">
-          <span class="recap__zone-name">Zone travaillée : {{ zoneLabel(zs.zone) }}</span>
+          <span class="recap__zone-name">Zone travaillée : {{ zoneLabel(zs.zones) }}</span>
           <span class="recap__zone-acc">{{ zs.accuracy }}%</span>
         </div>
 

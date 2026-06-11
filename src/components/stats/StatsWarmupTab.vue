@@ -1,6 +1,6 @@
 <script setup>
 import StatCell from '../StatCell.vue'
-import { formatZoneLabel } from '../../composables/useWarmup.js'
+import { formatZoneLabel, formatZonesLabel } from '../../composables/useWarmup.js'
 
 const props = defineProps({
   summary:  { type: Object, default: null },
@@ -18,7 +18,11 @@ function zoneCount(s) {
 }
 
 function zoneNames(s) {
-  if (s.settings?.zoneRecap?.length) return s.settings.zoneRecap.map(z => formatZoneLabel(z.zone)).join(', ')
+  if (s.settings?.zoneRecap?.length) {
+    return s.settings.zoneRecap.map(z =>
+      z.zones ? formatZonesLabel(z.zones) : formatZoneLabel(z.zone)
+    ).join(', ')
+  }
   return s.zone ?? '—'
 }
 </script>

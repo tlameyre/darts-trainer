@@ -226,6 +226,7 @@ async function onPasswordSave(newPassword) {
     align-items: center;
     justify-content: space-between;
     background: rgba(255, 255, 255, 0.05);
+    color: $white;
     border-radius: $radius-md;
     padding: $padding-sm $padding-md;
     text-align: left;

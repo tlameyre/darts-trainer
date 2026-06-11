@@ -184,6 +184,7 @@ create table public.x01_sessions (
   highest_volley      int,
   doubles_hit         int,
   doubles_attempted   int,
+  total_darts         int,
   settings            jsonb,
   volley_distribution jsonb,
   leg_averages        jsonb,
@@ -200,4 +201,5 @@ create policy "Users manage own x01_sessions"
 -- Migration si la table existe déjà sans les colonnes doubles :
 -- alter table public.x01_sessions
 --   add column if not exists doubles_hit       int,
---   add column if not exists doubles_attempted  int;
+--   add column if not exists doubles_attempted  int,
+--   add column if not exists total_darts        int;

@@ -24,34 +24,62 @@ const TYPES_BULL = [
 ]
 
 const props = defineProps({
-  modelValue: { type: Object, required: true },
+  modelValue: { required: true },
+  multiple:   { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:modelValue'])
 
-const availableTypes = computed(() =>
-  props.modelValue.sector === null ? TYPES_BULL : TYPES_NUM
-)
+const availableTypes = computed(() => {
+  const first = props.multiple ? props.modelValue[0] : props.modelValue
+  return first?.sector === null ? TYPES_BULL : TYPES_NUM
+})
 
 function selectSector(sector) {
-  let type = props.modelValue.type
-  if (sector === null && !['AB', 'B', 'SB'].includes(type)) type = 'AB'
-  if (sector !== null && !['A', 'S', 'D', 'T'].includes(type)) type = 'D'
-  emit('update:modelValue', { sector, type })
+  if (!props.multiple) {
+    let type = props.modelValue.type
+    if (sector === null && !['AB', 'B', 'SB'].includes(type)) type = 'AB'
+    if (sector !== null && !['A', 'S', 'D', 'T'].includes(type)) type = 'D'
+    emit('update:modelValue', { sector, type })
+    return
+  }
+  const isBullKind = sector === null
+  const currentIsBull = props.modelValue[0]?.sector === null
+  if (isBullKind !== currentIsBull) {
+    emit('update:modelValue', [{ sector, type: isBullKind ? 'AB' : 'A' }])
+    return
+  }
+  const idx = props.modelValue.findIndex(z => z.sector === sector)
+  if (idx >= 0) {
+    if (props.modelValue.length > 1) emit('update:modelValue', props.modelValue.filter((_, i) => i !== idx))
+  } else if (props.modelValue.length < 5) {
+    const sharedType = props.modelValue[0]?.type ?? 'A'
+    emit('update:modelValue', [...props.modelValue, { sector, type: sharedType }])
+  }
 }
 
 function selectType(type) {
-  emit('update:modelValue', { ...props.modelValue, type })
+  if (!props.multiple) {
+    emit('update:modelValue', { ...props.modelValue, type })
+  } else {
+    emit('update:modelValue', props.modelValue.map(z => ({ ...z, type })))
+  }
 }
 
 function cellSelected(n) {
-  return props.modelValue.sector === n
+  if (!props.multiple) return props.modelValue.sector === n
+  return props.modelValue.some(z => z.sector === n)
+}
+
+function activeType() {
+  if (!props.multiple) return props.modelValue.type
+  return props.modelValue[0]?.type
 }
 </script>
 
 <template>
   <div class="zone-picker">
     <div class="zone-picker__types">
-      <AppButton v-for="t in availableTypes" :key="t.id" size="small" variant="ghost" :active="modelValue.type === t.id"
+      <AppButton v-for="t in availableTypes" :key="t.id" size="small" variant="ghost" :active="activeType() === t.id"
         @click="selectType(t.id)">{{ t.label }}</AppButton>
     </div>
 

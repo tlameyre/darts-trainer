@@ -349,6 +349,8 @@ export function useX01({ startScore, legsToWin, players = null }) {
     const highestFinish = wonLegs.length ? Math.max(...wonLegs.map(l => l.checkoutScore), 0) : 0
     const highestVolley = scores.length ? Math.max(...scores) : 0
 
+    const totalDarts = orderedLegs.reduce((s, leg) => s + leg.totalDarts, 0)
+
     const thresholds = [160, 140, 120, 100, 80, 60, 40]
     const volleyDistribution = { '40': 0, '60': 0, '80': 0, '100': 0, '120': 0, '140': 0, '160': 0, '180': 0 }
     for (const v of validVs) {
@@ -367,6 +369,7 @@ export function useX01({ startScore, legsToWin, players = null }) {
     return {
       avgVolley, avg9darts, avgDartsToFinish, doublesHit, doublesAttempted,
       highestFinish, highestVolley, bestLeg, worstLeg, volleyDistribution, legAverages,
+      totalDarts,
     }
   }
 

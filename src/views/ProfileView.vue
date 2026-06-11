@@ -5,12 +5,12 @@ import { useAuthStore } from '../store/authStore.js'
 import { useDbStore } from '../store/dbStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import { useFriendStore } from '../store/friendStore.js'
-import { BADGES } from '../data/badges.js'
 import BadgeDetailModal from '../components/badges/BadgeDetailModal.vue'
 import ProfileFriendsSection from '../components/friends/ProfileFriendsSection.vue'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
 import AppIcon from '../components/AppIcon.vue'
+import RecentBadges from '../components/RecentBadges.vue'
 
 const router      = useRouter()
 const authStore   = useAuthStore()
@@ -116,32 +116,12 @@ async function onSignOut() {
       />
 
       <!-- Badges -->
-      <section class="profile__badges">
-        <div class="profile__badges-header">
-          <h2 class="profile__badges-title">
-            Badges <span>{{ userBadges.length }}/{{ BADGES.length }}</span>
-          </h2>
-          <button class="profile__badges-more" @click="router.push({ name: 'badges' })">
-            Voir tout
-          </button>
-        </div>
-
-        <div v-if="recentBadges.length" class="profile__badges-grid">
-          <button
-            v-for="badge in recentBadges"
-            :key="badge.id"
-            class="profile__badge"
-            @click="openBadge(badge)"
-          >
-            <span class="profile__badge-icon">{{ badge.icon }}</span>
-            <span class="profile__badge-label">{{ badge.label }}</span>
-          </button>
-        </div>
-
-        <p v-else class="profile__badges-empty">
-          Joue ta première partie pour débloquer des badges.
-        </p>
-      </section>
+      <RecentBadges
+        :badges="recentBadges"
+        empty-text="Joue ta première partie pour débloquer des badges."
+        @badge-click="openBadge"
+        @view-all="router.push({ name: 'badges' })"
+      />
 
       <AppButton variant="ghost" class="profile__logout" @click="onSignOut">
         Se déconnecter
@@ -255,70 +235,6 @@ async function onSignOut() {
     letter-spacing: 0.04em;
   }
 
-  // --- Badges ---
-  &__badges {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
-  }
-
-  &__badges-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  &__badges-title {
-    @include title-sm;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-
-    span { color: $orange; margin-left: $gap-xs; }
-  }
-
-  &__badges-more {
-    @include title-sm;
-    color: $orange;
-  }
-
-  &__badges-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: $gap-sm;
-  }
-
-  &__badge {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: $radius-md;
-    padding: $padding-sm;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: $gap-xxs;
-    text-align: center;
-    transition: background 0.15s;
-
-    &:active { background: rgba(255, 255, 255, 0.09); }
-  }
-
-  &__badge-icon {
-    @include title-xxl;
-    line-height: 1;
-  }
-
-  &__badge-label {
-    @include title-xs;
-    color: $muted;
-    line-height: 1.3;
-  }
-
-  &__badges-empty {
-    @include title-sm;
-    color: $muted;
-    text-align: center;
-  }
-
   // --- Logout ---
   &__logout {
     color: $error;
@@ -348,12 +264,6 @@ async function onSignOut() {
     &__stats-card { padding: $padding-xl $padding-lg; }
     &__stat-label { @include text-sm; }
 
-    &__badges-title { @include title-md; }
-    &__badges-more  { @include title-md; }
-    &__badges-grid  { gap: $gap-md; }
-    &__badge        { padding: $padding-md; }
-    &__badge-label  { @include title-sm; }
-    &__badges-empty { @include title-md; }
   }
 }
 </style>

@@ -8,14 +8,24 @@ export function formatZoneLabel(zone) {
     return "Bull (tout)";
   }
   const types = { S: "Simple", D: "Double", T: "Triple", A: "" };
-  return `${types[zone.type]} ${zone.sector}`;
+  return `${types[zone.type]} ${zone.sector}`.trim();
+}
+
+export function formatZonesLabel(zones) {
+  if (!zones || zones.length === 0) return "";
+  return zones.map(formatZoneLabel).join(" + ");
 }
 
 function zonesMatch(z1, z2) {
   return z1?.sector === z2?.sector && z1?.type === z2?.type;
 }
 
-function isHit(dart, zone) {
+function zonesArrayMatch(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  return a.every((z, i) => zonesMatch(z, b[i]));
+}
+
+function isHitSingle(dart, zone) {
   if (!zone || dart.type === "miss") return false;
   if (zone.sector === null) {
     if (zone.type === "AB") return dart.type === "bull";
@@ -33,9 +43,15 @@ function isHit(dart, zone) {
   return dart.type === typeMap[zone.type] && dart.sector === zone.sector;
 }
 
-export function useWarmup({ duration, zone: initialZone }) {
+function isHit(dart, zones) {
+  if (!zones || dart.type === "miss") return false;
+  const arr = Array.isArray(zones) ? zones : [zones];
+  return arr.some(z => isHitSingle(dart, z));
+}
+
+export function useWarmup({ duration, zones: initialZones }) {
   const darts = ref([]);
-  const currentZone = ref({ ...initialZone });
+  const currentZones = ref(initialZones.map(z => ({ ...z })));
   const periods = ref([]);
   const timeLeft = ref(duration !== null ? duration * 60 : null);
   const gameOver = ref(false);
@@ -55,8 +71,10 @@ export function useWarmup({ duration, zone: initialZone }) {
   );
 
   const currentZoneStats = computed(() => {
-    const zd = darts.value.filter((d) => zonesMatch(d.zone, currentZone.value));
-    const hits = zd.filter((d) => isHit(d, currentZone.value)).length;
+    const zd = darts.value.filter(d =>
+      zonesArrayMatch(d.zones ?? [d.zone], currentZones.value)
+    );
+    const hits = zd.filter(d => isHit(d, currentZones.value)).length;
     return {
       total: zd.length,
       hits,
@@ -67,16 +85,18 @@ export function useWarmup({ duration, zone: initialZone }) {
   const zoneRecapStats = computed(() => {
     const seen = [];
     periods.value.forEach((p) => {
-      if (!seen.find((z) => zonesMatch(z, p.zone))) seen.push(p.zone);
+      if (!seen.find(zs => zonesArrayMatch(zs, p.zones))) seen.push(p.zones);
     });
-    return seen.map((zone) => {
-      const zd = darts.value.filter((d) => zonesMatch(d.zone, zone));
-      const hits = zd.filter((d) => isHit(d, zone)).length;
+    return seen.map((zones) => {
+      const zd = darts.value.filter(d =>
+        zonesArrayMatch(d.zones ?? [d.zone], zones)
+      );
+      const hits = zd.filter(d => isHit(d, zones)).length;
       const durationMs = periods.value
-        .filter((p) => zonesMatch(p.zone, zone))
+        .filter(p => zonesArrayMatch(p.zones, zones))
         .reduce((sum, p) => sum + ((p.endTs ?? Date.now()) - p.startTs), 0);
       return {
-        zone,
+        zones,
         total: zd.length,
         hits,
         accuracy: zd.length > 0 ? Math.round((hits / zd.length) * 100) : 0,
@@ -87,7 +107,7 @@ export function useWarmup({ duration, zone: initialZone }) {
 
   const sessionStats = computed(() => {
     const total = darts.value.length;
-    const hits = darts.value.filter((d) => isHit(d, d.zone)).length;
+    const hits = darts.value.filter(d => isHit(d, d.zones ?? [d.zone])).length;
     return {
       total,
       hits,
@@ -99,7 +119,7 @@ export function useWarmup({ duration, zone: initialZone }) {
     if (gameOver.value) return;
     darts.value.push({
       ...dart,
-      zone: { ...currentZone.value },
+      zones: currentZones.value.map(z => ({ ...z })),
       ts: Date.now(),
     });
   }
@@ -109,14 +129,14 @@ export function useWarmup({ duration, zone: initialZone }) {
     darts.value.pop();
   }
 
-  function changeZone(newZone) {
+  function changeZones(newZones) {
     const now = Date.now();
     if (periods.value.length > 0) {
       const last = periods.value[periods.value.length - 1];
       periods.value[periods.value.length - 1] = { ...last, endTs: now };
     }
-    periods.value.push({ zone: { ...newZone }, startTs: now, endTs: null });
-    currentZone.value = { ...newZone };
+    periods.value.push({ zones: newZones.map(z => ({ ...z })), startTs: now, endTs: null });
+    currentZones.value = newZones.map(z => ({ ...z }));
   }
 
   function _startInterval() {
@@ -135,7 +155,7 @@ export function useWarmup({ duration, zone: initialZone }) {
   function startTimer() {
     const now = Date.now();
     periods.value.push({
-      zone: { ...currentZone.value },
+      zones: currentZones.value.map(z => ({ ...z })),
       startTs: now,
       endTs: null,
     });
@@ -159,7 +179,6 @@ export function useWarmup({ duration, zone: initialZone }) {
   function _closePeriod() {
     const last = periods.value[periods.value.length - 1];
     if (last && !last.endTs) {
-      // Remplace l'objet entier pour garantir la réactivité Vue sur la mutation
       periods.value[periods.value.length - 1] = { ...last, endTs: Date.now() };
     }
   }
@@ -174,7 +193,7 @@ export function useWarmup({ duration, zone: initialZone }) {
 
   return {
     darts,
-    currentZone,
+    currentZones,
     gameOver,
     timeDisplay,
     isUnlimited,
@@ -185,7 +204,7 @@ export function useWarmup({ duration, zone: initialZone }) {
     totalDurationMs,
     recordDart,
     undoLast,
-    changeZone,
+    changeZones,
     startTimer,
     pauseTimer,
     resumeTimer,

@@ -20,13 +20,20 @@ export const useDbStore = defineStore('db', () => {
     if (error) console.error('[dbStore] saveGameSession:', error.message)
   }
 
-  async function saveWarmupSession({ zone, totalDarts, hits, durationS, settings }) {
+  async function saveWarmupSession({ zones, totalDarts, hits, durationS, settings }) {
     const user = getUser()
     if (!user) return
     const accuracy = totalDarts > 0 ? Math.round((hits / totalDarts) * 100) : 0
+    const zoneLabel = Array.isArray(zones)
+      ? zones.map(z => {
+          if (z.sector === null) return z.type === 'B' ? 'Bull' : z.type === 'SB' ? 'Outer' : 'Bull (tout)'
+          const t = { S: 'S', D: 'D', T: 'T', A: '' }[z.type] ?? ''
+          return `${t}${z.sector}`.trim()
+        }).join('+')
+      : zones
     const { error } = await supabase.from('warmup_sessions').insert({
       user_id:     user.id,
-      zone,
+      zone:        zoneLabel,
       total_darts: totalDarts,
       hits,
       accuracy,
@@ -56,6 +63,7 @@ export const useDbStore = defineStore('db', () => {
    *   doubles_attempted    int,
    *   volley_distribution  jsonb,
    *   leg_averages         jsonb,
+   *   total_darts          int,
    *   settings             jsonb
    * );
    * -- Migration si la table existe déjà :
@@ -63,7 +71,8 @@ export const useDbStore = defineStore('db', () => {
    *   ADD COLUMN IF NOT EXISTS doubles_hit          int,
    *   ADD COLUMN IF NOT EXISTS doubles_attempted     int,
    *   ADD COLUMN IF NOT EXISTS volley_distribution   jsonb,
-   *   ADD COLUMN IF NOT EXISTS leg_averages          jsonb;
+   *   ADD COLUMN IF NOT EXISTS leg_averages          jsonb,
+   *   ADD COLUMN IF NOT EXISTS total_darts           int;
    * ALTER TABLE public.x01_sessions ENABLE ROW LEVEL SECURITY;
    * CREATE POLICY "Users manage own x01_sessions"
    *   ON public.x01_sessions FOR ALL USING (auth.uid() = user_id);
@@ -86,6 +95,7 @@ export const useDbStore = defineStore('db', () => {
       doubles_attempted:   stats.doublesAttempted      ?? null,
       volley_distribution: stats.volleyDistribution    ?? null,
       leg_averages:        stats.legAverages           ?? null,
+      total_darts:         stats.totalDarts            ?? null,
       settings,
     })
     if (error) console.error('[dbStore] saveX01Session:', error.message)
@@ -121,13 +131,21 @@ export const useDbStore = defineStore('db', () => {
     const user = getUser()
     if (!user) return null
 
-    const [{ data: gameSessions }, { data: warmupSessions }] = await Promise.all([
-      supabase.from('game_sessions').select('id, best_streak, correct_count').eq('user_id', user.id),
+    const [{ data: gameSessions }, { data: warmupSessions }, { data: x01Sessions }] = await Promise.all([
+      supabase.from('game_sessions').select('id, best_streak, correct_count, total_questions').eq('user_id', user.id),
       supabase.from('warmup_sessions').select('total_darts, accuracy').eq('user_id', user.id),
+      supabase.from('x01_sessions').select('total_darts').eq('user_id', user.id),
     ])
 
-    const totalSessions = (gameSessions?.length ?? 0) + (warmupSessions?.length ?? 0)
-    const totalDarts    = warmupSessions?.reduce((s, r) => s + r.total_darts, 0) ?? 0
+    const warmupSessionsCount = warmupSessions?.length ?? 0
+    const x01SessionsCount    = x01Sessions?.length ?? 0
+    const gameSessionsCount   = gameSessions?.length ?? 0
+    const totalSessions       = warmupSessionsCount + x01SessionsCount + gameSessionsCount
+
+    const warmupDarts   = warmupSessions?.reduce((s, r) => s + r.total_darts, 0) ?? 0
+    const x01Darts      = x01Sessions?.reduce((s, r) => s + (r.total_darts ?? 0), 0) ?? 0
+    const totalDarts    = warmupDarts + x01Darts
+
     const avgAccuracy   = warmupSessions?.length
       ? Math.round(warmupSessions.reduce((s, r) => s + Number(r.accuracy), 0) / warmupSessions.length)
       : null
@@ -138,6 +156,10 @@ export const useDbStore = defineStore('db', () => {
       ? Math.max(...gameSessions.map(r => r.best_streak ?? 0))
       : 0
     const totalCorrect  = gameSessions?.reduce((s, r) => s + (r.correct_count ?? 0), 0) ?? 0
+    const totalQuestions = gameSessions?.reduce((s, r) => s + (r.total_questions ?? 0), 0) ?? 0
+    const bestGameAccuracy = gameSessions?.length
+      ? Math.max(...gameSessions.map(r => r.total_questions > 0 ? Math.round(r.correct_count / r.total_questions * 100) : 0))
+      : 0
 
     const last10        = warmupSessions?.slice(-10) ?? []
     const avg80eligible = last10.length >= 10
@@ -145,7 +167,12 @@ export const useDbStore = defineStore('db', () => {
       ? Math.round(last10.reduce((s, r) => s + Number(r.accuracy), 0) / 10)
       : 0
 
-    return { totalSessions, totalDarts, avgAccuracy, bestAccuracy, bestStreak, totalCorrect, avgAccuracy10, avg80eligible }
+    return {
+      totalSessions, warmupSessionsCount, x01SessionsCount, gameSessionsCount,
+      totalDarts, warmupDarts, x01Darts,
+      totalQuestions, bestGameAccuracy,
+      avgAccuracy, bestAccuracy, bestStreak, totalCorrect, avgAccuracy10, avg80eligible,
+    }
   }
 
   async function deleteGameSession(id) {

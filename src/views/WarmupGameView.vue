@@ -2,13 +2,13 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '../store/gameStore.js'
-import { useWarmup, formatZoneLabel } from '../composables/useWarmup.js'
+import { useWarmup, formatZonesLabel } from '../composables/useWarmup.js'
 import { useDbStore } from '../store/dbStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import StatsCard from '../components/game/StatsCard.vue'
 import DartSlotsHeader from '../components/game/DartSlotsHeader.vue'
-import GameInput from '../components/game/GameInput.vue'
+import WarmupInput from '../components/warmup/WarmupInput.vue'
 import WarmupRecap from '../components/warmup/WarmupRecap.vue'
 import WarmupMenuModal from '../components/warmup/WarmupMenuModal.vue'
 import AppIcon from '../components/AppIcon.vue'
@@ -23,14 +23,14 @@ if (!gameStore.gameSettings) router.replace({ name: 'warmup-settings' })
 
 const {
   timeDisplay, isUnlimited, isUrgent, gameOver,
-  currentZone, currentZoneStats, zoneRecapStats, sessionStats, totalDurationMs,
-  darts, recordDart, undoLast, changeZone, startTimer, pauseTimer, resumeTimer, endSession, cleanup,
-} = useWarmup(gameStore.gameSettings ?? { duration: 5, zone: { sector: 20, type: 'D' } })
+  currentZones, currentZoneStats, zoneRecapStats, sessionStats, totalDurationMs,
+  darts, recordDart, undoLast, changeZones, startTimer, pauseTimer, resumeTimer, endSession, cleanup,
+} = useWarmup(gameStore.gameSettings ?? { duration: 5, zones: [{ sector: 20, type: 'D' }] })
 
 watch(gameOver, async (val) => {
   if (val) {
     await dbStore.saveWarmupSession({
-      zone: currentZone.value,
+      zones: currentZones.value,
       totalDarts: sessionStats.value.total,
       hits: sessionStats.value.hits,
       durationS: Math.round(totalDurationMs.value / 1000),
@@ -88,6 +88,8 @@ const tourNumber = computed(() => {
   return Math.floor(darts.value.length / 3) + 1
 })
 
+const hideStats = computed(() => currentZones.value.length > 3)
+
 const statsRows = computed(() => [
   { label: 'Fléchettes jetées', value: currentZoneStats.value.total },
   { label: 'Fléchettes touchées', value: currentZoneStats.value.hits },
@@ -120,8 +122,8 @@ onUnmounted(() => {
     </AppHeader>
 
     <div v-if="!gameOver" class="warmup__game">
-      <StatsCard class="warmup__stats-card" color="#1D4ED8" :rows="statsRows">
-        {{ formatZoneLabel(currentZone) }}
+      <StatsCard class="warmup__stats-card" :class="{ 'warmup__stats-card--compact': hideStats }" color="#1D4ED8" :rows="statsRows">
+        {{ formatZonesLabel(currentZones) }}
       </StatsCard>
       <div class="warmup__game-main">
         <DartSlotsHeader :tour-number="tourNumber">
@@ -132,19 +134,22 @@ onUnmounted(() => {
             </div>
           </template>
         </DartSlotsHeader>
-        <GameInput :darts="displayedDarts" value-key="pts" :locked="justCompleted" @dart="recordDart"
-          @miss="recordDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })" @undo="undoLast">
-          <template #right>
-          </template>
-        </GameInput>
+        <WarmupInput
+          :darts="displayedDarts"
+          :locked="justCompleted"
+          :zones="currentZones"
+          @dart="recordDart"
+          @miss="recordDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })"
+          @undo="undoLast"
+        />
       </div>
     </div>
 
     <WarmupRecap v-else :zoneRecapStats="zoneRecapStats" :sessionStats="sessionStats"
       @restart="router.push({ name: 'warmup-settings' })" @home="router.push({ name: 'home' })" />
 
-    <WarmupMenuModal :show="showMenuModal" :zone="currentZone" @close="closeMenu"
-      @zone-change="changeZone" @finish="endSession" @quit="handleQuit" />
+    <WarmupMenuModal :show="showMenuModal" :zones="currentZones" @close="closeMenu"
+      @zone-change="changeZones" @finish="endSession" @quit="handleQuit" />
 
     <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
   </div>
@@ -180,7 +185,18 @@ onUnmounted(() => {
   gap: $gap-md;
 }
 
+.warmup__stats-card {
+  flex: 1;
+  min-height: 0;
+
+  &--compact {
+    flex: 0 0 auto;
+  }
+}
+
 .warmup__game-main {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: $gap-md;
@@ -203,13 +219,6 @@ onUnmounted(() => {
   min-width: 4ch;
   text-align: right;
   font-variant-numeric: tabular-nums;
-}
-
-@media (min-width: $bp-tablet) {
-  .warmup__game-main {
-    flex: 1;
-    min-height: 0;
-  }
 }
 
 @media (min-width: $bp-laptop) {

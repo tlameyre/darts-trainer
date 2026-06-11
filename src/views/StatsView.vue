@@ -1,13 +1,15 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useDbStore } from '../store/dbStore.js'
+import { useBadgeStore } from '../store/badgeStore.js'
 import AppTabs from '../components/AppTabs.vue'
 import StatsScoreTab from '../components/stats/StatsScoreTab.vue'
 import StatsWarmupTab from '../components/stats/StatsWarmupTab.vue'
 import StatsX01Tab from '../components/stats/StatsX01Tab.vue'
 import StatsSessionDetail from '../components/stats/StatsSessionDetail.vue'
 
-const dbStore = useDbStore()
+const dbStore    = useDbStore()
+const badgeStore = useBadgeStore()
 
 const globalStats    = ref(null)
 const gameSessions   = ref([])
@@ -56,7 +58,12 @@ async function deleteSession(id) {
     x01Sessions.value = x01Sessions.value.filter(s => s.id !== id)
   }
   showDetail.value = false
-  globalStats.value = await dbStore.fetchGlobalStats()
+  const [newGlobal, profileStats] = await Promise.all([
+    dbStore.fetchGlobalStats(),
+    dbStore.fetchProfileStats(),
+  ])
+  globalStats.value = newGlobal
+  await badgeStore.revokeVolumeBadges(profileStats)
 }
 </script>
 

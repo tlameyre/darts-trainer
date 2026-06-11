@@ -11,7 +11,7 @@ const gameStore = useGameStore()
 
 const settings = reactive({
   duration: 15,
-  zone: { sector: 20, type: 'A' },
+  zones: [{ sector: 20, type: 'A' }],
 })
 
 const customMinutes = ref(10)
@@ -29,7 +29,7 @@ function startGame() {
   const duration = settings.duration === 'custom'
     ? (Number(customMinutes.value) > 0 ? Number(customMinutes.value) : 5)
     : settings.duration
-  gameStore.gameSettings = { mode: 'warmup', duration, zone: settings.zone }
+  gameStore.gameSettings = { mode: 'warmup', duration, zones: settings.zones }
   router.push({ name: 'warmup-game' })
 }
 </script>
@@ -60,8 +60,8 @@ function startGame() {
       </div>
 
       <div class="settings__card">
-        <div class="settings__section-label">Zone à travailler</div>
-        <ZonePicker v-model="settings.zone" />
+        <div class="settings__section-label">Zones à travailler</div>
+        <ZonePicker :multiple="true" v-model="settings.zones" />
       </div>
     </main>
 

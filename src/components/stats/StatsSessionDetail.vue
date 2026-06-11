@@ -13,15 +13,21 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'delete'])
 
+// Normalise un item zoneRecap vers le format { zones: [...] } attendu par WarmupRecap
+function normalizeZoneItem(item) {
+  if (item.zones) return item
+  // Ancien format : { zone: { sector, type }, ... }
+  return { ...item, zones: item.zone ? [item.zone] : [] }
+}
+
 // Mappe les données DB → format WarmupRecap
 const warmupZoneStats = computed(() => {
   const s = props.session
   if (!s) return []
-  // Utilise zoneRecap sauvegardé dans settings si disponible (sessions récentes)
-  if (s.settings?.zoneRecap?.length) return s.settings.zoneRecap
-  // Fallback : zone unique stockée en DB
+  if (s.settings?.zoneRecap?.length) return s.settings.zoneRecap.map(normalizeZoneItem)
+  // Fallback : zone unique stockée en DB (anciennes sessions sans zoneRecap)
   return [{
-    zone:       s.zone,
+    zones:      s.zone ? [s.zone] : [],
     accuracy:   s.accuracy,
     durationMs: (s.duration_s ?? 0) * 1000,
     total:      s.total_darts,

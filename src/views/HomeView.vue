@@ -4,8 +4,8 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/authStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import { GAME_MODES } from '../data/gameModes.js'
-import { BADGES } from '../data/badges.js'
 import AppIcon from '../components/AppIcon.vue'
+import RecentBadges from '../components/RecentBadges.vue'
 
 const router     = useRouter()
 const authStore  = useAuthStore()
@@ -63,29 +63,11 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
       </section>
 
       <!-- Badges récents -->
-      <section class="home__section">
-        <div class="home__section-header">
-          <h2 class="home__section-title">
-            Badges <span class="home__section-count">{{ userBadges.length }}/{{ BADGES.length }}</span>
-          </h2>
-          <button class="home__section-link" @click="router.push({ name: 'badges' })">
-            Voir tout
-          </button>
-        </div>
-
-        <div v-if="recentBadges.length" class="home__badges">
-          <button v-for="badge in recentBadges" :key="badge.id" class="home__badge"
-            @click="router.push({ name: 'badges' })">
-            <span class="home__badge-icon">{{ badge.icon }}</span>
-            <span class="home__badge-label">{{ badge.label }}</span>
-          </button>
-        </div>
-
-        <button v-else class="home__badges-empty" @click="router.push({ name: 'badges' })">
-          <span>Aucun badge encore — commence à jouer !</span>
-          <AppIcon name="arrow-left" :width="14" :height="14" class="home__mode-arrow" />
-        </button>
-      </section>
+      <RecentBadges
+        :badges="recentBadges"
+        @badge-click="router.push({ name: 'badges' })"
+        @view-all="router.push({ name: 'badges' })"
+      />
 
     </main>
   </div>
@@ -212,55 +194,6 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
     flex-shrink: 0;
   }
 
-  // --- Badges ---
-  &__badges {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: $gap-sm;
-  }
-
-  &__badge {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: $radius-md;
-    padding: $padding-sm;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: $gap-xxs;
-    transition: background 0.15s;
-
-    &:active {
-      background: rgba(255, 255, 255, 0.09);
-    }
-  }
-
-  &__badge-icon {
-    @include title-xxl;
-    line-height: 1;
-  }
-
-  &__badge-label {
-    @include title-xs;
-    color: $muted;
-    text-align: center;
-    line-height: 1.3;
-  }
-
-  &__badges-empty {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: $radius-md;
-    padding: $padding-md;
-    @include title-sm;
-    color: $muted;
-    transition: background 0.15s;
-
-    &:active {
-      background: rgba(255, 255, 255, 0.08);
-    }
-  }
 }
 
 @media (min-width: $bp-laptop) {
@@ -307,18 +240,6 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
       @include title-lg;
     }
 
-    &__badge {
-      padding: $padding-md;
-      gap: $gap-xs;
-    }
-
-    &__badge-icon {
-      @include title-xxl;
-    }
-
-    &__badge-label {
-      @include title-sm;
-    }
   }
 }
 </style>
