@@ -64,6 +64,7 @@ function accuracy(correct, total) {
       flex: 1;
       min-height: 0;
       overflow: hidden;
+      padding-bottom: 0;
     }
   }
 
@@ -98,6 +99,7 @@ function accuracy(correct, total) {
     overflow-y: auto;
     flex: 1;
     min-height: 0;
+    padding-bottom: $padding-md;
   }
 
   &__session-card {

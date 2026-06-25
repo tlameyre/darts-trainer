@@ -7,8 +7,8 @@ export function formatZoneLabel(zone) {
     if (zone.type === "SB") return "Outer (25)";
     return "Bull (tout)";
   }
-  const types = { S: "Simple", D: "Double", T: "Triple", A: "" };
-  return `${types[zone.type]} ${zone.sector}`.trim();
+  const types = { S: "S", D: "D", T: "T", A: "" };
+  return `${types[zone.type]}${zone.sector}`.trim();
 }
 
 export function formatZonesLabel(zones) {

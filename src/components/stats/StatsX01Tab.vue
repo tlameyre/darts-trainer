@@ -142,6 +142,7 @@ function legsToWin(s) {
       flex: 1;
       min-height: 0;
       overflow-y: scroll;
+      padding-bottom: 0;
     }
   }
 
@@ -176,6 +177,7 @@ function legsToWin(s) {
     overflow-y: auto;
     flex: 1;
     min-height: 0;
+    padding-bottom: $padding-md;
   }
 
   // ── Card session ───────────────────────────────────────────────────────────

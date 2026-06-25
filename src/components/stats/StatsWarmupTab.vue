@@ -75,6 +75,7 @@ function zoneNames(s) {
       flex: 1;
       min-height: 0;
       overflow: hidden;
+      padding-bottom: 0;
     }
   }
 
@@ -109,6 +110,7 @@ function zoneNames(s) {
     overflow-y: auto;
     flex: 1;
     min-height: 0;
+    padding-bottom: $padding-md;
   }
 
   &__session-card {
