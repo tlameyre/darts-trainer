@@ -34,9 +34,6 @@ onMounted(async () => {
   userBadges.value = b
 })
 
-// 4 derniers badges débloqués (déjà triés desc par unlockedAt)
-const recentBadges = computed(() => userBadges.value.slice(0, 4))
-
 const selectedProgress = computed(() =>
   selectedBadge.value && !selectedBadge.value.unlockedAt
     ? getBadgeProgress(selectedBadge.value.id, stats.value)
@@ -117,7 +114,7 @@ async function onSignOut() {
 
       <!-- Badges -->
       <RecentBadges
-        :badges="recentBadges"
+        :badges="userBadges"
         empty-text="Joue ta première partie pour débloquer des badges."
         @badge-click="openBadge"
         @view-all="router.push({ name: 'badges' })"

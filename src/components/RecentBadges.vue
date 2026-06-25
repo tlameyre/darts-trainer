@@ -1,5 +1,6 @@
 <script setup>
 import { BADGES } from '../data/badges.js'
+import { computed } from "vue";
 import AppIcon from './AppIcon.vue'
 
 const props = defineProps({
@@ -7,6 +8,7 @@ const props = defineProps({
   emptyText: { type: String, default: 'Aucun badge encore — commence à jouer !' },
 })
 
+const recentBadges = computed(() => props.badges.slice(0, 4))
 defineEmits(['badge-click', 'view-all'])
 </script>
 
@@ -23,7 +25,7 @@ defineEmits(['badge-click', 'view-all'])
 
     <div v-if="badges.length" class="recent-badges__grid">
       <button
-        v-for="badge in badges"
+        v-for="badge in recentBadges"
         :key="badge.id"
         class="recent-badges__badge"
         @click="$emit('badge-click', badge)"

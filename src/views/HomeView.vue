@@ -30,9 +30,6 @@ const initials = computed(() => {
   }
   return (p.username?.[0] ?? authStore.user?.email?.[0] ?? '?').toUpperCase()
 })
-
-// 4 derniers badges débloqués
-const recentBadges = computed(() => userBadges.value.slice(0, 4))
 </script>
 
 <template>
@@ -64,7 +61,7 @@ const recentBadges = computed(() => userBadges.value.slice(0, 4))
 
       <!-- Badges récents -->
       <RecentBadges
-        :badges="recentBadges"
+        :badges="userBadges"
         @badge-click="router.push({ name: 'badges' })"
         @view-all="router.push({ name: 'badges' })"
       />
