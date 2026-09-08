@@ -22,7 +22,7 @@ const settings = gameStore.gameSettings ?? {
   variant: 'review',
   brackets: [[2, 170]],
   order: 'asc',
-  count: 10,
+  count: 'all',
 }
 
 const {

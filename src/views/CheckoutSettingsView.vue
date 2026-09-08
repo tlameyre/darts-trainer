@@ -14,7 +14,7 @@ const settings = reactive({
   variant: 'review',
   brackets: [CHECKOUT_BRACKETS[2].label], // une tranche cochée au départ
   order: 'asc',
-  count: 10,
+  count: 'all',
 })
 
 const customCount = ref(15)
@@ -28,8 +28,8 @@ const orderOptions = [
   { value: 'random', label: 'Aléatoire' },
 ]
 const countOptions = [
-  { value: 10, label: '10' },
-  { value: 25, label: '25' },
+  { value: 'all', label: 'Tout' },
+  { value: 20, label: '20' },
   { value: 'custom', label: 'Custom' },
   { value: Infinity, label: 'Infini' },
 ]
@@ -53,7 +53,7 @@ function startGame() {
     .map((b) => b.range)
 
   let count = settings.count
-  if (count === 'custom') count = Number(customCount.value) > 0 ? Number(customCount.value) : 10
+  if (count === 'custom') count = Number(customCount.value) > 0 ? Number(customCount.value) : 20
 
   gameStore.gameSettings = {
     mode: 'checkout',

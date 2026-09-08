@@ -60,6 +60,15 @@ export function matchesRoute(darts, route) {
   return routeKey(darts) === routeKey(route);
 }
 
+/** Mélange `arr` en place (Fisher–Yates) et le renvoie. */
+export function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 /**
  * Construit un pool de scores à réviser à partir de tranches [[min,max], ...],
  * trié croissant ou mélangé.
@@ -68,11 +77,5 @@ export function buildPool(brackets, order = "asc") {
   const pool = CHECKOUT_SCORES.filter((s) =>
     brackets.some(([min, max]) => s >= min && s <= max),
   );
-  if (order === "random") {
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
-    }
-  }
-  return pool;
+  return order === "random" ? shuffle(pool) : pool;
 }

@@ -5,6 +5,7 @@ import {
   matchesRoute,
   buildPool,
   bracketPoints,
+  shuffle,
 } from "./useCheckouts.js";
 
 /**
@@ -14,20 +15,24 @@ import {
  *   variant: 'review' | 'quiz',
  *   brackets: Array<[number, number]>,
  *   order?: 'asc' | 'random',
- *   count?: number,   // quiz : nombre de checkouts (Infinity = illimité)
+ *   count?: number | 'all',   // quiz : nombre de checkouts ('all' = tout le pool, Infinity = illimité)
  * }} settings
  */
-export function useCheckoutTrainer({ variant, brackets, order = "asc", count = 10 }) {
+export function useCheckoutTrainer({ variant, brackets, order = "asc", count = "all" }) {
   const isQuiz = variant === "quiz";
-  const infinite = !Number.isFinite(count);
   const pool = buildPool(brackets, order);
+  const resolvedCount = count === "all" ? pool.length : count;
+  const infinite = !Number.isFinite(resolvedCount);
 
-  const pickRandom = () => pool[Math.floor(Math.random() * pool.length)];
+  // One full pass of the pool in the chosen order (reshuffled each cycle when random).
+  const cycle = () => (order === "random" ? shuffle([...pool]) : [...pool]);
 
   function buildQueue() {
     if (!isQuiz) return [...pool];
-    if (infinite) return [pickRandom()];
-    return Array.from({ length: count }, pickRandom);
+    if (infinite) return cycle();
+    const q = [];
+    while (q.length < resolvedCount) q.push(...cycle());
+    return q.slice(0, resolvedCount);
   }
 
   const queue = ref(buildQueue());
@@ -118,11 +123,12 @@ export function useCheckoutTrainer({ variant, brackets, order = "asc", count = 1
 
   // ─── Navigation quiz ──────────────────────────────────────────────
   function next() {
-    if (infinite) {
-      queue.value = [...queue.value, pickRandom()];
-    } else if (index.value + 1 >= queue.value.length) {
-      gameOver.value = true;
-      return;
+    if (index.value + 1 >= queue.value.length) {
+      if (!infinite) {
+        gameOver.value = true;
+        return;
+      }
+      queue.value = [...queue.value, ...cycle()];
     }
     index.value += 1;
     revealed.value = false;
