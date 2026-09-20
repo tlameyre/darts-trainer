@@ -101,10 +101,13 @@ function goBack() {
   }
 
   &__board {
-    flex-shrink: 0;
+    flex: 3;
+    min-height: 0;
     width: 100%;
     display: flex;
+    align-items: center;
     justify-content: center;
+    container-type: size;
   }
 
   &__info {
@@ -112,7 +115,7 @@ function goBack() {
     flex-direction: column;
     align-items: center;
     gap: $gap-sm;
-    flex: 1;
+    flex: 2;
     min-height: 0;
     width: 100%;
   }
@@ -179,11 +182,6 @@ function goBack() {
     &__board {
       min-width: 0;
       min-height: 0;
-      align-items: flex-start;
-
-      :deep(.board) {
-        max-width: min(100%, calc(100dvh - 180px));
-      }
     }
 
     &__info {

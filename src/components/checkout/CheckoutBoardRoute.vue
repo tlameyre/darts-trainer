@@ -146,14 +146,9 @@ const badgeW = (label) => 34 + Math.max(0, label.length - 1) * 7
 <style lang="scss" scoped>
 .board {
   display: block;
-  width: 100%;
-  max-width: 300px;
-  margin: 0 auto;
+  width: min(100%, 100cqh);
   aspect-ratio: 1;
-}
-
-@media (min-width: $bp-laptop) {
-  .board { max-width: 440px; }
+  margin: 0 auto;
 }
 
 .board__bg { fill: $dart-black; }

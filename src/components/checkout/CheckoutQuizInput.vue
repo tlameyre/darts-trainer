@@ -45,7 +45,7 @@ const banner = computed(() => {
   const r = props.lastResult
   if (!r) return null
   if (r.optimal) return { cls: 'ok', text: `Parfait — route recommandée · +${r.points}` }
-  if (r.correct) return { cls: 'ok', text: `Sortie valide · +${r.points} — la recommandée compte double` }
+  if (r.correct) return { cls: 'ok', text: `Sortie valide - route alternative · +${r.points}` }
   return { cls: 'ko', text: 'Sortie invalide' }
 })
 
@@ -116,7 +116,9 @@ watch(
 
       <template v-else>
         <div class="quiz__study">
-          <CheckoutBoardRoute :route="studyRoute || []" class="quiz__board-route" />
+          <div class="quiz__board-route">
+            <CheckoutBoardRoute :route="studyRoute || []" />
+          </div>
           <CheckoutRouteCard
             :checkout="checkout"
             size="md"
@@ -266,17 +268,20 @@ watch(
     gap: $gap-sm;
   }
 
-  // Cap the board so the route list keeps usable height on small screens.
-  &__study &__board-route {
-    flex-shrink: 0;
-    width: auto;
-    height: min(30vh, 240px);
+  &__board-route {
+    flex: 3;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    container-type: size;
   }
 
   &__routes {
     width: 100%;
     max-width: 420px;
-    flex: 1;
+    flex: 2;
     min-height: 0;
     overflow-y: auto;
   }
@@ -319,7 +324,6 @@ watch(
       min-width: 0;
       width: auto;
       height: auto;
-      align-self: center;
     }
     &__routes { flex: 1; min-width: 0; max-width: 460px; }
   }

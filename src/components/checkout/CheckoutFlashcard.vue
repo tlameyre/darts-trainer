@@ -149,7 +149,7 @@ function grade(known) {
 
       <div class="deck__face deck__face--back" :class="{ 'deck__face--hidden': !revealed, 'deck__face--no-transition': animating }">
         <button type="button" class="deck__board-btn" @click="emit('toggle')">
-          <CheckoutBoardRoute :route="selectedRoute || []" class="deck__board" />
+          <CheckoutBoardRoute :route="selectedRoute || []" />
         </button>
         <div class="deck__detail">
           <div class="deck__value">{{ score }}</div>
@@ -291,17 +291,16 @@ function grade(known) {
   }
 
   &__board-btn {
-    flex-shrink: 0;
+    flex: 3;
+    min-height: 0;
     width: 100%;
     display: flex;
+    align-items: center;
     justify-content: center;
+    container-type: size;
     cursor: pointer;
 
     &:active { opacity: 0.85; }
-  }
-
-  &__board {
-    flex-shrink: 0;
   }
 
   &__detail {
@@ -309,7 +308,7 @@ function grade(known) {
     flex-direction: column;
     align-items: center;
     gap: $gap-md;
-    flex: 1;
+    flex: 2;
     min-height: 0;
     width: 100%;
   }
