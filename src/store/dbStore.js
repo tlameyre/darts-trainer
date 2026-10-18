@@ -706,6 +706,15 @@ export const useDbStore = defineStore('db', () => {
     return data
   }
 
+  async function fetchTournamentPlayerSessions(tournamentId) {
+    const { data, error } = await supabase.rpc('get_tournament_player_sessions', { p_tournament_id: tournamentId })
+    if (error) {
+      console.error('[dbStore] fetchTournamentPlayerSessions:', error.message)
+      return []
+    }
+    return data ?? []
+  }
+
   async function reportOnlineTournamentResult(matchId, { hostLegs, guestLegs }) {
     const { error } = await supabase.rpc('report_online_tournament_result', {
       p_online_match_id: matchId,
@@ -717,7 +726,7 @@ export const useDbStore = defineStore('db', () => {
 
   return {
     createOnlineMatch, fetchOnlineMatch, fetchOpenOnlineMatches, updateOnlineMatchStatus,
-    fetchOnlineMatchEvents, insertOnlineMatchEvent, startOnlineMatch, reportOnlineTournamentResult, reportLocalTournamentResult, fetchTournamentMatchStats,
+    fetchOnlineMatchEvents, insertOnlineMatchEvent, startOnlineMatch, reportOnlineTournamentResult, reportLocalTournamentResult, fetchTournamentMatchStats, fetchTournamentPlayerSessions,
     saveGameSession, saveWarmupSession, saveX01Session, saveTournamentX01Session, saveTacticsSession, saveCheckoutSession,
     deleteGameSession, deleteWarmupSession, deleteX01Session, deleteTacticsSession, deleteCheckoutSession,
     fetchGameSessions, fetchWarmupSessions, fetchWarmupSessionsForChart, fetchX01Sessions, fetchTacticsSessions, fetchCheckoutSessions,

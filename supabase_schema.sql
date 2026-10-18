@@ -998,6 +998,23 @@ $$;
 revoke execute on function public.get_tournament_match_stats(uuid) from public, anon;
 grant execute on function public.get_tournament_match_stats(uuid) to authenticated;
 
+-- Sessions X01 de tous les joueurs d'un tournoi (une par joueur et par match),
+-- pour l'onglet Stats : chacune porte les stats de son propriétaire.
+create or replace function public.get_tournament_player_sessions(p_tournament_id uuid)
+returns table (
+  user_id uuid, tournament_match_id uuid, legs_played int, highest_volley int, match_stats jsonb
+)
+language sql stable security definer set search_path = public as $$
+  select s.user_id, s.tournament_match_id, s.legs_played, s.highest_volley, s.match_stats
+  from public.x01_sessions s
+  join public.tournament_matches m on m.id = s.tournament_match_id
+  where s.tournament_id = p_tournament_id
+    and s.match_stats is not null
+    and (public.is_tournament_host(p_tournament_id) or public.is_tournament_participant(p_tournament_id));
+$$;
+revoke execute on function public.get_tournament_player_sessions(uuid) from public, anon;
+grant execute on function public.get_tournament_player_sessions(uuid) to authenticated;
+
 -- Un match de tournoi joué en ligne passe « en cours » dès que le match en ligne
 -- démarre, pour que tous les participants le voient (online_matches n'est lisible
 -- que par ses deux joueurs).

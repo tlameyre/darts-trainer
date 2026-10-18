@@ -103,7 +103,7 @@ function buildMockPendingTournament() {
 // toute la ligue est jouée et le bracket du top playoffSize est généré.
 function buildMockChampionship({ playerCount, doubleRoundRobin, playoffSize, playedRounds, withPlayoffs = false }) {
   const participants = Array.from({ length: playerCount }, (_, i) => ({
-    id: `part-${i + 1}`, seed: i + 1, user_id: i === 0 ? 'mock-me' : null, player_data: { name: i === 0 ? 'Toi' : `Joueur ${i + 1}` },
+    id: `part-${i + 1}`, seed: i + 1, user_id: i === 0 ? 'mock-me' : `mock-u${i + 1}`, player_data: { name: i === 0 ? 'Toi' : `Joueur ${i + 1}` },
   }))
   const toRow = (m, seedToId) => ({
     id: m.key, round: m.round, bracket_type: m.bracketType, slot_in_round: m.slotInRound,
@@ -136,7 +136,27 @@ function buildMockChampionship({ playerCount, doubleRoundRobin, playoffSize, pla
     matches.push(...bracket.map(m => toRow(m, playoffSeedToId)))
   }
 
+  // Une session X01 fictive par joueur et par match de ligue joué (onglet Stats)
+  const playerSessions = matches
+    .filter(m => m.bracket_type === 'league' && m.status === 'completed')
+    .flatMap((m, i) => [m.player1_participant_id, m.player2_participant_id].map((pid, side) => {
+      const p   = participants.find(x => x.id === pid)
+      const won = m.winner_participant_id === pid
+      const avg = 35 + ((p.seed * 11 + i * 7 + side * 5) % 40)
+      const own = {
+        legsWon: won ? 2 : side ? m.player2_legs : m.player1_legs, average: avg, first9Average: avg + 4,
+        checkoutHits: won ? 2 : 0, checkoutAttempts: (won ? 2 : 0) + ((i + side) % 4),
+        highestFinish: won ? 40 + ((i * 13 + p.seed) % 90) : null, darts: 45, bestLeg: won ? 15 + ((i + p.seed) % 10) : null,
+      }
+      return {
+        user_id: p.user_id, tournament_match_id: m.id, legs_played: 3,
+        highest_volley: 60 + ((i * 17 + p.seed * 5) % 121),
+        match_stats: { players: [{ name: p.player_data.name, isMe: true }], match: [own], legs: [] },
+      }
+    }))
+
   return {
+    playerSessions,
     tournament: {
       id: 'mock-championship', name: `Championnat ${playerCount} joueurs${doubleRoundRobin ? ' — aller-retour' : ''}`,
       description: 'Championnat de démonstration', join_code: 'T-DEV03', format: 'championship',

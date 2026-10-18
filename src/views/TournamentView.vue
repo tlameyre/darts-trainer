@@ -17,6 +17,7 @@ import TournamentBracketTree from '../components/tournament/TournamentBracketTre
 import TournamentStandingsTable from '../components/tournament/TournamentStandingsTable.vue'
 import TournamentMatchdayList from '../components/tournament/TournamentMatchdayList.vue'
 import TournamentMatchStatsSheet from '../components/tournament/TournamentMatchStatsSheet.vue'
+import TournamentPlayerStatsTable from '../components/tournament/TournamentPlayerStatsTable.vue'
 import TournamentStartModal from '../components/tournament/TournamentStartModal.vue'
 import TournamentHostPickerModal from '../components/tournament/TournamentHostPickerModal.vue'
 import X01PlayerPicker from '../components/x01/X01PlayerPicker.vue'
@@ -46,10 +47,12 @@ const tabs = computed(() => {
     { id: 'infos',        label: 'Infos' },
     { id: 'participants', label: 'Participants' },
   ]
-  if (!isChampionship.value) return [...base, { id: 'bracket', label: 'Bracket' }]
+  const stats = { id: 'stats', label: 'Stats' }
+  if (!isChampionship.value) return [...base, { id: 'bracket', label: 'Bracket' }, stats]
   return [
     ...base,
     { id: 'standings', label: 'Classement' },
+    stats,
     { id: 'matchdays', label: 'Journées' },
     ...(data.value.tournament.playoff_size ? [{ id: 'bracket', label: 'Playoffs' }] : []),
   ]
@@ -264,6 +267,19 @@ function playLocal(matchId) {
   router.push({ name: 'x01-game' })
 }
 
+// Onglet Stats : sessions X01 de tous les joueurs, rechargées à chaque match terminé
+const playerSessions = ref([])
+watch(
+  () => [activeTab.value, data.value?.matches.filter(m => m.status === 'completed').length],
+  async ([tab]) => {
+    if (tab !== 'stats' || !data.value) return
+    playerSessions.value = isMock.value
+      ? (data.value.playerSessions ?? [])
+      : await tournamentStore.fetchPlayerSessions(data.value.tournament.id)
+  },
+  { immediate: true },
+)
+
 // Stats d'un match terminé (feuille plein écran)
 const statsMatch   = ref(null)
 const matchStats   = ref(null)
@@ -296,7 +312,7 @@ async function playOnline() {
   <div class="tournament" :class="{ 'tournament--fill': activeTab === 'participants' }" v-if="data">
     <AppHeader :title="data.tournament.name" @back="router.push({ name: 'tournaments' })" />
 
-    <AppTabs v-model="activeTab" :tabs="tabs" />
+    <AppTabs v-model="activeTab" :tabs="tabs" scrollable />
 
     <main class="tournament__main">
 
@@ -429,6 +445,19 @@ async function playOnline() {
             Lancer les playoffs
           </AppButton>
         </template>
+      </div>
+
+      <!-- ── Stats des joueurs ───────────────────────────────────────────── -->
+      <div v-if="activeTab === 'stats'" class="tournament__tab">
+        <p v-if="!playerSessions.length" class="tournament__empty">
+          Aucun match joué pour l'instant.
+        </p>
+        <TournamentPlayerStatsTable
+          v-else
+          :sessions="playerSessions"
+          :participants="data.participants"
+          :my-user-id="authStore.user?.id ?? null"
+        />
       </div>
 
       <!-- ── Journées (championnat) ──────────────────────────────────────── -->

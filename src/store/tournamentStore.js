@@ -314,6 +314,10 @@ export const useTournamentStore = defineStore('tournament', () => {
     return useDbStore().fetchTournamentMatchStats(matchId)
   }
 
+  async function fetchPlayerSessions(tournamentId) {
+    return useDbStore().fetchTournamentPlayerSessions(tournamentId)
+  }
+
   // Avancement des joueurs et clôture du tournoi faits côté serveur (complete_tournament_match)
   async function recordMatchResult({ matchId, winnerParticipantId, player1Legs, player2Legs }) {
     await useDbStore().reportLocalTournamentResult({ matchId, winnerParticipantId, player1Legs, player2Legs })
@@ -327,7 +331,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     createTournamentShell, startTournament, startPlayoffs,
     fetchTournamentPreviewByCode, joinTournament, leaveTournament,
     updateTournamentName, addHost, removeHost, removeParticipant, deleteTournament, addParticipant,
-    buildGameSettingsForMatch, recordMatchResult, fetchMatchStats,
+    buildGameSettingsForMatch, recordMatchResult, fetchMatchStats, fetchPlayerSessions,
     unseenTournamentCount, fetchMyParticipations, markTournamentSeen,
     subscribeToMyParticipations, unsubscribeFromMyParticipations,
     subscribeToTournamentDetail, unsubscribeFromTournamentDetail,
