@@ -43,7 +43,30 @@ function buildMockTournament({ playerCount, doubleElimination }) {
   const roster = Array.from({ length: playerCount }, (_, i) => ({ id: `p${i + 1}`, name: `Joueur ${i + 1}` }))
   const { seeded, matches } = generateBracket({ roster, seedingMethod: 'manual', doubleElimination })
   const seedToParticipantId = Object.fromEntries(seeded.map(p => [p.seed, `part-${p.seed}`]))
-  const resolved = resolveMatches(matches, seedToParticipantId)
+  const resolved = resolveMatches(matches, seedToParticipantId).map(m => ({
+    id: m.key,
+    round: m.round,
+    bracket_type: m.bracketType,
+    slot_in_round: m.slotInRound,
+    player1_participant_id: m.player1ParticipantId,
+    player2_participant_id: m.player2ParticipantId,
+    winner_participant_id: m.winnerParticipantId,
+    status: m.status,
+    next_match_id: m.nextMatchKey,
+    next_match_slot: m.nextMatchSlot,
+    loser_next_match_id: m.loserNextMatchKey,
+    loser_next_match_slot: m.loserNextMatchSlot,
+    player1_legs: null,
+    player2_legs: null,
+  }))
+  // Shows every card state: first playable match won 2-1 (winner advanced), second one live
+  const [played, live] = resolved.filter(m => m.status === 'ready')
+  if (played) {
+    Object.assign(played, { status: 'completed', winner_participant_id: played.player1_participant_id, player1_legs: 2, player2_legs: 1 })
+    const next = resolved.find(m => m.id === played.next_match_id)
+    if (next) next[`player${played.next_match_slot}_participant_id`] = played.player1_participant_id
+  }
+  if (live) live.status = 'in_progress'
   return {
     tournament: {
       id: 'mock-tournament', name: `Mock ${playerCount} joueurs${doubleElimination ? ' — double élim' : ''}`,
@@ -52,20 +75,7 @@ function buildMockTournament({ playerCount, doubleElimination }) {
     },
     hosts: MOCK_HOSTS,
     participants: seeded.map(p => ({ id: `part-${p.seed}`, seed: p.seed, player_data: { name: p.name } })),
-    matches: resolved.map(m => ({
-      id: m.key,
-      round: m.round,
-      bracket_type: m.bracketType,
-      slot_in_round: m.slotInRound,
-      player1_participant_id: m.player1ParticipantId,
-      player2_participant_id: m.player2ParticipantId,
-      winner_participant_id: m.winnerParticipantId,
-      status: m.status,
-      next_match_id: m.nextMatchKey,
-      next_match_slot: m.nextMatchSlot,
-      loser_next_match_id: m.loserNextMatchKey,
-      loser_next_match_slot: m.loserNextMatchSlot,
-    })),
+    matches: resolved,
   }
 }
 function buildMockPendingTournament() {

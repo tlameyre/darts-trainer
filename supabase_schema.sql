@@ -316,13 +316,15 @@ create table public.tournament_matches (
   player2_participant_id uuid references public.tournament_participants(id) on delete set null,
   winner_participant_id  uuid references public.tournament_participants(id) on delete set null,
   status                 text not null default 'pending'
-                           check (status in ('pending', 'ready', 'bye', 'completed')),
+                           check (status in ('pending', 'ready', 'in_progress', 'bye', 'completed')),
   next_match_id          uuid references public.tournament_matches(id) on delete set null,
   next_match_slot        int check (next_match_slot in (1, 2)),
   loser_next_match_id    uuid references public.tournament_matches(id) on delete set null,
   loser_next_match_slot  int check (loser_next_match_slot in (1, 2)),
   created_at             timestamptz default now(),
   played_at              timestamptz,
+  player1_legs           int,
+  player2_legs           int,
   unique(tournament_id, bracket_type, round, slot_in_round)
 );
 
@@ -529,6 +531,7 @@ create trigger before_tournament_insert
 alter publication supabase_realtime add table public.tournament_participants;
 alter publication supabase_realtime add table public.tournaments;
 alter publication supabase_realtime add table public.tournament_hosts;
+alter publication supabase_realtime add table public.tournament_matches;
 alter publication supabase_realtime add table public.friendships;
 
 
@@ -702,14 +705,18 @@ grant execute on function public.start_online_match(uuid, uuid) to authenticated
 -- Résultat d'un match de tournoi joué en ligne : tournament_matches n'est modifiable
 -- que par les hôtes, donc un joueur passe par cette fonction. Reprend la logique de
 -- tournamentStore.recordMatchResult / advanceParticipant. Idempotente.
-create or replace function public.report_online_tournament_result(p_online_match_id uuid)
+create or replace function public.report_online_tournament_result(p_online_match_id uuid, p_host_legs int, p_guest_legs int)
 returns void
 language plpgsql security definer set search_path = public as $$
 declare
-  om        public.online_matches;
-  tm        public.tournament_matches;
+  om         public.online_matches;
+  tm         public.tournament_matches;
+  max_legs   int;
   winner_pid uuid;
   loser_pid  uuid;
+  host_legs  int;
+  guest_legs int;
+  host_pid   uuid;
 begin
   select * into om from public.online_matches where id = p_online_match_id;
   if om.id is null or auth.uid() not in (om.host_id, om.guest_id) then
@@ -732,8 +739,18 @@ begin
   loser_pid := case when tm.player1_participant_id = winner_pid
                     then tm.player2_participant_id else tm.player1_participant_id end;
 
+  select legs_to_win into max_legs from public.tournaments where id = tm.tournament_id;
+  host_legs  := case when p_host_legs  between 0 and max_legs then p_host_legs  end;
+  guest_legs := case when p_guest_legs between 0 and max_legs then p_guest_legs end;
+  select p.id into host_pid from public.tournament_participants p
+  where p.id in (tm.player1_participant_id, tm.player2_participant_id) and p.user_id = om.host_id;
+
   update public.tournament_matches
-  set winner_participant_id = winner_pid, status = 'completed', played_at = now()
+  set winner_participant_id = winner_pid,
+      status       = 'completed',
+      played_at    = now(),
+      player1_legs = case when player1_participant_id = host_pid then host_legs else guest_legs end,
+      player2_legs = case when player2_participant_id = host_pid then host_legs else guest_legs end
   where id = tm.id;
 
   if tm.next_match_id is not null then
@@ -765,8 +782,28 @@ begin
 end;
 $$;
 revoke execute on function public.advance_tournament_participant(uuid, int, uuid) from public, anon, authenticated;
-revoke execute on function public.report_online_tournament_result(uuid) from public, anon;
-grant execute on function public.report_online_tournament_result(uuid) to authenticated;
+revoke execute on function public.report_online_tournament_result(uuid, int, int) from public, anon;
+grant execute on function public.report_online_tournament_result(uuid, int, int) to authenticated;
+
+-- Un match de tournoi joué en ligne passe « en cours » dès que le match en ligne
+-- démarre, pour que tous les participants le voient (online_matches n'est lisible
+-- que par ses deux joueurs).
+create or replace function public.mark_tournament_match_in_progress()
+returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  update public.tournament_matches set status = 'in_progress'
+  where id = new.tournament_match_id and status = 'ready';
+  return new;
+end;
+$$;
+revoke execute on function public.mark_tournament_match_in_progress() from public, anon, authenticated;
+
+create trigger after_online_match_active
+  after update of status on public.online_matches
+  for each row
+  when (new.status = 'active' and old.status <> 'active' and new.tournament_match_id is not null)
+  execute procedure public.mark_tournament_match_in_progress();
 
 alter publication supabase_realtime add table public.online_matches;
 alter publication supabase_realtime add table public.online_match_events;

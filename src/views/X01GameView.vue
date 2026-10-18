@@ -214,11 +214,21 @@ if (isOnline) {
   })
 }
 
+// Player order can differ from the bracket slots (starter choice), so match by identity
+function legsWonBy(predicate) {
+  const idx = players.findIndex(predicate)
+  return idx >= 0 ? allCompletedLegs[idx].value.length : null
+}
+
 async function finalizeOnlineMatch() {
   const legsWinner = players.findIndex((_, i) => allCompletedLegs[i].value.length >= settings.legsToWin)
   if (legsWinner >= 0) await online.complete(players[legsWinner].id)
   if (isTournamentMatch && online.match.value?.winner_id) {
-    await dbStore.reportOnlineTournamentResult(onlineContext.matchId)
+    const { host_id, guest_id } = online.match.value
+    await dbStore.reportOnlineTournamentResult(onlineContext.matchId, {
+      hostLegs:  legsWonBy(p => p.id === host_id),
+      guestLegs: legsWonBy(p => p.id === guest_id),
+    })
   }
 }
 
@@ -285,9 +295,12 @@ watch(phase, async (val) => {
     if (isTournamentMatch && !isOnline && multiWinnerIndex.value != null) {
       const winnerParticipantId = players[multiWinnerIndex.value]?.participantId
       if (winnerParticipantId) {
+        const match = tournamentStore.activeTournament?.matches.find(m => m.id === tournamentContext.matchId)
         await tournamentStore.recordMatchResult({
           matchId:             tournamentContext.matchId,
           winnerParticipantId,
+          player1Legs:         legsWonBy(p => p.participantId === match?.player1_participant_id),
+          player2Legs:         legsWonBy(p => p.participantId === match?.player2_participant_id),
         })
       }
     }

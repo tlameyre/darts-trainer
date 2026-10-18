@@ -676,8 +676,12 @@ export const useDbStore = defineStore('db', () => {
     return fetchOnlineMatch(matchId)
   }
 
-  async function reportOnlineTournamentResult(matchId) {
-    const { error } = await supabase.rpc('report_online_tournament_result', { p_online_match_id: matchId })
+  async function reportOnlineTournamentResult(matchId, { hostLegs, guestLegs }) {
+    const { error } = await supabase.rpc('report_online_tournament_result', {
+      p_online_match_id: matchId,
+      p_host_legs:       hostLegs,
+      p_guest_legs:      guestLegs,
+    })
     if (error) console.error('[dbStore] reportOnlineTournamentResult:', error.message)
   }
 

@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import TournamentMatchCard from './TournamentMatchCard.vue'
 
 const props = defineProps({
@@ -27,6 +27,49 @@ const winnerRounds = computed(() => groupRounds('winner'))
 const loserRounds  = computed(() => groupRounds('loser'))
 const grandFinal   = computed(() => props.matches.find(m => m.bracket_type === 'grand_final') ?? null)
 
+// Connectors are measured from the rendered cards rather than derived from the
+// round structure: loser-bracket rounds don't halve, so only real positions line up.
+const winnerRowEl = ref(null)
+const loserRowEl  = ref(null)
+const winnerLinks = ref([])
+const loserLinks  = ref([])
+
+function measureLinks(rowEl, type) {
+  if (!rowEl) return []
+  const origin = rowEl.getBoundingClientRect()
+  const rects  = Object.fromEntries(
+    [...rowEl.querySelectorAll('[data-match-id]')].map(el => [el.dataset.matchId, el.getBoundingClientRect()]),
+  )
+  return props.matches
+    .filter(m => m.bracket_type === type && rects[m.id] && rects[m.next_match_id])
+    .map(m => {
+      const from = rects[m.id]
+      const to   = rects[m.next_match_id]
+      const x1 = from.right - origin.left
+      const y1 = from.top + from.height / 2 - origin.top
+      const x2 = to.left - origin.left
+      const y2 = to.top + to.height / 2 - origin.top
+      const xm = (x1 + x2) / 2
+      return { id: m.id, d: `M${x1} ${y1}H${xm}V${y2}H${x2}`, done: m.status === 'completed' }
+    })
+    // Winner paths drawn last so they sit on top of the grey ones at shared elbows
+    .sort((a, b) => a.done - b.done)
+}
+
+function updateLinks() {
+  winnerLinks.value = measureLinks(winnerRowEl.value, 'winner')
+  loserLinks.value  = measureLinks(loserRowEl.value, 'loser')
+}
+
+let resizeObserver = null
+onMounted(() => {
+  resizeObserver = new ResizeObserver(updateLinks)
+  for (const el of [winnerRowEl.value, loserRowEl.value]) if (el) resizeObserver.observe(el)
+  updateLinks()
+})
+onUnmounted(() => resizeObserver?.disconnect())
+watch(() => props.matches, () => nextTick(updateLinks), { deep: true })
+
 function roundLabel(rounds, idx) {
   const fromEnd = rounds.length - 1 - idx
   if (fromEnd === 0) return 'Finale'
@@ -40,7 +83,10 @@ function roundLabel(rounds, idx) {
   <div class="bracket">
     <section class="bracket__section">
       <div v-if="loserRounds.length" class="bracket__section-title">Tableau principal</div>
-      <div class="bracket__row">
+      <div ref="winnerRowEl" class="bracket__row">
+        <svg class="bracket__lines">
+          <path v-for="l in winnerLinks" :key="l.id" :d="l.d" class="bracket__line" :class="{ 'bracket__line--done': l.done }" />
+        </svg>
         <div v-for="(round, ri) in winnerRounds" :key="`w-${ri}`" class="bracket__col">
           <div class="bracket__col-title">{{ roundLabel(winnerRounds, ri) }}</div>
           <div class="bracket__col-matches">
@@ -54,7 +100,10 @@ function roundLabel(rounds, idx) {
 
     <section v-if="loserRounds.length" class="bracket__section">
       <div class="bracket__section-title">Tableau des perdants</div>
-      <div class="bracket__row">
+      <div ref="loserRowEl" class="bracket__row">
+        <svg class="bracket__lines">
+          <path v-for="l in loserLinks" :key="l.id" :d="l.d" class="bracket__line" :class="{ 'bracket__line--done': l.done }" />
+        </svg>
         <div v-for="(round, ri) in loserRounds" :key="`l-${ri}`" class="bracket__col">
           <div class="bracket__col-title">Tour {{ ri + 1 }}</div>
           <div class="bracket__col-matches">
@@ -95,13 +144,32 @@ function roundLabel(rounds, idx) {
   }
 
   &__row {
+    position: relative;
     display: flex;
     align-items: stretch;
     gap: $gap-xl;
     min-width: max-content;
   }
 
+  &__lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  &__line {
+    fill: none;
+    stroke: rgba($white, 0.15);
+    stroke-width: 1.5;
+
+    &--done { stroke: rgba($orange, 0.6); }
+  }
+
   &__col {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: $gap-sm;
@@ -120,24 +188,6 @@ function roundLabel(rounds, idx) {
     flex-direction: column;
     justify-content: space-around;
     gap: $gap-sm;
-  }
-
-  &__node {
-    position: relative;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 100%;
-      width: $gap-xl;
-      height: 1px;
-      background: rgba($white, 0.15);
-    }
-  }
-
-  &__col:last-child &__node::after {
-    display: none;
   }
 }
 </style>

@@ -75,6 +75,7 @@ export const useTournamentStore = defineStore('tournament', () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_participants', filter: `tournament_id=eq.${tournamentId}` }, () => fetchTournamentDetail(tournamentId))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_hosts', filter: `tournament_id=eq.${tournamentId}` }, () => fetchTournamentDetail(tournamentId))
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tournaments', filter: `id=eq.${tournamentId}` }, () => fetchTournamentDetail(tournamentId))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_matches', filter: `tournament_id=eq.${tournamentId}` }, () => fetchTournamentDetail(tournamentId))
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'tournaments', filter: `id=eq.${tournamentId}` }, () => {
         activeTournament.value = null
         onDeleted?.()
@@ -278,12 +279,14 @@ export const useTournamentStore = defineStore('tournament', () => {
   // Fait avancer le vainqueur (et, en cas de double élimination, le perdant vers le
   // loser bracket) vers le(s) match(s) suivant(s), et clôt le tournoi si c'était le
   // match final (repérable : aucun next_match_id).
-  async function recordMatchResult({ matchId, winnerParticipantId }) {
+  async function recordMatchResult({ matchId, winnerParticipantId, player1Legs, player2Legs }) {
     const dbStore = useDbStore()
     const updated = await dbStore.updateTournamentMatch(matchId, {
       winner_participant_id: winnerParticipantId,
       status:                'completed',
       played_at:              new Date().toISOString(),
+      player1_legs:           player1Legs,
+      player2_legs:           player2Legs,
     })
     if (!updated) return
 
