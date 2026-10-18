@@ -352,6 +352,8 @@ const mockSent = [
       <div class="dev__buttons">
         <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('invited'), myId: 'me' }">Invitation envoyée (hôte)</button>
         <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('invited'), myId: 'u1' }">Invitation reçue (invité)</button>
+        <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted'), myId: 'me' }">Bull — choix du premier joueur (hôte)</button>
+        <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted'), myId: 'u1' }">Bull — attente (invité)</button>
         <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('declined'), myId: 'me' }">Invitation refusée</button>
       </div>
     </section>

@@ -620,7 +620,7 @@ export const useDbStore = defineStore('db', () => {
     const { data, error } = await supabase
       .from('online_matches')
       .select(ONLINE_MATCH_SELECT)
-      .in('status', ['invited', 'active'])
+      .in('status', ['invited', 'accepted', 'active'])
       .order('created_at', { ascending: false })
     if (error) {
       console.error('[dbStore] fetchOpenOnlineMatches:', error.message)
@@ -666,6 +666,16 @@ export const useDbStore = defineStore('db', () => {
     return !error
   }
 
+  // Après le bull : l'hôte désigne le premier joueur, ce qui démarre le match
+  async function startOnlineMatch(matchId, starterId) {
+    const { error } = await supabase.rpc('start_online_match', { p_match_id: matchId, p_starter_id: starterId })
+    if (error) {
+      console.error('[dbStore] startOnlineMatch:', error.message)
+      return null
+    }
+    return fetchOnlineMatch(matchId)
+  }
+
   async function reportOnlineTournamentResult(matchId) {
     const { error } = await supabase.rpc('report_online_tournament_result', { p_online_match_id: matchId })
     if (error) console.error('[dbStore] reportOnlineTournamentResult:', error.message)
@@ -673,7 +683,7 @@ export const useDbStore = defineStore('db', () => {
 
   return {
     createOnlineMatch, fetchOnlineMatch, fetchOpenOnlineMatches, updateOnlineMatchStatus,
-    fetchOnlineMatchEvents, insertOnlineMatchEvent, reportOnlineTournamentResult,
+    fetchOnlineMatchEvents, insertOnlineMatchEvent, startOnlineMatch, reportOnlineTournamentResult,
     saveGameSession, saveWarmupSession, saveX01Session, saveTacticsSession, saveCheckoutSession,
     deleteGameSession, deleteWarmupSession, deleteX01Session, deleteTacticsSession, deleteCheckoutSession,
     fetchGameSessions, fetchWarmupSessions, fetchWarmupSessionsForChart, fetchX01Sessions, fetchTacticsSessions, fetchCheckoutSessions,

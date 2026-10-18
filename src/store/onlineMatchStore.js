@@ -9,7 +9,7 @@ export function profileName(profile) {
 }
 
 export const useOnlineMatchStore = defineStore('onlineMatch', () => {
-  // Matchs 'invited' ou 'active' où l'utilisateur est hôte ou invité
+  // Matchs 'invited', 'accepted' ou 'active' où l'utilisateur est hôte ou invité
   const openMatches = ref([])
   let channel = null
 
@@ -20,7 +20,9 @@ export const useOnlineMatchStore = defineStore('onlineMatch', () => {
   const incomingInvites = computed(() =>
     openMatches.value.filter(m => m.status === 'invited' && m.guest_id === myId())
   )
-  const activeMatches = computed(() => openMatches.value.filter(m => m.status === 'active'))
+  // Accepté : les joueurs font le bull, l'hôte doit désigner qui commence
+  const acceptedMatches = computed(() => openMatches.value.filter(m => m.status === 'accepted'))
+  const activeMatches   = computed(() => openMatches.value.filter(m => m.status === 'active'))
 
   async function fetchOpenMatches() {
     openMatches.value = await useDbStore().fetchOpenOnlineMatches()
@@ -44,16 +46,15 @@ export const useOnlineMatchStore = defineStore('onlineMatch', () => {
     openMatches.value = []
   }
 
-  // starter : 'me' | 'opponent' | 'random' — l'ordre de players fait foi pour les deux clients
-  async function invite({ guest, startScore, legsToWin, starter = 'random', tournament = null }) {
+  // L'ordre de players est provisoire : l'hôte le fixe après le bull (chooseStarter)
+  async function invite({ guest, startScore, legsToWin, tournament = null }) {
     const me = { id: myId(), name: profileName(useAuthStore().profile) }
     const opponent = { id: guest.id, name: guest.name }
     if (tournament) {
       me.participantId       = tournament.myParticipantId
       opponent.participantId = tournament.opponentParticipantId
     }
-    const meFirst = starter === 'random' ? Math.random() < 0.5 : starter === 'me'
-    const players = meFirst ? [me, opponent] : [opponent, me]
+    const players = [me, opponent]
     const match = await useDbStore().createOnlineMatch({
       guestId:           guest.id,
       settings:          { startScore, legsToWin, players, tournamentId: tournament?.tournamentId ?? null },
@@ -69,9 +70,15 @@ export const useOnlineMatchStore = defineStore('onlineMatch', () => {
     return updated
   }
 
-  const accept  = (matchId) => setStatus(matchId, 'invited', 'active')
+  const accept  = (matchId) => setStatus(matchId, 'invited', 'accepted')
   const decline = (matchId) => setStatus(matchId, 'invited', 'declined')
-  const cancel  = (matchId) => setStatus(matchId, 'invited', 'cancelled')
+  const cancel  = (matchId, fromStatus = 'invited') => setStatus(matchId, fromStatus, 'cancelled')
+
+  async function chooseStarter(matchId, starterId) {
+    const updated = await useDbStore().startOnlineMatch(matchId, starterId)
+    await fetchOpenMatches()
+    return updated
+  }
 
   function opponentOf(match) {
     return match.host_id === myId() ? match.guest : match.host
@@ -95,8 +102,8 @@ export const useOnlineMatchStore = defineStore('onlineMatch', () => {
   }
 
   return {
-    openMatches, incomingInvites, activeMatches,
+    openMatches, incomingInvites, acceptedMatches, activeMatches,
     fetchOpenMatches, subscribeToOpenMatches, unsubscribeFromOpenMatches,
-    invite, accept, decline, cancel, opponentOf, buildGameSettings,
+    invite, accept, decline, cancel, chooseStarter, opponentOf, buildGameSettings,
   }
 })

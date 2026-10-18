@@ -544,7 +544,7 @@ create table public.online_matches (
   host_id             uuid references public.profiles(id) on delete cascade not null,
   guest_id            uuid references public.profiles(id) on delete cascade not null,
   status              text not null default 'invited'
-                        check (status in ('invited', 'active', 'completed', 'declined', 'cancelled', 'abandoned')),
+                        check (status in ('invited', 'accepted', 'active', 'completed', 'declined', 'cancelled', 'abandoned')),
   settings            jsonb not null, -- { startScore, legsToWin, players: [{ id, name }] } (ordre = starter)
   winner_id           uuid references public.profiles(id) on delete set null,
   tournament_match_id uuid references public.tournament_matches(id) on delete set null,
@@ -557,7 +557,7 @@ create index if not exists idx_online_matches_guest on public.online_matches(gue
 -- Un seul match en ligne ouvert par match de tournoi
 create unique index if not exists idx_online_matches_open_tournament_match
   on public.online_matches(tournament_match_id)
-  where tournament_match_id is not null and status in ('invited', 'active');
+  where tournament_match_id is not null and status in ('invited', 'accepted', 'active');
 
 create table public.online_match_events (
   id         bigint generated always as identity primary key,
@@ -621,7 +621,8 @@ revoke update on public.online_matches from authenticated, anon;
 grant update (status, winner_id) on public.online_matches to authenticated;
 
 -- Transitions autorisées : invité → accepte/refuse, hôte → annule l'invitation,
--- n'importe quel joueur → termine/abandonne un match actif.
+-- hôte → démarre un match accepté (après le bull, via start_online_match),
+-- n'importe quel joueur → annule un match accepté / termine ou abandonne un match actif.
 create or replace function public.check_online_match_transition()
 returns trigger
 language plpgsql set search_path = public as $$
@@ -630,9 +631,11 @@ begin
     return new;
   end if;
   if not (
-       (old.status = 'invited' and new.status in ('active', 'declined') and auth.uid() = old.guest_id)
-    or (old.status = 'invited' and new.status = 'cancelled' and auth.uid() = old.host_id)
-    or (old.status = 'active'  and new.status in ('completed', 'abandoned'))
+       (old.status = 'invited'  and new.status in ('accepted', 'declined') and auth.uid() = old.guest_id)
+    or (old.status = 'invited'  and new.status = 'cancelled' and auth.uid() = old.host_id)
+    or (old.status = 'accepted' and new.status = 'active' and auth.uid() = old.host_id)
+    or (old.status = 'accepted' and new.status = 'cancelled')
+    or (old.status = 'active'   and new.status in ('completed', 'abandoned'))
   ) then
     raise exception 'Transition de match invalide : % → %', old.status, new.status;
   end if;
@@ -663,6 +666,38 @@ create policy "Players append own events to active match"
       where m.id = match_id and m.status = 'active' and auth.uid() in (m.host_id, m.guest_id)
     )
   );
+
+-- Après le bull, l'hôte désigne qui commence : réordonne settings.players (non
+-- modifiable directement, cf. grant update plus haut) et démarre le match.
+create or replace function public.start_online_match(p_match_id uuid, p_starter_id uuid)
+returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  om      public.online_matches;
+  ordered jsonb;
+begin
+  select * into om from public.online_matches where id = p_match_id for update;
+  if om.id is null or om.host_id <> auth.uid() then
+    raise exception 'Match introuvable';
+  end if;
+  if om.status <> 'accepted' then
+    raise exception 'Le match n''attend pas le choix du premier joueur';
+  end if;
+  if p_starter_id not in (om.host_id, om.guest_id) then
+    raise exception 'Joueur invalide';
+  end if;
+
+  select jsonb_agg(p order by (p->>'id')::uuid <> p_starter_id)
+  into ordered
+  from jsonb_array_elements(om.settings->'players') p;
+
+  update public.online_matches
+  set settings = jsonb_set(settings, '{players}', ordered), status = 'active'
+  where id = p_match_id;
+end;
+$$;
+revoke execute on function public.start_online_match(uuid, uuid) from public, anon;
+grant execute on function public.start_online_match(uuid, uuid) to authenticated;
 
 -- Résultat d'un match de tournoi joué en ligne : tournament_matches n'est modifiable
 -- que par les hôtes, donc un joueur passe par cette fonction. Reprend la logique de

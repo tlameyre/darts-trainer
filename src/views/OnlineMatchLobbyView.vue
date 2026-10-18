@@ -27,22 +27,24 @@ const busy    = ref(false)
 
 const myId     = computed(() => props.mock?.myId ?? authStore.user?.id)
 const isHost   = computed(() => match.value?.host_id === myId.value)
-const opponent = computed(() => match.value && profileName(isHost.value ? match.value.guest : match.value.host))
+const opponent   = computed(() => match.value && profileName(isHost.value ? match.value.guest : match.value.host))
+const opponentId = computed(() => match.value && (isHost.value ? match.value.guest_id : match.value.host_id))
 const summary  = computed(() => {
   if (!match.value) return ''
   const { startScore, legsToWin } = match.value.settings
   return `${startScore} · ${legsToWin} manche${legsToWin > 1 ? 's' : ''} gagnante${legsToWin > 1 ? 's' : ''}`
 })
 
+// L'ordre de players n'est définitif qu'une fois le match démarré
 const starterLabel = computed(() => {
-  const first = match.value?.settings.players?.[0]
+  const first = match.value?.status === 'active' && match.value.settings.players?.[0]
   if (!first) return ''
   return first.id === myId.value ? 'Tu commences' : `${first.name} commence`
 })
 
 const CLOSED_MESSAGES = {
   declined:  'Invitation refusée.',
-  cancelled: 'Invitation annulée.',
+  cancelled: 'Match annulé.',
   completed: 'Ce match est terminé.',
   abandoned: 'Ce match a été abandonné.',
 }
@@ -57,9 +59,9 @@ function startGame() {
   router.replace({ name: 'x01-game', query: { online: match.value.id } })
 }
 
-async function run(action) {
+async function run(action, ...args) {
   busy.value = true
-  const updated = await action(match.value.id)
+  const updated = await action(match.value.id, ...args)
   busy.value = false
   if (updated) match.value = updated
   else await load()
@@ -104,6 +106,12 @@ if (!props.mock) {
           </p>
         </div>
 
+        <div v-if="match.status === 'accepted'" class="lobby__card">
+          <h3 class="lobby__bull-title">Faites le bull !</h3>
+          <p v-if="isHost" class="lobby__muted">Qui a gagné le bull ? Il commence la partie.</p>
+          <p v-else class="lobby__waiting">{{ opponent }} indique qui commence…</p>
+        </div>
+
         <template v-if="match.status === 'invited'">
           <template v-if="isHost">
             <AppButton variant="secondary" :disabled="busy" @click="run(onlineMatchStore.cancel)">
@@ -114,6 +122,15 @@ if (!props.mock) {
             <AppButton :disabled="busy" @click="run(onlineMatchStore.accept)">Accepter</AppButton>
             <AppButton variant="secondary" :disabled="busy" @click="run(onlineMatchStore.decline)">Refuser</AppButton>
           </template>
+        </template>
+        <template v-else-if="match.status === 'accepted'">
+          <template v-if="isHost">
+            <AppButton :disabled="busy" @click="run(onlineMatchStore.chooseStarter, myId)">Moi</AppButton>
+            <AppButton :disabled="busy" @click="run(onlineMatchStore.chooseStarter, opponentId)">{{ opponent }}</AppButton>
+          </template>
+          <AppButton variant="ghost" :disabled="busy" @click="run(onlineMatchStore.cancel, 'accepted')">
+            Annuler le match
+          </AppButton>
         </template>
         <AppButton v-else-if="match.status === 'active'" @click="startGame">Reprendre le match</AppButton>
         <AppButton v-else variant="secondary" @click="router.push({ name: 'online-settings' })">Nouveau défi</AppButton>
@@ -154,7 +171,8 @@ if (!props.mock) {
   }
 
   &__icon     { color: $orange; }
-  &__opponent { @include title-lg; color: $text-color; }
+  &__opponent   { @include title-lg; color: $text-color; }
+  &__bull-title { @include title-md; color: $orange; text-transform: uppercase; }
   &__muted    { @include text-sm; color: $muted; text-align: center; }
   &__status   { @include text-sm; color: $error; text-align: center; }
 
@@ -174,7 +192,8 @@ if (!props.mock) {
     padding: $padding-xxl $padding-xxl 0;
     @include nav-safe-bottom($padding-xl);
 
-    &__opponent { @include title-xl; }
+    &__opponent   { @include title-xl; }
+    &__bull-title { @include title-lg; }
     &__muted,
     &__status,
     &__waiting  { @include text-md; }

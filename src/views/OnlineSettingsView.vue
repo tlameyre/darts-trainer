@@ -22,7 +22,6 @@ const MAX_LEGS      = 9
 
 const startScore = ref(501)
 const legsToWin  = ref(2)
-const starter    = ref('random')
 const opponentId = ref(null)
 const inviting   = ref(false)
 
@@ -36,13 +35,7 @@ function openMatchWith(friendId) {
   ) ?? null
 }
 
-const STATUS_LABELS = { invited: 'Défi en attente', active: 'Match en cours' }
-
-const starterOptions = computed(() => [
-  { id: 'me',       label: 'Moi' },
-  { id: 'opponent', label: opponent.value ? profileName(opponent.value) : 'Adversaire' },
-  { id: 'random',   label: 'Au hasard' },
-])
+const STATUS_LABELS = { invited: 'Défi en attente', accepted: 'Bull en cours', active: 'Match en cours' }
 
 function selectFriend(friend) {
   const open = openMatchWith(friend.id)
@@ -57,7 +50,6 @@ async function challenge() {
     guest:      { id: opponent.value.id, name: profileName(opponent.value) },
     startScore: startScore.value,
     legsToWin:  legsToWin.value,
-    starter:    starter.value,
   })
   inviting.value = false
   if (match) router.push({ name: 'online-match', params: { id: match.id } })
@@ -125,19 +117,8 @@ onMounted(() => {
         </div>
         <p class="online-settings__hint">
           Le premier à {{ legsToWin }} manche{{ legsToWin > 1 ? 's' : '' }} gagne.
+          Une fois le défi accepté, faites le bull : tu choisiras alors qui commence.
         </p>
-      </div>
-
-      <div class="online-settings__card">
-        <div class="online-settings__section-label">Qui commence ?</div>
-        <div class="online-settings__row">
-          <AppButton
-            v-for="o in starterOptions" :key="o.id"
-            size="small" variant="ghost" :active="starter === o.id"
-            @click="starter = o.id"
-          >{{ o.label }}</AppButton>
-        </div>
-        <p class="online-settings__hint">Le joueur qui commence alterne ensuite à chaque manche.</p>
       </div>
     </main>
 

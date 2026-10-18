@@ -13,6 +13,10 @@ const banner = computed(() => {
   if (invite) {
     return { match: invite, text: `${profileName(invite.host)} te défie en ${invite.settings.startScore}`, action: 'Voir' }
   }
+  const accepted = onlineMatchStore.acceptedMatches[0]
+  if (accepted) {
+    return { match: accepted, text: `Bull contre ${profileName(onlineMatchStore.opponentOf(accepted))}`, action: 'Ouvrir' }
+  }
   const active = onlineMatchStore.activeMatches[0]
   if (active) {
     return { match: active, text: `Match en cours contre ${profileName(onlineMatchStore.opponentOf(active))}`, action: 'Reprendre' }
