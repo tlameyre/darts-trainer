@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/authStore.js'
 import { useX01 } from '../composables/useX01.js'
 import { useX01AIOpponent } from '../composables/useX01AIOpponent.js'
 import { analyzeLegs, MAX_CHECKOUT } from '../composables/useCheckoutAnalysis.js'
-import { buildMatchStats, volleyDarts } from '../composables/useX01MatchStats.js'
+import { buildMatchStats, computePlayerStats, threeDartAverage, volleyDarts } from '../composables/useX01MatchStats.js'
 import { useDbStore } from '../store/dbStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import { useTournamentStore } from '../store/tournamentStore.js'
@@ -62,7 +62,6 @@ const {
   startNextLeg,
   addLostLegVolleys,
   stats,
-  liveAvgVolley,
   // Multi-player extras
   currentPlayerIndex,
   legStarterIndex,
@@ -96,6 +95,8 @@ const {
   pendingCheckout,
   startNextLeg,
 })
+
+const headerTitle = `${settings.startScore} · ${settings.legsToWin} manche${settings.legsToWin > 1 ? 's' : ''}`
 
 const isBust   = computed(() => phase.value === 'bust')
 const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.value)
@@ -268,11 +269,6 @@ watch(phase, async (val) => {
 })
 
 // ── Données carte joueurs ──────────────────────────────────────────────────
-const lastHumanDarts = computed(() => {
-  const last = volleys.value[volleys.value.length - 1]
-  return last ? last.darts : []
-})
-
 const humanTotalDarts = computed(() =>
   volleys.value.reduce((sum, v) => sum + volleyDarts(v), 0)
   + (isBust.value || !currentDarts.value.length ? 0 : volleyDarts({ darts: currentDarts.value }))
@@ -282,6 +278,17 @@ const humanLastScore = computed(() => {
   const valid = volleys.value.filter(v => !v.bust)
   return valid.length ? valid[valid.length - 1].score : null
 })
+
+// Average and checkout % over the whole game so far (current leg included)
+function averageLabel(idx) {
+  const avg = threeDartAverage(legsForAnalysis(idx).flatMap(l => l.volleys))
+  return avg == null ? '–' : avg.toFixed(2)
+}
+
+function checkoutPctLabel(idx) {
+  const { checkoutHits, checkoutAttempts } = computePlayerStats(legsForAnalysis(idx), settings.startScore)
+  return checkoutAttempts ? `${Math.round((checkoutHits / checkoutAttempts) * 100)}%` : '–'
+}
 
 // Build player cards for X01PlayerSplitCard
 const playerCards = computed(() => {
@@ -301,10 +308,10 @@ const playerCards = computed(() => {
           remaining:  legRemaining.value,
           legsWon:    allCompletedLegs[i].value.length,
           legsToWin:  settings.legsToWin,
-          lastDarts:  lastHumanDarts.value,
-          avgVolley:  liveAvgVolley.value,
+          avgVolley:  averageLabel(i),
           lastScore:  humanLastScore.value,
           totalDarts: humanTotalDarts.value,
+          checkoutPct: checkoutPctLabel(i),
           isLegStarter: i === legStarterIndex.value,
         })
       } else {
@@ -316,10 +323,10 @@ const playerCards = computed(() => {
           remaining:  pRemaining,
           legsWon:    allCompletedLegs[i].value.length,
           legsToWin:  settings.legsToWin,
-          lastDarts:  pLastVolley ? pLastVolley.darts : [],
-          avgVolley:  computeStatsForPlayer(i)?.avgVolley ?? '–',
+          avgVolley:  averageLabel(i),
           lastScore:  pLastVolley?.score ?? null,
           totalDarts: pVols.reduce((sum, v) => sum + volleyDarts(v), 0),
+          checkoutPct: checkoutPctLabel(i),
           isLegStarter: i === legStarterIndex.value,
         })
       }
@@ -331,10 +338,10 @@ const playerCards = computed(() => {
       remaining:  legRemaining.value,
       legsWon:    completedLegs.value.length,
       legsToWin:  settings.legsToWin,
-      lastDarts:  lastHumanDarts.value,
-      avgVolley:  liveAvgVolley.value,
+      avgVolley:  averageLabel(meIndex),
       lastScore:  humanLastScore.value,
       totalDarts: humanTotalDarts.value,
+      checkoutPct: checkoutPctLabel(meIndex),
     })
 
     // AI card
@@ -411,7 +418,7 @@ const multiWinnerName = computed(() =>
 <template>
   <div class="x01">
 
-    <AppHeader :title="String(settings.startScore)" back-icon="exit" @back="router.push({ name: 'x01-settings' })">
+    <AppHeader :title="headerTitle" back-icon="exit" @back="router.push({ name: 'x01-settings' })">
       <template v-if="phase !== 'game-over'" #right>
         <button class="x01__menu-btn" @click="showMenu = true">
           <AppIcon name="gear" :width="22" :height="22" />

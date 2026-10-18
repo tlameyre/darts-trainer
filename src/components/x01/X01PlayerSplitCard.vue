@@ -3,7 +3,7 @@ import { computed } from 'vue'
 
 const props = defineProps({
   // Array of player card data:
-  // Human: { name, remaining, legsWon, legsToWin, lastDarts, avgVolley, lastScore, totalDarts, isLegStarter }
+  // Human: { name, remaining, legsWon, legsToWin, avgVolley, lastScore, totalDarts, checkoutPct, isLegStarter }
   // AI:    { name, profileLabel, level, remaining, legsWon, legsToWin, lastScore, avgVolley, totalDarts, isThinking, isAI }
   players:     { type: Array,   required: true },
   activeIndex: { type: Number,  default: 0 },
@@ -41,15 +41,6 @@ const otherPlayers = computed(() => {
           <span class="split-card__legs-badge">{{ activePlayer.legsWon }}</span>
         </div>
 
-        <div class="split-card__darts">
-          <template v-if="activePlayer.lastDarts?.length">
-            <span v-for="(d, j) in activePlayer.lastDarts" :key="j" class="split-card__dart-chip">
-              {{ d.label }}
-            </span>
-          </template>
-          <span v-else class="split-card__dart-chip split-card__dart-chip--empty">–</span>
-        </div>
-
         <div class="split-card__stats">
           <div class="split-card__stat-row">
             <span class="split-card__stat-label">Moyenne</span>
@@ -62,6 +53,10 @@ const otherPlayers = computed(() => {
           <div class="split-card__stat-row">
             <span class="split-card__stat-label">Fléchettes</span>
             <span class="split-card__stat-val">{{ activePlayer.totalDarts }}</span>
+          </div>
+          <div class="split-card__stat-row">
+            <span class="split-card__stat-label">Checkout</span>
+            <span class="split-card__stat-val">{{ activePlayer.checkoutPct ?? '–' }}</span>
           </div>
         </div>
       </div>
@@ -109,26 +104,14 @@ const otherPlayers = computed(() => {
           <span class="split-card__legs-badge">{{ player.legsWon }}</span>
         </div>
 
-        <div class="split-card__darts">
-          <!-- AI thinking animation -->
-          <template v-if="player.isAI && player.isThinking">
-            <span class="split-card__dart-chip split-card__dart-chip--thinking">
-              <span class="split-card__think-dot" />
-              <span class="split-card__think-dot" />
-              <span class="split-card__think-dot" />
-            </span>
-          </template>
-          <!-- AI last score -->
-          <template v-else-if="player.isAI && player.lastScore != null">
-            <span class="split-card__dart-chip">{{ player.lastScore > 0 ? player.lastScore : 'MISS' }}</span>
-          </template>
-          <!-- Human last darts -->
-          <template v-else-if="!player.isAI && player.lastDarts?.length">
-            <span v-for="(d, j) in player.lastDarts" :key="j" class="split-card__dart-chip">
-              {{ d.label }}
-            </span>
-          </template>
-          <span v-else class="split-card__dart-chip split-card__dart-chip--empty">–</span>
+        <!-- DartBot thinking animation (placeholder keeps the card height stable) -->
+        <div v-if="player.isAI" class="split-card__darts">
+          <span v-if="player.isThinking" class="split-card__dart-chip split-card__dart-chip--thinking">
+            <span class="split-card__think-dot" />
+            <span class="split-card__think-dot" />
+            <span class="split-card__think-dot" />
+          </span>
+          <span v-else class="split-card__dart-chip split-card__dart-chip--empty" aria-hidden="true">–</span>
         </div>
 
         <div class="split-card__stats">
@@ -143,6 +126,10 @@ const otherPlayers = computed(() => {
           <div class="split-card__stat-row">
             <span class="split-card__stat-label">Fléchettes</span>
             <span class="split-card__stat-val">{{ player.totalDarts }}</span>
+          </div>
+          <div class="split-card__stat-row">
+            <span class="split-card__stat-label">Checkout</span>
+            <span class="split-card__stat-val">{{ player.checkoutPct ?? '–' }}</span>
           </div>
         </div>
       </div>
@@ -330,7 +317,7 @@ const otherPlayers = computed(() => {
     flex-shrink: 0;
   }
 
-  // ── Darts chips ───────────────────────────────────────────────────────────
+  // ── DartBot thinking chip ───────────────────────────────────────────────────────────
   &__darts {
     display: flex;
     gap: $gap-xxs;
@@ -345,7 +332,7 @@ const otherPlayers = computed(() => {
     font-weight: 700;
     color: $white;
 
-    &--empty    { color: rgba($white, 0.4); background: rgba($black, 0.3); }
+    &--empty    { visibility: hidden; }
     &--thinking {
       display: flex;
       gap: 3px;

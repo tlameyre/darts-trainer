@@ -296,14 +296,6 @@ export function useX01({ startScore, legsToWin, players = null }) {
     phase.value                = 'playing'
   }
 
-  // ─── Moyenne en temps réel (joueur courant) ───────────────────────────────
-  const liveAvgVolley = computed(() => {
-    const idx         = currentPlayerIndex.value
-    const pastVolleys = allLegsOrdered[idx].value.flatMap(l => l.volleys)
-    const avg         = threeDartAverage([...pastVolleys, ...allVolleys[idx].value])
-    return avg == null ? '–' : avg.toFixed(2)
-  })
-
   // Called from view when AI wins a leg (single-player vs AI mode)
   function addLostLegVolleys(legVolleys) {
     allLegsOrdered[0].value.push({
@@ -409,7 +401,6 @@ export function useX01({ startScore, legsToWin, players = null }) {
     startNextLeg,
     addLostLegVolleys,
     stats,
-    liveAvgVolley,
     // Multi-player
     currentPlayerIndex,
     legStarterIndex,
