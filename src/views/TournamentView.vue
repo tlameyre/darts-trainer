@@ -16,6 +16,7 @@ import AppModal from '../components/AppModal.vue'
 import TournamentBracketTree from '../components/tournament/TournamentBracketTree.vue'
 import TournamentStandingsTable from '../components/tournament/TournamentStandingsTable.vue'
 import TournamentMatchdayList from '../components/tournament/TournamentMatchdayList.vue'
+import TournamentMatchStatsSheet from '../components/tournament/TournamentMatchStatsSheet.vue'
 import TournamentStartModal from '../components/tournament/TournamentStartModal.vue'
 import TournamentHostPickerModal from '../components/tournament/TournamentHostPickerModal.vue'
 import X01PlayerPicker from '../components/x01/X01PlayerPicker.vue'
@@ -263,6 +264,20 @@ function playLocal(matchId) {
   router.push({ name: 'x01-game' })
 }
 
+// Stats d'un match terminé (feuille plein écran)
+const statsMatch   = ref(null)
+const matchStats   = ref(null)
+const statsLoading = ref(false)
+
+async function openMatchStats(matchId) {
+  statsMatch.value = data.value.matches.find(m => m.id === matchId) ?? null
+  matchStats.value = null
+  if (isMock.value || !statsMatch.value) return
+  statsLoading.value = true
+  matchStats.value   = await tournamentStore.fetchMatchStats(matchId)
+  statsLoading.value = false
+}
+
 async function playOnline() {
   const { matchId, me, opponent } = playChoice.value
   playChoice.value = null
@@ -278,7 +293,7 @@ async function playOnline() {
 </script>
 
 <template>
-  <div class="tournament" v-if="data">
+  <div class="tournament" :class="{ 'tournament--fill': activeTab === 'participants' }" v-if="data">
     <AppHeader :title="data.tournament.name" @back="router.push({ name: 'tournaments' })" />
 
     <AppTabs v-model="activeTab" :tabs="tabs" />
@@ -350,7 +365,7 @@ async function playOnline() {
       </div>
 
       <!-- ── Participants ─────────────────────────────────────────────────── -->
-      <div v-if="activeTab === 'participants'" class="tournament__tab">
+      <div v-if="activeTab === 'participants'" class="tournament__tab tournament__tab--fill">
         <div class="tournament__section">
           <div class="tournament__section-header">
             <span class="tournament__section-title">Hôtes ({{ resolvedHosts.length }})</span>
@@ -370,7 +385,7 @@ async function playOnline() {
           </div>
         </div>
 
-        <div class="tournament__section">
+        <div class="tournament__section tournament__section--fill">
           <div class="tournament__section-header">
             <span class="tournament__section-title">Participants ({{ data.participants.length }})</span>
             <button v-if="isHost && data.tournament.status === 'pending'" class="tournament__section-action" @click="openAddPlayerPicker">+ Ajouter</button>
@@ -427,6 +442,7 @@ async function playOnline() {
           :participants="data.participants"
           :playable-match-ids="playableMatchIds"
           @play="onPlay"
+          @details="openMatchStats"
         />
       </div>
 
@@ -444,6 +460,7 @@ async function playOnline() {
           :participants="data.participants"
           :playable-match-ids="playableMatchIds"
           @play="onPlay"
+          @details="openMatchStats"
         />
       </div>
 
@@ -470,6 +487,15 @@ async function playOnline() {
       :allow-guests="false"
       @close="showAddPlayerPicker = false"
       @select="onAddPlayers"
+    />
+    <TournamentMatchStatsSheet
+      :match="statsMatch"
+      :participants="data.participants"
+      :start-score="data.tournament.start_score"
+      :match-stats="matchStats"
+      :loading="statsLoading"
+      :my-user-id="authStore.user?.id ?? null"
+      @close="statsMatch = null"
     />
     <AppModal :show="!!playChoice" title="Jouer le match" @close="playChoice = null">
       <div class="tournament__play-choice">
@@ -516,8 +542,15 @@ async function playOnline() {
     gap: $gap-sm;
   }
 
+  // Onglet Participants : la vue tient dans l'écran, la liste prend la place
+  // restante et défile en interne
+  &--fill {
+    height: 100dvh;
+  }
+
   &__main {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     padding: $padding-md 0;
@@ -527,6 +560,11 @@ async function playOnline() {
     display: flex;
     flex-direction: column;
     gap: $gap-lg;
+
+    &--fill {
+      flex: 1;
+      min-height: 0;
+    }
   }
 
   &__winner {
@@ -636,6 +674,11 @@ async function playOnline() {
     display: flex;
     flex-direction: column;
     gap: $gap-sm;
+
+    &--fill {
+      flex: 1;
+      min-height: 0;
+    }
   }
 
   &__section-header {
@@ -660,11 +703,12 @@ async function playOnline() {
     display: flex;
     flex-direction: column;
     gap: $gap-xs;
-  }
 
-  &__list--scroll {
-    max-height: 340px;
-    overflow-y: auto;
+    &--scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
   }
 
   &__row {

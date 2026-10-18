@@ -7,7 +7,10 @@ const props = defineProps({
   playable:         { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['play'])
+const emit = defineEmits(['play', 'details'])
+
+// Terminé (hors forfait) : la carte ouvre les stats du match
+const hasDetails = computed(() => props.match.status === 'completed' && !props.match.forfeited)
 
 const slots = computed(() => [
   { participantId: props.match.player1_participant_id, legs: props.match.player1_legs },
@@ -35,15 +38,16 @@ function isForfeitLoser(participantId) {
 
 function onClick() {
   if (props.playable) emit('play')
+  else if (hasDetails.value) emit('details')
 }
 </script>
 
 <template>
   <button
     class="match-card"
-    :class="[`match-card--${match.status}`, { 'match-card--locked': !playable }]"
+    :class="[`match-card--${match.status}`, { 'match-card--locked': !playable, 'match-card--viewable': hasDetails }]"
     :data-match-id="match.id"
-    :disabled="!playable"
+    :disabled="!playable && !hasDetails"
     @click="onClick"
   >
     <span v-if="match.status === 'in_progress'" class="match-card__badge match-card__badge--live">
@@ -99,6 +103,8 @@ function onClick() {
   &--completed {
     border-color: rgba($white, 0.1);
   }
+
+  &--viewable:active { background: rgba($white, 0.08); }
 
   &:disabled {
     cursor: default;

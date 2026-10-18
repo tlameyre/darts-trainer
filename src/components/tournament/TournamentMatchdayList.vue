@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import AppTabs from '../AppTabs.vue'
+import AppIcon from '../AppIcon.vue'
 import TournamentMatchCard from './TournamentMatchCard.vue'
 import { leagueMatches, byesForMatchday } from '../../composables/useChampionship.js'
 
@@ -11,7 +11,7 @@ const props = defineProps({
   playableMatchIds: { type: Array, default: () => [] },
 })
 
-const emit = defineEmits(['play'])
+const emit = defineEmits(['play', 'details'])
 
 const participantsById = computed(() => Object.fromEntries(props.participants.map(p => [p.id, p])))
 
@@ -31,16 +31,21 @@ const matchdays = computed(() => {
     }))
 })
 
-const tabs = computed(() => matchdays.value.map(d => ({ id: String(d.round), label: `J${d.round}` })))
-
 // Par défaut, la première journée qui reste à jouer
-const selectedRound = ref('')
-watch(matchdays, (days) => {
-  if (days.some(d => String(d.round) === selectedRound.value)) return
-  selectedRound.value = String((days.find(d => !d.done) ?? days[days.length - 1])?.round ?? '')
+const selectedIndex = ref(0)
+watch(() => matchdays.value.length, (count) => {
+  if (!count) return
+  const firstOpen = matchdays.value.findIndex(d => !d.done)
+  selectedIndex.value = firstOpen === -1 ? count - 1 : firstOpen
 }, { immediate: true })
 
-const current = computed(() => matchdays.value.find(d => String(d.round) === selectedRound.value) ?? null)
+const current     = computed(() => matchdays.value[selectedIndex.value] ?? null)
+const playedCount = computed(() => current.value?.matches.filter(m => m.status === 'completed').length ?? 0)
+
+function step(delta) {
+  selectedIndex.value = Math.min(matchdays.value.length - 1, Math.max(0, selectedIndex.value + delta))
+}
+
 const byes    = computed(() =>
   current.value ? byesForMatchday(props.matches, props.participants, current.value.round) : []
 )
@@ -48,12 +53,25 @@ const byes    = computed(() =>
 
 <template>
   <div class="matchdays">
-    <AppTabs v-model="selectedRound" :tabs="tabs" variant="underline" scrollable />
-
     <div v-if="current" class="matchdays__day">
-      <div class="matchdays__header">
-        <span class="matchdays__title">Journée {{ current.round }}</span>
-        <span v-if="current.done" class="matchdays__status">Terminée</span>
+      <div class="matchdays__nav">
+        <button class="matchdays__arrow" :disabled="selectedIndex === 0" aria-label="Journée précédente" @click="step(-1)">
+          <AppIcon name="arrow-left" :width="18" :height="18" />
+        </button>
+        <div class="matchdays__heading">
+          <span class="matchdays__title">Journée {{ current.round }}<span class="matchdays__total"> / {{ matchdays.length }}</span></span>
+          <span class="matchdays__status">
+            {{ current.done ? 'Terminée' : `${playedCount}/${current.matches.length} joués` }}
+          </span>
+        </div>
+        <button
+          class="matchdays__arrow"
+          :disabled="selectedIndex === matchdays.length - 1"
+          aria-label="Journée suivante"
+          @click="step(1)"
+        >
+          <AppIcon name="arrow-right" :width="18" :height="18" />
+        </button>
       </div>
       <TournamentMatchCard
         v-for="m in current.matches" :key="m.id"
@@ -62,6 +80,7 @@ const byes    = computed(() =>
         :participants-by-id="participantsById"
         :playable="playableMatchIds.includes(m.id)"
         @play="emit('play', m.id)"
+        @details="emit('details', m.id)"
       />
       <p v-if="byes.length" class="matchdays__bye">
         Exempt : {{ byes.map(p => p.player_data?.name).join(', ') }}
@@ -82,16 +101,47 @@ const byes    = computed(() =>
     gap: $gap-md;
   }
 
-  &__header {
+  &__nav {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
+    align-items: center;
+    gap: $gap-sm;
+  }
+
+  &__arrow {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-pill;
+    border: $border-md solid rgba($white, 0.15);
+    background: rgba($white, 0.05);
+    color: $text-color;
+    transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+
+    &:active:not(:disabled) {
+      border-color: $orange;
+      color: $orange;
+    }
+
+    &:disabled { opacity: 0.3; }
+  }
+
+  &__heading {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $gap-xxs;
   }
 
   &__title {
     @include title-md;
     color: $white;
   }
+
+  &__total { color: $muted; }
 
   &__status {
     @include text-xs;

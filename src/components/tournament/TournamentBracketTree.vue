@@ -9,7 +9,7 @@ const props = defineProps({
   playableMatchIds: { type: Array, default: () => [] },
 })
 
-const emit = defineEmits(['play'])
+const emit = defineEmits(['play', 'details'])
 
 const participantsById = computed(() => Object.fromEntries(props.participants.map(p => [p.id, p])))
 
@@ -93,7 +93,7 @@ function roundLabel(rounds, idx) {
           <div class="bracket__col-title">{{ roundLabel(winnerRounds, ri) }}</div>
           <div class="bracket__col-matches">
             <div v-for="match in round" :key="match.id" class="bracket__node">
-              <TournamentMatchCard :match="match" :participants-by-id="participantsById" :playable="playableMatchIds.includes(match.id)" @play="emit('play', match.id)" />
+              <TournamentMatchCard :match="match" :participants-by-id="participantsById" :playable="playableMatchIds.includes(match.id)" @play="emit('play', match.id)" @details="emit('details', match.id)" />
             </div>
           </div>
         </div>
@@ -110,7 +110,7 @@ function roundLabel(rounds, idx) {
           <div class="bracket__col-title">Tour {{ ri + 1 }}</div>
           <div class="bracket__col-matches">
             <div v-for="match in round" :key="match.id" class="bracket__node">
-              <TournamentMatchCard :match="match" :participants-by-id="participantsById" :playable="playableMatchIds.includes(match.id)" @play="emit('play', match.id)" />
+              <TournamentMatchCard :match="match" :participants-by-id="participantsById" :playable="playableMatchIds.includes(match.id)" @play="emit('play', match.id)" @details="emit('details', match.id)" />
             </div>
           </div>
         </div>
@@ -119,7 +119,7 @@ function roundLabel(rounds, idx) {
 
     <section v-if="grandFinal" class="bracket__section">
       <div class="bracket__section-title">Grande finale</div>
-      <TournamentMatchCard :match="grandFinal" :participants-by-id="participantsById" :playable="playableMatchIds.includes(grandFinal.id)" @play="emit('play', grandFinal.id)" />
+      <TournamentMatchCard :match="grandFinal" :participants-by-id="participantsById" :playable="playableMatchIds.includes(grandFinal.id)" @play="emit('play', grandFinal.id)" @details="emit('details', grandFinal.id)" />
     </section>
   </div>
 </template>

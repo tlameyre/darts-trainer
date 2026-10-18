@@ -148,7 +148,7 @@ function buildMockChampionship({ playerCount, doubleRoundRobin, playoffSize, pla
     matches,
   }
 }
-const mockChampionshipOngoing  = buildMockChampionship({ playerCount: 5, doubleRoundRobin: false, playoffSize: 4, playedRounds: 2 })
+const mockChampionshipOngoing  = buildMockChampionship({ playerCount: 9, doubleRoundRobin: true, playoffSize: 4, playedRounds: 5 })
 const mockChampionshipPlayoffs = buildMockChampionship({ playerCount: 4, doubleRoundRobin: true, playoffSize: 2, withPlayoffs: true })
 const showChampionshipOngoingPreview  = ref(false)
 const showChampionshipPlayoffsPreview = ref(false)
@@ -409,7 +409,7 @@ const mockSent = [
       <div class="dev__buttons">
         <button class="dev__btn" @click="showTournamentByesPreview = true">Bracket 5 joueurs (avec byes)</button>
         <button class="dev__btn" @click="showTournamentDoubleElimPreview = true">Bracket 4 joueurs (double élimination)</button>
-        <button class="dev__btn" @click="showChampionshipOngoingPreview = true">Championnat 5 joueurs en cours (exempts, top 4)</button>
+        <button class="dev__btn" @click="showChampionshipOngoingPreview = true">Championnat 9 joueurs aller-retour en cours (18 journées, exempts, top 4)</button>
         <button class="dev__btn" @click="showChampionshipPlayoffsPreview = true">Championnat 4 joueurs aller-retour + finale</button>
         <button class="dev__btn" @click="showTournamentPendingPreview = true">Tournoi pas démarré (Infos/Participants)</button>
         <button class="dev__btn" @click="showTournamentJoinPreview = true">Page "Rejoindre par code"</button>
