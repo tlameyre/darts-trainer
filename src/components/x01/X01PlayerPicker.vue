@@ -12,6 +12,8 @@ const props = defineProps({
   selectedIds: { type: Array, default: () => [] },
   // Nombre de joueurs qu'il est encore possible d'ajouter (limite du mode de jeu)
   maxAdditional: { type: Number, default: Infinity },
+  // false = comptes uniquement (amis ou recherche), ex. tournois
+  allowGuests: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(['close', 'select'])
@@ -276,7 +278,7 @@ function removeSelected(item) {
       <!-- Ajouter invité -->
       <div class="picker__guest-add">
         <Transition name="slide-fade">
-          <div v-if="showGuestInput" class="picker__guest-input-row">
+          <div v-if="allowGuests && showGuestInput" class="picker__guest-input-row">
             <input
               v-model="newGuestName"
               class="picker__guest-input"
@@ -289,7 +291,7 @@ function removeSelected(item) {
         </Transition>
         <p v-if="guestError" class="picker__guest-error">{{ guestError }}</p>
         <button
-          v-if="!showGuestInput"
+          v-if="allowGuests && !showGuestInput"
           class="picker__add-guest-btn"
           :disabled="limitReached"
           @click="showGuestInput = true"

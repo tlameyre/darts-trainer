@@ -4,11 +4,10 @@ import { computed } from 'vue'
 const props = defineProps({
   match:            { type: Object, required: true },
   participantsById: { type: Object, required: true }, // id -> participant row
+  playable:         { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['play'])
-
-const isPlayable = computed(() => ['ready', 'in_progress'].includes(props.match.status))
 
 const slots = computed(() => [
   { participantId: props.match.player1_participant_id, legs: props.match.player1_legs },
@@ -30,22 +29,22 @@ function slotModifiers(participantId) {
 }
 
 function onClick() {
-  if (isPlayable.value) emit('play')
+  if (props.playable) emit('play')
 }
 </script>
 
 <template>
   <button
     class="match-card"
-    :class="`match-card--${match.status}`"
+    :class="[`match-card--${match.status}`, { 'match-card--locked': !playable }]"
     :data-match-id="match.id"
-    :disabled="!isPlayable"
+    :disabled="!playable"
     @click="onClick"
   >
     <span v-if="match.status === 'in_progress'" class="match-card__badge match-card__badge--live">
       <span class="match-card__live-dot" />Live
     </span>
-    <span v-else-if="match.status === 'ready'" class="match-card__badge">À jouer</span>
+    <span v-else-if="match.status === 'ready' && playable" class="match-card__badge">À jouer</span>
 
     <template v-for="(slot, i) in slots" :key="i">
       <div v-if="i" class="match-card__divider" />
@@ -72,6 +71,11 @@ function onClick() {
     border-color: rgba($orange, 0.5);
 
     &:active { background: rgba($orange, 0.1); }
+  }
+
+  // Ready but not launchable by the current user: no call to action
+  &--ready#{&}--locked {
+    border-color: rgba($white, 0.1);
   }
 
   &--in_progress {

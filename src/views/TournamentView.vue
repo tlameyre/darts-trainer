@@ -161,7 +161,7 @@ async function confirmDeleteTournament() {
 function onAddPlayers(newPlayers) {
   showAddPlayerPicker.value = false
   for (const p of newPlayers) {
-    tournamentStore.addGuestParticipant(data.value.tournament.id, p)
+    tournamentStore.addParticipant(data.value.tournament.id, p)
   }
 }
 
@@ -171,33 +171,48 @@ const winnerName = computed(() => {
   return t.participants.find(p => p.id === t.tournament.winner_participant_id)?.player_data?.name ?? null
 })
 
-// Match jouable en ligne : j'y participe et l'adversaire a un compte
-const onlineChoice = ref(null) // { matchId, me, opponent } (participants)
-
-function onlineCandidate(matchId) {
+// Lancement : l'hôte peut lancer n'importe quel match prêt, chaque joueur le sien.
+// Un match en cours ne se rejoint que par ses deux joueurs (match en ligne ouvert).
+function myMatchSlots(match) {
   const t     = data.value
-  const match = t.matches.find(m => m.id === matchId)
-  const slots = [match?.player1_participant_id, match?.player2_participant_id]
+  const slots = [match.player1_participant_id, match.player2_participant_id]
     .map(id => t.participants.find(p => p.id === id))
   const me       = slots.find(p => p?.user_id && p.user_id === authStore.user?.id)
   const opponent = slots.find(p => p && p !== me)
-  return me && opponent?.user_id ? { matchId, me, opponent } : null
+  return { me, opponent }
 }
 
+const playableMatchIds = computed(() => {
+  const t = data.value
+  if (!t) return []
+  return t.matches
+    .filter(m => {
+      const { me } = myMatchSlots(m)
+      if (m.status === 'ready')       return isHost.value || !!me
+      if (m.status === 'in_progress') return !!me
+      return false
+    })
+    .map(m => m.id)
+})
+
+const playChoice = ref(null) // { matchId, me, opponent } (participants)
+
 function onPlay(matchId) {
-  if (isMock.value) return
+  if (isMock.value || !playableMatchIds.value.includes(matchId)) return
   const open = onlineMatchStore.openMatches.find(m => m.tournament_match_id === matchId)
   if (open) {
     router.push({ name: 'online-match', params: { id: open.id } })
     return
   }
-  const candidate = onlineCandidate(matchId)
-  if (candidate) onlineChoice.value = candidate
+  const match = data.value.matches.find(m => m.id === matchId)
+  if (match.status !== 'ready') return
+  const { me, opponent } = myMatchSlots(match)
+  if (me) playChoice.value = { matchId, me, opponent }
   else playLocal(matchId)
 }
 
 function playLocal(matchId) {
-  onlineChoice.value = null
+  playChoice.value = null
   const settings = tournamentStore.buildGameSettingsForMatch(matchId)
   if (!settings) return
   gameStore.gameSettings = settings
@@ -205,8 +220,8 @@ function playLocal(matchId) {
 }
 
 async function playOnline() {
-  const { matchId, me, opponent } = onlineChoice.value
-  onlineChoice.value = null
+  const { matchId, me, opponent } = playChoice.value
+  playChoice.value = null
   const t = data.value.tournament
   const match = await onlineMatchStore.invite({
     guest:      { id: opponent.user_id, name: opponent.player_data?.name ?? 'Joueur' },
@@ -340,6 +355,7 @@ async function playOnline() {
           v-else
           :matches="data.matches"
           :participants="data.participants"
+          :playable-match-ids="playableMatchIds"
           @play="onPlay"
         />
       </div>
@@ -363,15 +379,16 @@ async function playOnline() {
       :show="showAddPlayerPicker"
       :friends="friendStore.friends"
       :selected-ids="data.participants.map(p => p.player_data?.id).filter(Boolean)"
+      :allow-guests="false"
       @close="showAddPlayerPicker = false"
       @select="onAddPlayers"
     />
-    <AppModal :show="!!onlineChoice" title="Jouer le match" @close="onlineChoice = null">
+    <AppModal :show="!!playChoice" title="Jouer le match" @close="playChoice = null">
       <div class="tournament__play-choice">
-        <AppButton @click="playOnline">
-          En ligne contre {{ onlineChoice?.opponent.player_data?.name }}
+        <AppButton v-if="playChoice?.opponent?.user_id" @click="playOnline">
+          En ligne contre {{ playChoice.opponent.player_data?.name }}
         </AppButton>
-        <AppButton v-if="isHost" variant="secondary" @click="playLocal(onlineChoice.matchId)">
+        <AppButton variant="secondary" @click="playLocal(playChoice.matchId)">
           Sur cet appareil
         </AppButton>
       </div>

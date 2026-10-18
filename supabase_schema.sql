@@ -702,71 +702,6 @@ $$;
 revoke execute on function public.start_online_match(uuid, uuid) from public, anon;
 grant execute on function public.start_online_match(uuid, uuid) to authenticated;
 
--- Résultat d'un match de tournoi joué en ligne : tournament_matches n'est modifiable
--- que par les hôtes, donc un joueur passe par cette fonction. Reprend la logique de
--- tournamentStore.recordMatchResult / advanceParticipant. Idempotente.
-create or replace function public.report_online_tournament_result(p_online_match_id uuid, p_host_legs int, p_guest_legs int)
-returns void
-language plpgsql security definer set search_path = public as $$
-declare
-  om         public.online_matches;
-  tm         public.tournament_matches;
-  max_legs   int;
-  winner_pid uuid;
-  loser_pid  uuid;
-  host_legs  int;
-  guest_legs int;
-  host_pid   uuid;
-begin
-  select * into om from public.online_matches where id = p_online_match_id;
-  if om.id is null or auth.uid() not in (om.host_id, om.guest_id) then
-    raise exception 'Match introuvable';
-  end if;
-  if om.status not in ('completed', 'abandoned') or om.winner_id is null or om.tournament_match_id is null then
-    raise exception 'Match non terminé ou hors tournoi';
-  end if;
-
-  select * into tm from public.tournament_matches where id = om.tournament_match_id for update;
-  if tm.status = 'completed' then
-    return;
-  end if;
-
-  select p.id into winner_pid from public.tournament_participants p
-  where p.id in (tm.player1_participant_id, tm.player2_participant_id) and p.user_id = om.winner_id;
-  if winner_pid is null then
-    raise exception 'Vainqueur absent du match de tournoi';
-  end if;
-  loser_pid := case when tm.player1_participant_id = winner_pid
-                    then tm.player2_participant_id else tm.player1_participant_id end;
-
-  select legs_to_win into max_legs from public.tournaments where id = tm.tournament_id;
-  host_legs  := case when p_host_legs  between 0 and max_legs then p_host_legs  end;
-  guest_legs := case when p_guest_legs between 0 and max_legs then p_guest_legs end;
-  select p.id into host_pid from public.tournament_participants p
-  where p.id in (tm.player1_participant_id, tm.player2_participant_id) and p.user_id = om.host_id;
-
-  update public.tournament_matches
-  set winner_participant_id = winner_pid,
-      status       = 'completed',
-      played_at    = now(),
-      player1_legs = case when player1_participant_id = host_pid then host_legs else guest_legs end,
-      player2_legs = case when player2_participant_id = host_pid then host_legs else guest_legs end
-  where id = tm.id;
-
-  if tm.next_match_id is not null then
-    perform public.advance_tournament_participant(tm.next_match_id, tm.next_match_slot, winner_pid);
-  end if;
-  if tm.loser_next_match_id is not null and loser_pid is not null then
-    perform public.advance_tournament_participant(tm.loser_next_match_id, tm.loser_next_match_slot, loser_pid);
-  end if;
-  if tm.next_match_id is null then
-    update public.tournaments
-    set status = 'completed', winner_participant_id = winner_pid, completed_at = now()
-    where id = tm.tournament_id;
-  end if;
-end;
-$$;
-
 create or replace function public.advance_tournament_participant(p_match_id uuid, p_slot int, p_participant_id uuid)
 returns void
 language plpgsql security definer set search_path = public as $$
@@ -782,8 +717,121 @@ begin
 end;
 $$;
 revoke execute on function public.advance_tournament_participant(uuid, int, uuid) from public, anon, authenticated;
+
+-- Clôt un match de tournoi : enregistre vainqueur + manches, fait avancer le
+-- vainqueur (et le perdant en double élimination), clôt le tournoi après la
+-- finale. Interne : appelée par les RPC report_*_tournament_result. Idempotente.
+create or replace function public.complete_tournament_match(p_match_id uuid, p_winner_pid uuid, p_player1_legs int, p_player2_legs int)
+returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  tm        public.tournament_matches;
+  max_legs  int;
+  loser_pid uuid;
+begin
+  select * into tm from public.tournament_matches where id = p_match_id for update;
+  if tm.id is null then
+    raise exception 'Match de tournoi introuvable';
+  end if;
+  if tm.status = 'completed' then
+    return;
+  end if;
+  if p_winner_pid is null or p_winner_pid not in (tm.player1_participant_id, tm.player2_participant_id) then
+    raise exception 'Vainqueur absent du match de tournoi';
+  end if;
+  loser_pid := case when tm.player1_participant_id = p_winner_pid
+                    then tm.player2_participant_id else tm.player1_participant_id end;
+
+  select legs_to_win into max_legs from public.tournaments where id = tm.tournament_id;
+
+  update public.tournament_matches
+  set winner_participant_id = p_winner_pid,
+      status       = 'completed',
+      played_at    = now(),
+      player1_legs = case when p_player1_legs between 0 and max_legs then p_player1_legs end,
+      player2_legs = case when p_player2_legs between 0 and max_legs then p_player2_legs end
+  where id = tm.id;
+
+  if tm.next_match_id is not null then
+    perform public.advance_tournament_participant(tm.next_match_id, tm.next_match_slot, p_winner_pid);
+  end if;
+  if tm.loser_next_match_id is not null and loser_pid is not null then
+    perform public.advance_tournament_participant(tm.loser_next_match_id, tm.loser_next_match_slot, loser_pid);
+  end if;
+  if tm.next_match_id is null then
+    update public.tournaments
+    set status = 'completed', winner_participant_id = p_winner_pid, completed_at = now()
+    where id = tm.tournament_id;
+  end if;
+end;
+$$;
+revoke execute on function public.complete_tournament_match(uuid, uuid, int, int) from public, anon, authenticated;
+
+-- Résultat d'un match de tournoi joué en ligne, signalé par l'un des deux joueurs.
+create or replace function public.report_online_tournament_result(p_online_match_id uuid, p_host_legs int, p_guest_legs int)
+returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  om         public.online_matches;
+  tm         public.tournament_matches;
+  winner_pid uuid;
+  host_pid   uuid;
+begin
+  select * into om from public.online_matches where id = p_online_match_id;
+  if om.id is null or auth.uid() not in (om.host_id, om.guest_id) then
+    raise exception 'Match introuvable';
+  end if;
+  if om.status not in ('completed', 'abandoned') or om.winner_id is null or om.tournament_match_id is null then
+    raise exception 'Match non terminé ou hors tournoi';
+  end if;
+
+  select * into tm from public.tournament_matches where id = om.tournament_match_id;
+  select p.id into winner_pid from public.tournament_participants p
+  where p.id in (tm.player1_participant_id, tm.player2_participant_id) and p.user_id = om.winner_id;
+  select p.id into host_pid from public.tournament_participants p
+  where p.id in (tm.player1_participant_id, tm.player2_participant_id) and p.user_id = om.host_id;
+
+  perform public.complete_tournament_match(
+    tm.id,
+    winner_pid,
+    case when tm.player1_participant_id = host_pid then p_host_legs else p_guest_legs end,
+    case when tm.player2_participant_id = host_pid then p_host_legs else p_guest_legs end
+  );
+end;
+$$;
 revoke execute on function public.report_online_tournament_result(uuid, int, int) from public, anon;
 grant execute on function public.report_online_tournament_result(uuid, int, int) to authenticated;
+
+-- Résultat d'un match de tournoi joué sur un seul appareil : autorisé aux hôtes
+-- et aux deux joueurs du match (tournament_matches n'est modifiable que par les hôtes).
+create or replace function public.report_local_tournament_result(p_match_id uuid, p_winner_participant_id uuid, p_player1_legs int, p_player2_legs int)
+returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  tm public.tournament_matches;
+begin
+  select * into tm from public.tournament_matches where id = p_match_id;
+  if tm.id is null or not (
+    public.is_tournament_host(tm.tournament_id)
+    or exists (
+      select 1 from public.tournament_participants p
+      where p.id in (tm.player1_participant_id, tm.player2_participant_id) and p.user_id = auth.uid()
+    )
+  ) then
+    raise exception 'Match introuvable';
+  end if;
+  if tm.status = 'completed' then
+    return;
+  end if;
+  if tm.status <> 'ready' then
+    raise exception 'Match non jouable';
+  end if;
+
+  perform public.complete_tournament_match(tm.id, p_winner_participant_id, p_player1_legs, p_player2_legs);
+end;
+$$;
+revoke execute on function public.report_local_tournament_result(uuid, uuid, int, int) from public, anon;
+grant execute on function public.report_local_tournament_result(uuid, uuid, int, int) to authenticated;
 
 -- Un match de tournoi joué en ligne passe « en cours » dès que le match en ligne
 -- démarre, pour que tous les participants le voient (online_matches n'est lisible

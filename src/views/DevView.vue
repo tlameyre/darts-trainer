@@ -64,7 +64,10 @@ function buildMockTournament({ playerCount, doubleElimination }) {
   if (played) {
     Object.assign(played, { status: 'completed', winner_participant_id: played.player1_participant_id, player1_legs: 2, player2_legs: 1 })
     const next = resolved.find(m => m.id === played.next_match_id)
-    if (next) next[`player${played.next_match_slot}_participant_id`] = played.player1_participant_id
+    if (next) {
+      next[`player${played.next_match_slot}_participant_id`] = played.player1_participant_id
+      if (next.player1_participant_id && next.player2_participant_id) next.status = 'ready'
+    }
   }
   if (live) live.status = 'in_progress'
   return {

@@ -414,7 +414,7 @@ export const useDbStore = defineStore('db', () => {
     return data
   }
 
-  async function addGuestParticipant(tournamentId, participant) {
+  async function addTournamentParticipant(tournamentId, participant) {
     return createTournamentParticipants(tournamentId, [participant])
   }
 
@@ -566,15 +566,6 @@ export const useDbStore = defineStore('db', () => {
     return { tournament, hosts: hosts ?? [], participants: participants ?? [], matches: matches ?? [] }
   }
 
-  async function updateTournamentMatch(matchId, fields) {
-    const { data, error } = await supabase.from('tournament_matches').update(fields).eq('id', matchId).select().single()
-    if (error) {
-      console.error('[dbStore] updateTournamentMatch:', error.message)
-      return null
-    }
-    return data
-  }
-
   async function updateTournament(tournamentId, fields) {
     const { error } = await supabase.from('tournaments').update(fields).eq('id', tournamentId)
     if (error) console.error('[dbStore] updateTournament:', error.message)
@@ -676,6 +667,16 @@ export const useDbStore = defineStore('db', () => {
     return fetchOnlineMatch(matchId)
   }
 
+  async function reportLocalTournamentResult({ matchId, winnerParticipantId, player1Legs, player2Legs }) {
+    const { error } = await supabase.rpc('report_local_tournament_result', {
+      p_match_id:              matchId,
+      p_winner_participant_id: winnerParticipantId,
+      p_player1_legs:          player1Legs,
+      p_player2_legs:          player2Legs,
+    })
+    if (error) console.error('[dbStore] reportLocalTournamentResult:', error.message)
+  }
+
   async function reportOnlineTournamentResult(matchId, { hostLegs, guestLegs }) {
     const { error } = await supabase.rpc('report_online_tournament_result', {
       p_online_match_id: matchId,
@@ -687,15 +688,15 @@ export const useDbStore = defineStore('db', () => {
 
   return {
     createOnlineMatch, fetchOnlineMatch, fetchOpenOnlineMatches, updateOnlineMatchStatus,
-    fetchOnlineMatchEvents, insertOnlineMatchEvent, startOnlineMatch, reportOnlineTournamentResult,
+    fetchOnlineMatchEvents, insertOnlineMatchEvent, startOnlineMatch, reportOnlineTournamentResult, reportLocalTournamentResult,
     saveGameSession, saveWarmupSession, saveX01Session, saveTacticsSession, saveCheckoutSession,
     deleteGameSession, deleteWarmupSession, deleteX01Session, deleteTacticsSession, deleteCheckoutSession,
     fetchGameSessions, fetchWarmupSessions, fetchWarmupSessionsForChart, fetchX01Sessions, fetchTacticsSessions, fetchCheckoutSessions,
     fetchProfileStats, fetchGlobalStats,
     createTournamentRecord, createTournamentParticipants, createTournamentMatches,
     updateTournamentMatchPointers, fetchTournaments, fetchActiveTournaments, fetchTournamentDetail,
-    updateTournamentMatch, updateTournament,
-    addGuestParticipant, assignParticipantSeeds, leaveTournament, deleteTournamentParticipant, deleteTournament,
+    updateTournament,
+    addTournamentParticipant, assignParticipantSeeds, leaveTournament, deleteTournamentParticipant, deleteTournament,
     addTournamentHost, removeTournamentHost, fetchTournamentHosts,
     findTournamentByCode, joinTournamentByCode, fetchMyParticipantTournamentIds,
   }

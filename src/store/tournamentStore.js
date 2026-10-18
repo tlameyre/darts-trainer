@@ -239,15 +239,13 @@ export const useTournamentStore = defineStore('tournament', () => {
     return ok
   }
 
-  // player vient de X01PlayerPicker : { id, name, isFriend?, isRegistered?, isGuest? }.
-  // Un ami ou un utilisateur trouvé par recherche a un vrai compte (id = auth.users.id) :
-  // il faut le lier via user_id pour que ce participant voie le tournoi de son côté
-  // (RLS scope l'accès via tournament_participants.user_id, pas juste player_data).
-  async function addGuestParticipant(tournamentId, player) {
-    const hasAccount = player.isFriend || player.isRegistered
-    await useDbStore().addGuestParticipant(tournamentId, {
+  // player vient de X01PlayerPicker sans invités : { id, name, isFriend?, isRegistered? },
+  // id = auth.users.id. Le lier via user_id pour que ce participant voie le tournoi
+  // de son côté (RLS scope l'accès via tournament_participants.user_id).
+  async function addParticipant(tournamentId, player) {
+    await useDbStore().addTournamentParticipant(tournamentId, {
       playerData:     player,
-      userId:         hasAccount ? player.id : null,
+      userId:         player.id,
       linkedFriendId: player.isFriend ? player.id : null,
     })
     await fetchTournamentDetail(tournamentId)
@@ -276,51 +274,11 @@ export const useTournamentStore = defineStore('tournament', () => {
     }
   }
 
-  // Fait avancer le vainqueur (et, en cas de double élimination, le perdant vers le
-  // loser bracket) vers le(s) match(s) suivant(s), et clôt le tournoi si c'était le
-  // match final (repérable : aucun next_match_id).
+  // Avancement des joueurs et clôture du tournoi faits côté serveur (complete_tournament_match)
   async function recordMatchResult({ matchId, winnerParticipantId, player1Legs, player2Legs }) {
-    const dbStore = useDbStore()
-    const updated = await dbStore.updateTournamentMatch(matchId, {
-      winner_participant_id: winnerParticipantId,
-      status:                'completed',
-      played_at:              new Date().toISOString(),
-      player1_legs:           player1Legs,
-      player2_legs:           player2Legs,
-    })
-    if (!updated) return
-
-    const loserParticipantId = updated.player1_participant_id === winnerParticipantId
-      ? updated.player2_participant_id
-      : updated.player1_participant_id
-
-    if (updated.next_match_id) {
-      await advanceParticipant(dbStore, updated.next_match_id, updated.next_match_slot, winnerParticipantId)
-    }
-    if (updated.loser_next_match_id && loserParticipantId) {
-      await advanceParticipant(dbStore, updated.loser_next_match_id, updated.loser_next_match_slot, loserParticipantId)
-    }
-
-    if (!updated.next_match_id) {
-      await dbStore.updateTournament(updated.tournament_id, {
-        status:                 'completed',
-        winner_participant_id:  winnerParticipantId,
-        completed_at:           new Date().toISOString(),
-      })
-    }
-
-    if (activeTournament.value?.tournament?.id === updated.tournament_id) {
-      await fetchTournamentDetail(updated.tournament_id)
-    }
-  }
-
-  async function advanceParticipant(dbStore, matchId, slot, participantId) {
-    const field   = slot === 1 ? 'player1_participant_id' : 'player2_participant_id'
-    const partial = await dbStore.updateTournamentMatch(matchId, { [field]: participantId })
-    if (!partial) return
-    if (partial.player1_participant_id && partial.player2_participant_id && partial.status === 'pending') {
-      await dbStore.updateTournamentMatch(matchId, { status: 'ready' })
-    }
+    await useDbStore().reportLocalTournamentResult({ matchId, winnerParticipantId, player1Legs, player2Legs })
+    const tournamentId = activeTournament.value?.tournament?.id
+    if (tournamentId) await fetchTournamentDetail(tournamentId)
   }
 
   return {
@@ -328,7 +286,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     fetchTournaments, fetchActiveTournaments, fetchTournamentDetail,
     createTournamentShell, startTournament,
     fetchTournamentPreviewByCode, joinTournament, leaveTournament,
-    updateTournamentName, addHost, removeHost, removeParticipant, deleteTournament, addGuestParticipant,
+    updateTournamentName, addHost, removeHost, removeParticipant, deleteTournament, addParticipant,
     buildGameSettingsForMatch, recordMatchResult,
     unseenTournamentCount, fetchMyParticipations, markTournamentSeen,
     subscribeToMyParticipations, unsubscribeFromMyParticipations,
