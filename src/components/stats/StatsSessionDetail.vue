@@ -42,22 +42,33 @@ const warmupSessionStats = computed(() => {
   return { total: s.total_darts, hits: s.hits, accuracy: s.accuracy }
 })
 
-// Mappe les données DB → format attendu par X01Result
-const x01Stats = computed(() => {
+// Sessions récentes : match_stats complet. Anciennes : onglet Match seul, reconstruit des colonnes.
+const x01MatchStats = computed(() => {
   const s = props.session
   if (!s) return null
+  if (s.match_stats) return s.match_stats
+  const dist = s.volley_distribution ?? {}
   return {
-    avgVolley:        s.avg_volley,
-    avg9darts:        s.avg_9darts,
-    avgDartsToFinish: s.avg_darts_to_finish,
-    doublesHit:       s.doubles_hit,
-    doublesAttempted: s.doubles_attempted,
-    highestFinish:    s.highest_finish,
-    highestVolley:    s.highest_volley,
-    bestLeg:             s.min_darts != null ? { darts: s.min_darts, checkoutScore: null } : null,
-    worstLeg:            s.max_darts != null ? { darts: s.max_darts, checkoutScore: null } : null,
-    volleyDistribution:  s.volley_distribution ?? null,
-    legAverages:         s.leg_averages        ?? null,
+    players: [{ name: s.settings?.humanName ?? 'Toi', isMe: true }],
+    match: [{
+      legsWon:          s.settings?.humanLegsWon ?? s.legs_played,
+      average:          s.avg_volley != null ? Number(s.avg_volley) : null,
+      scoringAverage:   null,
+      first9Average:    s.avg_9darts != null ? Number(s.avg_9darts) : null,
+      checkoutHits:     s.doubles_hit ?? 0,
+      checkoutAttempts: s.doubles_attempted,
+      highestFinish:    s.highest_finish || null,
+      darts:            s.total_darts,
+      bestLeg:          s.min_darts,
+      buckets: {
+        60:  dist['60'] ?? 0,
+        80:  dist['80'] ?? 0,
+        100: (dist['100'] ?? 0) + (dist['120'] ?? 0),
+        140: (dist['140'] ?? 0) + (dist['160'] ?? 0),
+        180: dist['180'] ?? 0,
+      },
+    }],
+    legs: [],
   }
 })
 
@@ -103,9 +114,8 @@ function formatDate(iso) {
       <!-- Résultat 501 -->
       <template v-if="mode === 'x01'">
         <X01Result
-          :stats="x01Stats"
-          :legs-played="session.legs_played"
-          :start-score="session.start_score"
+          :match-stats="x01MatchStats"
+          :subtitle="`${session.start_score} pts · ${session.legs_played} manche${session.legs_played > 1 ? 's' : ''}`"
           hide-actions
         />
       </template>

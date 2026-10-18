@@ -189,6 +189,7 @@ create table public.x01_sessions (
   volley_distribution jsonb,
   leg_averages        jsonb,
   opponent_data       jsonb,
+  match_stats         jsonb, -- stats par joueur, match + par leg (buildMatchStats)
   linked_friend_id    uuid references public.profiles(id) on delete set null
 );
 
@@ -203,6 +204,9 @@ create policy "Users manage own x01_sessions"
 --   add column if not exists doubles_hit       int,
 --   add column if not exists doubles_attempted  int,
 --   add column if not exists total_darts        int;
+
+-- Migration stats de fin de match (façon Scolia) :
+-- alter table public.x01_sessions add column if not exists match_stats jsonb;
 
 
 -- ============================================================

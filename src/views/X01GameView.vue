@@ -5,6 +5,8 @@ import { useGameStore } from '../store/gameStore.js'
 import { useAuthStore } from '../store/authStore.js'
 import { useX01 } from '../composables/useX01.js'
 import { useX01AIOpponent } from '../composables/useX01AIOpponent.js'
+import { analyzeLegs, MAX_CHECKOUT } from '../composables/useCheckoutAnalysis.js'
+import { buildMatchStats, volleyDarts } from '../composables/useX01MatchStats.js'
 import { useDbStore } from '../store/dbStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import { useTournamentStore } from '../store/tournamentStore.js'
@@ -45,6 +47,7 @@ const {
   currentDarts,
   phase,
   legRemaining,
+  volleyRemaining,
   volleyNumber,
   volleyCompleting,
   pendingDoublesPrompt,
@@ -69,6 +72,7 @@ const {
   allVolleys,
   lastLegWinnerIndex,
   computeStatsForPlayer,
+  legsForAnalysis,
 } = useX01(settings)
 
 const {
@@ -78,7 +82,7 @@ const {
   aiTurn,
   aiWonLeg,
   aiWonGame,
-  aiVolleysScores,
+  aiLegs,
   aiLegHumanSnapshot,
   aiCardData,
   handleAILegContinue,
@@ -93,34 +97,79 @@ const {
   startNextLeg,
 })
 
-const AI_VOLLEY_BUCKETS = ['180', '160', '140', '120', '100', '80', '60', '40']
-
-const aiStats = computed(() => {
-  if (!aiProfile || !aiVolleysScores.value.length) return null
-  const scores = aiVolleysScores.value
-  const dist = Object.fromEntries(AI_VOLLEY_BUCKETS.map(k => [k, 0]))
-  for (const s of scores) {
-    if (s >= 180)      dist['180']++
-    else if (s >= 160) dist['160']++
-    else if (s >= 140) dist['140']++
-    else if (s >= 120) dist['120']++
-    else if (s >= 100) dist['100']++
-    else if (s >= 80)  dist['80']++
-    else if (s >= 60)  dist['60']++
-    else if (s >= 40)  dist['40']++
-  }
-  const avg = scores.reduce((a, b) => a + b, 0) / scores.length
-  return {
-    avgVolley:          parseFloat(avg.toFixed(2)),
-    highestVolley:      Math.max(...scores),
-    doublesHit:         aiLegsWon.value,
-    volleyDistribution: dist,
-  }
-})
-
 const isBust   = computed(() => phase.value === 'bust')
 const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.value)
 const showMenu = ref(false)
+
+// ── Analyse des checkouts : cible visée demandée avant chaque fléchette ────
+const analysisZone = computed(() =>
+  !!settings.checkoutAnalysis
+  && currentPlayerIndex.value === meIndex
+  && !aiTurn.value
+  && volleyRemaining.value <= MAX_CHECKOUT
+)
+const pendingTarget = ref(null)
+const targeting     = computed(() => analysisZone.value && !isLocked.value && !pendingTarget.value)
+
+watch([currentPlayerIndex, phase], () => { pendingTarget.value = null })
+
+function handleDart(dart) {
+  if (targeting.value) {
+    pendingTarget.value = dart
+    return
+  }
+  addDart(pendingTarget.value ? { ...dart, target: pendingTarget.value } : dart)
+  pendingTarget.value = null
+}
+
+function handleMiss() {
+  addMiss(pendingTarget.value)
+  pendingTarget.value = null
+}
+
+function handleUndo() {
+  if (pendingTarget.value) pendingTarget.value = null
+  else undo()
+}
+
+const checkoutAnalysis = computed(() => {
+  if (!settings.checkoutAnalysis || phase.value !== 'game-over') return null
+  const analysis = analyzeLegs(legsForAnalysis(meIndex), settings.startScore)
+  return analysis.moves.length ? analysis : null
+})
+
+const matchStats = computed(() => {
+  if (phase.value !== 'game-over') return null
+  const resultPlayers = isMulti
+    ? players.map(p => ({ name: p.name, isMe: !!p.isMe }))
+    : [
+        { name: authStore.profile?.username ?? 'Toi', isMe: true },
+        ...(aiProfile ? [{ name: 'DartBot', isAI: true }] : []),
+      ]
+  const legsByPlayer = isMulti
+    ? players.map((_, i) => legsForAnalysis(i))
+    : [legsForAnalysis(meIndex), ...(aiProfile ? [aiLegs.value] : [])]
+  const result = buildMatchStats({ players: resultPlayers, legsByPlayer, startScore: settings.startScore })
+  return result.legs.length ? result : null
+})
+
+const resultTitle = computed(() => {
+  if (isMulti) return multiWinnerName.value ? `${multiWinnerName.value} a gagné la partie !` : 'Partie terminée'
+  return aiWonGame.value ? 'L\'IA a gagné la partie !' : 'Bien joué !'
+})
+
+const resultSubtitle = computed(() => {
+  const legs = matchStats.value?.legs.length ?? 0
+  return `${settings.startScore} pts · ${legs} manche${legs > 1 ? 's' : ''}`
+})
+
+function handleReplay() {
+  if (isTournamentMatch) {
+    router.push({ name: 'tournament-detail', params: { id: tournamentContext.tournamentId } })
+  } else {
+    router.push({ name: 'x01-settings' })
+  }
+}
 
 function finishGame() {
   showMenu.value = false
@@ -173,6 +222,7 @@ watch(phase, async (val) => {
       startScore: settings.startScore,
       legsPlayed: Math.max(...allCompletedLegs.map(r => r.value.length)),
       stats:      stats.value,
+      matchStats: matchStats.value,
       settings: {
         ...settings,
         humanName:    authStore.profile?.username ?? null,
@@ -199,6 +249,7 @@ watch(phase, async (val) => {
       startScore: settings.startScore,
       legsPlayed: completedLegs.value.length,
       stats:      stats.value,
+      matchStats: matchStats.value,
       settings: {
         ...settings,
         humanName:    authStore.profile?.username ?? null,
@@ -223,8 +274,8 @@ const lastHumanDarts = computed(() => {
 })
 
 const humanTotalDarts = computed(() =>
-  volleys.value.reduce((sum, v) => sum + v.darts.length, 0)
-  + (isBust.value ? 0 : currentDarts.value.length)
+  volleys.value.reduce((sum, v) => sum + volleyDarts(v), 0)
+  + (isBust.value || !currentDarts.value.length ? 0 : volleyDarts({ darts: currentDarts.value }))
 )
 
 const humanLastScore = computed(() => {
@@ -268,7 +319,7 @@ const playerCards = computed(() => {
           lastDarts:  pLastVolley ? pLastVolley.darts : [],
           avgVolley:  computeStatsForPlayer(i)?.avgVolley ?? '–',
           lastScore:  pLastVolley?.score ?? null,
-          totalDarts: pVols.reduce((sum, v) => sum + v.darts.length, 0),
+          totalDarts: pVols.reduce((sum, v) => sum + volleyDarts(v), 0),
           isLegStarter: i === legStarterIndex.value,
         })
       }
@@ -325,7 +376,7 @@ const recapVolleys = computed(() =>
 
 const recapTotalDarts = computed(() =>
   legWinner.value === 'ai'
-    ? recapVolleys.value.reduce((sum, v) => sum + v.darts.length, 0)
+    ? recapVolleys.value.reduce((sum, v) => sum + volleyDarts(v), 0)
     : (lastLeg.value?.totalDarts ?? 0)
 )
 
@@ -381,7 +432,14 @@ const multiWinnerName = computed(() =>
       <div class="x01__game-main">
         <DartSlotsHeader :tour-number="isBust ? volleyNumber - 1 : volleyNumber">
           <template #right>
+            <span v-if="targeting" class="x01__turn-label x01__turn-label--target">
+              Où vises-tu ?
+            </span>
+            <span v-else-if="pendingTarget" class="x01__turn-label x01__turn-label--target">
+              Visé {{ pendingTarget.label }} · touché ?
+            </span>
             <span
+              v-else
               class="x01__turn-label"
               :class="{ 'x01__turn-label--ai': aiTurn && !isMulti }"
             >
@@ -395,11 +453,13 @@ const multiWinnerName = computed(() =>
           :bust="isBust"
           :locked="isLocked || (aiTurn && !isMulti)"
           toggleable
-          @dart="addDart"
-          @miss="addMiss"
+          :force-dart="analysisZone"
+          :targeting="targeting"
+          @dart="handleDart"
+          @miss="handleMiss"
           @bust="bustVolley"
           @validate="confirmVolleyTotal"
-          @undo="undo"
+          @undo="handleUndo"
         />
       </div>
     </div>
@@ -450,42 +510,15 @@ const multiWinnerName = computed(() =>
     <Transition name="slide-up">
       <div v-if="phase === 'game-over'" class="x01__overlay">
 
-        <!-- Multi-player result -->
-        <div v-if="isMulti" class="x01__multi-result">
-          <div class="x01__multi-winner">
-            <div class="x01__multi-trophy">🏆</div>
-            <div class="x01__multi-winner-name">{{ multiWinnerName }}</div>
-            <div class="x01__multi-winner-sub">a gagné la partie !</div>
-          </div>
-          <div class="x01__multi-scores">
-            <div v-for="(p, i) in players" :key="i" class="x01__multi-score-row"
-                 :class="{ 'x01__multi-score-row--winner': i === multiWinnerIndex }">
-              <div class="x01__multi-avatar">{{ p.name?.[0]?.toUpperCase() }}</div>
-              <span class="x01__multi-player-name">{{ p.name }}</span>
-              <span class="x01__multi-legs">{{ allCompletedLegs[i].value.length }} / {{ settings.legsToWin }}</span>
-            </div>
-          </div>
-          <div class="x01__multi-actions">
-            <button
-              v-if="isTournamentMatch"
-              class="x01__multi-btn"
-              @click="router.push({ name: 'tournament-detail', params: { id: tournamentContext.tournamentId } })"
-            >Retour au bracket</button>
-            <button v-else class="x01__multi-btn" @click="router.push({ name: 'x01-settings' })">Rejouer</button>
-            <button class="x01__multi-btn x01__multi-btn--ghost" @click="router.push({ name: 'home' })">Accueil</button>
-          </div>
-        </div>
-
-        <!-- Solo / vs AI result -->
         <X01Result
-          v-else
-          :stats="stats"
-          :legs-played="completedLegs.length"
-          :start-score="settings.startScore"
-          :ai-won="aiWonGame"
-          :ai-legs-won="aiLegsWon"
-          :ai-stats="aiStats"
-          @replay="router.push({ name: 'x01-settings' })"
+          :match-stats="matchStats"
+          :title="resultTitle"
+          :subtitle="resultSubtitle"
+          :emoji="aiWonGame ? '🤖' : '🏆'"
+          :title-color="aiWonGame ? 'orange' : null"
+          :replay-label="isTournamentMatch ? 'Retour au bracket' : 'Rejouer'"
+          :checkout-analysis="checkoutAnalysis"
+          @replay="handleReplay"
           @home="router.push({ name: 'home' })"
         />
       </div>
@@ -543,7 +576,8 @@ const multiWinnerName = computed(() =>
     text-transform: uppercase;
     letter-spacing: 0.04em;
 
-    &--ai { color: $muted; }
+    &--ai     { color: $muted; }
+    &--target { color: $accent; }
   }
 
   &__overlay {
@@ -553,115 +587,6 @@ const multiWinnerName = computed(() =>
     z-index: 90;
     display: flex;
     padding: $padding-md;
-  }
-
-  // ── Multi-player result screen ──────────────────────────────────────────
-  &__multi-result {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xl;
-  }
-
-  &__multi-winner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: $gap-sm;
-  }
-
-  &__multi-trophy {
-    font-size: 64px;
-    line-height: 1;
-  }
-
-  &__multi-winner-name {
-    @include title-xxl;
-    font-weight: 700;
-    color: $orange;
-  }
-
-  &__multi-winner-sub {
-    @include text-md;
-    color: $muted;
-  }
-
-  &__multi-scores {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-xs;
-    width: 100%;
-    max-width: 320px;
-  }
-
-  &__multi-score-row {
-    display: flex;
-    align-items: center;
-    gap: $gap-sm;
-    padding: $padding-sm $padding-md;
-    border-radius: $radius-md;
-    background: rgba($white, 0.05);
-
-    &--winner {
-      background: rgba($orange, 0.15);
-      border: $border-sm solid rgba($orange, 0.4);
-    }
-  }
-
-  &__multi-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: $radius-pill;
-    background: $orange;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    @include title-xs;
-    font-weight: 700;
-    color: $white;
-    flex-shrink: 0;
-  }
-
-  &__multi-player-name {
-    flex: 1;
-    @include text-sm;
-    font-weight: 600;
-    color: $text-color;
-  }
-
-  &__multi-legs {
-    @include title-md;
-    font-weight: 700;
-    color: $white;
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__multi-actions {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
-    width: 100%;
-    max-width: 320px;
-  }
-
-  &__multi-btn {
-    @include title-md;
-    font-weight: 700;
-    color: $white;
-    background: $orange;
-    border-radius: $radius-md;
-    padding: $padding-md;
-    text-align: center;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.8; }
-
-    &--ghost {
-      background: rgba($white, 0.08);
-      color: $muted;
-    }
   }
 }
 

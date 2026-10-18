@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { volleyDarts, threeDartAverage } from './useX01MatchStats.js'
 
 /**
  * Logique du mode X01 — saisie fléchette par fléchette, double-out obligatoire.
@@ -22,6 +23,8 @@ export function useX01({ startScore, legsToWin, players = null }) {
   // All legs in chronological order per player: { volleys, won, totalDarts, checkoutScore? }
   const allLegsOrdered   = Array.from({ length: playerCount }, () => ref([]))
   const lastLegWinnerIndex = ref(null)
+  // True once the current leg is recorded in allLegsOrdered (until startNextLeg resets it)
+  const legClosed          = ref(false)
 
   const currentPlayerIndex = ref(0)
   const legStarterIndex    = ref(0)
@@ -88,11 +91,12 @@ export function useX01({ startScore, legsToWin, players = null }) {
   }
 
   function finishLeg() {
-    const totalDarts    = volleys.value.reduce((sum, v) => sum + v.darts.length, 0)
+    const totalDarts    = volleys.value.reduce((sum, v) => sum + volleyDarts(v), 0)
     const checkoutScore = volleys.value[volleys.value.length - 1].score
     const winnerIndex   = currentPlayerIndex.value
 
     lastLegWinnerIndex.value = winnerIndex
+    legClosed.value          = true
 
     // Record this leg for ALL players in chronological order
     for (let i = 0; i < playerCount; i++) {
@@ -101,7 +105,7 @@ export function useX01({ startScore, legsToWin, players = null }) {
       allLegsOrdered[i].value.push({
         volleys: legVolleys,
         won,
-        totalDarts: won ? totalDarts : legVolleys.reduce((s, v) => s + v.darts.length, 0),
+        totalDarts: won ? totalDarts : legVolleys.reduce((s, v) => s + volleyDarts(v), 0),
         checkoutScore: won ? checkoutScore : null,
       })
     }
@@ -241,8 +245,8 @@ export function useX01({ startScore, legsToWin, players = null }) {
     finishLeg()
   }
 
-  function addMiss() {
-    addDart({ pts: 0, type: 'miss', label: 'Miss', sector: null })
+  function addMiss(target = null) {
+    addDart({ pts: 0, type: 'miss', label: 'Miss', sector: null, ...(target ? { target } : {}) })
   }
 
   function undo() {
@@ -283,11 +287,12 @@ export function useX01({ startScore, legsToWin, players = null }) {
     volleyCompleting.value     = false
     pendingDoublesPrompt.value = false
     pendingCheckout.value      = null
-    // 2 joueurs : alterne le joueur qui démarre, en partant de celui placé en premier.
-    // 3+ joueurs : même ordre à chaque manche (toujours le joueur placé en premier).
+    // Le joueur qui démarre tourne à chaque manche, en partant de celui placé en premier
+    // (2 joueurs : alternance ; 3+ : boucle 0 → 1 → 2 → 0…)
     const legsPlayed           = allLegsOrdered[0].value.length
-    currentPlayerIndex.value   = playerCount === 2 ? legsPlayed % 2 : 0
+    currentPlayerIndex.value   = legsPlayed % playerCount
     legStarterIndex.value      = currentPlayerIndex.value
+    legClosed.value            = false
     phase.value                = 'playing'
   }
 
@@ -295,10 +300,8 @@ export function useX01({ startScore, legsToWin, players = null }) {
   const liveAvgVolley = computed(() => {
     const idx         = currentPlayerIndex.value
     const pastVolleys = allLegsOrdered[idx].value.flatMap(l => l.volleys)
-    const all         = [...pastVolleys, ...allVolleys[idx].value]
-    if (!all.length) return '–'
-    const sum = all.reduce((s, v) => s + (v.bust ? 0 : v.score), 0)
-    return (sum / all.length).toFixed(2)
+    const avg         = threeDartAverage([...pastVolleys, ...allVolleys[idx].value])
+    return avg == null ? '–' : avg.toFixed(2)
   })
 
   // Called from view when AI wins a leg (single-player vs AI mode)
@@ -306,9 +309,16 @@ export function useX01({ startScore, legsToWin, players = null }) {
     allLegsOrdered[0].value.push({
       volleys:    [...legVolleys],
       won:        false,
-      totalDarts: legVolleys.reduce((s, v) => s + v.darts.length, 0),
+      totalDarts: legVolleys.reduce((s, v) => s + volleyDarts(v), 0),
       checkoutScore: null,
     })
+    legClosed.value = true
+  }
+
+  // Legs of a player for checkout analysis, including an unfinished leg (game ended via menu)
+  function legsForAnalysis(idx) {
+    const legs = allLegsOrdered[idx].value
+    return legClosed.value ? legs : [...legs, { volleys: allVolleys[idx].value }]
   }
 
   // ─── Statistiques finales (joueur 0 = utilisateur connecté) ──────────────
@@ -321,16 +331,9 @@ export function useX01({ startScore, legsToWin, players = null }) {
     const validVs = allVs.filter(v => !v.bust)
     const scores  = validVs.map(v => v.score)
 
-    const avgVolley = scores.length
-      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-      : 0
-
-    const first3Scores = wonLegs.flatMap(l =>
-      l.volleys.filter(v => !v.bust).slice(0, 3).map(v => v.score)
-    )
-    const avg9darts = first3Scores.length
-      ? Math.round(first3Scores.reduce((a, b) => a + b, 0) / first3Scores.length)
-      : 0
+    // 3-dart averages (points / darts thrown × 3), busts count as 0
+    const avgVolley = threeDartAverage(allVs) ?? 0
+    const avg9darts = threeDartAverage(orderedLegs.flatMap(l => l.volleys.slice(0, 3))) ?? 0
 
     const doublesHit       = wonLegs.length
     const doublesAttempted = allVs.reduce((sum, v) => {
@@ -392,6 +395,7 @@ export function useX01({ startScore, legsToWin, players = null }) {
     pendingCheckout,
     // Computed
     legRemaining,
+    volleyRemaining,
     legNumber,
     volleyNumber,
     // Actions
@@ -415,5 +419,6 @@ export function useX01({ startScore, legsToWin, players = null }) {
     allVolleys,
     lastLegWinnerIndex,
     computeStatsForPlayer,
+    legsForAnalysis,
   }
 }

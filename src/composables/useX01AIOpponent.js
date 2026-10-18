@@ -36,6 +36,7 @@ export function useX01AIOpponent({
       aiTotalDarts:     ref(0),
       aiAvgVolley:      computed(() => '–'),
       aiLegHumanSnapshot: ref(null),
+      aiLegs:           ref([]),
       aiLevel:          computed(() => null),
       aiCardData:       computed(() => null),
       handleAILegContinue: () => {},
@@ -52,6 +53,9 @@ export function useX01AIOpponent({
   const aiTotalDarts       = ref(0)
   const aiVolleysScores    = ref([])
   const aiLegHumanSnapshot = ref(null)
+  // Closed legs { volleys, won, checkoutScore } + volleys of the leg in progress
+  const aiLegs             = ref([])
+  const aiCurrentVolleys   = ref([])
   let _aiTimer             = null
 
   const aiLevel = computed(() => aiProfile.level ?? null)
@@ -72,11 +76,13 @@ export function useX01AIOpponent({
 
       aiTotalDarts.value += result.dartsUsed
       aiVolleysScores.value.push(result.bust ? 0 : result.score)
+      aiCurrentVolleys.value.push({ score: result.score, bust: result.bust, darts: result.dartsUsed })
 
       if (result.isCheckout) {
         aiRemaining.value = 0
         aiLegsWon.value  += 1
         aiTurn.value      = false
+        closeAILeg(true, result.score)
 
         aiLegHumanSnapshot.value = {
           volleys:   [...volleys.value],
@@ -96,6 +102,11 @@ export function useX01AIOpponent({
     }, 900)
   }
 
+  function closeAILeg(won, checkoutScore = null) {
+    aiLegs.value.push({ volleys: aiCurrentVolleys.value, won, checkoutScore })
+    aiCurrentVolleys.value = []
+  }
+
   function handleAILegContinue() {
     aiWonLeg.value           = false
     aiLegHumanSnapshot.value = null
@@ -113,6 +124,11 @@ export function useX01AIOpponent({
       return
     }
     triggerAIVolley()
+  })
+
+  // Leg won by the human, or game ended from the menu while the leg was in progress
+  watch(phase, (val) => {
+    if ((val === 'leg-recap' || val === 'game-over') && !aiWonGame.value) closeAILeg(false)
   })
 
   // Reprend après fin du bust
@@ -160,6 +176,7 @@ export function useX01AIOpponent({
     aiAvgVolley,
     aiVolleysScores,
     aiLegHumanSnapshot,
+    aiLegs,
     aiLevel,
     aiCardData,
     handleAILegContinue,

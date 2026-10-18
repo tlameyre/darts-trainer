@@ -18,6 +18,10 @@ import X01DoublesModal from '../components/x01/X01DoublesModal.vue'
 import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
 import SvgDartboard from '../components/x01/SvgDartboard.vue'
 import GameInput from '../components/game/GameInput.vue'
+import X01CheckoutReview from '../components/x01/X01CheckoutReview.vue'
+import X01Result from '../components/x01/X01Result.vue'
+import { buildMatchStats } from '../composables/useX01MatchStats.js'
+import { analyzeLegs, ALL_SEGMENTS } from '../composables/useCheckoutAnalysis.js'
 import FriendsView from './FriendsView.vue'
 import StatsWarmupDetailView from './StatsWarmupDetailView.vue'
 import TournamentView from './TournamentView.vue'
@@ -142,6 +146,51 @@ function onMockDart(d) {
   if (mockDarts.value.length >= 3) mockDarts.value = []
   mockDarts.value = [...mockDarts.value, d]
 }
+
+// --- Preview X01CheckoutReview (revue des checkouts, départ fictif à 170) ---
+const showCheckoutReviewPreview = ref(false)
+
+// ─── X01Result — stats de fin de match fictives (2 joueurs, 3 legs) ──────────
+const showX01ResultPreview = ref(false)
+// scores: points par volée (volée de 3 fléchettes), 'B' = bust ; doubles: doubles tentés sur la dernière volée
+function mockLeg(scores, { won = false, dartsToFinish = 3, doubles = 0 } = {}) {
+  const volleys = scores.map(sc => (sc === 'B'
+    ? { darts: [{}, {}, {}], bust: true, score: 0 }
+    : { darts: [{}, {}, {}], bust: false, score: sc }))
+  volleys[volleys.length - 1] = won
+    ? { ...volleys[volleys.length - 1], dartsToFinish, doublesThrown: doubles }
+    : { ...volleys[volleys.length - 1], doublesAttempted: doubles }
+  return { volleys, won, checkoutScore: won ? scores[scores.length - 1] : null }
+}
+const mockMatchStats = buildMatchStats({
+  startScore: 501,
+  players: [{ name: 'Theotime', isMe: true }, { name: 'Pakitou' }],
+  legsByPlayer: [
+    [
+      mockLeg([100, 85, 60, 140, 45, 41, 20, 10], { won: true, dartsToFinish: 2, doubles: 4 }),
+      mockLeg([60, 81, 45, 100, 26, 'B', 0], { doubles: 3 }),
+      mockLeg([180, 140, 60, 81, 40], { won: true, dartsToFinish: 1, doubles: 1 }),
+    ],
+    [
+      mockLeg([45, 60, 41, 26, 85, 100, 60, 'B'], { doubles: 2 }),
+      mockLeg([60, 100, 81, 140, 60, 40, 20], { won: true, dartsToFinish: 3, doubles: 2 }),
+      mockLeg([41, 60, 85, 100], { doubles: 0 }),
+    ],
+  ],
+})
+const seg    = (label) => ALL_SEGMENTS.find(s => s.label === label)
+const aimed  = (target, hit) => ({ ...seg(hit), target: seg(target) })
+const volley = (darts) => ({ darts, bust: false, score: darts.reduce((sum, d) => sum + d.pts, 0) })
+const mockCheckoutAnalysis = analyzeLegs([
+  { volleys: [
+    volley([aimed('T20', 'T20'), aimed('T20', '20'), aimed('T20', 'T18')]),
+    volley([aimed('D18', '18'), aimed('D9', 'D9')]),
+  ] },
+  { volleys: [
+    volley([aimed('T20', 'T20'), aimed('T20', 'T20'), aimed('Bull', 'Outer')]),
+    volley([aimed('D8', '9'), aimed('D8', '8'), aimed('D4', 'D4')]),
+  ] },
+], 170)
 
 // --- Preview StatsWarmupDetailView ---
 const showWarmupDetailPreview = ref(false)
@@ -322,6 +371,22 @@ const mockSent = [
       </div>
     </section>
 
+    <!-- X01CheckoutReview — revue des checkouts avec données fictives -->
+    <section class="dev__section">
+      <h2 class="dev__section-title">X01 — Revue des checkouts (preview)</h2>
+      <div class="dev__buttons">
+        <button class="dev__btn" @click="showCheckoutReviewPreview = true">Ouvrir la revue</button>
+      </div>
+    </section>
+
+    <!-- X01Result — stats de fin de match avec données fictives -->
+    <section class="dev__section">
+      <h2 class="dev__section-title">X01 — Stats de fin de match (preview)</h2>
+      <div class="dev__buttons">
+        <button class="dev__btn" @click="showX01ResultPreview = true">Ouvrir le résultat</button>
+      </div>
+    </section>
+
     <!-- StatsWarmupDetailView — aperçu plein écran avec données fictives -->
     <section class="dev__section">
       <h2 class="dev__section-title">Stats — Détail échauffement (preview)</h2>
@@ -380,7 +445,22 @@ const mockSent = [
       <button class="dev__close-preview" @click="showGameInputPreview = false">✕ Fermer</button>
     </div>
 
+    <div v-if="showX01ResultPreview" class="dev__fullscreen-preview dev__gameinput-preview">
+      <X01Result
+        :match-stats="mockMatchStats"
+        subtitle="501 pts · 3 manches"
+        :checkout-analysis="mockCheckoutAnalysis"
+        hide-actions
+      />
+      <button class="dev__close-preview" @click="showX01ResultPreview = false">✕ Fermer</button>
+    </div>
+
     <!-- StatsWarmupDetailView plein écran -->
+    <div v-if="showCheckoutReviewPreview" class="dev__fullscreen-preview dev__gameinput-preview">
+      <X01CheckoutReview :analysis="mockCheckoutAnalysis" />
+      <button class="dev__close-preview" @click="showCheckoutReviewPreview = false">✕ Fermer</button>
+    </div>
+
     <div v-if="showWarmupDetailPreview" class="dev__fullscreen-preview">
       <StatsWarmupDetailView :mock-sessions="mockWarmupSessions" />
       <button class="dev__close-preview" @click="showWarmupDetailPreview = false">✕ Fermer</button>

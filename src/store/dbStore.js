@@ -77,7 +77,7 @@ export const useDbStore = defineStore('db', () => {
    * CREATE POLICY "Users manage own x01_sessions"
    *   ON public.x01_sessions FOR ALL USING (auth.uid() = user_id);
    */
-  async function saveX01Session({ startScore, legsPlayed, stats, settings, tournamentId = null, tournamentMatchId = null }) {
+  async function saveX01Session({ startScore, legsPlayed, stats, matchStats = null, settings, tournamentId = null, tournamentMatchId = null }) {
     const user = getUser()
     if (!user) return null
     const { data, error } = await supabase.from('x01_sessions').insert({
@@ -96,6 +96,7 @@ export const useDbStore = defineStore('db', () => {
       volley_distribution: stats.volleyDistribution    ?? null,
       leg_averages:        stats.legAverages           ?? null,
       total_darts:         stats.totalDarts            ?? null,
+      match_stats:         matchStats,
       settings,
       tournament_id:       tournamentId,
       tournament_match_id: tournamentMatchId,
