@@ -833,6 +833,75 @@ $$;
 revoke execute on function public.report_local_tournament_result(uuid, uuid, int, int) from public, anon;
 grant execute on function public.report_local_tournament_result(uuid, uuid, int, int) to authenticated;
 
+-- Une seule session X01 par joueur et par match de tournoi
+create unique index if not exists idx_x01_sessions_user_tournament_match
+  on public.x01_sessions(user_id, tournament_match_id)
+  where tournament_match_id is not null;
+
+-- Match de tournoi joué sur un seul appareil : enregistre la session X01 de
+-- chaque joueur sur son propre compte (la RLS de x01_sessions limite l'insertion
+-- à soi-même). Autorisé aux hôtes et aux joueurs du match, une fois le match terminé.
+create or replace function public.save_tournament_x01_session(p_match_id uuid, p_participant_id uuid, p_session jsonb)
+returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  tm          public.tournament_matches;
+  target_user uuid;
+begin
+  select * into tm from public.tournament_matches where id = p_match_id;
+  if tm.id is null or not (
+    public.is_tournament_host(tm.tournament_id)
+    or exists (
+      select 1 from public.tournament_participants p
+      where p.id in (tm.player1_participant_id, tm.player2_participant_id) and p.user_id = auth.uid()
+    )
+  ) then
+    raise exception 'Match introuvable';
+  end if;
+  if tm.status <> 'completed' then
+    raise exception 'Match non terminé';
+  end if;
+  if p_participant_id not in (tm.player1_participant_id, tm.player2_participant_id) then
+    raise exception 'Joueur absent du match';
+  end if;
+
+  select user_id into target_user from public.tournament_participants where id = p_participant_id;
+  if target_user is null then
+    return;
+  end if;
+
+  insert into public.x01_sessions (
+    user_id, start_score, legs_played, avg_volley, avg_9darts, avg_darts_to_finish,
+    min_darts, max_darts, highest_finish, highest_volley, doubles_hit, doubles_attempted,
+    volley_distribution, leg_averages, total_darts, match_stats, settings,
+    tournament_id, tournament_match_id
+  ) values (
+    target_user,
+    (p_session->>'start_score')::int,
+    (p_session->>'legs_played')::int,
+    (p_session->>'avg_volley')::numeric,
+    (p_session->>'avg_9darts')::numeric,
+    (p_session->>'avg_darts_to_finish')::numeric,
+    (p_session->>'min_darts')::int,
+    (p_session->>'max_darts')::int,
+    (p_session->>'highest_finish')::int,
+    (p_session->>'highest_volley')::int,
+    (p_session->>'doubles_hit')::int,
+    (p_session->>'doubles_attempted')::int,
+    p_session->'volley_distribution',
+    p_session->'leg_averages',
+    (p_session->>'total_darts')::int,
+    p_session->'match_stats',
+    p_session->'settings',
+    tm.tournament_id,
+    tm.id
+  )
+  on conflict (user_id, tournament_match_id) where tournament_match_id is not null do nothing;
+end;
+$$;
+revoke execute on function public.save_tournament_x01_session(uuid, uuid, jsonb) from public, anon;
+grant execute on function public.save_tournament_x01_session(uuid, uuid, jsonb) to authenticated;
+
 -- Un match de tournoi joué en ligne passe « en cours » dès que le match en ligne
 -- démarre, pour que tous les participants le voient (online_matches n'est lisible
 -- que par ses deux joueurs).

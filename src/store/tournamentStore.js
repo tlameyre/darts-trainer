@@ -260,16 +260,19 @@ export const useTournamentStore = defineStore('tournament', () => {
     const p1 = t.participants.find(p => p.id === match.player1_participant_id)
     const p2 = t.participants.find(p => p.id === match.player2_participant_id)
     if (!p1 || !p2) return null
+    const authStore = useAuthStore()
 
     return {
       mode:       'x01',
       startScore: t.tournament.start_score,
       legsToWin:  t.tournament.legs_to_win,
       aiProfile:  null,
-      players: [
-        { ...p1.player_data, participantId: p1.id },
-        { ...p2.player_data, participantId: p2.id },
-      ],
+      // isMe stored in player_data reflects whoever created the row, not this device
+      players: [p1, p2].map(p => ({
+        ...p.player_data,
+        participantId: p.id,
+        isMe:          !!p.user_id && p.user_id === authStore.user?.id,
+      })),
       tournamentContext: { tournamentId: t.tournament.id, matchId: match.id },
     }
   }

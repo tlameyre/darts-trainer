@@ -77,11 +77,8 @@ export const useDbStore = defineStore('db', () => {
    * CREATE POLICY "Users manage own x01_sessions"
    *   ON public.x01_sessions FOR ALL USING (auth.uid() = user_id);
    */
-  async function saveX01Session({ startScore, legsPlayed, stats, matchStats = null, settings, tournamentId = null, tournamentMatchId = null }) {
-    const user = getUser()
-    if (!user) return null
-    const { data, error } = await supabase.from('x01_sessions').insert({
-      user_id:             user.id,
+  function x01SessionRow({ startScore, legsPlayed, stats, matchStats = null, settings, tournamentId = null, tournamentMatchId = null }) {
+    return {
       start_score:         startScore,
       legs_played:         legsPlayed,
       avg_volley:          stats.avgVolley,
@@ -100,12 +97,31 @@ export const useDbStore = defineStore('db', () => {
       settings,
       tournament_id:       tournamentId,
       tournament_match_id: tournamentMatchId,
-    }).select().single()
+    }
+  }
+
+  async function saveX01Session(session) {
+    const user = getUser()
+    if (!user) return null
+    const { data, error } = await supabase.from('x01_sessions')
+      .insert({ user_id: user.id, ...x01SessionRow(session) })
+      .select().single()
     if (error) {
       console.error('[dbStore] saveX01Session:', error.message)
       return null
     }
     return data
+  }
+
+  // Match de tournoi local : la session est enregistrée sur le compte du joueur,
+  // pas forcément celui de l'appareil (cf. save_tournament_x01_session).
+  async function saveTournamentX01Session({ matchId, participantId, session }) {
+    const { error } = await supabase.rpc('save_tournament_x01_session', {
+      p_match_id:       matchId,
+      p_participant_id: participantId,
+      p_session:        x01SessionRow(session),
+    })
+    if (error) console.error('[dbStore] saveTournamentX01Session:', error.message)
   }
 
   /**
@@ -689,7 +705,7 @@ export const useDbStore = defineStore('db', () => {
   return {
     createOnlineMatch, fetchOnlineMatch, fetchOpenOnlineMatches, updateOnlineMatchStatus,
     fetchOnlineMatchEvents, insertOnlineMatchEvent, startOnlineMatch, reportOnlineTournamentResult, reportLocalTournamentResult,
-    saveGameSession, saveWarmupSession, saveX01Session, saveTacticsSession, saveCheckoutSession,
+    saveGameSession, saveWarmupSession, saveX01Session, saveTournamentX01Session, saveTacticsSession, saveCheckoutSession,
     deleteGameSession, deleteWarmupSession, deleteX01Session, deleteTacticsSession, deleteCheckoutSession,
     fetchGameSessions, fetchWarmupSessions, fetchWarmupSessionsForChart, fetchX01Sessions, fetchTacticsSessions, fetchCheckoutSessions,
     fetchProfileStats, fetchGlobalStats,

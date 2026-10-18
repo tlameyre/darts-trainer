@@ -50,6 +50,8 @@ const isTournamentMatch  = !!tournamentContext
 const onlineContext      = settings.online ?? null
 const isOnline           = !!onlineContext
 const settingsRoute      = isOnline ? 'online-settings' : 'x01-settings'
+// False when a tournament host runs a match between two other players on this device
+const deviceUserPlays    = !players || players.some(p => p.isMe)
 
 const {
   completedLegs,
@@ -245,7 +247,7 @@ watch(aiWonLeg, (val) => {
 
 // ── Lancers spéciaux en temps réel (utilisateur connecté = meIndex) ────────
 watch(() => allVolleys[meIndex].value.length, async (newLen, oldLen) => {
-  if (newLen <= oldLen || online?.loading.value) return
+  if (!deviceUserPlays || newLen <= oldLen || online?.loading.value) return
   const v = allVolleys[meIndex].value[newLen - 1]
   if (v.bust) return
   const isTotal = v.darts.length === 1 && v.darts[0].type === 'volley'
@@ -257,6 +259,54 @@ watch(() => allVolleys[meIndex].value.length, async (newLen, oldLen) => {
 })
 
 // ── Sauvegarde en fin de partie ────────────────────────────────────────────
+// Session from player idx's point of view, with the other players as opponents
+function multiSessionFor(idx, legsPlayed) {
+  const opponents = players
+    .map((p, i) => ({ p, i }))
+    .filter(({ i }) => i !== idx)
+    .map(({ p, i }) => ({
+      name:      p.name,
+      legsWon:   allCompletedLegs[i].value.length,
+      avgVolley: matchStats.value?.match[i]?.average ?? null,
+      isFriend:  !!p.isFriend,
+      friendId:  p.isFriend ? p.id : null,
+    }))
+  return {
+    startScore: settings.startScore,
+    legsPlayed,
+    stats:      computeStatsForPlayer(idx),
+    matchStats: matchStats.value && {
+      ...matchStats.value,
+      players: matchStats.value.players.map((p, i) => ({ ...p, isMe: i === idx })),
+    },
+    settings: {
+      ...settings,
+      humanName:    players[idx].isMe ? (authStore.profile?.username ?? null) : players[idx].name,
+      humanLegsWon: allCompletedLegs[idx].value.length,
+      opponents,
+    },
+    tournamentId:      tournamentContext?.tournamentId ?? null,
+    tournamentMatchId: tournamentContext?.matchId ?? null,
+  }
+}
+
+// Each player gets the session on their own account, once the result is recorded
+// (the server only accepts sessions for a completed match)
+async function saveLocalTournamentMatch(legsPlayed) {
+  const match = tournamentStore.activeTournament?.matches.find(m => m.id === tournamentContext.matchId)
+  await tournamentStore.recordMatchResult({
+    matchId:             tournamentContext.matchId,
+    winnerParticipantId: players[multiWinnerIndex.value].participantId,
+    player1Legs:         legsWonBy(p => p.participantId === match?.player1_participant_id),
+    player2Legs:         legsWonBy(p => p.participantId === match?.player2_participant_id),
+  })
+  await Promise.all(players.map((p, i) => dbStore.saveTournamentX01Session({
+    matchId:       tournamentContext.matchId,
+    participantId: p.participantId,
+    session:       multiSessionFor(i, legsPlayed),
+  })))
+}
+
 watch(phase, async (val) => {
   if (val !== 'game-over') return
   if (isOnline) await finalizeOnlineMatch()
@@ -265,45 +315,11 @@ watch(phase, async (val) => {
   const humanLegsWon = allCompletedLegs[meIndex].value.length
   const legsPlayed   = matchStats.value?.legs.length ?? 0
 
-  if (isMulti) {
-    // Multi-player: save session for logged-in user with opponents data
-    const opponents = players
-      .map((p, i) => ({ p, i }))
-      .filter(({ i }) => i !== meIndex)
-      .map(({ p, i }) => ({
-        name:      p.name,
-        legsWon:   allCompletedLegs[i].value.length,
-        avgVolley: matchStats.value?.match[i]?.average ?? null,
-        isFriend:  !!p.isFriend,
-        friendId:  p.isFriend ? p.id : null,
-      }))
-    await dbStore.saveX01Session({
-      startScore: settings.startScore,
-      legsPlayed,
-      stats:      stats.value,
-      matchStats: matchStats.value,
-      settings: {
-        ...settings,
-        humanName:    authStore.profile?.username ?? null,
-        humanLegsWon,
-        opponents,
-      },
-      tournamentId:      tournamentContext?.tournamentId ?? null,
-      tournamentMatchId: tournamentContext?.matchId ?? null,
-    })
-
-    if (isTournamentMatch && !isOnline && multiWinnerIndex.value != null) {
-      const winnerParticipantId = players[multiWinnerIndex.value]?.participantId
-      if (winnerParticipantId) {
-        const match = tournamentStore.activeTournament?.matches.find(m => m.id === tournamentContext.matchId)
-        await tournamentStore.recordMatchResult({
-          matchId:             tournamentContext.matchId,
-          winnerParticipantId,
-          player1Legs:         legsWonBy(p => p.participantId === match?.player1_participant_id),
-          player2Legs:         legsWonBy(p => p.participantId === match?.player2_participant_id),
-        })
-      }
-    }
+  if (isMulti && isTournamentMatch && !isOnline) {
+    // An unfinished local tournament match is neither recorded nor saved
+    if (multiWinnerIndex.value != null) await saveLocalTournamentMatch(legsPlayed)
+  } else if (isMulti) {
+    await dbStore.saveX01Session(multiSessionFor(meIndex, legsPlayed))
   } else {
     // Solo or vs AI (existing behavior)
     await dbStore.saveX01Session({
