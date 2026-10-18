@@ -24,6 +24,7 @@ import { buildMatchStats } from '../composables/useX01MatchStats.js'
 import { analyzeLegs, ALL_SEGMENTS } from '../composables/useCheckoutAnalysis.js'
 import FriendsView from './FriendsView.vue'
 import StatsWarmupDetailView from './StatsWarmupDetailView.vue'
+import StatsSessionDetail from '../components/stats/StatsSessionDetail.vue'
 import TournamentView from './TournamentView.vue'
 import TournamentJoinView from './TournamentJoinView.vue'
 import OnlineMatchLobbyView from './OnlineMatchLobbyView.vue'
@@ -291,6 +292,20 @@ const mockCheckoutAnalysis = analyzeLegs([
   ] },
 ], 170)
 
+// --- Preview StatsSessionDetail : match X01 joué dans le championnat fictif ---
+const showTournamentSessionPreview = ref(false)
+const mockTournamentSession = {
+  id: 'mock-session', played_at: '2026-10-12T19:30:00Z', start_score: 501, legs_played: 3,
+  tournament_id: mockChampionshipOngoing.tournament.id,
+  tournaments: { name: mockChampionshipOngoing.tournament.name, format: 'championship' },
+  match_stats: mockMatchStats,
+  settings: { legsToWin: 2, humanName: 'Theotime', humanLegsWon: 2, opponents: [{ name: 'Pakitou', legsWon: 1 }] },
+}
+function openMockSessionTournament() {
+  showTournamentSessionPreview.value   = false
+  showChampionshipOngoingPreview.value = true
+}
+
 // --- Preview StatsWarmupDetailView ---
 const showWarmupDetailPreview = ref(false)
 const D16 = { sector: 16, type: 'D' }
@@ -501,6 +516,13 @@ const mockSent = [
       </div>
     </section>
 
+    <section class="dev__section">
+      <h2 class="dev__section-title">Stats — Détail match X01 de tournoi (preview)</h2>
+      <div class="dev__buttons">
+        <button class="dev__btn" @click="showTournamentSessionPreview = true">Ouvrir le détail (badge → championnat fictif)</button>
+      </div>
+    </section>
+
     <!-- StatsWarmupDetailView — aperçu plein écran avec données fictives -->
     <section class="dev__section">
       <h2 class="dev__section-title">Stats — Détail échauffement (preview)</h2>
@@ -574,6 +596,15 @@ const mockSent = [
       <X01CheckoutReview :analysis="mockCheckoutAnalysis" />
       <button class="dev__close-preview" @click="showCheckoutReviewPreview = false">✕ Fermer</button>
     </div>
+
+    <!-- Overlay fixed avec son propre bouton retour -->
+    <StatsSessionDetail
+      :show="showTournamentSessionPreview"
+      :session="mockTournamentSession"
+      mode="x01"
+      @close="showTournamentSessionPreview = false"
+      @open-tournament="openMockSessionTournament"
+    />
 
     <div v-if="showWarmupDetailPreview" class="dev__fullscreen-preview">
       <StatsWarmupDetailView :mock-sessions="mockWarmupSessions" />

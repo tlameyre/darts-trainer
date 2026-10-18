@@ -53,6 +53,11 @@ function openDetail(session) {
   showDetail.value      = true
 }
 
+function openTournament({ tournament_id: id, tournaments }) {
+  const tab = tournaments.format === 'championship' ? 'matchdays' : 'bracket'
+  router.push({ name: 'tournament-detail', params: { id }, query: { tab } })
+}
+
 async function deleteSession(id) {
   if (selectedMode.value === 'score') {
     await dbStore.deleteGameSession(id)
@@ -120,6 +125,7 @@ async function deleteSession(id) {
       :mode="selectedMode"
       @close="showDetail = false"
       @delete="deleteSession"
+      @open-tournament="openTournament"
     />
   </div>
 </template>

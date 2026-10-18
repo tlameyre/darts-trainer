@@ -1,6 +1,5 @@
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 import AppIcon from '../AppIcon.vue'
 import X01Result from '../x01/X01Result.vue'
 import GameOver from '../GameOver.vue'
@@ -13,15 +12,7 @@ const props = defineProps({
   mode:    { type: String,  required: true },
 })
 
-const emit = defineEmits(['close', 'delete'])
-
-const router = useRouter()
-
-function openTournament() {
-  const { tournament_id: id, tournaments } = props.session
-  const tab = tournaments.format === 'championship' ? 'matchdays' : 'bracket'
-  router.push({ name: 'tournament-detail', params: { id }, query: { tab } })
-}
+const emit = defineEmits(['close', 'delete', 'open-tournament'])
 
 // Normalise un item zoneRecap vers le format { zones: [...] } attendu par WarmupRecap
 function normalizeZoneItem(item) {
@@ -138,7 +129,7 @@ function formatDate(iso) {
       <button
         v-if="session.tournaments"
         class="session-detail__badge session-detail__badge--link"
-        @click="openTournament"
+        @click="$emit('open-tournament', session)"
       >
         <AppIcon name="trophy" :width="12" :height="12" />
         {{ session.tournaments.name }}
