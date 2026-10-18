@@ -30,6 +30,18 @@ export function threeDartAverage(volleys) {
   return Math.round((points / darts) * 3 * 100) / 100
 }
 
+// Checkout % with 2 decimals (null when no double was attempted or attempts are unknown)
+export function checkoutPct({ checkoutHits, checkoutAttempts }) {
+  return checkoutAttempts ? Math.round((checkoutHits / checkoutAttempts) * 10000) / 100 : null
+}
+
+// Card label of a player's last volley in the current leg
+export function lastVolleyLabel(volleys) {
+  const last = volleys[volleys.length - 1]
+  if (!last) return null
+  return last.bust ? 'Bust' : last.score
+}
+
 // Volleys started while the remaining score was above the checkout range
 function scoringVolleys(leg, startScore) {
   let remaining = startScore

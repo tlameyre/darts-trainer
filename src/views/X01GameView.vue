@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/authStore.js'
 import { useX01 } from '../composables/useX01.js'
 import { useX01AIOpponent } from '../composables/useX01AIOpponent.js'
 import { analyzeLegs, MAX_CHECKOUT } from '../composables/useCheckoutAnalysis.js'
-import { buildMatchStats, computePlayerStats, threeDartAverage, volleyDarts } from '../composables/useX01MatchStats.js'
+import { buildMatchStats, checkoutPct, computePlayerStats, lastVolleyLabel, threeDartAverage, volleyDarts } from '../composables/useX01MatchStats.js'
 import { useDbStore } from '../store/dbStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import { useTournamentStore } from '../store/tournamentStore.js'
@@ -206,6 +206,7 @@ watch(phase, async (val) => {
   if (val !== 'game-over' || !stats.value) return
 
   const humanLegsWon = allCompletedLegs[meIndex].value.length
+  const legsPlayed   = matchStats.value?.legs.length ?? 0
 
   if (isMulti) {
     // Multi-player: save session for logged-in user with opponents data
@@ -215,13 +216,13 @@ watch(phase, async (val) => {
       .map(({ p, i }) => ({
         name:      p.name,
         legsWon:   allCompletedLegs[i].value.length,
-        avgVolley: computeStatsForPlayer(i)?.avgVolley ?? null,
+        avgVolley: matchStats.value?.match[i]?.average ?? null,
         isFriend:  !!p.isFriend,
         friendId:  p.isFriend ? p.id : null,
       }))
     await dbStore.saveX01Session({
       startScore: settings.startScore,
-      legsPlayed: Math.max(...allCompletedLegs.map(r => r.value.length)),
+      legsPlayed,
       stats:      stats.value,
       matchStats: matchStats.value,
       settings: {
@@ -245,19 +246,18 @@ watch(phase, async (val) => {
     }
   } else {
     // Solo or vs AI (existing behavior)
-    const humanLegsWonAdj = Math.max(0, completedLegs.value.length - (aiProfile ? aiLegsWon.value : 0))
     await dbStore.saveX01Session({
       startScore: settings.startScore,
-      legsPlayed: completedLegs.value.length,
+      legsPlayed,
       stats:      stats.value,
       matchStats: matchStats.value,
       settings: {
         ...settings,
         humanName:    authStore.profile?.username ?? null,
-        humanLegsWon: humanLegsWonAdj,
+        humanLegsWon,
         ...(aiProfile ? {
           aiLegsWon:   aiLegsWon.value,
-          aiAvgVolley: aiCardData.value.avgVolley,
+          aiAvgVolley: matchStats.value?.match[1]?.average ?? null,
         } : {}),
       },
     })
@@ -274,10 +274,7 @@ const humanTotalDarts = computed(() =>
   + (isBust.value || !currentDarts.value.length ? 0 : volleyDarts({ darts: currentDarts.value }))
 )
 
-const humanLastScore = computed(() => {
-  const valid = volleys.value.filter(v => !v.bust)
-  return valid.length ? valid[valid.length - 1].score : null
-})
+const humanLastScore = computed(() => lastVolleyLabel(volleys.value))
 
 // Average and checkout % over the whole game so far (current leg included)
 function averageLabel(idx) {
@@ -286,8 +283,8 @@ function averageLabel(idx) {
 }
 
 function checkoutPctLabel(idx) {
-  const { checkoutHits, checkoutAttempts } = computePlayerStats(legsForAnalysis(idx), settings.startScore)
-  return checkoutAttempts ? `${Math.round((checkoutHits / checkoutAttempts) * 100)}%` : '–'
+  const pct = checkoutPct(computePlayerStats(legsForAnalysis(idx), settings.startScore))
+  return pct == null ? '–' : `${pct}%`
 }
 
 // Build player cards for X01PlayerSplitCard
@@ -317,14 +314,13 @@ const playerCards = computed(() => {
       } else {
         const pVols       = allVolleys[i].value
         const pRemaining  = pVols.filter(v => !v.bust).reduce((acc, v) => acc - v.score, settings.startScore)
-        const pLastVolley = pVols.filter(v => !v.bust).slice(-1)[0] ?? null
         cards.push({
           name:       p.name,
           remaining:  pRemaining,
           legsWon:    allCompletedLegs[i].value.length,
           legsToWin:  settings.legsToWin,
           avgVolley:  averageLabel(i),
-          lastScore:  pLastVolley?.score ?? null,
+          lastScore:  lastVolleyLabel(pVols),
           totalDarts: pVols.reduce((sum, v) => sum + volleyDarts(v), 0),
           checkoutPct: checkoutPctLabel(i),
           isLegStarter: i === legStarterIndex.value,

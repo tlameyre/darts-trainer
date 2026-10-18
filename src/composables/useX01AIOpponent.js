@@ -1,5 +1,6 @@
 import { ref, computed, watch } from 'vue'
 import { simulateAIVolley } from './useX01AI.js'
+import { lastVolleyLabel, threeDartAverage, volleyDarts } from './useX01MatchStats.js'
 
 /**
  * Gère l'état et la logique du bot IA dans une partie X01.
@@ -33,7 +34,6 @@ export function useX01AIOpponent({
       aiTurn:           ref(false),
       aiWonLeg:         ref(false),
       aiWonGame:        ref(false),
-      aiTotalDarts:     ref(0),
       aiAvgVolley:      computed(() => '–'),
       aiLegHumanSnapshot: ref(null),
       aiLegs:           ref([]),
@@ -50,8 +50,6 @@ export function useX01AIOpponent({
   const aiPending          = ref(false)
   const aiWonLeg           = ref(false)
   const aiWonGame          = ref(false)
-  const aiTotalDarts       = ref(0)
-  const aiVolleysScores    = ref([])
   const aiLegHumanSnapshot = ref(null)
   // Closed legs { volleys, won, checkoutScore } + volleys of the leg in progress
   const aiLegs             = ref([])
@@ -60,10 +58,10 @@ export function useX01AIOpponent({
 
   const aiLevel = computed(() => aiProfile.level ?? null)
 
+  // 3-dart average over the whole match, same formula as the human players
   const aiAvgVolley = computed(() => {
-    if (!aiVolleysScores.value.length) return '–'
-    const sum = aiVolleysScores.value.reduce((a, b) => a + b, 0)
-    return (sum / aiVolleysScores.value.length).toFixed(2)
+    const avg = threeDartAverage([...aiLegs.value.flatMap(l => l.volleys), ...aiCurrentVolleys.value])
+    return avg == null ? '–' : avg.toFixed(2)
   })
 
   function triggerAIVolley() {
@@ -74,8 +72,6 @@ export function useX01AIOpponent({
       const result = simulateAIVolley(aiRemaining.value, aiProfile)
       aiLastVolley.value = result
 
-      aiTotalDarts.value += result.dartsUsed
-      aiVolleysScores.value.push(result.bust ? 0 : result.score)
       aiCurrentVolleys.value.push({ score: result.score, bust: result.bust, darts: result.dartsUsed })
 
       if (result.isCheckout) {
@@ -157,11 +153,10 @@ export function useX01AIOpponent({
     remaining:    aiRemaining.value,
     legsWon:      aiLegsWon.value,
     legsToWin:    settings.legsToWin,
-    lastScore:    aiLastVolley.value?.isCheckout
-      ? aiLastVolley.value.score
-      : (aiLastVolley.value?.bust ? null : aiLastVolley.value?.score ?? null),
+    // Current leg only, like the human cards
+    lastScore:    lastVolleyLabel(aiCurrentVolleys.value),
     avgVolley:    aiAvgVolley.value,
-    totalDarts:   aiTotalDarts.value,
+    totalDarts:   aiCurrentVolleys.value.reduce((s, v) => s + volleyDarts(v), 0),
     isThinking:   aiTurn.value,
   }))
 
@@ -172,9 +167,7 @@ export function useX01AIOpponent({
     aiTurn,
     aiWonLeg,
     aiWonGame,
-    aiTotalDarts,
     aiAvgVolley,
-    aiVolleysScores,
     aiLegHumanSnapshot,
     aiLegs,
     aiLevel,

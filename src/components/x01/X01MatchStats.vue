@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { checkoutPct } from '../../composables/useX01MatchStats.js'
 
 // One stats table: whole match (leg = null) or a single leg of buildMatchStats()
 const props = defineProps({
@@ -12,10 +13,6 @@ const legWinnerName = computed(() => props.players[props.leg?.winnerIndex]?.name
 
 function formatAvg(v) {
   return v == null ? '–' : v.toFixed(2)
-}
-
-function checkoutPct(s) {
-  return s.checkoutAttempts ? Math.round((s.checkoutHits / s.checkoutAttempts) * 10000) / 100 : null
 }
 
 // better: 'high' | 'low' → highlights the best value of the row; omitted = no highlight

@@ -169,7 +169,12 @@ function startGame() {
           >+</button>
         </div>
         <p class="settings__hint">
-          La partie se termine après {{ settings.legsToWin }} manche{{ settings.legsToWin > 1 ? 's' : '' }}.
+          <template v-if="players.length > 1 || aiProfile">
+            Le premier à {{ settings.legsToWin }} manche{{ settings.legsToWin > 1 ? 's' : '' }} gagne la partie.
+          </template>
+          <template v-else>
+            La partie se termine après {{ settings.legsToWin }} manche{{ settings.legsToWin > 1 ? 's' : '' }}.
+          </template>
         </p>
       </div>
 

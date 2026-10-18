@@ -315,9 +315,10 @@ export function useX01({ startScore, legsToWin, players = null }) {
 
   // ─── Statistiques finales (joueur 0 = utilisateur connecté) ──────────────
   function computeStatsForPlayer(idx) {
-    const orderedLegs = allLegsOrdered[idx].value
+    // Includes the leg in progress when the game ended without closing it (menu, DartBot win)
+    const orderedLegs = legsForAnalysis(idx)
     const wonLegs     = allCompletedLegs[idx].value
-    if (!orderedLegs.length) return null
+    if (!orderedLegs.some(l => l.volleys.length)) return null
 
     const allVs   = orderedLegs.flatMap(l => l.volleys)
     const validVs = allVs.filter(v => !v.bust)
@@ -350,7 +351,7 @@ export function useX01({ startScore, legsToWin, players = null }) {
     const highestFinish = wonLegs.length ? Math.max(...wonLegs.map(l => l.checkoutScore), 0) : 0
     const highestVolley = scores.length ? Math.max(...scores) : 0
 
-    const totalDarts = orderedLegs.reduce((s, leg) => s + leg.totalDarts, 0)
+    const totalDarts = orderedLegs.flatMap(l => l.volleys).reduce((s, v) => s + volleyDarts(v), 0)
 
     const thresholds = [160, 140, 120, 100, 80, 60, 40]
     const volleyDistribution = { '40': 0, '60': 0, '80': 0, '100': 0, '120': 0, '140': 0, '160': 0, '180': 0 }
@@ -364,7 +365,7 @@ export function useX01({ startScore, legsToWin, players = null }) {
     const legAverages = orderedLegs.map((leg, i) => {
       const valid = leg.volleys.filter(v => !v.bust)
       const avg   = valid.length ? Math.round(valid.reduce((s, v) => s + v.score, 0) / valid.length) : 0
-      return { leg: i + 1, avg, won: leg.won }
+      return { leg: i + 1, avg, won: !!leg.won }
     })
 
     return {

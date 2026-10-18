@@ -94,6 +94,12 @@ const otherPlayers = computed(() => {
             {{ player.isAI ? '🤖' : (player.name?.[0]?.toUpperCase() ?? '?') }}
           </div>
           <span class="split-card__name">{{ player.isAI ? 'DartBot' : player.name }}</span>
+          <!-- In the header so DartBot's card keeps the same height as the human card -->
+          <span v-if="player.isAI && player.isThinking" class="split-card__thinking">
+            <span class="split-card__think-dot" />
+            <span class="split-card__think-dot" />
+            <span class="split-card__think-dot" />
+          </span>
           <span v-if="player.isAI" class="split-card__level-badge">
             {{ player.level != null ? 'Lv. ' + player.level : 'Custom' }}
           </span>
@@ -102,16 +108,6 @@ const otherPlayers = computed(() => {
         <div class="split-card__score-row">
           <span class="split-card__score">{{ player.remaining }}</span>
           <span class="split-card__legs-badge">{{ player.legsWon }}</span>
-        </div>
-
-        <!-- DartBot thinking animation (placeholder keeps the card height stable) -->
-        <div v-if="player.isAI" class="split-card__darts">
-          <span v-if="player.isThinking" class="split-card__dart-chip split-card__dart-chip--thinking">
-            <span class="split-card__think-dot" />
-            <span class="split-card__think-dot" />
-            <span class="split-card__think-dot" />
-          </span>
-          <span v-else class="split-card__dart-chip split-card__dart-chip--empty" aria-hidden="true">–</span>
         </div>
 
         <div class="split-card__stats">
@@ -154,6 +150,8 @@ const otherPlayers = computed(() => {
     background: $orange;
     transition: background 0.25s;
     height: fit-content;
+
+    min-width: 0;
 
     &--active { background: $orange; }
     &:not(&--active) { background: transparent; }
@@ -307,6 +305,9 @@ const otherPlayers = computed(() => {
     transition: color 0.2s;
   }
 
+  // Two halves side by side on mobile: a 3-digit display-md score overflows the card
+  &--count-2 &__score { @include display-sm; }
+
   &__legs-badge {
     @include title-sm;
     font-weight: 700;
@@ -317,29 +318,12 @@ const otherPlayers = computed(() => {
     flex-shrink: 0;
   }
 
-  // ── DartBot thinking chip ───────────────────────────────────────────────────────────
-  &__darts {
+  // ── DartBot thinking indicator ──────────────────────────────────────────
+  &__thinking {
     display: flex;
-    gap: $gap-xxs;
-    flex-wrap: wrap;
-  }
-
-  &__dart-chip {
-    background: rgba($black, 0.5);
-    border-radius: $radius-sm;
-    padding: 3px 9px;
-    @include title-xs;
-    font-weight: 700;
-    color: $white;
-
-    &--empty    { visibility: hidden; }
-    &--thinking {
-      display: flex;
-      gap: 3px;
-      align-items: center;
-      background: rgba($black, 0.3);
-      padding: 6px 10px;
-    }
+    gap: 3px;
+    align-items: center;
+    flex-shrink: 0;
   }
 
   &__think-dot {
@@ -393,10 +377,10 @@ const otherPlayers = computed(() => {
     &--count-1 &__half  { border-radius: $radius-lg; }
 
     &__name       { @include text-md; }
-    &__score      { @include display-md; }
+    &__score,
+    &--count-2 &__score { @include display-md; }
     &__stat-label { @include text-sm; }
     &__stat-val   { @include title-lg; }
-    &__dart-chip  { @include title-sm; padding: 4px 10px; }
 
     // Spotlight layout stays row-based (doesn't stack like the 1-2 player halves)
     &--spotlight              { flex-direction: row; }
@@ -413,10 +397,10 @@ const otherPlayers = computed(() => {
     &__avatar      { width: 40px; height: 40px; }
     &__avatar--sm  { width: 24px; height: 24px; }
     &__name        { @include text-lg; }
-    &__score       { @include display-lg; }
+    &__score,
+    &--count-2 &__score { @include display-lg; }
     &__stat-label  { @include text-md; }
     &__stat-val    { @include title-xxl; }
-    &__dart-chip   { @include title-md; padding: 5px 12px; }
     &__row-name    { @include text-md; }
     &__row-score   { @include title-lg; }
   }

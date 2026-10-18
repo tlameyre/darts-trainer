@@ -72,6 +72,25 @@ const x01MatchStats = computed(() => {
   }
 })
 
+// Same title as the end-of-game screen: who won, or a neutral title if nobody reached legsToWin
+const x01Result = computed(() => {
+  const st = props.session?.settings ?? {}
+  const target = st.legsToWin ?? Infinity
+  if (st.aiProfile) {
+    return st.aiLegsWon >= target
+      ? { title: 'L\'IA a gagné la partie !', emoji: '🤖', titleColor: 'orange' }
+      // humanLegsWon was under-counted in older sessions, so only DartBot's legs are reliable
+      : { title: 'Bien joué !', emoji: '🏆' }
+  }
+  if (st.opponents?.length) {
+    const winner = st.humanLegsWon >= target
+      ? (st.humanName ?? 'Toi')
+      : st.opponents.find(o => o.legsWon >= target)?.name
+    return { title: winner ? `${winner} a gagné la partie !` : 'Partie terminée', emoji: '🏆' }
+  }
+  return { title: 'Bien joué !', emoji: '🏆' }
+})
+
 const checkoutStats = computed(() => {
   const s = props.session
   if (!s) return null
@@ -115,6 +134,9 @@ function formatDate(iso) {
       <template v-if="mode === 'x01'">
         <X01Result
           :match-stats="x01MatchStats"
+          :title="x01Result.title"
+          :emoji="x01Result.emoji"
+          :title-color="x01Result.titleColor ?? null"
           :subtitle="`${session.start_score} pts · ${session.legs_played} manche${session.legs_played > 1 ? 's' : ''}`"
           hide-actions
         />
