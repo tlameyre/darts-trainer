@@ -1,10 +1,11 @@
 <script setup>
 import { computed, watch, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useGameStore } from '../store/gameStore.js'
 import { useAuthStore } from '../store/authStore.js'
 import { useX01 } from '../composables/useX01.js'
 import { useX01AIOpponent } from '../composables/useX01AIOpponent.js'
+import { useOnlineMatch } from '../composables/useOnlineMatch.js'
 import { analyzeLegs, MAX_CHECKOUT } from '../composables/useCheckoutAnalysis.js'
 import { buildMatchStats, checkoutPct, computePlayerStats, lastVolleyLabel, threeDartAverage, volleyDarts } from '../composables/useX01MatchStats.js'
 import { useDbStore } from '../store/dbStore.js'
@@ -23,6 +24,7 @@ import AppIcon from '../components/AppIcon.vue'
 import AppHeader from '../components/AppHeader.vue'
 
 const router          = useRouter()
+const route           = useRoute()
 const gameStore       = useGameStore()
 const authStore       = useAuthStore()
 const dbStore         = useDbStore()
@@ -31,7 +33,12 @@ const tournamentStore = useTournamentStore()
 
 const newBadges  = ref([])
 
-if (!gameStore.gameSettings) router.replace({ name: 'x01-settings' })
+// Rechargement en plein match en ligne : la salle d'attente reconstruit gameSettings
+if (!gameStore.gameSettings) {
+  router.replace(route.query.online
+    ? { name: 'online-match', params: { id: route.query.online } }
+    : { name: 'x01-settings' })
+}
 
 const settings  = gameStore.gameSettings ?? { startScore: 501, legsToWin: 2, players: null }
 const aiProfile = settings.aiProfile ?? null
@@ -40,6 +47,8 @@ const isMulti   = players && players.length > 1 && !aiProfile
 
 const tournamentContext  = settings.tournamentContext ?? null
 const isTournamentMatch  = !!tournamentContext
+const onlineContext      = settings.online ?? null
+const isOnline           = !!onlineContext
 
 const {
   completedLegs,
@@ -70,9 +79,23 @@ const {
   allCompletedLegs,
   allVolleys,
   lastLegWinnerIndex,
+  legClosed,
+  applyVolley,
+  removeLastVolley,
+  resetMatch,
   computeStatsForPlayer,
   legsForAnalysis,
-} = useX01(settings)
+} = useX01({ ...settings, onVolleyCommitted: (e) => online?.publishVolley(e) })
+
+const online = isOnline
+  ? useOnlineMatch({
+      matchId: onlineContext.matchId,
+      myId:    authStore.user?.id,
+      players,
+      x01:     { currentPlayerIndex, currentDarts, legClosed, applyVolley, removeLastVolley, resetMatch },
+    })
+  : null
+const isOpponentTurn = computed(() => isOnline && !online.isMyTurn.value)
 
 const {
   aiRemaining,
@@ -99,7 +122,7 @@ const {
 const headerTitle = `${settings.startScore} · ${settings.legsToWin} manche${settings.legsToWin > 1 ? 's' : ''}`
 
 const isBust   = computed(() => phase.value === 'bust')
-const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.value)
+const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.value || isOpponentTurn.value)
 const showMenu = ref(false)
 
 // ── Analyse des checkouts : cible visée demandée avant chaque fléchette ────
@@ -128,9 +151,14 @@ function handleMiss() {
   pendingTarget.value = null
 }
 
+// En ligne, une volée déjà publiée ne s'annule que via publishUndo (bouton dédié)
+const hasVolleyInProgress = computed(() =>
+  currentDarts.value.length > 0 || isBust.value || volleyCompleting.value
+)
+
 function handleUndo() {
   if (pendingTarget.value) pendingTarget.value = null
-  else undo()
+  else if (!isOnline || hasVolleyInProgress.value) undo()
 }
 
 const checkoutAnalysis = computed(() => {
@@ -172,9 +200,25 @@ function handleReplay() {
   }
 }
 
-function finishGame() {
+async function finishGame() {
   showMenu.value = false
+  if (isOnline) await online.forfeit()
   phase.value    = 'game-over'
+}
+
+// L'adversaire a abandonné (ou terminé le match) pendant qu'on regardait
+if (isOnline) {
+  watch(() => online.match.value?.status, (status) => {
+    if (['completed', 'abandoned'].includes(status) && phase.value !== 'game-over') phase.value = 'game-over'
+  })
+}
+
+async function finalizeOnlineMatch() {
+  const legsWinner = players.findIndex((_, i) => allCompletedLegs[i].value.length >= settings.legsToWin)
+  if (legsWinner >= 0) await online.complete(players[legsWinner].id)
+  if (isTournamentMatch && online.match.value?.winner_id) {
+    await dbStore.reportOnlineTournamentResult(onlineContext.matchId)
+  }
 }
 
 function quitGame() {
@@ -190,7 +234,7 @@ watch(aiWonLeg, (val) => {
 
 // ── Lancers spéciaux en temps réel (utilisateur connecté = meIndex) ────────
 watch(() => allVolleys[meIndex].value.length, async (newLen, oldLen) => {
-  if (newLen <= oldLen) return
+  if (newLen <= oldLen || online?.loading.value) return
   const v = allVolleys[meIndex].value[newLen - 1]
   if (v.bust) return
   const isTotal = v.darts.length === 1 && v.darts[0].type === 'volley'
@@ -203,7 +247,9 @@ watch(() => allVolleys[meIndex].value.length, async (newLen, oldLen) => {
 
 // ── Sauvegarde en fin de partie ────────────────────────────────────────────
 watch(phase, async (val) => {
-  if (val !== 'game-over' || !stats.value) return
+  if (val !== 'game-over') return
+  if (isOnline) await finalizeOnlineMatch()
+  if (!stats.value) return
 
   const humanLegsWon = allCompletedLegs[meIndex].value.length
   const legsPlayed   = matchStats.value?.legs.length ?? 0
@@ -235,7 +281,7 @@ watch(phase, async (val) => {
       tournamentMatchId: tournamentContext?.matchId ?? null,
     })
 
-    if (isTournamentMatch && multiWinnerIndex.value != null) {
+    if (isTournamentMatch && !isOnline && multiWinnerIndex.value != null) {
       const winnerParticipantId = players[multiWinnerIndex.value]?.participantId
       if (winnerParticipantId) {
         await tournamentStore.recordMatchResult({
@@ -360,11 +406,10 @@ const activePlayerName = computed(() => {
   return aiTurn.value ? 'DartBot' : (authStore.profile?.username ?? 'Toi')
 })
 
-const currentVolleyDarts = computed(() =>
-  isBust.value
-    ? (volleys.value[volleys.value.length - 1]?.darts ?? [])
-    : currentDarts.value
-)
+const currentVolleyDarts = computed(() => {
+  if (isBust.value) return volleys.value[volleys.value.length - 1]?.darts ?? []
+  return isOpponentTurn.value ? online.liveDarts.value : currentDarts.value
+})
 
 // ── Données récap de manche ────────────────────────────────────────────────
 const showLegRecap = computed(() => phase.value === 'leg-recap' || aiWonLeg.value)
@@ -400,6 +445,9 @@ function startNextLegWithAI() {
 // Winner in multi-player
 const multiWinnerIndex = computed(() => {
   if (!isMulti || phase.value !== 'game-over') return null
+  // Abandon en ligne : le vainqueur n'a pas forcément gagné ses manches
+  const onlineWinnerId = online?.match.value?.winner_id
+  if (onlineWinnerId) return players.findIndex(p => p.id === onlineWinnerId)
   for (let i = 0; i < playerCount; i++) {
     if (allCompletedLegs[i].value.length >= settings.legsToWin) return i
   }
@@ -441,6 +489,12 @@ const multiWinnerName = computed(() =>
             <span v-else-if="pendingTarget" class="x01__turn-label x01__turn-label--target">
               Visé {{ pendingTarget.label }} · touché ?
             </span>
+            <span v-else-if="isOpponentTurn" class="x01__turn-label x01__turn-label--ai">
+              {{ online.loading.value ? 'Connexion…' : `${activePlayerName} joue…` }}
+              <span v-if="!online.loading.value && !online.opponentOnline.value" class="x01__offline">
+                hors ligne
+              </span>
+            </span>
             <span
               v-else
               class="x01__turn-label"
@@ -450,6 +504,10 @@ const multiWinnerName = computed(() =>
             </span>
           </template>
         </DartSlotsHeader>
+        <button v-if="online?.canUndoRemote.value" class="x01__remote-undo" @click="online.publishUndo">
+          <AppIcon name="undo" :width="16" :height="16" />
+          Annuler ma dernière volée
+        </button>
         <GameInput
           :darts="currentVolleyDarts"
           value-key="label"
@@ -500,7 +558,14 @@ const multiWinnerName = computed(() =>
 
     <!-- ── Modales ──────────────────────────────────────────────────────────── -->
     <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
-    <GameMenuModal :show="showMenu" @close="showMenu = false" @finish="finishGame" @quit="quitGame" />
+    <GameMenuModal
+      :show="showMenu"
+      :finish-label="isOnline ? 'Abandonner le match' : undefined"
+      :quit-label="isOnline ? 'Quitter (reprendre plus tard)' : undefined"
+      @close="showMenu = false"
+      @finish="finishGame"
+      @quit="quitGame"
+    />
     <X01DoublesModal :show="pendingDoublesPrompt" @confirm="confirmDoublesAttempted" />
     <X01CheckoutModal
       :show="!!pendingCheckout"
@@ -583,6 +648,28 @@ const multiWinnerName = computed(() =>
     &--target { color: $accent; }
   }
 
+  &__offline {
+    @include text-xs;
+    color: $error;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  &__remote-undo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $gap-xs;
+    @include text-sm;
+    color: $text-color;
+    padding: $padding-sm $padding-md;
+    border: $border-sm solid rgba($white, 0.12);
+    border-radius: $radius-pill;
+    transition: opacity 0.15s;
+
+    &:active { opacity: 0.6; }
+  }
+
   &__overlay {
     position: fixed;
     inset: 0;
@@ -611,8 +698,10 @@ const multiWinnerName = computed(() =>
     padding: $padding-xl;
   }
 
-  .x01__game      { gap: $gap-xl; }
-  .x01__turn-label { @include title-md; }
+  .x01__game        { gap: $gap-xl; }
+  .x01__turn-label  { @include title-md; }
+  .x01__offline     { @include text-sm; }
+  .x01__remote-undo { @include text-md; }
 }
 
 .slide-up-enter-active { transition: transform 0.3s ease, opacity 0.3s; }

@@ -5,11 +5,13 @@ import { useTournamentStore } from '../store/tournamentStore.js'
 import { useFriendStore } from '../store/friendStore.js'
 import { useAuthStore } from '../store/authStore.js'
 import { useGameStore } from '../store/gameStore.js'
+import { useOnlineMatchStore } from '../store/onlineMatchStore.js'
 import { MIN_PARTICIPANTS_TO_START } from '../data/tournamentConstants.js'
 import AppHeader from '../components/AppHeader.vue'
 import AppTabs from '../components/AppTabs.vue'
 import AppButton from '../components/AppButton.vue'
 import AppIcon from '../components/AppIcon.vue'
+import AppModal from '../components/AppModal.vue'
 import TournamentBracketTree from '../components/tournament/TournamentBracketTree.vue'
 import TournamentStartModal from '../components/tournament/TournamentStartModal.vue'
 import TournamentHostPickerModal from '../components/tournament/TournamentHostPickerModal.vue'
@@ -27,6 +29,7 @@ const tournamentStore  = useTournamentStore()
 const friendStore      = useFriendStore()
 const authStore        = useAuthStore()
 const gameStore        = useGameStore()
+const onlineMatchStore = useOnlineMatchStore()
 
 const isMock = computed(() => props.mockTournament !== null)
 const data   = computed(() => isMock.value ? props.mockTournament : tournamentStore.activeTournament)
@@ -168,12 +171,50 @@ const winnerName = computed(() => {
   return t.participants.find(p => p.id === t.tournament.winner_participant_id)?.player_data?.name ?? null
 })
 
+// Match jouable en ligne : j'y participe et l'adversaire a un compte
+const onlineChoice = ref(null) // { matchId, me, opponent } (participants)
+
+function onlineCandidate(matchId) {
+  const t     = data.value
+  const match = t.matches.find(m => m.id === matchId)
+  const slots = [match?.player1_participant_id, match?.player2_participant_id]
+    .map(id => t.participants.find(p => p.id === id))
+  const me       = slots.find(p => p?.user_id && p.user_id === authStore.user?.id)
+  const opponent = slots.find(p => p && p !== me)
+  return me && opponent?.user_id ? { matchId, me, opponent } : null
+}
+
 function onPlay(matchId) {
   if (isMock.value) return
+  const open = onlineMatchStore.openMatches.find(m => m.tournament_match_id === matchId)
+  if (open) {
+    router.push({ name: 'online-match', params: { id: open.id } })
+    return
+  }
+  const candidate = onlineCandidate(matchId)
+  if (candidate) onlineChoice.value = candidate
+  else playLocal(matchId)
+}
+
+function playLocal(matchId) {
+  onlineChoice.value = null
   const settings = tournamentStore.buildGameSettingsForMatch(matchId)
   if (!settings) return
   gameStore.gameSettings = settings
   router.push({ name: 'x01-game' })
+}
+
+async function playOnline() {
+  const { matchId, me, opponent } = onlineChoice.value
+  onlineChoice.value = null
+  const t = data.value.tournament
+  const match = await onlineMatchStore.invite({
+    guest:      { id: opponent.user_id, name: opponent.player_data?.name ?? 'Joueur' },
+    startScore: t.start_score,
+    legsToWin:  t.legs_to_win,
+    tournament: { tournamentId: t.id, matchId, myParticipantId: me.id, opponentParticipantId: opponent.id },
+  })
+  if (match) router.push({ name: 'online-match', params: { id: match.id } })
 }
 </script>
 
@@ -325,6 +366,16 @@ function onPlay(matchId) {
       @close="showAddPlayerPicker = false"
       @select="onAddPlayers"
     />
+    <AppModal :show="!!onlineChoice" title="Jouer le match" @close="onlineChoice = null">
+      <div class="tournament__play-choice">
+        <AppButton @click="playOnline">
+          En ligne contre {{ onlineChoice?.opponent.player_data?.name }}
+        </AppButton>
+        <AppButton v-if="isHost" variant="secondary" @click="playLocal(onlineChoice.matchId)">
+          Sur cet appareil
+        </AppButton>
+      </div>
+    </AppModal>
     <ConfirmModal
       :show="!!participantToRemove"
       title="Retirer ce participant"
@@ -353,6 +404,12 @@ function onPlay(matchId) {
   padding: $padding-md $padding-md 0;
   gap: $gap-md;
   @include nav-safe-bottom;
+
+  &__play-choice {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-sm;
+  }
 
   &__main {
     flex: 1;

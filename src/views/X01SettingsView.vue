@@ -10,11 +10,13 @@ import X01PlayerOrderList from '../components/x01/X01PlayerOrderList.vue'
 import { useGameStore } from '../store/gameStore.js'
 import { useAuthStore } from '../store/authStore.js'
 import { useFriendStore } from '../store/friendStore.js'
+import { useOnlineMatchStore } from '../store/onlineMatchStore.js'
 
 const router      = useRouter()
 const gameStore   = useGameStore()
 const authStore   = useAuthStore()
 const friendStore = useFriendStore()
+const onlineMatchStore = useOnlineMatchStore()
 
 const SCORE_OPTIONS = [101, 170, 301, 501]
 const MIN_LEGS      = 1
@@ -25,6 +27,7 @@ const settings = reactive({
   scoreKey:  301,
   legsToWin: 2,
   checkoutAnalysis: false,
+  online: false,
 })
 const customScore = ref(401)
 const aiProfile     = ref(null)
@@ -48,6 +51,13 @@ const effectiveScore = computed(() =>
 )
 
 const canAddMore = computed(() => players.value.length < MAX_PLAYERS)
+
+// En ligne : uniquement en 1v1 contre un ami (chacun joue sur son appareil)
+const onlineOpponent = computed(() =>
+  !aiProfile.value && players.value.length === 2 ? players.value.find(p => p.isFriend) ?? null : null
+)
+const isOnline = computed(() => settings.online && !!onlineOpponent.value)
+const inviting = ref(false)
 
 function decrementLegs() {
   settings.legsToWin = Math.max(MIN_LEGS, settings.legsToWin - 1)
@@ -75,7 +85,22 @@ function openPicker() {
   showPicker.value = true
 }
 
+async function startOnlineMatch() {
+  inviting.value = true
+  const match = await onlineMatchStore.invite({
+    guest:      onlineOpponent.value,
+    startScore: effectiveScore.value,
+    legsToWin:  settings.legsToWin,
+  })
+  inviting.value = false
+  if (match) router.push({ name: 'online-match', params: { id: match.id } })
+}
+
 function startGame() {
+  if (isOnline.value) {
+    startOnlineMatch()
+    return
+  }
   gameStore.gameSettings = {
     mode:       'x01',
     startScore: effectiveScore.value,
@@ -178,12 +203,17 @@ function startGame() {
         </p>
       </div>
 
+      <ToggleSwitch v-if="onlineOpponent" v-model="settings.online" title="Jouer en ligne"
+        :description="`${onlineOpponent.name} reçoit une invitation et joue depuis son propre appareil`" />
+
       <ToggleSwitch v-model="settings.checkoutAnalysis" title="Analyse des checkouts"
         description="Sous 170, indique ta cible avant chaque fléchette : revue de tes placements en fin de partie" />
 
     </main>
 
-    <AppButton @click="startGame">COMMENCER</AppButton>
+    <AppButton :disabled="inviting" @click="startGame">
+      {{ isOnline ? 'INVITER' : 'COMMENCER' }}
+    </AppButton>
 
     <!-- Picker amis/invités -->
     <X01PlayerPicker

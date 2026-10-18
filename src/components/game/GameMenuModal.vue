@@ -3,7 +3,9 @@ import AppModal from '../AppModal.vue'
 import AppIcon from '../AppIcon.vue'
 
 defineProps({
-  show: { type: Boolean, required: true },
+  show:        { type: Boolean, required: true },
+  finishLabel: { type: String, default: 'Terminer la partie' },
+  quitLabel:   { type: String, default: 'Quitter sans sauvegarder' },
 })
 
 defineEmits(['finish', 'quit', 'close'])
@@ -13,12 +15,12 @@ defineEmits(['finish', 'quit', 'close'])
   <AppModal :show title="Partie en cours" @close="$emit('close')">
     <button class="gm-modal__item gm-modal__item--finish" @click="$emit('finish')">
       <AppIcon name="check" :width="20" :height="20" />
-      Terminer la partie
+      {{ finishLabel }}
     </button>
 
     <button class="gm-modal__item gm-modal__item--quit" @click="$emit('quit')">
       <AppIcon name="exit" :width="20" :height="20" />
-      Quitter sans sauvegarder
+      {{ quitLabel }}
     </button>
   </AppModal>
 </template>

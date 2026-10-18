@@ -26,6 +26,7 @@ import FriendsView from './FriendsView.vue'
 import StatsWarmupDetailView from './StatsWarmupDetailView.vue'
 import TournamentView from './TournamentView.vue'
 import TournamentJoinView from './TournamentJoinView.vue'
+import OnlineMatchLobbyView from './OnlineMatchLobbyView.vue'
 import { generateBracket, resolveMatches } from '../composables/useTournamentBracket.js'
 import { useGameStore } from '../store/gameStore.js'
 
@@ -89,6 +90,15 @@ const showTournamentByesPreview       = ref(false)
 const showTournamentDoubleElimPreview = ref(false)
 const showTournamentPendingPreview    = ref(false)
 const showTournamentJoinPreview       = ref(false)
+// --- Mock data OnlineMatchLobbyView ---
+const mockOnlineMatch = (status) => ({
+  id: 'mock-online', status, host_id: 'me', guest_id: 'u1', tournament_match_id: null,
+  host:  { id: 'me', username: 'Théotime' },
+  guest: { id: 'u1', username: 'luca92' },
+  settings: { startScore: 501, legsToWin: 2, players: [] },
+})
+const onlineLobbyPreview = ref(null) // { match, myId }
+
 const mockJoinPreview = {
   name: 'Tournoi de démonstration', description: 'Preview de la page de rejoindre',
   host_name: 'Théotime', participant_count: 2, status: 'pending',
@@ -335,6 +345,16 @@ const mockSent = [
       </div>
     </section>
 
+    <!-- OnlineMatchLobbyView — aperçu plein écran avec données fictives -->
+    <section class="dev__section">
+      <h2 class="dev__section-title">Match en ligne — salle d'attente (preview)</h2>
+      <div class="dev__buttons">
+        <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('invited'), myId: 'me' }">Invitation envoyée (hôte)</button>
+        <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('invited'), myId: 'u1' }">Invitation reçue (invité)</button>
+        <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('declined'), myId: 'me' }">Invitation refusée</button>
+      </div>
+    </section>
+
     <!-- Tactics — parties avec données fictives (preview) -->
     <section class="dev__section">
       <h2 class="dev__section-title">Tactics — parties avec données fictives (preview)</h2>
@@ -482,6 +502,12 @@ const mockSent = [
     <div v-if="showTournamentPendingPreview" class="dev__fullscreen-preview">
       <TournamentView :mock-tournament="mockTournamentPending" />
       <button class="dev__close-preview" @click="showTournamentPendingPreview = false">✕ Fermer</button>
+    </div>
+
+    <!-- OnlineMatchLobbyView plein écran -->
+    <div v-if="onlineLobbyPreview" class="dev__fullscreen-preview">
+      <OnlineMatchLobbyView :mock="onlineLobbyPreview" />
+      <button class="dev__close-preview" @click="onlineLobbyPreview = null">✕ Fermer</button>
     </div>
 
     <!-- TournamentJoinView plein écran -->
