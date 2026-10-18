@@ -412,6 +412,12 @@ const currentVolleyDarts = computed(() => {
   return isOpponentTurn.value ? online.liveDarts.value : currentDarts.value
 })
 
+// Reste avant la volée qui déclenche le prompt des doubles (elle est déjà enregistrée)
+const doublesPromptStartRemaining = computed(() => {
+  const last = volleys.value[volleys.value.length - 1]
+  return last ? legRemaining.value + (last.bust ? 0 : last.score) : null
+})
+
 // ── Données récap de manche ────────────────────────────────────────────────
 const showLegRecap = computed(() => phase.value === 'leg-recap' || aiWonLeg.value)
 const legWinner    = computed(() => aiWonLeg.value ? 'ai' : 'human')
@@ -567,7 +573,11 @@ const multiWinnerName = computed(() =>
       @finish="finishGame"
       @quit="quitGame"
     />
-    <X01DoublesModal :show="pendingDoublesPrompt" @confirm="confirmDoublesAttempted" />
+    <X01DoublesModal
+      :show="pendingDoublesPrompt"
+      :start-remaining="doublesPromptStartRemaining"
+      @confirm="confirmDoublesAttempted"
+    />
     <X01CheckoutModal
       :show="!!pendingCheckout"
       :default-darts="pendingCheckout?.defaultDarts ?? 3"

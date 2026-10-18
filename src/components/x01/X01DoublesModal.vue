@@ -1,9 +1,19 @@
 <script setup>
+import { computed } from 'vue'
+import { canFinish } from '../../composables/useCheckoutAnalysis.js'
 import AppModal from '../AppModal.vue'
 import AppIcon from '../AppIcon.vue'
 
-defineProps({
-  show: { type: Boolean, default: false },
+const props = defineProps({
+  show:           { type: Boolean, default: false },
+  // Reste au début de la volée : ex. 23 impose 1 fléchette de préparation → 2 doubles max
+  startRemaining: { type: Number,  default: null },
+})
+
+const maxDoubles = computed(() => {
+  if (props.startRemaining == null) return 3
+  const minDarts = [1, 2, 3].find(n => canFinish(props.startRemaining, n)) ?? 3
+  return 3 - (minDarts - 1)
 })
 
 defineEmits(['confirm'])
@@ -23,6 +33,7 @@ defineEmits(['confirm'])
         v-for="n in [0, 1, 2, 3]"
         :key="n"
         class="db-modal__btn"
+        :disabled="n > maxDoubles"
         @click="$emit('confirm', n)"
       >
         {{ n }}
@@ -76,10 +87,12 @@ defineEmits(['confirm'])
     color: $white;
     transition: background 0.15s, transform 0.1s;
 
-    &:active {
+    &:active:not(:disabled) {
       background: $orange;
       transform: scale(0.96);
     }
+
+    &:disabled { opacity: 0.2; cursor: default; }
   }
 }
 
