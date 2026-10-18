@@ -3,6 +3,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
+import ToggleSwitch from '../components/ToggleSwitch.vue'
 import X01BotConfigModal from '../components/x01/X01BotConfigModal.vue'
 import X01PlayerPicker from '../components/x01/X01PlayerPicker.vue'
 import X01PlayerOrderList from '../components/x01/X01PlayerOrderList.vue'
@@ -23,6 +24,7 @@ const MAX_PLAYERS   = 4
 const settings = reactive({
   scoreKey:  301,
   legsToWin: 2,
+  checkoutAnalysis: false,
 })
 const customScore = ref(401)
 const aiProfile     = ref(null)
@@ -80,6 +82,7 @@ function startGame() {
     legsToWin:  settings.legsToWin,
     aiProfile:  aiProfile.value,
     players:    players.value,
+    checkoutAnalysis: settings.checkoutAnalysis,
   }
   const needsStarterDraw = players.value.length > 1 && !aiProfile.value
   router.push({ name: needsStarterDraw ? 'x01-starter' : 'x01-game' })
@@ -170,6 +173,8 @@ function startGame() {
         </p>
       </div>
 
+      <ToggleSwitch v-model="settings.checkoutAnalysis" title="Analyse des checkouts"
+        description="Sous 170, indique ta cible avant chaque fléchette : revue de tes placements en fin de partie" />
 
     </main>
 

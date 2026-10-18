@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import DartSlotsBar from './DartSlotsBar.vue'
 import SectorGrid from './SectorGrid.vue'
 import SvgDartboard from '../x01/SvgDartboard.vue'
@@ -12,12 +12,22 @@ const props = defineProps({
   bust:       { type: Boolean, default: false },
   locked:     { type: Boolean, default: false },
   toggleable: { type: Boolean, default: false },
+  // Dart-by-dart input only (no volley total), e.g. when each dart must be analysed
+  forceDart:  { type: Boolean, default: false },
+  // Next tap picks the aimed target, not the hit: miss/bust are disabled
+  targeting:  { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['dart', 'miss', 'bust', 'validate', 'undo'])
 
 const mode = ref('volley')
 const volleyStr = ref('')
+
+watch(() => props.forceDart, (forced) => {
+  if (!forced || mode.value !== 'volley') return
+  mode.value = 'board'
+  volleyStr.value = ''
+}, { immediate: true })
 
 function selectMode(newMode) {
   if (props.locked || props.bust) return
@@ -52,9 +62,10 @@ function handleUndo() {
 </script>
 
 <template>
-  <div class="game-input">
+  <div class="game-input" :class="{ 'game-input--targeting': targeting }">
     <DartSlotsBar
       :mode="mode"
+      :modes="forceDart ? ['dart', 'board'] : undefined"
       :darts="darts"
       :value-key="valueKey"
       :value="volleyStr"
@@ -72,7 +83,7 @@ function handleUndo() {
 
     <GameBottomBar
       :bust-mode="mode === 'volley'"
-      :locked="locked"
+      :locked="locked || targeting"
       @undo="handleUndo"
       @miss="$emit('miss')"
       @bust="$emit('bust')"
@@ -91,6 +102,13 @@ function handleUndo() {
   display: flex;
   flex-direction: column;
   gap: $gap-md;
+
+  &--targeting &__dartboard,
+  &--targeting :deep(.sector-grid) {
+    outline: $border-md dashed $accent;
+    outline-offset: $padding-xxs;
+    border-radius: $radius-md;
+  }
 
   &__numpad {
     min-height: 0;
