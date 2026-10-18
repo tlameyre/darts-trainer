@@ -15,11 +15,13 @@ const summary = computed(() => {
 
   const totalDoublesHit = s.reduce((acc, r) => acc + (r.doubles_hit ?? 0), 0)
   const totalDoublesAttempted = s.reduce((acc, r) => acc + (r.doubles_attempted ?? 0), 0)
+  // Tournament matches lost without throwing a dart have no averages
+  const thrown = s.filter(r => r.avg_volley != null)
 
   return {
     sessions: s.length,
-    avgVolley: (s.reduce((acc, r) => acc + Number(r.avg_volley), 0) / s.length).toFixed(2),
-    avg9darts: (s.reduce((acc, r) => acc + Number(r.avg_9darts), 0) / s.length).toFixed(2),
+    avgVolley: thrown.length ? (thrown.reduce((acc, r) => acc + Number(r.avg_volley), 0) / thrown.length).toFixed(2) : '—',
+    avg9darts: thrown.length ? (thrown.reduce((acc, r) => acc + Number(r.avg_9darts), 0) / thrown.length).toFixed(2) : '—',
     pctFinish: totalDoublesAttempted > 0
       ? (totalDoublesHit / totalDoublesAttempted * 100).toFixed(2) + '%'
       : '—',
@@ -84,7 +86,7 @@ function legsToWin(s) {
             </div>
             <div class="tab__player-stats">
               <span class="tab__player-legs">{{ s.settings?.humanLegsWon ?? '–' }}</span>
-              <span class="tab__player-avg">{{ Number(s.avg_volley).toFixed(2) }}</span>
+              <span class="tab__player-avg">{{ s.avg_volley != null ? Number(s.avg_volley).toFixed(2) : '–' }}</span>
             </div>
           </div>
           <!-- DartBot opponent -->

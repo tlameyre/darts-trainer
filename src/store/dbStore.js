@@ -77,22 +77,24 @@ export const useDbStore = defineStore('db', () => {
    * CREATE POLICY "Users manage own x01_sessions"
    *   ON public.x01_sessions FOR ALL USING (auth.uid() = user_id);
    */
+  // stats is null for a player who threw no dart (opponent finished first in a
+  // local tournament match): the session is still saved, the match counts as played
   function x01SessionRow({ startScore, legsPlayed, stats, matchStats = null, settings, tournamentId = null, tournamentMatchId = null }) {
     return {
       start_score:         startScore,
       legs_played:         legsPlayed,
-      avg_volley:          stats.avgVolley,
-      avg_9darts:          stats.avg9darts,
-      avg_darts_to_finish: stats.avgDartsToFinish,
-      min_darts:           stats.bestLeg?.darts  ?? null,
-      max_darts:           stats.worstLeg?.darts ?? null,
-      highest_finish:      stats.highestFinish,
-      highest_volley:      stats.highestVolley,
-      doubles_hit:         stats.doublesHit           ?? null,
-      doubles_attempted:   stats.doublesAttempted      ?? null,
-      volley_distribution: stats.volleyDistribution    ?? null,
-      leg_averages:        stats.legAverages           ?? null,
-      total_darts:         stats.totalDarts            ?? null,
+      avg_volley:          stats?.avgVolley          ?? null,
+      avg_9darts:          stats?.avg9darts          ?? null,
+      avg_darts_to_finish: stats?.avgDartsToFinish   ?? null,
+      min_darts:           stats?.bestLeg?.darts     ?? null,
+      max_darts:           stats?.worstLeg?.darts    ?? null,
+      highest_finish:      stats?.highestFinish      ?? null,
+      highest_volley:      stats?.highestVolley      ?? null,
+      doubles_hit:         stats?.doublesHit         ?? null,
+      doubles_attempted:   stats?.doublesAttempted   ?? null,
+      volley_distribution: stats?.volleyDistribution ?? null,
+      leg_averages:        stats?.legAverages        ?? null,
+      total_darts:         stats?.totalDarts         ?? null,
       match_stats:         matchStats,
       settings,
       tournament_id:       tournamentId,
