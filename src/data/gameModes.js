@@ -45,6 +45,16 @@ export const GAME_MODES = [
     group: "play",
   },
   {
+    id: "x01-online",
+    title: "501 EN LIGNE",
+    description:
+      "Défie un ami à distance : chacun joue sur son propre appareil, les scores se synchronisent en direct.",
+    color: "#B45309",
+    icon: "globe",
+    settingsRoute: "online-settings",
+    group: "play",
+  },
+  {
     id: "tactics",
     title: "TACTICS",
     description:

@@ -30,6 +30,7 @@ import TournamentSettingsView from "../views/TournamentSettingsView.vue";
 import TournamentView from "../views/TournamentView.vue";
 import TournamentJoinView from "../views/TournamentJoinView.vue";
 import OnlineMatchLobbyView from "../views/OnlineMatchLobbyView.vue";
+import OnlineSettingsView from "../views/OnlineSettingsView.vue";
 
 const routes = [
   // Auth
@@ -84,6 +85,7 @@ const routes = [
     component: X01GameView,
     meta: { hideNav: true },
   },
+  { path: "/501/online", name: "online-settings", component: OnlineSettingsView },
   { path: "/501/online/:id", name: "online-match", component: OnlineMatchLobbyView },
   { path: "/checkouts", name: "checkout-settings", component: CheckoutSettingsView },
   { path: "/checkouts/wiki", name: "checkout-wiki", component: CheckoutWikiView },

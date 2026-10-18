@@ -79,7 +79,7 @@ if (!props.mock) {
 
 <template>
   <div class="lobby">
-    <AppHeader title="Match en ligne" @back="router.push({ name: 'x01-settings' })" />
+    <AppHeader title="Match en ligne" @back="router.push({ name: 'online-settings' })" />
 
     <main class="lobby__main">
       <p v-if="loading" class="lobby__muted">Chargement…</p>
@@ -109,7 +109,7 @@ if (!props.mock) {
           </template>
         </template>
         <AppButton v-else-if="match.status === 'active'" @click="startGame">Reprendre le match</AppButton>
-        <AppButton v-else variant="secondary" @click="router.push({ name: 'x01-settings' })">Retour</AppButton>
+        <AppButton v-else variant="secondary" @click="router.push({ name: 'online-settings' })">Nouveau défi</AppButton>
       </template>
 
       <p v-else class="lobby__status">Match introuvable.</p>

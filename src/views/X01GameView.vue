@@ -49,6 +49,7 @@ const tournamentContext  = settings.tournamentContext ?? null
 const isTournamentMatch  = !!tournamentContext
 const onlineContext      = settings.online ?? null
 const isOnline           = !!onlineContext
+const settingsRoute      = isOnline ? 'online-settings' : 'x01-settings'
 
 const {
   completedLegs,
@@ -196,7 +197,7 @@ function handleReplay() {
   if (isTournamentMatch) {
     router.push({ name: 'tournament-detail', params: { id: tournamentContext.tournamentId } })
   } else {
-    router.push({ name: 'x01-settings' })
+    router.push({ name: settingsRoute })
   }
 }
 
@@ -223,7 +224,7 @@ async function finalizeOnlineMatch() {
 
 function quitGame() {
   showMenu.value = false
-  router.push({ name: 'x01-settings' })
+  router.push({ name: settingsRoute })
 }
 
 watch(aiWonLeg, (val) => {
@@ -462,7 +463,7 @@ const multiWinnerName = computed(() =>
 <template>
   <div class="x01">
 
-    <AppHeader :title="headerTitle" back-icon="exit" @back="router.push({ name: 'x01-settings' })">
+    <AppHeader :title="headerTitle" back-icon="exit" @back="router.push({ name: settingsRoute })">
       <template v-if="phase !== 'game-over'" #right>
         <button class="x01__menu-btn" @click="showMenu = true">
           <AppIcon name="gear" :width="22" :height="22" />

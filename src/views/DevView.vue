@@ -267,6 +267,7 @@ const views = [
   { name: 'x01-settings',  label: 'Réglages 501' },
   { name: 'x01-starter',   label: 'Partie 501 — Qui commence' },
   { name: 'x01-game',      label: 'Partie 501' },
+  { name: 'online-settings', label: '501 en ligne — Réglages' },
   { name: 'tactics-settings', label: 'Réglages Tactics' },
   { name: 'tactics-starter',  label: 'Partie Tactics — Qui commence' },
   { name: 'tactics-game',     label: 'Partie Tactics' },
