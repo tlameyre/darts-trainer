@@ -59,6 +59,10 @@ function startGame() {
   router.replace({ name: 'x01-game', query: { online: match.value.id } })
 }
 
+function randomStarter() {
+  return Math.random() < 0.5 ? myId.value : opponentId.value
+}
+
 async function run(action, ...args) {
   busy.value = true
   const updated = await action(match.value.id, ...args)
@@ -107,9 +111,9 @@ if (!props.mock) {
         </div>
 
         <div v-if="match.status === 'accepted'" class="lobby__card">
-          <h3 class="lobby__bull-title">Faites le bull !</h3>
-          <p v-if="isHost" class="lobby__muted">Qui a gagné le bull ? Il commence la partie.</p>
-          <p v-else class="lobby__waiting">{{ opponent }} indique qui commence…</p>
+          <h3 class="lobby__bull-title">Qui commence ?</h3>
+          <p v-if="isHost" class="lobby__muted">Faites le bull et indique qui l'a gagné, ou tire au sort.</p>
+          <p v-else class="lobby__waiting">{{ opponent }} choisit qui commence (bull ou tirage au sort)…</p>
         </div>
 
         <template v-if="match.status === 'invited'">
@@ -127,6 +131,9 @@ if (!props.mock) {
           <template v-if="isHost">
             <AppButton :disabled="busy" @click="run(onlineMatchStore.chooseStarter, myId)">Moi</AppButton>
             <AppButton :disabled="busy" @click="run(onlineMatchStore.chooseStarter, opponentId)">{{ opponent }}</AppButton>
+            <AppButton variant="secondary" :disabled="busy" @click="run(onlineMatchStore.chooseStarter, randomStarter())">
+              Au hasard
+            </AppButton>
           </template>
           <AppButton variant="ghost" :disabled="busy" @click="run(onlineMatchStore.cancel, 'accepted')">
             Annuler le match

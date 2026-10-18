@@ -117,7 +117,7 @@ onMounted(() => {
         </div>
         <p class="online-settings__hint">
           Le premier à {{ legsToWin }} manche{{ legsToWin > 1 ? 's' : '' }} gagne.
-          Une fois le défi accepté, faites le bull : tu choisiras alors qui commence.
+          Une fois le défi accepté, tu choisiras qui commence : au bull ou au hasard.
         </p>
       </div>
     </main>
