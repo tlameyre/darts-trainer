@@ -325,6 +325,7 @@ create table public.tournament_matches (
   played_at              timestamptz,
   player1_legs           int,
   player2_legs           int,
+  forfeited              boolean not null default false, -- match en ligne gagné par abandon
   unique(tournament_id, bracket_type, round, slot_in_round)
 );
 
@@ -797,6 +798,9 @@ begin
     case when tm.player1_participant_id = host_pid then p_host_legs else p_guest_legs end,
     case when tm.player2_participant_id = host_pid then p_host_legs else p_guest_legs end
   );
+  if om.status = 'abandoned' then
+    update public.tournament_matches set forfeited = true where id = tm.id;
+  end if;
 end;
 $$;
 revoke execute on function public.report_online_tournament_result(uuid, int, int) from public, anon;

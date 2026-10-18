@@ -28,6 +28,11 @@ function slotModifiers(participantId) {
   }
 }
 
+// A forfeited match shows who gave up rather than a meaningless leg count
+function isForfeitLoser(participantId) {
+  return props.match.forfeited && !!participantId && participantId !== props.match.winner_participant_id
+}
+
 function onClick() {
   if (props.playable) emit('play')
 }
@@ -50,7 +55,8 @@ function onClick() {
       <div v-if="i" class="match-card__divider" />
       <div class="match-card__player" :class="slotModifiers(slot.participantId)">
         <span class="match-card__name">{{ slotLabel(slot.participantId) }}</span>
-        <span v-if="slot.legs != null" class="match-card__legs">{{ slot.legs }}</span>
+        <span v-if="isForfeitLoser(slot.participantId)" class="match-card__forfeit">Abandon</span>
+        <span v-else-if="slot.legs != null && !match.forfeited" class="match-card__legs">{{ slot.legs }}</span>
       </div>
     </template>
   </button>
@@ -160,6 +166,15 @@ function onClick() {
   &__legs {
     flex-shrink: 0;
     font-variant-numeric: tabular-nums;
+  }
+
+  &__forfeit {
+    flex-shrink: 0;
+    @include text-xxs;
+    color: $muted;
+    font-style: normal;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   &__divider {

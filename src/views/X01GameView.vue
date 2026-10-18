@@ -197,7 +197,7 @@ const resultSubtitle = computed(() => {
 
 function handleReplay() {
   if (isTournamentMatch) {
-    router.push({ name: 'tournament-detail', params: { id: tournamentContext.tournamentId } })
+    router.push({ name: 'tournament-detail', params: { id: tournamentContext.tournamentId }, query: { tab: 'bracket' } })
   } else {
     router.push({ name: settingsRoute })
   }

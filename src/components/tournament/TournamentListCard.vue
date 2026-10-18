@@ -1,9 +1,15 @@
 <script setup>
+import { computed } from 'vue'
 import AppIcon from '../AppIcon.vue'
 
-defineProps({
+const props = defineProps({
   tournament: { type: Object, required: true },
 })
+
+// player_count is only set at start: count the roster for pending tournaments
+const playerCount = computed(() =>
+  props.tournament.tournament_participants?.[0]?.count ?? props.tournament.player_count
+)
 
 defineEmits(['click'])
 
@@ -23,7 +29,7 @@ const STATUS_LABELS = { pending: 'Pas démarré', in_progress: 'En cours', compl
     <div class="tournament-card__info">
       <span class="tournament-card__name">{{ tournament.name }}</span>
       <span class="tournament-card__meta">
-        {{ tournament.player_count }} joueurs · {{ formatDate(tournament.created_at) }}
+        {{ playerCount }} joueur{{ playerCount > 1 ? 's' : '' }} · {{ formatDate(tournament.created_at) }}
       </span>
     </div>
     <span class="tournament-card__status" :class="{ 'tournament-card__status--done': tournament.status === 'completed' }">

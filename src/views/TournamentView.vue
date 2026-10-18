@@ -40,7 +40,8 @@ const TABS = [
   { id: 'participants',  label: 'Participants' },
   { id: 'bracket',       label: 'Bracket' },
 ]
-const activeTab = ref('infos')
+// ?tab=bracket au retour d'un match
+const activeTab = ref(TABS.some(t => t.id === route.query.tab) ? route.query.tab : 'infos')
 
 const showStartModal      = ref(false)
 const showHostPicker      = ref(false)
@@ -404,7 +405,7 @@ async function playOnline() {
     <ConfirmModal
       :show="showDeleteConfirm"
       title="Supprimer le tournoi"
-      message="Cette action est définitive : le tournoi, ses participants et ses matchs seront supprimés pour tout le monde."
+      message="Cette action est définitive : le tournoi, ses participants et ses matchs seront supprimés pour tout le monde. Les stats X01 des joueurs sont conservées."
       :confirm-label="deleting ? 'Suppression...' : 'Supprimer'"
       @close="showDeleteConfirm = false"
       @confirm="confirmDeleteTournament"

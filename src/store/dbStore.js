@@ -540,10 +540,13 @@ export const useDbStore = defineStore('db', () => {
     // l'utilisateur est hôte ou participant (auto-inscrit ou ajouté).
     const { data, error } = await supabase
       .from('tournaments')
-      .select('*')
+      .select('*, tournament_participants!tournament_participants_tournament_id_fkey(count)')
       .order('created_at', { ascending: false })
       .limit(limit)
-    if (error) return []
+    if (error) {
+      console.error('[dbStore] fetchTournaments:', error.message)
+      return []
+    }
     return data
   }
 

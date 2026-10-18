@@ -65,6 +65,7 @@ function openTournament(id) {
           @click="openTournament(t.id)"
         />
       </div>
+      <p v-else-if="tournamentStore.loading" class="tournaments__empty">Chargement…</p>
       <p v-else class="tournaments__empty">
         {{ activeTab === 'active' ? 'Aucun tournoi en cours.' : 'Aucun tournoi terminé.' }}
       </p>

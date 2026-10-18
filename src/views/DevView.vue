@@ -58,6 +58,7 @@ function buildMockTournament({ playerCount, doubleElimination }) {
     loser_next_match_slot: m.loserNextMatchSlot,
     player1_legs: null,
     player2_legs: null,
+    forfeited: false,
   }))
   // Shows every card state: first playable match won 2-1 (winner advanced), second one live
   const [played, live] = resolved.filter(m => m.status === 'ready')
