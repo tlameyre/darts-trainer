@@ -1,5 +1,6 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { canFinish } from '../../composables/useCheckoutAnalysis.js'
 import AppModal from '../AppModal.vue'
 import AppIcon from '../AppIcon.vue'
 
@@ -11,17 +12,23 @@ const props = defineProps({
 
 const emit = defineEmits(['confirm'])
 
-const dartsToFinish = ref(props.defaultDarts)
+// Ex. 56 ne se finit pas en 1 fléchette (double-out) : minimum 2
+const minDarts = computed(() => [1, 2, 3].find(n => canFinish(props.checkoutScore, n)) ?? 1)
+
+const dartsToFinish = ref(Math.max(props.defaultDarts, minDarts.value))
 const doublesThrown = ref(1)
 
 watch(() => props.show, (val) => {
   if (val) {
-    dartsToFinish.value = props.defaultDarts
+    dartsToFinish.value = Math.max(props.defaultDarts, minDarts.value)
     doublesThrown.value = 1
   }
 })
 
-watch(dartsToFinish, (val) => {
+// Les minDarts − 1 premières fléchettes servent forcément à préparer le finish
+const maxDoubles = computed(() => dartsToFinish.value - (minDarts.value - 1))
+
+watch(maxDoubles, (val) => {
   if (doublesThrown.value > val) doublesThrown.value = val
 })
 
@@ -50,7 +57,11 @@ function confirm() {
           v-for="n in [1, 2, 3]"
           :key="n"
           class="co-modal__btn"
-          :class="{ 'co-modal__btn--active': dartsToFinish === n }"
+          :class="{
+            'co-modal__btn--active':   dartsToFinish === n,
+            'co-modal__btn--disabled': n < minDarts,
+          }"
+          :disabled="n < minDarts"
           @click="dartsToFinish = n"
         >
           {{ n }}
@@ -67,9 +78,9 @@ function confirm() {
           class="co-modal__btn"
           :class="{
             'co-modal__btn--active':   doublesThrown === n,
-            'co-modal__btn--disabled': n > dartsToFinish,
+            'co-modal__btn--disabled': n > maxDoubles,
           }"
-          :disabled="n > dartsToFinish"
+          :disabled="n > maxDoubles"
           @click="doublesThrown = n"
         >
           {{ n }}
