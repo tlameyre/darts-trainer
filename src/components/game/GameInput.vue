@@ -23,6 +23,11 @@ const emit = defineEmits(['dart', 'miss', 'bust', 'validate', 'undo'])
 const mode = ref('volley')
 const volleyStr = ref('')
 
+// Le tour peut passer à l'adversaire pendant la saisie (match en ligne)
+watch(() => props.locked, (locked) => {
+  if (locked) volleyStr.value = ''
+})
+
 watch(() => props.forceDart, (forced) => {
   if (!forced || mode.value !== 'volley') return
   mode.value = 'board'
@@ -36,7 +41,7 @@ function selectMode(newMode) {
 }
 
 function appendDigit(d) {
-  if (volleyStr.value.length >= 3) return
+  if (props.locked || props.bust || volleyStr.value.length >= 3) return
   const next = volleyStr.value + d
   if (Number(next) > 180) return
   volleyStr.value = next
@@ -47,7 +52,7 @@ function deleteDigit() {
 }
 
 function submitVolley() {
-  if (!volleyStr.value) return
+  if (props.locked || props.bust || !volleyStr.value) return
   emit('validate', Number(volleyStr.value))
   volleyStr.value = ''
 }
