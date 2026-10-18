@@ -580,7 +580,100 @@ export const useDbStore = defineStore('db', () => {
     if (error) console.error('[dbStore] updateTournament:', error.message)
   }
 
+  // ── Matchs en ligne ────────────────────────────────────────────────────────
+
+  const ONLINE_MATCH_SELECT = `
+    *,
+    host:host_id ( id, username, first_name ),
+    guest:guest_id ( id, username, first_name )
+  `
+
+  async function createOnlineMatch({ guestId, settings, tournamentMatchId = null }) {
+    const user = getUser()
+    if (!user) return null
+    const { data, error } = await supabase
+      .from('online_matches')
+      .insert({ host_id: user.id, guest_id: guestId, settings, tournament_match_id: tournamentMatchId })
+      .select(ONLINE_MATCH_SELECT)
+      .single()
+    if (error) {
+      console.error('[dbStore] createOnlineMatch:', error.message)
+      return null
+    }
+    return data
+  }
+
+  async function fetchOnlineMatch(matchId) {
+    const { data, error } = await supabase
+      .from('online_matches')
+      .select(ONLINE_MATCH_SELECT)
+      .eq('id', matchId)
+      .maybeSingle()
+    if (error) console.error('[dbStore] fetchOnlineMatch:', error.message)
+    return data ?? null
+  }
+
+  async function fetchOpenOnlineMatches() {
+    const user = getUser()
+    if (!user) return []
+    // La RLS limite déjà aux matchs où l'utilisateur est hôte ou invité
+    const { data, error } = await supabase
+      .from('online_matches')
+      .select(ONLINE_MATCH_SELECT)
+      .in('status', ['invited', 'active'])
+      .order('created_at', { ascending: false })
+    if (error) {
+      console.error('[dbStore] fetchOpenOnlineMatches:', error.message)
+      return []
+    }
+    return data
+  }
+
+  // Ne fait rien si le match n'est plus dans fromStatus (déjà traité par l'autre joueur)
+  async function updateOnlineMatchStatus(matchId, fromStatus, { status, winnerId = null }) {
+    const { data, error } = await supabase
+      .from('online_matches')
+      .update({ status, ...(winnerId ? { winner_id: winnerId } : {}) })
+      .eq('id', matchId)
+      .eq('status', fromStatus)
+      .select(ONLINE_MATCH_SELECT)
+      .maybeSingle()
+    if (error) console.error('[dbStore] updateOnlineMatchStatus:', error.message)
+    return data ?? null
+  }
+
+  async function fetchOnlineMatchEvents(matchId) {
+    const { data, error } = await supabase
+      .from('online_match_events')
+      .select('*')
+      .eq('match_id', matchId)
+      .order('seq', { ascending: true })
+    if (error) {
+      console.error('[dbStore] fetchOnlineMatchEvents:', error.message)
+      return null
+    }
+    return data
+  }
+
+  // false si le seq est déjà pris (l'autre joueur a écrit avant) → le client resynchronise
+  async function insertOnlineMatchEvent({ matchId, seq, type, payload }) {
+    const user = getUser()
+    if (!user) return false
+    const { error } = await supabase
+      .from('online_match_events')
+      .insert({ match_id: matchId, seq, player_id: user.id, type, payload })
+    if (error) console.error('[dbStore] insertOnlineMatchEvent:', error.message)
+    return !error
+  }
+
+  async function reportOnlineTournamentResult(matchId) {
+    const { error } = await supabase.rpc('report_online_tournament_result', { p_online_match_id: matchId })
+    if (error) console.error('[dbStore] reportOnlineTournamentResult:', error.message)
+  }
+
   return {
+    createOnlineMatch, fetchOnlineMatch, fetchOpenOnlineMatches, updateOnlineMatchStatus,
+    fetchOnlineMatchEvents, insertOnlineMatchEvent, reportOnlineTournamentResult,
     saveGameSession, saveWarmupSession, saveX01Session, saveTacticsSession, saveCheckoutSession,
     deleteGameSession, deleteWarmupSession, deleteX01Session, deleteTacticsSession, deleteCheckoutSession,
     fetchGameSessions, fetchWarmupSessions, fetchWarmupSessionsForChart, fetchX01Sessions, fetchTacticsSessions, fetchCheckoutSessions,
