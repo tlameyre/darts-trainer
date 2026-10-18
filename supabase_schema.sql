@@ -273,6 +273,8 @@ create table public.tournaments (
   legs_to_win           int not null,
   seeding_method        text check (seeding_method in ('random', 'manual')), -- choisi au démarrage
   double_elimination    boolean default false,                                -- choisi au démarrage
+  double_round_robin    boolean default false,                                -- championnat : aller-retour, choisi au démarrage
+  playoff_size          int,                                                  -- championnat : top N qualifié (null = pas de playoffs)
   player_count          int not null default 0,
   status                text not null default 'pending'
                           check (status in ('pending', 'in_progress', 'completed')),
@@ -310,7 +312,7 @@ create table public.tournament_matches (
   id                     uuid primary key default gen_random_uuid(),
   tournament_id          uuid references public.tournaments(id) on delete cascade not null,
   round                  int not null,
-  bracket_type           text not null default 'winner' check (bracket_type in ('winner', 'loser', 'grand_final')),
+  bracket_type           text not null default 'winner' check (bracket_type in ('winner', 'loser', 'grand_final', 'league')), -- league : round = journée
   slot_in_round          int not null,
   player1_participant_id uuid references public.tournament_participants(id) on delete set null,
   player2_participant_id uuid references public.tournament_participants(id) on delete set null,
@@ -719,6 +721,62 @@ end;
 $$;
 revoke execute on function public.advance_tournament_participant(uuid, int, uuid) from public, anon, authenticated;
 
+-- Classement d'un championnat (matchs 'league' terminés). V = 2 pts, D = 0.
+-- Départage : points, diff. de manches, manches gagnées, points pris contre les
+-- joueurs à égalité sur ces trois critères, puis seed.
+-- Miroir de computeStandings() dans src/composables/useChampionship.js : garder les deux synchrones.
+create or replace function public.championship_standings(p_tournament_id uuid)
+returns table (
+  participant_id uuid, played int, wins int, losses int,
+  legs_for int, legs_against int, points int, rank int
+)
+language sql stable security definer set search_path = public as $$
+  with lm as (
+    select * from public.tournament_matches m
+    where m.tournament_id = p_tournament_id and m.bracket_type = 'league' and m.status = 'completed'
+  ),
+  sides as (
+    select lm.player1_participant_id as pid, lm.player2_participant_id as opp,
+           coalesce(lm.player1_legs, 0) as lf, coalesce(lm.player2_legs, 0) as la,
+           lm.winner_participant_id = lm.player1_participant_id as won
+    from lm
+    union all
+    select lm.player2_participant_id, lm.player1_participant_id,
+           coalesce(lm.player2_legs, 0), coalesce(lm.player1_legs, 0),
+           lm.winner_participant_id = lm.player2_participant_id
+    from lm
+  ),
+  base as (
+    select p.id as pid, p.seed,
+           count(s.pid)::int                       as played,
+           (count(*) filter (where s.won))::int     as wins,
+           (count(*) filter (where not s.won))::int as losses,
+           coalesce(sum(s.lf), 0)::int              as lf,
+           coalesce(sum(s.la), 0)::int              as la,
+           (2 * count(*) filter (where s.won))::int as pts
+    from public.tournament_participants p
+    left join sides s on s.pid = p.id
+    where p.tournament_id = p_tournament_id
+    group by p.id, p.seed
+  ),
+  h2h as (
+    select s.pid, (2 * count(*))::int as h2h_pts
+    from sides s
+    join base me on me.pid = s.pid
+    join base o  on o.pid = s.opp
+    where s.won and o.pts = me.pts and o.lf - o.la = me.lf - me.la and o.lf = me.lf
+    group by s.pid
+  )
+  select b.pid, b.played, b.wins, b.losses, b.lf, b.la, b.pts,
+         (row_number() over (
+           order by b.pts desc, b.lf - b.la desc, b.lf desc, coalesce(h.h2h_pts, 0) desc, b.seed asc nulls last
+         ))::int
+  from base b
+  left join h2h h on h.pid = b.pid
+  order by 8;
+$$;
+revoke execute on function public.championship_standings(uuid) from public, anon, authenticated;
+
 -- Clôt un match de tournoi : enregistre vainqueur + manches, fait avancer le
 -- vainqueur (et le perdant en double élimination), clôt le tournoi après la
 -- finale. Interne : appelée par les RPC report_*_tournament_result. Idempotente.
@@ -752,6 +810,22 @@ begin
       player1_legs = case when p_player1_legs between 0 and max_legs then p_player1_legs end,
       player2_legs = case when p_player2_legs between 0 and max_legs then p_player2_legs end
   where id = tm.id;
+
+  -- Championnat : clôture quand la dernière journée est jouée, sauf si des
+  -- playoffs suivent (lancés par un hôte, leur finale clôt le tournoi).
+  if tm.bracket_type = 'league' then
+    if not exists (
+      select 1 from public.tournament_matches m
+      where m.tournament_id = tm.tournament_id and m.bracket_type = 'league' and m.status <> 'completed'
+    ) and (select t.playoff_size from public.tournaments t where t.id = tm.tournament_id) is null then
+      update public.tournaments
+      set status = 'completed',
+          winner_participant_id = (select s.participant_id from public.championship_standings(tm.tournament_id) s where s.rank = 1),
+          completed_at = now()
+      where id = tm.tournament_id;
+    end if;
+    return;
+  end if;
 
   if tm.next_match_id is not null then
     perform public.advance_tournament_participant(tm.next_match_id, tm.next_match_slot, p_winner_pid);

@@ -397,13 +397,14 @@ export const useDbStore = defineStore('db', () => {
 
   // ── Tournois ────────────────────────────────────────────────────────────
 
-  async function createTournamentRecord({ name, description, startScore, legsToWin }) {
+  async function createTournamentRecord({ name, description, format, startScore, legsToWin }) {
     const user = getUser()
     if (!user) return null
     const { data, error } = await supabase.from('tournaments').insert({
       user_id:     user.id,
       name,
       description: description || null,
+      format,
       start_score: startScore,
       legs_to_win: legsToWin,
     }).select().single()

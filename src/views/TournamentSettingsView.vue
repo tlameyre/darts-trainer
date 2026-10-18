@@ -8,7 +8,11 @@ import { useTournamentStore } from '../store/tournamentStore.js'
 const router          = useRouter()
 const tournamentStore = useTournamentStore()
 
-const SCORE_OPTIONS = [301, 501]
+const SCORE_OPTIONS  = [301, 501]
+const FORMAT_OPTIONS = [
+  { id: 'bracket',      label: 'Bracket',     hint: 'Élimination directe jusqu\'au vainqueur.' },
+  { id: 'championship', label: 'Championnat', hint: 'Chacun affronte tous les autres au fil des journées, avec playoffs en option.' },
+]
 const MIN_LEGS      = 1
 const MAX_LEGS      = 9
 
@@ -17,12 +21,14 @@ const step = ref(1)
 const name        = ref(`Tournoi du ${new Date().toLocaleDateString('fr-FR')}`)
 const description = ref('')
 const settings = reactive({
+  format:    'bracket',
   scoreKey:  501,
   legsToWin: 2,
 })
 const customScore = ref(401)
 const creating     = ref(false)
 
+const formatHint     = computed(() => FORMAT_OPTIONS.find(f => f.id === settings.format).hint)
 const isCustomScore  = computed(() => settings.scoreKey === 'custom')
 const effectiveScore = computed(() =>
   isCustomScore.value ? Math.max(1, Number(customScore.value) || 501) : settings.scoreKey
@@ -53,6 +59,7 @@ async function createTournament() {
   const id = await tournamentStore.createTournamentShell({
     name:        name.value.trim(),
     description: description.value.trim(),
+    format:      settings.format,
     startScore:  effectiveScore.value,
     legsToWin:   settings.legsToWin,
   })
@@ -81,6 +88,18 @@ async function createTournament() {
       </template>
 
       <template v-else>
+        <div class="settings__card">
+          <div class="settings__section-label">Format</div>
+          <div class="settings__row">
+            <AppButton
+              v-for="f in FORMAT_OPTIONS" :key="f.id"
+              size="small" variant="ghost" :active="settings.format === f.id"
+              @click="settings.format = f.id"
+            >{{ f.label }}</AppButton>
+          </div>
+          <p class="settings__hint">{{ formatHint }}</p>
+        </div>
+
         <div class="settings__card">
           <div class="settings__section-label">Score de départ</div>
           <div class="settings__row">

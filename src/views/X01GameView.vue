@@ -195,9 +195,13 @@ const resultSubtitle = computed(() => {
   return `${settings.startScore} pts · ${legs} manche${legs > 1 ? 's' : ''}`
 })
 
+const isLeagueMatch = isTournamentMatch
+  && tournamentStore.activeTournament?.matches.find(m => m.id === tournamentContext.matchId)?.bracket_type === 'league'
+
 function handleReplay() {
   if (isTournamentMatch) {
-    router.push({ name: 'tournament-detail', params: { id: tournamentContext.tournamentId }, query: { tab: 'bracket' } })
+    const tab = isLeagueMatch ? 'matchdays' : 'bracket'
+    router.push({ name: 'tournament-detail', params: { id: tournamentContext.tournamentId }, query: { tab } })
   } else {
     router.push({ name: settingsRoute })
   }
@@ -624,7 +628,7 @@ const multiWinnerName = computed(() =>
           :subtitle="resultSubtitle"
           :emoji="aiWonGame ? '🤖' : '🏆'"
           :title-color="aiWonGame ? 'orange' : null"
-          :replay-label="isTournamentMatch ? 'Retour au bracket' : 'Rejouer'"
+          :replay-label="isTournamentMatch ? (isLeagueMatch ? 'Retour aux journées' : 'Retour au bracket') : 'Rejouer'"
           :checkout-analysis="checkoutAnalysis"
           @replay="handleReplay"
           @home="router.push({ name: 'home' })"

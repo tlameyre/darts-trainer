@@ -19,6 +19,7 @@ function formatDate(iso) {
 }
 
 const STATUS_LABELS = { pending: 'Pas démarré', in_progress: 'En cours', completed: 'Terminé' }
+const FORMAT_LABELS = { bracket: 'Bracket', championship: 'Championnat' }
 </script>
 
 <template>
@@ -29,7 +30,7 @@ const STATUS_LABELS = { pending: 'Pas démarré', in_progress: 'En cours', compl
     <div class="tournament-card__info">
       <span class="tournament-card__name">{{ tournament.name }}</span>
       <span class="tournament-card__meta">
-        {{ playerCount }} joueur{{ playerCount > 1 ? 's' : '' }} · {{ formatDate(tournament.created_at) }}
+        {{ FORMAT_LABELS[tournament.format] ?? 'Bracket' }} · {{ playerCount }} joueur{{ playerCount > 1 ? 's' : '' }} · {{ formatDate(tournament.created_at) }}
       </span>
     </div>
     <span class="tournament-card__status" :class="{ 'tournament-card__status--done': tournament.status === 'completed' }">

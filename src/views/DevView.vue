@@ -28,6 +28,7 @@ import TournamentView from './TournamentView.vue'
 import TournamentJoinView from './TournamentJoinView.vue'
 import OnlineMatchLobbyView from './OnlineMatchLobbyView.vue'
 import { generateBracket, resolveMatches } from '../composables/useTournamentBracket.js'
+import { generateLeagueSchedule, computeStandings } from '../composables/useChampionship.js'
 import { useGameStore } from '../store/gameStore.js'
 
 const router    = useRouter()
@@ -97,6 +98,60 @@ function buildMockPendingTournament() {
     matches: [],
   }
 }
+// Championnat : les journées <= playedRounds sont jouées (le plus petit seed gagne,
+// 2-0 ou 2-1), un match de la journée suivante est en cours. Avec withPlayoffs,
+// toute la ligue est jouée et le bracket du top playoffSize est généré.
+function buildMockChampionship({ playerCount, doubleRoundRobin, playoffSize, playedRounds, withPlayoffs = false }) {
+  const participants = Array.from({ length: playerCount }, (_, i) => ({
+    id: `part-${i + 1}`, seed: i + 1, user_id: i === 0 ? 'mock-me' : null, player_data: { name: i === 0 ? 'Toi' : `Joueur ${i + 1}` },
+  }))
+  const toRow = (m, seedToId) => ({
+    id: m.key, round: m.round, bracket_type: m.bracketType, slot_in_round: m.slotInRound,
+    player1_participant_id: seedToId[m.player1Seed] ?? null, player2_participant_id: seedToId[m.player2Seed] ?? null,
+    winner_participant_id: null, status: m.status,
+    next_match_id: m.nextMatchKey ?? null, next_match_slot: m.nextMatchSlot ?? null,
+    player1_legs: null, player2_legs: null, forfeited: false,
+  })
+  const seedToId = Object.fromEntries(participants.map(p => [p.seed, p.id]))
+  const matches  = generateLeagueSchedule({ participantCount: playerCount, doubleRoundRobin }).map(m => toRow(m, seedToId))
+
+  const lastPlayed = withPlayoffs ? Infinity : playedRounds
+  matches.forEach((m, i) => {
+    if (m.round > lastPlayed) return
+    const p1Wins = m.player1_participant_id < m.player2_participant_id
+    Object.assign(m, {
+      status: 'completed',
+      winner_participant_id: p1Wins ? m.player1_participant_id : m.player2_participant_id,
+      player1_legs: p1Wins ? 2 : i % 2,
+      player2_legs: p1Wins ? i % 2 : 2,
+    })
+  })
+  const live = matches.find(m => m.status === 'ready')
+  if (live) live.status = 'in_progress'
+
+  if (withPlayoffs) {
+    const roster = computeStandings(matches, participants).slice(0, playoffSize).map(r => ({ ...r.participant.player_data, rowId: r.participant.id }))
+    const { seeded, matches: bracket } = generateBracket({ roster, seedingMethod: 'manual', doubleElimination: false })
+    const playoffSeedToId = Object.fromEntries(seeded.map(p => [p.seed, p.rowId]))
+    matches.push(...bracket.map(m => toRow(m, playoffSeedToId)))
+  }
+
+  return {
+    tournament: {
+      id: 'mock-championship', name: `Championnat ${playerCount} joueurs${doubleRoundRobin ? ' — aller-retour' : ''}`,
+      description: 'Championnat de démonstration', join_code: 'T-DEV03', format: 'championship',
+      start_score: 501, legs_to_win: 2, status: 'in_progress', winner_participant_id: null,
+      double_round_robin: doubleRoundRobin, playoff_size: playoffSize,
+    },
+    hosts: MOCK_HOSTS,
+    participants,
+    matches,
+  }
+}
+const mockChampionshipOngoing  = buildMockChampionship({ playerCount: 5, doubleRoundRobin: false, playoffSize: 4, playedRounds: 2 })
+const mockChampionshipPlayoffs = buildMockChampionship({ playerCount: 4, doubleRoundRobin: true, playoffSize: 2, withPlayoffs: true })
+const showChampionshipOngoingPreview  = ref(false)
+const showChampionshipPlayoffsPreview = ref(false)
 const mockTournamentByes       = buildMockTournament({ playerCount: 5, doubleElimination: false })
 const mockTournamentDoubleElim = buildMockTournament({ playerCount: 4, doubleElimination: true })
 const mockTournamentPending    = buildMockPendingTournament()
@@ -354,6 +409,8 @@ const mockSent = [
       <div class="dev__buttons">
         <button class="dev__btn" @click="showTournamentByesPreview = true">Bracket 5 joueurs (avec byes)</button>
         <button class="dev__btn" @click="showTournamentDoubleElimPreview = true">Bracket 4 joueurs (double élimination)</button>
+        <button class="dev__btn" @click="showChampionshipOngoingPreview = true">Championnat 5 joueurs en cours (exempts, top 4)</button>
+        <button class="dev__btn" @click="showChampionshipPlayoffsPreview = true">Championnat 4 joueurs aller-retour + finale</button>
         <button class="dev__btn" @click="showTournamentPendingPreview = true">Tournoi pas démarré (Infos/Participants)</button>
         <button class="dev__btn" @click="showTournamentJoinPreview = true">Page "Rejoindre par code"</button>
         <button class="dev__btn" @click="openMockTournamentMatch">Match tournoi (bouton "Retour au bracket")</button>
@@ -513,6 +570,18 @@ const mockSent = [
     <div v-if="showTournamentDoubleElimPreview" class="dev__fullscreen-preview">
       <TournamentView :mock-tournament="mockTournamentDoubleElim" />
       <button class="dev__close-preview" @click="showTournamentDoubleElimPreview = false">✕ Fermer</button>
+    </div>
+
+    <!-- TournamentView plein écran (championnat en cours) -->
+    <div v-if="showChampionshipOngoingPreview" class="dev__fullscreen-preview">
+      <TournamentView :mock-tournament="mockChampionshipOngoing" />
+      <button class="dev__close-preview" @click="showChampionshipOngoingPreview = false">✕ Fermer</button>
+    </div>
+
+    <!-- TournamentView plein écran (championnat + playoffs) -->
+    <div v-if="showChampionshipPlayoffsPreview" class="dev__fullscreen-preview">
+      <TournamentView :mock-tournament="mockChampionshipPlayoffs" />
+      <button class="dev__close-preview" @click="showChampionshipPlayoffsPreview = false">✕ Fermer</button>
     </div>
 
     <!-- TournamentView plein écran (pas démarré) -->

@@ -7,12 +7,15 @@ import { useAuthStore } from '../store/authStore.js'
 import { useGameStore } from '../store/gameStore.js'
 import { useOnlineMatchStore } from '../store/onlineMatchStore.js'
 import { MIN_PARTICIPANTS_TO_START } from '../data/tournamentConstants.js'
+import { isLeagueComplete } from '../composables/useChampionship.js'
 import AppHeader from '../components/AppHeader.vue'
 import AppTabs from '../components/AppTabs.vue'
 import AppButton from '../components/AppButton.vue'
 import AppIcon from '../components/AppIcon.vue'
 import AppModal from '../components/AppModal.vue'
 import TournamentBracketTree from '../components/tournament/TournamentBracketTree.vue'
+import TournamentStandingsTable from '../components/tournament/TournamentStandingsTable.vue'
+import TournamentMatchdayList from '../components/tournament/TournamentMatchdayList.vue'
 import TournamentStartModal from '../components/tournament/TournamentStartModal.vue'
 import TournamentHostPickerModal from '../components/tournament/TournamentHostPickerModal.vue'
 import X01PlayerPicker from '../components/x01/X01PlayerPicker.vue'
@@ -35,13 +38,51 @@ const isMock = computed(() => props.mockTournament !== null)
 const data   = computed(() => isMock.value ? props.mockTournament : tournamentStore.activeTournament)
 const isHost = computed(() => isMock.value ? true : tournamentStore.isHost)
 
-const TABS = [
-  { id: 'infos',        label: 'Infos' },
-  { id: 'participants',  label: 'Participants' },
-  { id: 'bracket',       label: 'Bracket' },
-]
-// ?tab=bracket au retour d'un match
-const activeTab = ref(TABS.some(t => t.id === route.query.tab) ? route.query.tab : 'infos')
+const isChampionship = computed(() => data.value?.tournament.format === 'championship')
+
+const tabs = computed(() => {
+  const base = [
+    { id: 'infos',        label: 'Infos' },
+    { id: 'participants', label: 'Participants' },
+  ]
+  if (!isChampionship.value) return [...base, { id: 'bracket', label: 'Bracket' }]
+  return [
+    ...base,
+    { id: 'standings', label: 'Classement' },
+    { id: 'matchdays', label: 'Journées' },
+    ...(data.value.tournament.playoff_size ? [{ id: 'bracket', label: 'Playoffs' }] : []),
+  ]
+})
+// ?tab=bracket / ?tab=matchdays au retour d'un match
+const activeTab = ref(route.query.tab ?? 'infos')
+watch(tabs, (list) => {
+  if (data.value && !list.some(t => t.id === activeTab.value)) activeTab.value = 'infos'
+}, { immediate: true })
+
+const formatLabel = computed(() => {
+  const t = data.value?.tournament
+  if (!t) return ''
+  if (!isChampionship.value) return t.double_elimination ? 'Bracket · double élimination' : 'Bracket'
+  const parts = ['Championnat']
+  if (t.double_round_robin) parts.push('aller-retour')
+  if (t.playoff_size) parts.push(t.playoff_size === 2 ? 'finale' : `playoffs top ${t.playoff_size}`)
+  return parts.join(' · ')
+})
+
+const hasPlayoffMatches = computed(() => data.value?.matches.some(m => m.bracket_type === 'winner') ?? false)
+const canStartPlayoffs  = computed(() =>
+  isHost.value && isChampionship.value && data.value.tournament.status === 'in_progress'
+  && !!data.value.tournament.playoff_size && !hasPlayoffMatches.value && isLeagueComplete(data.value.matches)
+)
+const startingPlayoffs = ref(false)
+
+async function onStartPlayoffs() {
+  if (isMock.value || startingPlayoffs.value) return
+  startingPlayoffs.value = true
+  await tournamentStore.startPlayoffs(data.value.tournament.id)
+  startingPlayoffs.value = false
+  activeTab.value = 'bracket'
+}
 
 const showStartModal      = ref(false)
 const showHostPicker      = ref(false)
@@ -124,14 +165,16 @@ async function copyInviteLink() {
   setTimeout(() => { copied.value = false }, 1500)
 }
 
-async function onStartConfirm({ seedingMethod, doubleElimination }) {
+async function onStartConfirm({ seedingMethod, doubleElimination, doubleRoundRobin, playoffSize }) {
   showStartModal.value = false
   await tournamentStore.startTournament({
     tournamentId: data.value.tournament.id,
     seedingMethod,
     doubleElimination,
+    doubleRoundRobin,
+    playoffSize,
   })
-  activeTab.value = 'bracket'
+  activeTab.value = isChampionship.value ? 'matchdays' : 'bracket'
 }
 
 function onAddHost(friend) {
@@ -238,7 +281,7 @@ async function playOnline() {
   <div class="tournament" v-if="data">
     <AppHeader :title="data.tournament.name" @back="router.push({ name: 'tournaments' })" />
 
-    <AppTabs v-model="activeTab" :tabs="TABS" />
+    <AppTabs v-model="activeTab" :tabs="tabs" />
 
     <main class="tournament__main">
 
@@ -263,6 +306,10 @@ async function playOnline() {
             @keydown.enter="$event.target.blur()"
           />
           <span v-else class="tournament__info-value">{{ data.tournament.name }}</span>
+        </div>
+        <div class="tournament__info-row">
+          <span class="tournament__info-label">Format</span>
+          <span class="tournament__info-value">{{ formatLabel }}</span>
         </div>
         <div class="tournament__info-row">
           <span class="tournament__info-label">Format de match</span>
@@ -291,6 +338,10 @@ async function playOnline() {
             Démarrer le tournoi
           </AppButton>
         </template>
+
+        <AppButton v-if="canStartPlayoffs" :disabled="startingPlayoffs" @click="onStartPlayoffs">
+          Lancer les playoffs
+        </AppButton>
 
         <button v-if="isHost" class="tournament__delete-action" @click="showDeleteConfirm = true">
           <AppIcon name="trash" :width="16" :height="16" />
@@ -347,10 +398,45 @@ async function playOnline() {
         </template>
       </div>
 
-      <!-- ── Bracket ──────────────────────────────────────────────────────── -->
+      <!-- ── Classement (championnat) ───────────────────────────────────────── -->
+      <div v-if="activeTab === 'standings'" class="tournament__tab">
+        <p v-if="data.tournament.status === 'pending'" class="tournament__empty">
+          Le tournoi n'a pas encore démarré.
+        </p>
+        <template v-else>
+          <TournamentStandingsTable
+            :matches="data.matches"
+            :participants="data.participants"
+            :playoff-size="data.tournament.playoff_size"
+            :my-user-id="authStore.user?.id ?? null"
+          />
+          <AppButton v-if="canStartPlayoffs" :disabled="startingPlayoffs" @click="onStartPlayoffs">
+            Lancer les playoffs
+          </AppButton>
+        </template>
+      </div>
+
+      <!-- ── Journées (championnat) ──────────────────────────────────────── -->
+      <div v-if="activeTab === 'matchdays'" class="tournament__tab">
+        <p v-if="data.tournament.status === 'pending'" class="tournament__empty">
+          Le tournoi n'a pas encore démarré.
+        </p>
+        <TournamentMatchdayList
+          v-else
+          :matches="data.matches"
+          :participants="data.participants"
+          :playable-match-ids="playableMatchIds"
+          @play="onPlay"
+        />
+      </div>
+
+      <!-- ── Bracket / Playoffs ─────────────────────────────────────────────── -->
       <div v-if="activeTab === 'bracket'" class="tournament__tab">
         <p v-if="data.tournament.status === 'pending'" class="tournament__empty">
           Le tournoi n'a pas encore démarré.
+        </p>
+        <p v-else-if="isChampionship && !hasPlayoffMatches" class="tournament__empty">
+          Les playoffs démarrent une fois toutes les journées jouées.
         </p>
         <TournamentBracketTree
           v-else
@@ -366,6 +452,7 @@ async function playOnline() {
     <TournamentStartModal
       :show="showStartModal"
       :participant-count="data.participants.length"
+      :format="data.tournament.format"
       @close="showStartModal = false"
       @confirm="onStartConfirm"
     />

@@ -68,7 +68,7 @@ export const GAME_MODES = [
     id: "tournament",
     title: "TOURNOI",
     description:
-      "Affronte un groupe de joueurs en bracket à élimination directe et suis la progression jusqu'au vainqueur.",
+      "Affronte un groupe de joueurs en bracket à élimination directe ou en championnat par journées, et suis la progression jusqu'au vainqueur.",
     color: "#7C3AED",
     icon: "trophy",
     settingsRoute: "tournaments",

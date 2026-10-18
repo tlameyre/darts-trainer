@@ -3,7 +3,8 @@ import { ref, computed } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { useDbStore } from './dbStore.js'
 import { useAuthStore } from './authStore.js'
-import { generateBracket, resolveMatches } from '../composables/useTournamentBracket.js'
+import { generateBracket, resolveMatches, assignSeeds } from '../composables/useTournamentBracket.js'
+import { generateLeagueSchedule, computeStandings, isLeagueComplete } from '../composables/useChampionship.js'
 
 export const useTournamentStore = defineStore('tournament', () => {
   const tournaments      = ref([])
@@ -136,10 +137,10 @@ export const useTournamentStore = defineStore('tournament', () => {
 
   // Crée le tournoi en statut "pending" : le créateur devient hôte + participant,
   // aucun bracket n'est généré (roster ouvert jusqu'au démarrage).
-  async function createTournamentShell({ name, description, startScore, legsToWin }) {
+  async function createTournamentShell({ name, description, format, startScore, legsToWin }) {
     const dbStore   = useDbStore()
     const authStore = useAuthStore()
-    const tournament = await dbStore.createTournamentRecord({ name, description, startScore, legsToWin })
+    const tournament = await dbStore.createTournamentRecord({ name, description, format, startScore, legsToWin })
     if (!tournament) return null
 
     await dbStore.addTournamentHost(tournament.id, authStore.user.id, 'creator')
@@ -151,23 +152,9 @@ export const useTournamentStore = defineStore('tournament', () => {
     return tournament.id
   }
 
-  // Génère le bracket à partir du roster actuellement inscrit et démarre le tournoi.
-  // useTournamentBracket.js est inchangé : seul le moment de l'appel diffère de la V1.
-  async function startTournament({ tournamentId, seedingMethod, doubleElimination, manualSeedOrder = null }) {
-    const dbStore = useDbStore()
-    const detail  = await dbStore.fetchTournamentDetail(tournamentId)
-    if (!detail) return false
-
-    const roster = (manualSeedOrder ?? detail.participants).map(p => ({
-      ...p.player_data,
-      participantRowId: p.id,
-    }))
-
-    const { seeded, matches } = generateBracket({ roster, seedingMethod, doubleElimination })
-
-    await dbStore.assignParticipantSeeds(seeded.map(p => ({ id: p.participantRowId, seed: p.seed })))
-
-    const seedToParticipantId = Object.fromEntries(seeded.map(p => [p.seed, p.participantRowId]))
+  // Insère des matchs générés en seeds, puis relie next/loser_next une fois les ids connus
+  async function insertMatches(tournamentId, matches, seedToParticipantId) {
+    const dbStore   = useDbStore()
     const resolved  = resolveMatches(matches, seedToParticipantId)
     const matchRows = await dbStore.createTournamentMatches(tournamentId, resolved)
     const keyToId   = Object.fromEntries(matchRows.map(r => [`${r.bracket_type}-${r.round}-${r.slot_in_round}`, r.id]))
@@ -182,13 +169,59 @@ export const useTournamentStore = defineStore('tournament', () => {
         loser_next_match_slot: m.loserNextMatchSlot ?? null,
       }))
     if (pointerUpdates.length) await dbStore.updateTournamentMatchPointers(pointerUpdates)
+  }
+
+  // Génère les matchs (bracket ou journées de championnat) à partir du roster
+  // actuellement inscrit et démarre le tournoi.
+  async function startTournament({
+    tournamentId, seedingMethod, doubleElimination, doubleRoundRobin, playoffSize, manualSeedOrder = null,
+  }) {
+    const dbStore = useDbStore()
+    const detail  = await dbStore.fetchTournamentDetail(tournamentId)
+    if (!detail) return false
+
+    const roster = (manualSeedOrder ?? detail.participants).map(p => ({
+      ...p.player_data,
+      participantRowId: p.id,
+    }))
+    const isChampionship = detail.tournament.format === 'championship'
+
+    let seeded, matches
+    if (isChampionship) {
+      seeded  = assignSeeds(roster, 'random')
+      matches = generateLeagueSchedule({ participantCount: seeded.length, doubleRoundRobin })
+    } else {
+      ({ seeded, matches } = generateBracket({ roster, seedingMethod, doubleElimination }))
+    }
+
+    await dbStore.assignParticipantSeeds(seeded.map(p => ({ id: p.participantRowId, seed: p.seed })))
+    await insertMatches(tournamentId, matches, Object.fromEntries(seeded.map(p => [p.seed, p.participantRowId])))
 
     await dbStore.updateTournament(tournamentId, {
-      status:             'in_progress',
-      seeding_method:     seedingMethod,
-      double_elimination: doubleElimination,
-      player_count:       seeded.length,
+      status:       'in_progress',
+      player_count: seeded.length,
+      ...(isChampionship
+        ? { seeding_method: 'random', double_round_robin: doubleRoundRobin, playoff_size: playoffSize }
+        : { seeding_method: seedingMethod, double_elimination: doubleElimination }),
     })
+
+    await fetchTournamentDetail(tournamentId)
+    return true
+  }
+
+  // Championnat terminé : les N premiers du classement entrent dans un bracket
+  // seedé 1vN, 2v(N-1)... Les seeds de playoffs ne sont pas stockés (ceux de la
+  // ligue occupent déjà la contrainte unique), seul le mapping vers les ids sert.
+  async function startPlayoffs(tournamentId) {
+    const t = activeTournament.value
+    if (!t || t.tournament.id !== tournamentId || !isLeagueComplete(t.matches)) return false
+
+    const qualified = computeStandings(t.matches, t.participants)
+      .slice(0, t.tournament.playoff_size)
+      .map(row => ({ ...row.participant.player_data, participantRowId: row.participant.id }))
+
+    const { seeded, matches } = generateBracket({ roster: qualified, seedingMethod: 'manual', doubleElimination: false })
+    await insertMatches(tournamentId, matches, Object.fromEntries(seeded.map(p => [p.seed, p.participantRowId])))
 
     await fetchTournamentDetail(tournamentId)
     return true
@@ -287,7 +320,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   return {
     tournaments, activeTournament, loading, isHost, isParticipant,
     fetchTournaments, fetchActiveTournaments, fetchTournamentDetail,
-    createTournamentShell, startTournament,
+    createTournamentShell, startTournament, startPlayoffs,
     fetchTournamentPreviewByCode, joinTournament, leaveTournament,
     updateTournamentName, addHost, removeHost, removeParticipant, deleteTournament, addParticipant,
     buildGameSettingsForMatch, recordMatchResult,
