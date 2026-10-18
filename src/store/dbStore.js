@@ -357,7 +357,7 @@ export const useDbStore = defineStore('db', () => {
     if (!user) return []
     const { data, error } = await supabase
       .from('x01_sessions')
-      .select('*, tournaments(name)')
+      .select('*, tournaments(name, format)')
       .eq('user_id', user.id)
       .order('played_at', { ascending: false })
       .limit(limit)

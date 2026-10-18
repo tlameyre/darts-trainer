@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import AppIcon from '../AppIcon.vue'
 import X01Result from '../x01/X01Result.vue'
 import GameOver from '../GameOver.vue'
@@ -13,6 +14,14 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'delete'])
+
+const router = useRouter()
+
+function openTournament() {
+  const { tournament_id: id, tournaments } = props.session
+  const tab = tournaments.format === 'championship' ? 'matchdays' : 'bracket'
+  router.push({ name: 'tournament-detail', params: { id }, query: { tab } })
+}
 
 // Normalise un item zoneRecap vers le format { zones: [...] } attendu par WarmupRecap
 function normalizeZoneItem(item) {
@@ -125,9 +134,19 @@ function formatDate(iso) {
         </button>
       </div>
 
-      <span v-if="session.tournament_id" class="session-detail__badge">
+      <!-- tournaments is null once the tournament is gone or no longer readable -->
+      <button
+        v-if="session.tournaments"
+        class="session-detail__badge session-detail__badge--link"
+        @click="openTournament"
+      >
         <AppIcon name="trophy" :width="12" :height="12" />
-        {{ session.tournaments?.name ?? 'Tournoi' }}
+        {{ session.tournaments.name }}
+        <AppIcon name="arrow-right" :width="12" :height="12" />
+      </button>
+      <span v-else-if="session.tournament_id" class="session-detail__badge">
+        <AppIcon name="trophy" :width="12" :height="12" />
+        Tournoi
       </span>
 
       <!-- Résultat 501 -->
@@ -221,6 +240,13 @@ function formatDate(iso) {
     @include text-xxs;
     margin-bottom: $gap-md;
     flex-shrink: 0;
+
+    &--link {
+      cursor: pointer;
+      transition: opacity 0.15s;
+
+      &:active { opacity: 0.6; }
+    }
   }
 
   &__date {
