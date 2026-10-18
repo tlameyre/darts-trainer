@@ -9,10 +9,12 @@ import { volleyDarts, threeDartAverage } from './useX01MatchStats.js'
  * - Bust si : score résultant < 0 | = 1 | = 0 sans double
  * - Bust annule toute la volée (score revient à la valeur avant la volée)
  *
- * @param {{ startScore: number, legsToWin: number, players?: Array }} settings
+ * @param {{ startScore: number, legsToWin: number, players?: Array, onVolleyCommitted?: Function }} settings
  *   players: tableau de joueurs humains (optionnel, défaut = 1 joueur)
+ *   onVolleyCommitted: appelé quand une volée est définitive (prompts doubles/checkout
+ *     inclus) avec { playerIndex, volley } — sert à publier la volée en ligne
  */
-export function useX01({ startScore, legsToWin, players = null }) {
+export function useX01({ startScore, legsToWin, players = null, onVolleyCommitted = null }) {
   const playerCount = players?.length ?? 1
   const isMulti     = playerCount > 1
   const meIndex     = players ? Math.max(0, players.findIndex(p => p.isMe)) : 0
@@ -75,6 +77,18 @@ export function useX01({ startScore, legsToWin, players = null }) {
     currentPlayerIndex.value = (currentPlayerIndex.value + 1) % playerCount
   }
 
+  function commitVolley() {
+    onVolleyCommitted?.({
+      playerIndex: currentPlayerIndex.value,
+      volley:      volleys.value[volleys.value.length - 1],
+    })
+  }
+
+  function endTurn() {
+    commitVolley()
+    advancePlayer()
+  }
+
   function triggerBust(newDarts, wasInCheckoutZone = false) {
     clearTimeout(_bustTimer)
     volleys.value.push({ darts: newDarts, bust: true, score: 0 })
@@ -85,7 +99,7 @@ export function useX01({ startScore, legsToWin, players = null }) {
       if (wasInCheckoutZone) {
         pendingDoublesPrompt.value = true
       } else {
-        advancePlayer()
+        endTurn()
       }
     }, 900)
   }
@@ -173,7 +187,7 @@ export function useX01({ startScore, legsToWin, players = null }) {
         if (inCheckoutZone) {
           pendingDoublesPrompt.value = true
         } else {
-          advancePlayer()
+          endTurn()
         }
       }, 700)
     }
@@ -216,7 +230,7 @@ export function useX01({ startScore, legsToWin, players = null }) {
       if (inCheckoutZone) {
         pendingDoublesPrompt.value = true
       } else {
-        advancePlayer()
+        endTurn()
       }
     }, 700)
   }
@@ -233,7 +247,7 @@ export function useX01({ startScore, legsToWin, players = null }) {
       volleys.value[volleys.value.length - 1] = { ...last, doublesAttempted: n }
     }
     pendingDoublesPrompt.value = false
-    advancePlayer()
+    endTurn()
   }
 
   function confirmCheckout({ dartsToFinish, doublesThrown }) {
@@ -242,6 +256,7 @@ export function useX01({ startScore, legsToWin, players = null }) {
       volleys.value[volleys.value.length - 1] = { ...last, dartsToFinish, doublesThrown }
     }
     pendingCheckout.value = null
+    commitVolley()
     finishLeg()
   }
 
@@ -279,21 +294,56 @@ export function useX01({ startScore, legsToWin, players = null }) {
   }
 
   function startNextLeg() {
-    clearTimeout(_completeTimer)
-    clearTimeout(_bustTimer)
+    clearTurnState()
     // Reset all players' current leg state
     for (const pVolleys of allVolleys) pVolleys.value = []
-    currentDarts.value         = []
-    volleyCompleting.value     = false
-    pendingDoublesPrompt.value = false
-    pendingCheckout.value      = null
     // Le joueur qui démarre tourne à chaque manche, en partant de celui placé en premier
     // (2 joueurs : alternance ; 3+ : boucle 0 → 1 → 2 → 0…)
     const legsPlayed           = allLegsOrdered[0].value.length
     currentPlayerIndex.value   = legsPlayed % playerCount
     legStarterIndex.value      = currentPlayerIndex.value
     legClosed.value            = false
+  }
+
+  function clearTurnState() {
+    clearTimeout(_completeTimer)
+    clearTimeout(_bustTimer)
+    currentDarts.value         = []
+    volleyCompleting.value     = false
+    pendingDoublesPrompt.value = false
+    pendingCheckout.value      = null
     phase.value                = 'playing'
+  }
+
+  // ─── Match en ligne : volées reçues / rejouées depuis le journal ───────────
+  // Synchrone, sans timer ni prompt : la volée arrive déjà complète.
+  function applyVolley(playerIndex, volley) {
+    if (legClosed.value) startNextLeg()
+    clearTurnState()
+    currentPlayerIndex.value = playerIndex
+    volleys.value.push(volley)
+    if (!volley.bust && legRemaining.value === 0) finishLeg()
+    else advancePlayer()
+  }
+
+  // Undo distant : retire la dernière volée (jamais un checkout) et rend la main
+  function removeLastVolley(playerIndex) {
+    clearTurnState()
+    allVolleys[playerIndex].value.pop()
+    currentPlayerIndex.value = playerIndex
+  }
+
+  function resetMatch() {
+    clearTurnState()
+    for (let i = 0; i < playerCount; i++) {
+      allVolleys[i].value       = []
+      allCompletedLegs[i].value = []
+      allLegsOrdered[i].value   = []
+    }
+    lastLegWinnerIndex.value = null
+    legClosed.value          = false
+    currentPlayerIndex.value = 0
+    legStarterIndex.value    = 0
   }
 
   // Called from view when AI wins a leg (single-player vs AI mode)
@@ -401,6 +451,9 @@ export function useX01({ startScore, legsToWin, players = null }) {
     confirmCheckout,
     startNextLeg,
     addLostLegVolleys,
+    applyVolley,
+    removeLastVolley,
+    resetMatch,
     stats,
     // Multi-player
     currentPlayerIndex,
@@ -410,6 +463,7 @@ export function useX01({ startScore, legsToWin, players = null }) {
     allCompletedLegs,
     allVolleys,
     lastLegWinnerIndex,
+    legClosed,
     computeStatsForPlayer,
     legsForAnalysis,
   }
