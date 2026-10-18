@@ -28,6 +28,7 @@ export function useOnlineMatch({ matchId, myId, players, x01 }) {
   let channel = null
   let hasSubscribed = false
   let offlineTimer  = null
+  let unmounted     = false
   const OFFLINE_GRACE_MS = 5000
 
   const meIndex = players.findIndex(p => p.id === myId)
@@ -87,9 +88,16 @@ export function useOnlineMatch({ matchId, myId, players, x01 }) {
     applyEvent(event)
   }
 
-  function subscribe() {
+  async function subscribe() {
+    const topic = `online-match-${matchId}`
+    // Le client réutilise un canal du même nom encore ouvert (match rouvert avant la
+    // fin de removeChannel) : on ne peut plus y ajouter de callbacks → on le ferme d'abord
+    const stale = supabase.getChannels().find(c => c.topic === `realtime:${topic}`)
+    if (stale) await supabase.removeChannel(stale)
+    if (unmounted) return
+
     channel = supabase
-      .channel(`online-match-${matchId}`, { config: { presence: { key: myId } } })
+      .channel(topic, { config: { presence: { key: myId } } })
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'online_match_events', filter: `match_id=eq.${matchId}`,
       }, ({ new: event }) => handleRemoteEvent(event))
@@ -174,11 +182,13 @@ export function useOnlineMatch({ matchId, myId, players, x01 }) {
     await refreshMatch()
     await resync()
     loading.value = false
-    subscribe()
-    document.addEventListener('visibilitychange', handleVisibility)
+    if (unmounted) return
+    await subscribe()
+    if (!unmounted) document.addEventListener('visibilitychange', handleVisibility)
   }
 
   onUnmounted(() => {
+    unmounted = true
     clearTimeout(offlineTimer)
     document.removeEventListener('visibilitychange', handleVisibility)
     if (channel) supabase.removeChannel(channel)
