@@ -529,3 +529,209 @@ create trigger before_tournament_insert
 alter publication supabase_realtime add table public.tournament_participants;
 alter publication supabase_realtime add table public.tournaments;
 alter publication supabase_realtime add table public.tournament_hosts;
+alter publication supabase_realtime add table public.friendships;
+
+
+-- ============================================================
+-- Matchs X01 en ligne (1v1 entre deux comptes, chacun sur son appareil)
+-- ============================================================
+-- L'état d'un match est reconstruit côté client en rejouant online_match_events
+-- dans l'ordre de seq (reprise après déconnexion). unique(match_id, seq) sert de
+-- verrou optimiste : deux inserts concurrents au même seq → un seul passe.
+
+create table public.online_matches (
+  id                  uuid primary key default gen_random_uuid(),
+  host_id             uuid references public.profiles(id) on delete cascade not null,
+  guest_id            uuid references public.profiles(id) on delete cascade not null,
+  status              text not null default 'invited'
+                        check (status in ('invited', 'active', 'completed', 'declined', 'cancelled', 'abandoned')),
+  settings            jsonb not null, -- { startScore, legsToWin, players: [{ id, name }] } (ordre = starter)
+  winner_id           uuid references public.profiles(id) on delete set null,
+  tournament_match_id uuid references public.tournament_matches(id) on delete set null,
+  created_at          timestamptz default now(),
+  check (host_id <> guest_id)
+);
+
+create index if not exists idx_online_matches_host  on public.online_matches(host_id);
+create index if not exists idx_online_matches_guest on public.online_matches(guest_id);
+-- Un seul match en ligne ouvert par match de tournoi
+create unique index if not exists idx_online_matches_open_tournament_match
+  on public.online_matches(tournament_match_id)
+  where tournament_match_id is not null and status in ('invited', 'active');
+
+create table public.online_match_events (
+  id         bigint generated always as identity primary key,
+  match_id   uuid references public.online_matches(id) on delete cascade not null,
+  seq        int not null,
+  player_id  uuid references public.profiles(id) on delete cascade not null,
+  type       text not null check (type in ('volley', 'undo')),
+  payload    jsonb not null default '{}'::jsonb,
+  created_at timestamptz default now(),
+  unique(match_id, seq)
+);
+
+alter table public.online_matches      enable row level security;
+alter table public.online_match_events enable row level security;
+
+-- Un match ne peut viser qu'un ami accepté, ou l'adversaire d'un match de tournoi prêt
+create or replace function public.can_create_online_match(guest uuid, t_match_id uuid)
+returns boolean
+language sql stable security definer set search_path = public as $$
+  select case
+    when t_match_id is null then exists (
+      select 1 from public.friendships f
+      where f.status = 'accepted'
+        and ((f.requester_id = auth.uid() and f.addressee_id = guest)
+          or (f.requester_id = guest and f.addressee_id = auth.uid()))
+    )
+    else exists (
+      select 1
+      from public.tournament_matches m
+      join public.tournament_participants p1 on p1.id = m.player1_participant_id
+      join public.tournament_participants p2 on p2.id = m.player2_participant_id
+      where m.id = t_match_id
+        and m.status = 'ready'
+        and ((p1.user_id = auth.uid() and p2.user_id = guest)
+          or (p1.user_id = guest and p2.user_id = auth.uid()))
+    )
+  end;
+$$;
+revoke execute on function public.can_create_online_match(uuid, uuid) from public, anon;
+grant execute on function public.can_create_online_match(uuid, uuid) to authenticated;
+
+create policy "Players read their online matches"
+  on public.online_matches for select
+  using (auth.uid() in (host_id, guest_id));
+
+create policy "Host creates online match"
+  on public.online_matches for insert
+  with check (
+    host_id = auth.uid()
+    and status = 'invited'
+    and public.can_create_online_match(guest_id, tournament_match_id)
+  );
+
+create policy "Players update their online matches"
+  on public.online_matches for update
+  using (auth.uid() in (host_id, guest_id))
+  with check (auth.uid() in (host_id, guest_id));
+
+-- Seuls status et winner_id sont modifiables après création
+revoke update on public.online_matches from authenticated, anon;
+grant update (status, winner_id) on public.online_matches to authenticated;
+
+-- Transitions autorisées : invité → accepte/refuse, hôte → annule l'invitation,
+-- n'importe quel joueur → termine/abandonne un match actif.
+create or replace function public.check_online_match_transition()
+returns trigger
+language plpgsql set search_path = public as $$
+begin
+  if new.status = old.status and new.winner_id is not distinct from old.winner_id then
+    return new;
+  end if;
+  if not (
+       (old.status = 'invited' and new.status in ('active', 'declined') and auth.uid() = old.guest_id)
+    or (old.status = 'invited' and new.status = 'cancelled' and auth.uid() = old.host_id)
+    or (old.status = 'active'  and new.status in ('completed', 'abandoned'))
+  ) then
+    raise exception 'Transition de match invalide : % → %', old.status, new.status;
+  end if;
+  if new.winner_id is not null and new.winner_id not in (old.host_id, old.guest_id) then
+    raise exception 'Vainqueur invalide';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger before_online_match_update
+  before update on public.online_matches
+  for each row execute procedure public.check_online_match_transition();
+
+create policy "Players read match events"
+  on public.online_match_events for select
+  using (exists (
+    select 1 from public.online_matches m
+    where m.id = match_id and auth.uid() in (m.host_id, m.guest_id)
+  ));
+
+create policy "Players append own events to active match"
+  on public.online_match_events for insert
+  with check (
+    player_id = auth.uid()
+    and exists (
+      select 1 from public.online_matches m
+      where m.id = match_id and m.status = 'active' and auth.uid() in (m.host_id, m.guest_id)
+    )
+  );
+
+-- Résultat d'un match de tournoi joué en ligne : tournament_matches n'est modifiable
+-- que par les hôtes, donc un joueur passe par cette fonction. Reprend la logique de
+-- tournamentStore.recordMatchResult / advanceParticipant. Idempotente.
+create or replace function public.report_online_tournament_result(p_online_match_id uuid)
+returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  om        public.online_matches;
+  tm        public.tournament_matches;
+  winner_pid uuid;
+  loser_pid  uuid;
+begin
+  select * into om from public.online_matches where id = p_online_match_id;
+  if om.id is null or auth.uid() not in (om.host_id, om.guest_id) then
+    raise exception 'Match introuvable';
+  end if;
+  if om.status not in ('completed', 'abandoned') or om.winner_id is null or om.tournament_match_id is null then
+    raise exception 'Match non terminé ou hors tournoi';
+  end if;
+
+  select * into tm from public.tournament_matches where id = om.tournament_match_id for update;
+  if tm.status = 'completed' then
+    return;
+  end if;
+
+  select p.id into winner_pid from public.tournament_participants p
+  where p.id in (tm.player1_participant_id, tm.player2_participant_id) and p.user_id = om.winner_id;
+  if winner_pid is null then
+    raise exception 'Vainqueur absent du match de tournoi';
+  end if;
+  loser_pid := case when tm.player1_participant_id = winner_pid
+                    then tm.player2_participant_id else tm.player1_participant_id end;
+
+  update public.tournament_matches
+  set winner_participant_id = winner_pid, status = 'completed', played_at = now()
+  where id = tm.id;
+
+  if tm.next_match_id is not null then
+    perform public.advance_tournament_participant(tm.next_match_id, tm.next_match_slot, winner_pid);
+  end if;
+  if tm.loser_next_match_id is not null and loser_pid is not null then
+    perform public.advance_tournament_participant(tm.loser_next_match_id, tm.loser_next_match_slot, loser_pid);
+  end if;
+  if tm.next_match_id is null then
+    update public.tournaments
+    set status = 'completed', winner_participant_id = winner_pid, completed_at = now()
+    where id = tm.tournament_id;
+  end if;
+end;
+$$;
+
+create or replace function public.advance_tournament_participant(p_match_id uuid, p_slot int, p_participant_id uuid)
+returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if p_slot = 1 then
+    update public.tournament_matches set player1_participant_id = p_participant_id where id = p_match_id;
+  else
+    update public.tournament_matches set player2_participant_id = p_participant_id where id = p_match_id;
+  end if;
+  update public.tournament_matches set status = 'ready'
+  where id = p_match_id and status = 'pending'
+    and player1_participant_id is not null and player2_participant_id is not null;
+end;
+$$;
+revoke execute on function public.advance_tournament_participant(uuid, int, uuid) from public, anon, authenticated;
+revoke execute on function public.report_online_tournament_result(uuid) from public, anon;
+grant execute on function public.report_online_tournament_result(uuid) to authenticated;
+
+alter publication supabase_realtime add table public.online_matches;
+alter publication supabase_realtime add table public.online_match_events;
