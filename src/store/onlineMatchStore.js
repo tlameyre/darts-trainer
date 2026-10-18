@@ -44,15 +44,16 @@ export const useOnlineMatchStore = defineStore('onlineMatch', () => {
     openMatches.value = []
   }
 
-  // Le starter de la 1re manche est tiré au sort ; l'ordre de players fait foi pour les deux clients
-  async function invite({ guest, startScore, legsToWin, tournament = null }) {
+  // starter : 'me' | 'opponent' | 'random' — l'ordre de players fait foi pour les deux clients
+  async function invite({ guest, startScore, legsToWin, starter = 'random', tournament = null }) {
     const me = { id: myId(), name: profileName(useAuthStore().profile) }
     const opponent = { id: guest.id, name: guest.name }
     if (tournament) {
       me.participantId       = tournament.myParticipantId
       opponent.participantId = tournament.opponentParticipantId
     }
-    const players = Math.random() < 0.5 ? [me, opponent] : [opponent, me]
+    const meFirst = starter === 'random' ? Math.random() < 0.5 : starter === 'me'
+    const players = meFirst ? [me, opponent] : [opponent, me]
     const match = await useDbStore().createOnlineMatch({
       guestId:           guest.id,
       settings:          { startScore, legsToWin, players, tournamentId: tournament?.tournamentId ?? null },

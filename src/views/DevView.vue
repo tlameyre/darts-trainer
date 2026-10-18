@@ -95,7 +95,7 @@ const mockOnlineMatch = (status) => ({
   id: 'mock-online', status, host_id: 'me', guest_id: 'u1', tournament_match_id: null,
   host:  { id: 'me', username: 'Théotime' },
   guest: { id: 'u1', username: 'luca92' },
-  settings: { startScore: 501, legsToWin: 2, players: [] },
+  settings: { startScore: 501, legsToWin: 2, players: [{ id: 'u1', name: 'luca92' }, { id: 'me', name: 'Théotime' }] },
 })
 const onlineLobbyPreview = ref(null) // { match, myId }
 

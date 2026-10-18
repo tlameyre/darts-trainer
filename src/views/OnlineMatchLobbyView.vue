@@ -34,6 +34,12 @@ const summary  = computed(() => {
   return `${startScore} · ${legsToWin} manche${legsToWin > 1 ? 's' : ''} gagnante${legsToWin > 1 ? 's' : ''}`
 })
 
+const starterLabel = computed(() => {
+  const first = match.value?.settings.players?.[0]
+  if (!first) return ''
+  return first.id === myId.value ? 'Tu commences' : `${first.name} commence`
+})
+
 const CLOSED_MESSAGES = {
   declined:  'Invitation refusée.',
   cancelled: 'Invitation annulée.',
@@ -89,6 +95,7 @@ if (!props.mock) {
           <AppIcon name="globe" :width="40" :height="40" class="lobby__icon" />
           <h2 class="lobby__opponent">{{ isHost ? `Défi lancé à ${opponent}` : `${opponent} te défie !` }}</h2>
           <p class="lobby__muted">{{ summary }}</p>
+          <p v-if="starterLabel" class="lobby__muted">{{ starterLabel }}</p>
           <p v-if="match.tournament_match_id" class="lobby__muted">Match de tournoi</p>
 
           <p v-if="CLOSED_MESSAGES[match.status]" class="lobby__status">{{ CLOSED_MESSAGES[match.status] }}</p>

@@ -17,7 +17,8 @@ export function useOnlineMatch({ matchId, myId, players, x01 }) {
 
   const match          = ref(null)
   const loading        = ref(true)
-  const opponentOnline = ref(false)
+  // Optimiste au départ : la présence met quelques secondes à se synchroniser
+  const opponentOnline = ref(true)
   // Fléchettes de la volée en cours de l'adversaire (broadcast, non persisté)
   const liveDarts      = ref([])
   // Volées actuellement appliquées, dans l'ordre (un undo retire la dernière)
@@ -26,6 +27,8 @@ export function useOnlineMatch({ matchId, myId, players, x01 }) {
   let lastSeq = 0
   let channel = null
   let hasSubscribed = false
+  let offlineTimer  = null
+  const OFFLINE_GRACE_MS = 5000
 
   const meIndex = players.findIndex(p => p.id === myId)
   const playerIndexOf = (id) => players.findIndex(p => p.id === id)
@@ -97,7 +100,12 @@ export function useOnlineMatch({ matchId, myId, players, x01 }) {
         if (payload.playerId !== myId) liveDarts.value = payload.darts
       })
       .on('presence', { event: 'sync' }, () => {
-        opponentOnline.value = Object.keys(channel.presenceState()).some(key => key !== myId)
+        clearTimeout(offlineTimer)
+        if (Object.keys(channel.presenceState()).some(key => key !== myId)) {
+          opponentOnline.value = true
+        } else {
+          offlineTimer = setTimeout(() => { opponentOnline.value = false }, OFFLINE_GRACE_MS)
+        }
       })
       .subscribe((status) => {
         if (status !== 'SUBSCRIBED') return
@@ -171,6 +179,7 @@ export function useOnlineMatch({ matchId, myId, players, x01 }) {
   }
 
   onUnmounted(() => {
+    clearTimeout(offlineTimer)
     document.removeEventListener('visibilitychange', handleVisibility)
     if (channel) supabase.removeChannel(channel)
   })
