@@ -49,6 +49,27 @@ function isHit(dart, zones) {
   return arr.some(z => isHitSingle(dart, z));
 }
 
+function sumHitPoints(darts) {
+  return darts.reduce((sum, d) => sum + (isHit(d, d.zones ?? [d.zone]) ? d.pts ?? 0 : 0), 0);
+}
+
+// A streak breaks on a miss or when the target zones change
+function computeBestStreaks(darts) {
+  const best = [];
+  let run = 0;
+  let prevZones = null;
+  darts.forEach((d) => {
+    const zones = d.zones ?? [d.zone];
+    if (!zonesArrayMatch(zones, prevZones)) run = 0;
+    prevZones = zones;
+    run = isHit(d, zones) ? run + 1 : 0;
+    const entry = best.find(b => zonesArrayMatch(b.zones, zones));
+    if (entry) entry.best = Math.max(entry.best, run);
+    else best.push({ zones, best: run });
+  });
+  return best;
+}
+
 export function useWarmup({ duration, zones: initialZones }) {
   const darts = ref([]);
   const currentZones = ref(initialZones.map(z => ({ ...z })));
@@ -82,6 +103,8 @@ export function useWarmup({ duration, zones: initialZones }) {
     };
   });
 
+  const bestStreaks = computed(() => computeBestStreaks(darts.value));
+
   const zoneRecapStats = computed(() => {
     const seen = [];
     periods.value.forEach((p) => {
@@ -101,6 +124,8 @@ export function useWarmup({ duration, zones: initialZones }) {
         hits,
         accuracy: zd.length > 0 ? Math.round((hits / zd.length) * 100) : 0,
         durationMs,
+        points: sumHitPoints(zd),
+        bestStreak: bestStreaks.value.find(b => zonesArrayMatch(b.zones, zones))?.best ?? 0,
       };
     });
   });
@@ -112,6 +137,8 @@ export function useWarmup({ duration, zones: initialZones }) {
       total,
       hits,
       accuracy: total > 0 ? Math.round((hits / total) * 100) : 0,
+      points: sumHitPoints(darts.value),
+      bestStreak: Math.max(0, ...bestStreaks.value.map(b => b.best)),
     };
   });
 

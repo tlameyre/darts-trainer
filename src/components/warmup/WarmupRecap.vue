@@ -92,6 +92,17 @@ const totalDurationMs = computed(() =>
             <span class="recap__zone-stat-lbl">Touchées</span>
           </div>
         </div>
+
+        <div v-if="zs.points != null" class="recap__zone-stats recap__zone-stats--extra">
+          <div class="recap__zone-stat">
+            <span class="recap__zone-stat-val">{{ zs.points }}</span>
+            <span class="recap__zone-stat-lbl">Points</span>
+          </div>
+          <div class="recap__zone-stat">
+            <span class="recap__zone-stat-val">{{ zs.bestStreak }}</span>
+            <span class="recap__zone-stat-lbl">Meilleure série</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -115,6 +126,16 @@ const totalDurationMs = computed(() =>
           <span class="recap__total-val">{{ sessionStats.accuracy }}%</span>
           <span class="recap__total-lbl">Précision</span>
         </div>
+        <template v-if="sessionStats.points != null">
+          <div class="recap__total-cell">
+            <span class="recap__total-val">{{ sessionStats.points }}</span>
+            <span class="recap__total-lbl">Points</span>
+          </div>
+          <div class="recap__total-cell">
+            <span class="recap__total-val">{{ sessionStats.bestStreak }}</span>
+            <span class="recap__total-lbl">Meilleure série</span>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -183,6 +204,11 @@ const totalDurationMs = computed(() =>
   &__zone-stats {
     display: flex;
     align-items: center;
+
+    &--extra {
+      padding-top: $padding-xs;
+      border-top: $border-md solid var(--card-sep);
+    }
   }
 
   &__zone-stat {
@@ -236,7 +262,7 @@ const totalDurationMs = computed(() =>
       border-right: $border-md solid $white;
     }
 
-    > :nth-child(-n+2) {
+    > :not(:nth-last-child(-n+2)) {
       border-bottom: $border-md solid $white;
     }
   }

@@ -39,7 +39,13 @@ const warmupZoneStats = computed(() => {
 const warmupSessionStats = computed(() => {
   const s = props.session
   if (!s) return { total: 0, hits: 0, accuracy: 0 }
-  return { total: s.total_darts, hits: s.hits, accuracy: s.accuracy }
+  return {
+    total:      s.total_darts,
+    hits:       s.hits,
+    accuracy:   s.accuracy,
+    points:     s.settings?.points,
+    bestStreak: s.settings?.bestStreak,
+  }
 })
 
 // Sessions récentes : match_stats complet. Anciennes : onglet Match seul, reconstruit des colonnes.

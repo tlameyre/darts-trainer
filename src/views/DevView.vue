@@ -312,10 +312,10 @@ const D16 = { sector: 16, type: 'D' }
 const T20 = { sector: 20, type: 'T' }
 const mockWarmupSessions = [
   { id: '1', played_at: '2025-11-02T10:00:00Z', accuracy: 55, total_darts: 20, hits: 11, duration_s: 300, settings: { zoneRecap: [{ zones: [D16], total: 20, hits: 9, accuracy: 45, durationMs: 300000 }] } },
-  { id: '2', played_at: '2026-01-05T10:00:00Z', accuracy: 62, total_darts: 40, hits: 25, duration_s: 480, settings: { zoneRecap: [{ zones: [D16], total: 20, hits: 12, accuracy: 60, durationMs: 240000 }, { zones: [T20], total: 20, hits: 13, accuracy: 65, durationMs: 240000 }] } },
+  { id: '2', played_at: '2026-01-05T10:00:00Z', accuracy: 62, total_darts: 40, hits: 25, duration_s: 480, settings: { points: 1164, bestStreak: 5, zoneRecap: [{ zones: [D16], total: 20, hits: 12, accuracy: 60, durationMs: 240000, points: 384, bestStreak: 4 }, { zones: [T20], total: 20, hits: 13, accuracy: 65, durationMs: 240000, points: 780, bestStreak: 5 }] } },
   { id: '3', played_at: '2026-02-12T10:00:00Z', accuracy: 68, total_darts: 30, hits: 21, duration_s: 360, settings: { zoneRecap: [{ zones: [T20], total: 30, hits: 21, accuracy: 70, durationMs: 360000 }] } },
   { id: '4', played_at: '2026-03-20T10:00:00Z', accuracy: 71, total_darts: 30, hits: 21, duration_s: 360, settings: { zoneRecap: [{ zones: [D16], total: 30, hits: 21, accuracy: 70, durationMs: 360000 }] } },
-  { id: '5', played_at: '2026-07-01T09:00:00Z', accuracy: 80, total_darts: 40, hits: 33, duration_s: 420, settings: { zoneRecap: [{ zones: [D16, T20], total: 40, hits: 33, accuracy: 82, durationMs: 420000 }] } },
+  { id: '5', played_at: '2026-07-01T09:00:00Z', accuracy: 80, total_darts: 40, hits: 33, duration_s: 420, settings: { points: 1608, bestStreak: 9, zoneRecap: [{ zones: [D16, T20], total: 40, hits: 33, accuracy: 82, durationMs: 420000, points: 1608, bestStreak: 9 }] } },
   { id: '6', played_at: '2026-07-01T18:30:00Z', accuracy: 58, total_darts: 25, hits: 15, duration_s: 300, settings: { zoneRecap: [{ zones: [T20], total: 25, hits: 15, accuracy: 60, durationMs: 300000 }] } },
 ]
 

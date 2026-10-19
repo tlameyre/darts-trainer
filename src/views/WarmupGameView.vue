@@ -38,6 +38,8 @@ watch(gameOver, async (val) => {
       settings: {
         ...restSettings,
         zoneRecap: zoneRecapStats.value,  // toutes les zones pour l'historique
+        points: sessionStats.value.points,
+        bestStreak: sessionStats.value.bestStreak,
       },
     })
     const stats = await dbStore.fetchProfileStats()
