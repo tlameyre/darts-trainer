@@ -22,6 +22,11 @@ export function useDarts({ difficulty, maxQuestions, timeLimit, doubleValidation
   const phase         = ref(1)
   const voleeTotal    = ref(0) // mémorisé après phase 1
 
+  // Per-question record for the end-of-game recap
+  // { label, total, score, answer, remaining, remainingAnswer, phase2Played }
+  const history   = ref([])
+  const startedAt = ref(null)
+
   // --- Timer ---
   const timeLeft = ref(timeLimit ?? 0)
   let _timer       = null
@@ -108,8 +113,16 @@ export function useDarts({ difficulty, maxQuestions, timeLimit, doubleValidation
     }, 1500)
   }
 
+  // undefined = not answered yet, null = timed out
+  function recordAnswer(value) {
+    const entry = history.value[history.value.length - 1]
+    if (phase.value === 1) entry.answer = value
+    else entry.remainingAnswer = value
+  }
+
   function onTimeout() {
     answered.value = true
+    recordAnswer(null)
     if (phase.value === 1) streak.value = 0
     feedbackState.value = 'timeout'
     scheduleNextRound()
@@ -125,6 +138,17 @@ export function useDarts({ difficulty, maxQuestions, timeLimit, doubleValidation
     questionIndex.value++
     currentScore.value  = Math.floor(Math.random() * 500) + 2
     currentVolee.value  = generateVolee(currentScore.value)
+    startedAt.value ??= Date.now()
+    const total = currentVolee.value.reduce((sum, d) => sum + d.pts, 0)
+    history.value.push({
+      label: currentVolee.value.map(d => d.label).join(' + '),
+      total,
+      score: currentScore.value,
+      answer: undefined,
+      remaining: currentScore.value - total,
+      remainingAnswer: undefined,
+      phase2Played: false,
+    })
     startTimer()
   }
 
@@ -145,6 +169,7 @@ export function useDarts({ difficulty, maxQuestions, timeLimit, doubleValidation
 
     stopTimer()
     answered.value = true
+    recordAnswer(userAnswer)
 
     if (userAnswer === correctAnswer.value) {
       if (phase.value === 1) {
@@ -162,6 +187,7 @@ export function useDarts({ difficulty, maxQuestions, timeLimit, doubleValidation
           clearTimeout(_autoAdvance)
           _autoAdvance = setTimeout(() => {
             phase.value         = 2
+            history.value[history.value.length - 1].phase2Played = true
             answered.value      = false
             inputValue.value    = ''
             feedbackState.value = null
@@ -189,7 +215,7 @@ export function useDarts({ difficulty, maxQuestions, timeLimit, doubleValidation
     currentScore, currentVolee, inputValue,
     feedbackState, answered, streak, best,
     questionIndex, correctCount, gameOver, timeLeft,
-    phase, voleeTotal,
+    phase, voleeTotal, history, startedAt,
     correctAnswer, questionLabel, phaseLabel,
     nextRound, appendDigit, deleteDigit, validate, cleanup,
   }

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useDarts } from '../composables/useDarts.js'
 import { useGameStore } from '../store/gameStore.js'
 import { useDbStore } from '../store/dbStore.js'
@@ -9,35 +9,47 @@ import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 
 import AppHeader from '../components/AppHeader.vue'
 import AppIcon from '../components/AppIcon.vue'
-import AnswerInput from '../components/AnswerInput.vue'
-import NumPad from '../components/NumPad.vue'
-import GameOver from '../components/GameOver.vue'
-import GameTourRow from '../components/game/GameTourRow.vue'
-import GameRoundCard from '../components/game/GameRoundCard.vue'
 import GameMenuModal from '../components/game/GameMenuModal.vue'
+import ScoreRoundPanel from '../components/score/ScoreRoundPanel.vue'
+import ScoreAnswerBox from '../components/score/ScoreAnswerBox.vue'
+import ScoreKeypad from '../components/score/ScoreKeypad.vue'
+import ScoreRecap from '../components/score/ScoreRecap.vue'
 
-const route      = useRoute()
 const router     = useRouter()
 const gameStore  = useGameStore()
 const dbStore    = useDbStore()
 const badgeStore = useBadgeStore()
 
+const settings = gameStore.gameSettings
+
 const {
   currentScore, currentVolee, inputValue,
   feedbackState, streak, best,
   correctCount, questionIndex, gameOver, timeLeft,
-  phase, voleeTotal,
-  correctAnswer, questionLabel, phaseLabel,
+  phase, voleeTotal, history, startedAt,
+  correctAnswer,
   nextRound, appendDigit, deleteDigit, validate, cleanup,
-} = useDarts(gameStore.gameSettings)
+} = useDarts(settings)
+
+const showMenu   = ref(false)
+const newBadges  = ref([])
+const durationMs = ref(0)
+
+// Feedback colors the whole orange zone (header, panel, answer) green or red
+const tone = computed(() => {
+  if (feedbackState.value === 'correct' || feedbackState.value === 'phase1ok') return 'ok'
+  if (feedbackState.value === 'wrong' || feedbackState.value === 'timeout') return 'ko'
+  return null
+})
 
 watch(gameOver, async (val) => {
   if (val) {
+    durationMs.value = startedAt.value ? Date.now() - startedAt.value : 0
     await dbStore.saveGameSession({
       correctCount:   correctCount.value,
       totalQuestions: questionIndex.value,
       bestStreak:     best.value,
-      settings:       gameStore.gameSettings,
+      settings,
     })
     const stats = await dbStore.fetchProfileStats()
     newBadges.value = await badgeStore.checkGameBadges({
@@ -48,9 +60,6 @@ watch(gameOver, async (val) => {
     })
   }
 })
-
-const showMenu      = ref(false)
-const newBadges     = ref([])
 
 function finishGame() {
   showMenu.value = false
@@ -65,6 +74,7 @@ function quitGame() {
 }
 
 function onKeydown(e) {
+  if (gameOver.value) return
   if (e.key >= '0' && e.key <= '9') appendDigit(e.key)
   else if (e.key === 'Backspace') deleteDigit()
   else if (e.key === 'Enter') validate()
@@ -82,36 +92,48 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="game" :class="{ gameOver: gameOver }">
-    <AppHeader :title="gameOver ? 'FIN DE PARTIE' : 'ENTRAINEMENT'" @back="router.push({ name: 'score-settings' })">
+  <div class="game" :class="!gameOver && tone && `game--${tone}`">
+    <AppHeader
+      :title="gameOver ? 'Fin de partie' : 'Entraînement'"
+      :back-icon="gameOver ? 'exit' : 'arrow-left'"
+      @back="router.push({ name: 'score-settings' })"
+    >
       <template v-if="!gameOver" #right>
-        <button class="game__menu-btn" @click="showMenu = true">
+        <button class="game__menu-btn" aria-label="Menu de la partie" @click="showMenu = true">
           <AppIcon name="gear" :width="22" :height="22" />
         </button>
       </template>
     </AppHeader>
 
-    <main class="game__main">
-      <GameOver v-if="gameOver" :correct-count="correctCount"
-        :max-questions="gameStore.gameSettings.maxQuestions ?? questionLabel" :best="best"
-        @replay="router.push({ name: 'score-settings' })"
-        @home="router.push({ name: 'home' })" />
+    <ScoreRecap
+      v-if="gameOver"
+      :history="history"
+      :double-validation="settings.doubleValidation"
+      :best="best"
+      :duration-ms="durationMs"
+      @replay="router.push({ name: 'score-settings' })"
+      @home="router.push({ name: 'home' })"
+    />
 
-      <template v-else>
-        <GameRoundCard :phase="phase" :current-score="currentScore" :current-volee="currentVolee"
-          :volee-total="voleeTotal" :feedback-state="feedbackState" :correct-answer="correctAnswer"
-          :show-value="gameStore.gameSettings.showDartValue" />
-
-        <div class="game__side">
-          <GameTourRow :question-label="questionLabel" :phase="phase" :show-phase="gameStore.gameSettings.doubleValidation"
-            :time-left="timeLeft" :show-timer="!!gameStore.gameSettings.timeLimit" :is-urgent="timeLeft <= 5" />
-
-          <AnswerInput :value="inputValue" :placeholder="phaseLabel"
-            :has-error="feedbackState === 'wrong' || feedbackState === 'timeout'" @validate="validate" />
-
-          <NumPad @digit="appendDigit" @delete="deleteDigit" @validate="validate" />
-        </div>
-      </template>
+    <main v-else class="game__main">
+      <ScoreRoundPanel
+        class="game__panel"
+        :phase="phase"
+        :show-phase="settings.doubleValidation"
+        :streak="streak"
+        :question-index="questionIndex"
+        :max-questions="settings.maxQuestions"
+        :time-left="timeLeft"
+        :show-timer="!!settings.timeLimit"
+        :current-score="currentScore"
+        :current-volee="currentVolee"
+        :volee-total="voleeTotal"
+        :show-dart-value="settings.showDartValue"
+      />
+      <div class="game__answer">
+        <ScoreAnswerBox :value="inputValue" :tone="tone" :expected="correctAnswer" />
+      </div>
+      <ScoreKeypad class="game__keys" @digit="appendDigit" @delete="deleteDigit" @validate="validate" />
     </main>
 
     <GameMenuModal :show="showMenu" @close="showMenu = false" @finish="finishGame" @quit="quitGame" />
@@ -125,53 +147,88 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: $padding-md;
-  gap: $gap-md;
-
-  &.gameOver {
-    padding: $padding-md $padding-md $padding-xxl;
-  }
 
   &__menu-btn {
-    color: $text-color;
     display: flex;
     align-items: center;
     padding: $padding-xxs;
+    color: $white;
     transition: opacity 0.15s;
 
     &:active { opacity: 0.6; }
   }
 
-
   &__main {
     flex: 1;
     min-height: 0;
-    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: $gap-md;
   }
 
-  &__side {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-md;
-    min-height: 0;
+  &__panel {
     flex: 1;
+    padding: $padding-xs $padding-md 0;
+    background: $orange;
+  }
+
+  &__answer {
+    padding: $padding-sm $padding-md $padding-md;
+    background: $orange;
+  }
+
+  // AppHeader's root carries this view's scope, so its background can be themed here
+  .app-header,
+  &__panel,
+  &__answer {
+    transition: background 0.2s;
+  }
+
+  &--ok {
+    .app-header,
+    .game__panel,
+    .game__answer {
+      background: $accent;
+    }
+  }
+
+  &--ko {
+    .app-header,
+    .game__panel,
+    .game__answer {
+      background: $error;
+    }
+  }
+
+  &__keys {
+    padding: $padding-sm $padding-md $padding-md;
   }
 }
 
 @media (min-width: $bp-laptop) {
   .game {
-    padding: $padding-xl;
-
     &__main {
-      flex-direction: row;
-      align-items: stretch;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: auto 1fr;
     }
 
-    &__side {
-      flex: 1;
+    &__panel {
+      grid-row: 1 / 3;
+      padding: $padding-xl $padding-xxl $padding-xxl;
+    }
+
+    &__answer {
+      padding: $padding-xl $padding-xxl $padding-md;
+    }
+
+    &__answer,
+    &--ok .game__answer,
+    &--ko .game__answer {
+      background: transparent;
+    }
+
+    &__keys {
+      padding: 0 $padding-xxl $padding-xxl;
     }
   }
 }
