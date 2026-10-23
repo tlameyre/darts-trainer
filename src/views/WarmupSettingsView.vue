@@ -74,7 +74,6 @@ function startGame() {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: $padding-md $padding-md 0;
   gap: $gap-xl;
   @include nav-safe-bottom;
 

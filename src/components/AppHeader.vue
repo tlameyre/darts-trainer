@@ -27,15 +27,16 @@ defineEmits(['back'])
 .app-header {
   width: 100%;
   display: grid;
-  grid-template-columns: 40px 1fr 40px;
+  grid-template-columns: 48px 1fr 48px;
   align-items: center;
+  padding: $padding-md;
+  background: $orange;
 
   &__back {
-    color: $text-color;
+    color: $white;
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    padding: $padding-xxs;
     transition: opacity 0.15s;
 
     &:active {
@@ -45,7 +46,7 @@ defineEmits(['back'])
 
   &__title {
     @include title-lg;
-    color: $text-color;
+    color: $white;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
