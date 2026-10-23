@@ -107,6 +107,8 @@ Le bas de page des vues avec BottomNav se réserve **toujours** via le mixin
 `nav-safe-bottom($extra)` (défini dans `_variables.scss`) — il ajoute la hauteur
 réelle de la nav (`$bottom-nav-height`) + `env(safe-area-inset-bottom)`. Ne jamais
 coder en dur `calc($padding-xxl + 64px)`.
+Les vues sans BottomNav (`meta: { hideNav: true }` : réglages et écrans de jeu)
+utilisent `safe-bottom($extra)`, qui ne réserve que la safe-area iOS.
 
 ```scss
 .ma-vue {

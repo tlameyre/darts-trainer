@@ -212,7 +212,7 @@ function startGame() {
   min-height: 100dvh;
   padding: $padding-md $padding-md 0;
   gap: $gap-xl;
-  @include nav-safe-bottom;
+  @include safe-bottom;
 
   &__main {
     flex: 1;
@@ -330,7 +330,7 @@ function startGame() {
 @media (min-width: $bp-tablet) {
   .settings {
     padding: $padding-xl $padding-xl 0;
-    @include nav-safe-bottom($padding-xl);
+    @include safe-bottom($padding-xl);
 
     &__section-label  { @include title-xl; }
     &__stepper-btn    { @include title-xl; }

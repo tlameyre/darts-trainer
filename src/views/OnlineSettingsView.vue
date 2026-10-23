@@ -136,7 +136,7 @@ onMounted(() => {
   margin: 0 auto;
   padding: $padding-lg $padding-md 0;
   gap: $gap-xl;
-  @include nav-safe-bottom;
+  @include safe-bottom;
 
   &__main {
     flex: 1;
@@ -269,7 +269,7 @@ onMounted(() => {
 @media (min-width: $bp-laptop) {
   .online-settings {
     padding: $padding-xxl $padding-xxl 0;
-    @include nav-safe-bottom($padding-xl);
+    @include safe-bottom($padding-xl);
 
     &__section-label { @include title-xl; }
     &__hint          { @include title-md; }

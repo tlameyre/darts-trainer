@@ -114,7 +114,7 @@ function startGame() {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  @include nav-safe-bottom($padding-md);
+  @include safe-bottom($padding-md);
 
   &__main {
     flex: 1;
@@ -249,7 +249,7 @@ function startGame() {
 
 @media (min-width: $bp-laptop) {
   .settings {
-    @include nav-safe-bottom(0px);
+    @include safe-bottom(0px);
 
     &__main {
       display: grid;

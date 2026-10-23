@@ -126,3 +126,8 @@ $bottom-nav-height: 69px;
 @mixin nav-safe-bottom($extra: $padding-xxl) {
   padding-bottom: calc(#{$extra} + #{$bottom-nav-height} + env(safe-area-inset-bottom));
 }
+
+// Same for views without BottomNav (hideNav): only the iOS safe-area is reserved.
+@mixin safe-bottom($extra: $padding-xxl) {
+  padding-bottom: calc(#{$extra} + env(safe-area-inset-bottom));
+}
