@@ -9,6 +9,7 @@ defineProps({
 
 <template>
   <svg
+    class="app-icon"
     :width="width"
     :height="height"
     :style="{ color }"
@@ -18,3 +19,10 @@ defineProps({
     <use :href="`#icon-${name}`" />
   </svg>
 </template>
+
+<style lang="scss" scoped>
+// As a flex item the svg would shrink below its width/height props in tight containers
+.app-icon {
+  flex-shrink: 0;
+}
+</style>
