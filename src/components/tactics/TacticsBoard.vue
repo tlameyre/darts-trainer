@@ -21,6 +21,11 @@ const gridTemplateColumns = computed(() =>
   columns.value.map(c => (c.type === 'zone' ? 'auto' : '1fr')).join(' '),
 )
 
+// Header à sa hauteur naturelle, les lignes de zones se partagent la hauteur restante.
+const gridTemplateRows = computed(() =>
+  `auto repeat(${props.players[0]?.zones.length ?? 0}, minmax(0, 1fr))`,
+)
+
 const headerCells = computed(() => columns.value.map(col =>
   col.type === 'zone'
     ? { type: 'zone', label: 'Zone' }
@@ -47,7 +52,7 @@ const tableRows = computed(() => {
 
 <template>
   <div class="tactics-board">
-    <div class="tactics-board__grid" :style="{ gridTemplateColumns }">
+    <div class="tactics-board__grid" :style="{ gridTemplateColumns, gridTemplateRows }">
       <div
         v-for="(h, i) in headerCells" :key="`h${i}`"
         class="tactics-board__cell tactics-board__cell--head"
@@ -81,9 +86,15 @@ const tableRows = computed(() => {
 
 <style lang="scss" scoped>
 .tactics-board {
-  overflow-x: auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
 
   &__grid {
+    flex: 1;
+    min-height: 0;
     display: grid;
     width: 100%;
     border: $border-sm solid $white;
@@ -93,7 +104,8 @@ const tableRows = computed(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: $padding-xs;
+    min-height: 0;
+    padding: $padding-xxs $padding-xs;
     border: $border-sm solid $white;
     text-align: center;
   }
@@ -123,9 +135,11 @@ const tableRows = computed(() => {
     background: $orange;
   }
 
+  // Shrinks with the row when the board is short on height
   &__mark {
-    width: 18px;
-    height: 18px;
+    height: 100%;
+    max-height: 18px;
+    aspect-ratio: 1;
     stroke: $white;
     stroke-width: 2.5;
     fill: none;
@@ -145,10 +159,7 @@ const tableRows = computed(() => {
     &__cell--head,
     &__cell--zone { @include title-sm; }
 
-    &__mark {
-      width: 22px;
-      height: 22px;
-    }
+    &__mark { max-height: 22px; }
   }
 }
 </style>

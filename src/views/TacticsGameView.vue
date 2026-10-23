@@ -280,6 +280,7 @@ watch(phase, async (val) => {
   }
 
   &__game-left {
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: $gap-sm;
@@ -287,12 +288,12 @@ watch(phase, async (val) => {
     overflow-y: auto;
   }
 
+  // Bounded height so the board keeps the rest while input buttons stay tappable
   &__game-main {
-    flex-shrink: 0;
+    flex: 0 0 38%;
     display: flex;
     flex-direction: column;
     gap: $gap-md;
-    flex: 1;
   }
 
   &__turn-label {
