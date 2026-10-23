@@ -104,7 +104,7 @@ function accuracy(correct, total) {
 
   &__session-card {
     background: rgba($white, 0.05);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-sm $padding-md;
     display: flex;
     flex-direction: column;

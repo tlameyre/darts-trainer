@@ -112,7 +112,7 @@ function handleUndo() {
   &--targeting :deep(.sector-grid) {
     outline: $border-md dashed $accent;
     outline-offset: $padding-xxs;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
   }
 
   &__numpad {

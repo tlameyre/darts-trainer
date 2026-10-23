@@ -132,7 +132,7 @@ async function onGoogle() {
     @include text-sm;
     background: rgba(255, 255, 255, 0.07);
     border: $border-sm solid rgba(255, 255, 255, 0.15);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     color: $text-color;
     padding: $padding-sm $padding-md;
     outline: none;
@@ -179,7 +179,7 @@ async function onGoogle() {
     color: $text-color;
     background: rgba(255, 255, 255, 0.07);
     border: $border-sm solid rgba(255, 255, 255, 0.15);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-sm $padding-md;
     transition: background 0.15s;
 

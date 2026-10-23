@@ -110,7 +110,7 @@ const pctLabel = (pct) => (pct == null ? '–' : `${pct} %`)
   }
 
   &__leg-title {
-    @include title-xs;
+    @include title-sm;
     color: $muted;
     text-transform: uppercase;
   }

@@ -100,7 +100,7 @@ const subtitle = computed(() => {
   &__heading {
     flex: 1;
     min-width: 0;
-    @include title-xs;
+    @include title-sm;
     color: $muted;
     text-align: center;
     white-space: nowrap;

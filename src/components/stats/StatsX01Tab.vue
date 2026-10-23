@@ -189,7 +189,7 @@ function legsToWin(s) {
   // ── Card session ───────────────────────────────────────────────────────────
   &__session-card {
     background: rgba($white, 0.05);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-md;
     display: flex;
     flex-direction: column;
@@ -282,7 +282,7 @@ function legsToWin(s) {
     display: flex;
     align-items: center;
     justify-content: center;
-    @include title-xs;
+    @include title-sm;
     color: $white;
     border-radius: $radius-xs;
     padding: $padding-xxs;
@@ -290,7 +290,7 @@ function legsToWin(s) {
   }
 
   &__player-avg {
-    @include title-xs;
+    @include title-sm;
     color: $white;
     font-variant-numeric: tabular-nums;
     min-width: 36px;
@@ -299,7 +299,7 @@ function legsToWin(s) {
 
   &__player-row.winner {
     .tab__player-name {
-      @include title-xs;
+      @include title-sm;
     }
     .tab__player-legs {
       background: $orange;

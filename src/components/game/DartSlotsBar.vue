@@ -148,7 +148,7 @@ function selectMode(id) {
     flex-direction: column;
     gap: $gap-xxs;
     background: $white;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-xs;
     min-width: 160px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);

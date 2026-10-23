@@ -62,7 +62,7 @@ const emit = defineEmits(['choose'])
 
   &__btn {
     background: rgba($white, 0.08);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-lg;
     @include text-xl;
     font-weight: 700;

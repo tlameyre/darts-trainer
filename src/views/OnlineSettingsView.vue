@@ -174,7 +174,7 @@ onMounted(() => {
     padding: $padding-sm $padding-md;
     background: rgba($white, 0.05);
     border: $border-sm solid transparent;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     color: $text-color;
     text-align: left;
     transition: border-color 0.15s, background 0.15s;
@@ -216,7 +216,7 @@ onMounted(() => {
     @include text-sm;
     color: $muted;
     padding: $padding-sm $padding-md;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     border: $border-sm dashed rgba($white, 0.2);
     text-align: center;
 

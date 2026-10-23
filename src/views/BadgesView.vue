@@ -151,7 +151,7 @@ const unlockedCount = computed(() => userBadges.value.length)
 
   &__item {
     background: rgba(255, 255, 255, 0.05);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-sm $padding-md $padding-xs;
     display: flex;
     flex-direction: column;
@@ -181,7 +181,7 @@ const unlockedCount = computed(() => userBadges.value.length)
   }
 
   &__item-check {
-    @include title-xs;
+    @include title-sm;
     color: $accent;
     margin-top: 2px;
   }

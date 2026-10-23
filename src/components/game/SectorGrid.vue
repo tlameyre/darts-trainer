@@ -144,7 +144,7 @@ function tapOuter() {
   }
 
   &-pts {
-    @include title-xs;
+    @include title-sm;
   }
 }
 

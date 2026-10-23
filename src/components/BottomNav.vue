@@ -98,7 +98,7 @@ const unseenTournamentCount = computed(() => tournamentStore.unseenTournamentCou
   }
 
   &__label {
-    @include title-xs;
+    @include title-sm;
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }

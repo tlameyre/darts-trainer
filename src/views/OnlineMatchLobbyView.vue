@@ -173,7 +173,7 @@ if (!props.mock) {
     gap: $gap-sm;
     padding: $padding-xl;
     background: rgba($white, 0.05);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     text-align: center;
   }
 

@@ -368,7 +368,7 @@ const zoneSummaries = computed(() => selectedZones.value.map(key => {
   &__month-select {
     flex: 1;
     background: rgba($white, 0.05);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-xs $padding-sm;
     color: $text-color;
     @include text-sm;

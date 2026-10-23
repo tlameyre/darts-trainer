@@ -130,7 +130,6 @@ function startGame() {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: $padding-md $padding-md 0;
   gap: $gap-xl;
   @include nav-safe-bottom;
 
@@ -200,7 +199,7 @@ function startGame() {
     @include text-sm;
     color: $muted;
     padding: $padding-sm $padding-md;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     border: $border-sm dashed rgba($white, 0.2);
     text-align: center;
     transition: border-color 0.15s, color 0.15s;

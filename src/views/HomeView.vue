@@ -197,7 +197,7 @@ const playModes  = computed(() => GAME_MODES.filter((m) => m.group !== 'train'))
     gap: $gap-sm;
     min-height: 96px;
     background: var(--mode-color);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-md;
     transition: opacity 0.15s;
     color: $white;

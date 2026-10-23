@@ -325,7 +325,7 @@ const tabs = [
     flex: 1;
     background: rgba(255, 255, 255, 0.07);
     border: $border-sm solid rgba(255, 255, 255, 0.15);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     color: $text-color;
     padding: $padding-sm $padding-md;
     outline: none;
@@ -350,7 +350,7 @@ const tabs = [
   &__add-btn {
     width: 48px;
     height: 48px;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     background: $orange;
     color: $white;
     display: flex;

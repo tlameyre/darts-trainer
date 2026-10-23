@@ -50,7 +50,7 @@ function initials(u) {
   gap: $gap-sm;
   padding: $padding-sm $padding-md;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: $radius-md;
+  border-radius: $radius-sm;
   border: $border-sm solid rgba(255, 255, 255, 0.07);
 
   &__avatar {

@@ -83,7 +83,7 @@ function onClose() {
     @include text-sm;
     background: rgba($white, 0.07);
     border: $border-sm solid rgba($white, 0.15);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     color: $text-color;
     padding: $padding-sm $padding-md;
     outline: none;

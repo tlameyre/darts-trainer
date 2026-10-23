@@ -5,24 +5,25 @@
 @mixin _font($size, $type) {
   @if $type == display {
     font-size: map.get(('xs': $display-xs, 'sm': $display-sm, 'md': $display-md, 'lg': $display-lg, 'xl': $display-xl), $size);
-    font-weight: 600;
+    font-weight: 800;
     font-family: $font-title;
   }
 
   @else if $type == title {
-    font-size: map.get(('xxs': $title-xxs, 'xs': $title-xs, 'sm': $title-sm, 'md': $title-md, 'lg': $title-lg, 'xl': $title-xl, 'xxl': $title-xxl, 'xxxl': $title-xxxl), $size);
-    font-weight: 600;
+    font-size: map.get(('xxs': $title-xxs, 'sm': $title-sm, 'md': $title-md, 'lg': $title-lg, 'xl': $title-xl, 'xxl': $title-xxl, 'xxxl': $title-xxxl), $size);
+    font-weight: 800;
     font-family: $font-title;
+    text-transform: uppercase;
   }
 
   @else if $type == text {
     font-size: map.get(('xxs': $text-xxs, 'xs': $text-xs, 'sm': $text-sm, 'md': $text-md, 'lg': $text-lg, 'xl': $text-xl, 'xxl': $text-xxl), $size);
-    font-weight: 300;
+    font-weight: 400;
     font-family: $font-text;
   }
 }
 
-// text — light
+// text — Barlow regular
 @mixin text-xxs {
   @include _font('xxs', text);
 }
@@ -51,13 +52,9 @@
   @include _font('xxl', text);
 }
 
-// title — semibold
+// title — Barlow Condensed extrabold, uppercase
 @mixin title-xxs {
   @include _font('xxs', title);
-}
-
-@mixin title-xs {
-  @include _font('xs', title);
 }
 
 @mixin title-sm {
@@ -84,7 +81,7 @@
   @include _font('xxxl', title);
 }
 
-// display — grandes tailles (scores, icônes, emojis) — font-size uniquement
+// display — grandes tailles (scores, restes, volées)
 @mixin display-xs { @include _font('xs', display);}
 @mixin display-sm { @include _font('sm', display); }
 @mixin display-md { @include _font('md', display); }
@@ -94,15 +91,33 @@
 
 // --- Fonts face ---
 @font-face {
-  font-family: 'Outfit';
-  src: url('/fonts/outfit-light.ttf') format('truetype');
+  font-family: 'Barlow';
+  src: url('/fonts/Barlow-Light.woff2') format('woff2');
   font-weight: 300;
   font-display: swap;
 }
-
 @font-face {
-  font-family: 'Outfit';
-  src: url('/fonts/outfit-semibold.ttf') format('truetype');
+  font-family: 'Barlow';
+  src: url('/fonts/Barlow-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow';
+  src: url('/fonts/Barlow-SemiBold.woff2') format('woff2');
   font-weight: 600;
   font-display: swap;
 }
+@font-face {
+  font-family: 'BarlowCondensed';
+  src: url('/fonts/BarlowCondensed-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'BarlowCondensed';
+  src: url('/fonts/BarlowCondensed-ExtraBold.woff2') format('woff2');
+  font-weight: 800;
+  font-display: swap;
+}
+

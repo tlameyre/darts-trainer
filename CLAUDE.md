@@ -41,14 +41,17 @@ Toutes les variables et mixins sont disponibles globalement dans les `<style sco
 
 ```scss
 // Couleurs
-$bg, $orange, $accent, $error, $muted, $text-color, $white, $blue ...
+$bg, $surface, $border-color, $orange, $accent, $error, $muted, $text-color, $white, $blue ...
 
 // Espacements (padding et gap)
 $padding-xxs / xs / sm / md / lg / xl / xxl
 $gap-xxs / xs / sm / md / lg / xl / xxl
 
 // Rayons
-$radius-sm / md / lg / pill
+$radius-xs / sm / lg / pill
+
+// Lettrage
+$tracking-sm / lg
 
 // Bordures
 $border-sm / md / lg
@@ -59,13 +62,13 @@ $border-sm / md / lg
 Ne jamais écrire `font-size`, `font-weight` ou `font-family` directement. Utiliser les mixins de `_fonts.scss` :
 
 ```scss
-// Corps de texte (Outfit light)
+// Corps de texte (Barlow regular)
 @include text-xxs / xs / sm / md / lg / xl / xxl
 
-// Titres (Outfit semibold)
-@include title-xxs / xs / sm / md / lg / xl / xxl / xxxl
+// Titres (Barlow Condensed extrabold, capitales)
+@include title-xxs / sm / md / lg / xl / xxl / xxxl
 
-// Grands affichages (scores, chiffres)
+// Grands affichages (scores, chiffres — Barlow Condensed extrabold)
 @include display-xs / sm / md / lg / xl
 ```
 

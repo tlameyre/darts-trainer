@@ -77,7 +77,7 @@ function rowClass(row) {
     width: 100%;
     background: rgba($white, 0.05);
     border: $border-sm solid transparent;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-sm;
     transition: border-color 0.15s, background 0.15s;
 

@@ -80,7 +80,7 @@ defineEmits(['confirm'])
   &__btn {
     flex: 1;
     background: rgba($white, 0.08);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-lg;
     @include text-xxl;
     font-weight: 700;

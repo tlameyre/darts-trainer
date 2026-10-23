@@ -247,7 +247,7 @@ function formatDate(iso) {
   }
 
   &__date {
-    @include title-xs;
+    @include title-sm;
     color: $muted;
     text-transform: capitalize;
     text-align: center;

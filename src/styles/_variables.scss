@@ -1,71 +1,86 @@
 // Typography
-$font-text: 'Outfit', sans-serif;
-$font-title: 'Outfit', sans-serif;
+$font-text: 'Barlow', sans-serif;
+$font-title: 'BarlowCondensed', sans-serif;
 
-// Backgrounds — dark forest green (DA DartCounter)
-$bg: #121A18;
-$black: #000000;
+// Letter spacing
+$tracking-sm: 0.04em; // header titles
+$tracking-lg: 0.12em; // uppercase labels
 
-// Brand — orange
+// Backgrounds — cream + ink (Nouvelle DA)
+$bg: #F2EFE6;
+$black: #14110F;
+$surface: #E9E4D8; // cards, secondary keys, recap rows
+$border-color: #D6CFBF; // neutral borders, inactive rings
+
+// Brand — orange (Calcul)
 $orange: #EB6343;
 $orange-dark: #B83D1C;
+$orange-light: #FFB199; // streak tag on orange
 
 // Brand — blue (sélection / échauffement)
 $blue: #1D4ED8;
 $blue-dark: #1E40AF;
+$blue-light: #9DB4F0; // streak tag on blue
 
 // Accent — green (correct / submit)
-$accent: #36cc86;
+$accent: #047857;
 $accent-dark: #16a34a;
 $accent-light: #86efac;
 
 // Semantic — error / wrong
-$error: #ef4444;
+$error: #C8001F;
 $error-dark: #B21327;
-$error-light: #fca5a5;
+$error-light: #FF5A6E; // active nav tab, tags on dark backgrounds
 
 // Text
 $white: #ffffff;
-$text-color: #ffffff;
-$muted: rgba(255, 255, 255, 0.656);
+$text-color: #14110F;
+$muted: #5F594F;
 
-// Input (pill blanc)
-$input-placeholder: rgba(0, 0, 0, 0.35);
+// Input
+$input-placeholder: rgba(20, 17, 15, 0.55);
 
 // Dartboard chip colors (fidèle aux couleurs de la cible)
-$dart-red: #B21327; // double/triple secteurs rouges + double bull
-$dart-green: #36cc86; // double/triple secteurs verts + outer bull
-$dart-black: #121A18; // simple secteurs rouges
-$dart-cream: #f0e8d0; // simple secteurs verts
-$dart-cream-text: #111111; // texte sur fond crème
-$dart-border: #ffffff; // bordure des secteurs
+$dart-red: #C8001F; // double/triple secteurs rouges + double bull
+$dart-green: #047857; // double/triple secteurs verts + outer bull
+$dart-black: #14110F; // simple secteurs sombres
+$dart-cream: #FBF9F3; // simple secteurs clairs
+$dart-cream-text: #14110F; // texte sur fond crème
+$dart-border: #F2EFE6; // bordure des secteurs
+$dart-cream-chip: #EADFC4; // light single chip (recap)
+$dart-cream-accent: #B39B62; // light single gauge (recap)
 
-// Font sizes — Fredoka (body) — multiples de 4
-$text-xxs: 8px;
+// Game modes — home tiles (à valider)
+$mode-checkout: #0891B2;
+$mode-online: #B45309;
+$mode-tactics: #DC2626;
+$mode-tournament: #7C3AED;
+
+// Font sizes — Barlow (body)
+$text-xxs: 10px;
 $text-xs: 12px;
-$text-sm: 16px;
-$text-md: 20px;
-$text-lg: 24px;
-$text-xl: 28px;
-$text-xxl: 32px;
+$text-sm: 14px;
+$text-md: 16px;
+$text-lg: 18px;
+$text-xl: 20px;
+$text-xxl: 24px;
 
-// Font sizes — Outfit (display) — multiples de 4
-$title-xxs: 8px;
-$title-xs: 12px;
-$title-sm: 14px;
-$title-md: 16px;
-$title-lg: 18px;
-$title-xl: 24px;
+// Font sizes — Barlow Condensed (titles)
+$title-xxs: 12px;
+$title-sm: 16px;
+$title-md: 18px;
+$title-lg: 20px;
+$title-xl: 22px;
 $title-xxl: 28px;
-$title-xxxl: 36px;
+$title-xxxl: 40px;
 
 
 // Font sizes — display (scores, icons, emojis)
-$display-xs: 48px;
-$display-sm: 56px;
-$display-md: 64px;
-$display-lg: 80px;
-$display-xl: 96px;
+$display-xs: 54px;
+$display-sm: 72px;
+$display-md: 88px;
+$display-lg: 104px;
+$display-xl: 120px;
 
 
 // Padding — multiples de 4
@@ -87,10 +102,9 @@ $gap-xl: 24px;
 $gap-xxl: 32px;
 
 // Border radius
-$radius-xs: 4px;
-$radius-sm: 8px;
-$radius-md: 14px;
-$radius-lg: 20px;
+$radius-xs: 2px;
+$radius-sm: 4px;
+$radius-lg: 8px;
 $radius-pill: 999px;
 
 // Border widths

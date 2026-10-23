@@ -75,7 +75,7 @@ function avatarLetter(player) {
     align-items: center;
     gap: $gap-sm;
     padding: $padding-sm $padding-md;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     background: rgba($white, 0.05);
     color: $white;
 
@@ -116,7 +116,7 @@ function avatarLetter(player) {
     display: flex;
     align-items: center;
     justify-content: center;
-    @include title-xs;
+    @include title-sm;
     font-weight: 700;
     color: $white;
     flex-shrink: 0;

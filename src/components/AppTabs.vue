@@ -38,13 +38,13 @@ function select(tab, e) {
   &--pill {
     gap: $gap-xs;
     background: rgba($white, 0.05);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: 4px;
 
     .app-tabs__tab {
       flex: 1;
       padding: $padding-xs $padding-sm;
-      border-radius: calc($radius-md - 4px);
+      border-radius: calc($radius-sm - 4px);
       @include title-sm;
       font-weight: 700;
       text-transform: uppercase;

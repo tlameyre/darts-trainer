@@ -63,7 +63,7 @@ defineEmits(['tournament-click', 'view-all'])
     align-items: flex-start;
     gap: 2px;
     background: rgba($white, 0.05);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-sm $padding-md;
     min-width: 140px;
     flex-shrink: 0;

@@ -98,7 +98,7 @@ function selectMode(mode) {
   }
 
   &__sub {
-    @include title-xs;
+    @include title-sm;
     color: $orange;
     text-transform: uppercase;
   }

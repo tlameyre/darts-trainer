@@ -133,7 +133,7 @@ defineEmits(['next'])
   }
 
   &__stat-lbl {
-    @include title-xs;
+    @include title-sm;
     color: $muted;
     text-align: center;
   }

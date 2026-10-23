@@ -177,7 +177,7 @@ const bucketRows = computed(() => buildRows(BUCKET_ROWS))
   }
 
   &__section {
-    @include title-xs;
+    @include title-sm;
     color: $muted;
     text-align: left;
     text-transform: uppercase;

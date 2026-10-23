@@ -140,7 +140,7 @@ function confirm() {
   &__btn {
     flex: 1;
     background: rgba($white, 0.07);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-md;
     @include title-xxl;
     font-weight: 700;

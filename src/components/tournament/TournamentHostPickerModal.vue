@@ -60,7 +60,7 @@ function pick(friend) {
     align-items: center;
     gap: $gap-sm;
     padding: $padding-sm $padding-md;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     background: rgba($white, 0.05);
     text-align: left;
     transition: background 0.15s;

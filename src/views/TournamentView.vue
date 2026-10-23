@@ -604,7 +604,7 @@ async function playOnline() {
     padding: $padding-lg;
     background: rgba($orange, 0.1);
     border: $border-sm solid rgba($orange, 0.3);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
   }
 
   &__winner-trophy { font-size: 40px; line-height: 1; }
@@ -651,7 +651,7 @@ async function playOnline() {
     @include text-sm;
     color: $orange;
     background: rgba($orange, 0.1);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-sm $padding-md;
   }
 
@@ -677,7 +677,7 @@ async function playOnline() {
     color: $text-color;
     background: rgba($white, 0.05);
     border: $border-sm dashed rgba($white, 0.2);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-md;
   }
 
@@ -745,7 +745,7 @@ async function playOnline() {
     align-items: center;
     gap: $gap-sm;
     padding: $padding-sm $padding-md;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     background: rgba($white, 0.05);
   }
 
@@ -757,7 +757,7 @@ async function playOnline() {
     display: flex;
     align-items: center;
     justify-content: center;
-    @include title-xs;
+    @include title-sm;
     font-weight: 700;
     color: $white;
     flex-shrink: 0;

@@ -79,7 +79,7 @@ defineEmits(['badge-click', 'view-all'])
 
   &__badge {
     background: rgba(255, 255, 255, 0.05);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-sm;
     display: flex;
     flex-direction: column;
@@ -98,7 +98,7 @@ defineEmits(['badge-click', 'view-all'])
   }
 
   &__label {
-    @include title-xs;
+    @include title-sm;
     color: $muted;
     line-height: 1.3;
   }
@@ -108,7 +108,7 @@ defineEmits(['badge-click', 'view-all'])
     align-items: center;
     justify-content: space-between;
     background: rgba(255, 255, 255, 0.05);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-md;
     @include title-sm;
     color: $muted;

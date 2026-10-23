@@ -20,7 +20,7 @@ defineProps({
   align-items: center;
   gap: $gap-xxs;
   background: rgba($white, 0.04);
-  border-radius: $radius-md;
+  border-radius: $radius-sm;
   padding: $padding-sm $padding-xs;
 
   &--highlight {
@@ -36,7 +36,7 @@ defineProps({
   }
 
   &__label {
-    @include title-xs;
+    @include title-sm;
     color: $muted;
     text-align: center;
     line-height: 1.3;

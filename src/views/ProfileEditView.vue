@@ -204,7 +204,7 @@ async function onPasswordSave(newPassword) {
     @include text-sm;
     background: rgba(255, 255, 255, 0.07);
     border: $border-sm solid rgba(255, 255, 255, 0.15);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     color: $text-color;
     padding: $padding-sm $padding-md;
     outline: none;
@@ -227,7 +227,7 @@ async function onPasswordSave(newPassword) {
     justify-content: space-between;
     background: rgba(255, 255, 255, 0.05);
     color: $white;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-sm $padding-md;
     text-align: left;
     transition: background 0.15s;

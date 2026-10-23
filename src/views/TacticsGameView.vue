@@ -361,7 +361,7 @@ watch(phase, async (val) => {
     align-items: center;
     gap: $gap-sm;
     padding: $padding-sm $padding-md;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     background: rgba($white, 0.05);
 
     &--winner {
@@ -378,7 +378,7 @@ watch(phase, async (val) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    @include title-xs;
+    @include title-sm;
     font-weight: 700;
     color: $white;
     flex-shrink: 0;
@@ -435,7 +435,7 @@ watch(phase, async (val) => {
     font-weight: 700;
     color: $white;
     background: $orange;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-md;
     text-align: center;
     transition: opacity 0.15s;

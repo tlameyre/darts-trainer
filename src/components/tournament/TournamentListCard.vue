@@ -46,7 +46,7 @@ const FORMAT_LABELS = { bracket: 'Bracket', championship: 'Championnat' }
   align-items: center;
   gap: $gap-sm;
   padding: $padding-md;
-  border-radius: $radius-md;
+  border-radius: $radius-sm;
   background: rgba($white, 0.05);
   text-align: left;
   transition: background 0.15s;

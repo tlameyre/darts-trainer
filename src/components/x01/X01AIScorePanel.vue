@@ -37,7 +37,7 @@ defineProps({
 .ai-panel {
   background: rgba(255, 255, 255, 0.04);
   border: $border-sm solid rgba(255, 255, 255, 0.08);
-  border-radius: $radius-md;
+  border-radius: $radius-sm;
   padding: $padding-sm $padding-md;
   display: flex;
   align-items: center;

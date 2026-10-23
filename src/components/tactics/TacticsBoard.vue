@@ -111,7 +111,7 @@ const tableRows = computed(() => {
   }
 
   &__cell--head {
-    @include title-xs;
+    @include title-sm;
     font-weight: 700;
     color: $white;
     white-space: nowrap;
@@ -122,7 +122,7 @@ const tableRows = computed(() => {
   }
 
   &__cell--zone {
-    @include title-xs;
+    @include title-sm;
     font-weight: 700;
     color: $white;
     white-space: nowrap;

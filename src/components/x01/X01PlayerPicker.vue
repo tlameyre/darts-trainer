@@ -341,7 +341,7 @@ function removeSelected(item) {
     align-items: center;
     gap: $gap-sm;
     padding: $padding-sm $padding-md;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     background: rgba($white, 0.05);
     border: $border-sm solid transparent;
     cursor: pointer;

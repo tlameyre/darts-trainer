@@ -89,7 +89,7 @@ function confirmOrder() {
     @include text-sm;
     color: $muted;
     padding: $padding-sm $padding-md;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     border: $border-sm dashed rgba($white, 0.2);
     text-align: center;
     transition: border-color 0.15s, color 0.15s;

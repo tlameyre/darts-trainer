@@ -33,7 +33,7 @@ defineEmits(['finish', 'quit', 'close'])
     gap: $gap-sm;
     @include text-sm;
     padding: $padding-md;
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     transition: background 0.15s;
     text-align: left;
 

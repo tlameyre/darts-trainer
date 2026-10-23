@@ -254,7 +254,7 @@ const otherPlayers = computed(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    @include title-xs;
+    @include title-sm;
     font-weight: 700;
     color: $white;
     flex-shrink: 0;

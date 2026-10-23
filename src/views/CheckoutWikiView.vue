@@ -99,7 +99,7 @@ function goBack() {
     aspect-ratio: 1;
     background: rgba($white, 0.05);
     border: $border-sm solid rgba($white, 0.08);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     color: $white;
     @include title-lg;
     line-height: 1;

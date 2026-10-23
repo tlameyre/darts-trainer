@@ -103,7 +103,7 @@ function initial(f) {
     gap: $gap-sm;
     padding: $padding-xs $padding-sm;
     background: rgba(255, 255, 255, 0.05);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
   }
 
   &__avatar {
@@ -136,7 +136,7 @@ function initial(f) {
     color: $muted;
     background: rgba(255, 255, 255, 0.03);
     border: $border-sm dashed rgba(255, 255, 255, 0.12);
-    border-radius: $radius-md;
+    border-radius: $radius-sm;
     padding: $padding-md;
     width: 100%;
     transition: background 0.15s;
