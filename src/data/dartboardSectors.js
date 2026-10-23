@@ -29,6 +29,9 @@ export const NUMBER_LABEL_PATHS = [
 // Ordre horaire des secteurs depuis le haut (20 à midi).
 export const SECTOR_ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5]
 
+// Sectors with red doubles/triples and dark singles (the others are green / cream)
+export const RED_SECTORS = new Set([20, 18, 13, 10, 2, 3, 7, 8, 14, 12])
+
 export const DARTBOARD_SECTORS = [
   { ring: 'double', sector: 5, d: 'M149.072 74.5388C165.018 66.4138 182.144 60.8494 199.82 58.0497L226.5 226.5L149.072 74.5388Z' },
   { ring: 'double', sector: 9, d: 'M74.5389 149.072C82.6639 133.126 93.2481 118.558 105.903 105.903L226.5 226.5L74.5389 149.072Z' },

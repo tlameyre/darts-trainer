@@ -8,7 +8,7 @@ function isBull(zone) {
 
 // Le bull stocke son type en AB/SB/B (legacy, pas de triple) — on le traduit
 // vers le référentiel générique A/S/D partagé avec les secteurs numériques.
-export function genericType(zone) {
+function genericType(zone) {
   if (!zone) return 'A'
   if (isBull(zone)) {
     if (zone.type === 'B') return 'D'

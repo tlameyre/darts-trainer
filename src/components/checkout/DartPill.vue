@@ -1,13 +1,12 @@
 <script setup>
 import { computed } from 'vue'
+import { RED_SECTORS } from '../../data/dartboardSectors.js'
 
 const props = defineProps({
   dart: { type: Object, required: true },
   size: { type: String, default: 'md', validator: v => ['sm', 'md'].includes(v) },
 })
 
-// Secteurs rouges de la cible (mêmes valeurs que DartChip / SvgDartboard).
-const RED_NUMBERS = new Set([20, 18, 13, 10, 2, 3, 7, 8, 14, 12])
 
 const colors = computed(() => {
   const { dart } = props
@@ -17,7 +16,7 @@ const colors = computed(() => {
       : { bg: 'var(--dart-green)', text: '#fff' }
   }
   const base = dart.sector
-  const isRed = RED_NUMBERS.has(base)
+  const isRed = RED_SECTORS.has(base)
   if (dart.type === 'single') {
     return isRed
       ? { bg: 'var(--dart-black)', text: '#fff' }

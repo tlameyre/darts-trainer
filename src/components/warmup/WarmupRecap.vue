@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { formatZonesLabel } from '../../composables/useWarmup.js'
+import { RED_SECTORS } from '../../data/dartboardSectors.js'
 import AppButton from '../AppButton.vue'
 
 const props = defineProps({
@@ -11,8 +12,6 @@ const props = defineProps({
 
 const emit = defineEmits(['restart', 'home'])
 
-// Même logique de couleurs que DartChip
-const RED_NUMBERS = new Set([20, 18, 13, 10, 2, 3, 7, 8, 14, 12])
 
 function cardStyle(zones) {
   if (zones.length > 1) {
@@ -25,7 +24,7 @@ function cardStyle(zones) {
   }
 
   if (zone.type === 'A') {
-    return RED_NUMBERS.has(zone.sector)
+    return RED_SECTORS.has(zone.sector)
       ? { '--card-bg': 'var(--dart-black)', '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.55)', '--card-sep': 'var(--text-color)' }
       : { '--card-bg': 'var(--dart-cream)', '--card-text': 'var(--dart-cream-text)', '--card-muted': 'rgba(0,0,0,0.4)', '--card-sep': 'rgba(0,0,0,0.5)' }
   }
@@ -35,7 +34,7 @@ function cardStyle(zones) {
     return { '--card-bg': bg, '--card-text': '#ffffff', '--card-muted': 'rgba(255,255,255,0.7)', '--card-sep': 'var(--text-color)' }
   }
 
-  const isRed = RED_NUMBERS.has(zone.sector)
+  const isRed = RED_SECTORS.has(zone.sector)
 
   if (zone.type === 'S') {
     return isRed

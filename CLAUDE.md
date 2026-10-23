@@ -21,6 +21,7 @@ src/
   composables/       # Logique réutilisable : useX01.js, useWarmup.js, useDarts.js
   data/              # Données statiques : badges.js, gameModes.js
   lib/               # Clients externes : supabase.js
+  utils/             # Fonctions pures partagées : formatDuration.js
   styles/            # SCSS global : _variables.scss, _fonts.scss, _base.scss, _reset.scss
   router/index.js    # Définition des routes + guard d'auth
 ```

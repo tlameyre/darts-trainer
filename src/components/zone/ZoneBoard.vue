@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useZoneSelection } from '../../composables/useZoneSelection.js'
+import { SECTOR_ORDER, RED_SECTORS } from '../../data/dartboardSectors.js'
 
 const props = defineProps({
   modelValue: { required: true },
@@ -9,9 +10,6 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const { activeType, isSelected, selectSector } = useZoneSelection(props, emit)
-
-// Clockwise from the top, as on a real board
-const SECTORS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5]
 
 const C = 170 // viewBox center
 // Ring radii, outside in: double, outer single, triple, inner single
@@ -41,9 +39,9 @@ function annulus(outer, inner, from, to) {
 
 const sectors = computed(() => {
   const rings = TYPE_RINGS[activeType.value]
-  return SECTORS.map((n, i) => {
+  return SECTOR_ORDER.map((n, i) => {
     const mid = -90 + i * 18
-    const dark = i % 2 === 0 // red/black sectors alternate with green/cream ones
+    const dark = RED_SECTORS.has(n)
     const selected = isSelected(n)
     const labelAt = point(LABEL_RADIUS, mid).split(' ')
     return {

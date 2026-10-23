@@ -6,6 +6,7 @@ import {
   NUMBER_LABEL_PATHS,
   DARTBOARD_SECTORS,
   SECTOR_ORDER,
+  RED_SECTORS,
 } from '../../data/dartboardSectors.js'
 
 const props = defineProps({
@@ -25,7 +26,6 @@ const BAND = {
 }
 
 // Mêmes couleurs que SvgDartboard.vue
-const RED_NUMBERS = new Set([20, 18, 13, 10, 2, 3, 7, 8, 14, 12])
 
 function zoneKey(seg) {
   return `${seg.ring}-${seg.sector}`
@@ -34,7 +34,7 @@ function zoneKey(seg) {
 function zoneClass(seg) {
   if (seg.ring === 'bull-outer') return 'board__zone--bull-outer'
   if (seg.ring === 'bull-inner') return 'board__zone--bull-inner'
-  const isRed = RED_NUMBERS.has(seg.sector)
+  const isRed = RED_SECTORS.has(seg.sector)
   if (seg.ring === 'double' || seg.ring === 'triple') {
     return isRed ? 'board__zone--red' : 'board__zone--green'
   }

@@ -6,6 +6,7 @@ import {
   NUMBER_LABEL_PATHS,
   DARTBOARD_SECTORS,
   SECTOR_ORDER,
+  RED_SECTORS,
 } from '../../data/dartboardSectors.js'
 import AppIcon from '../AppIcon.vue'
 
@@ -89,7 +90,6 @@ function segAtClient(cx, cy) {
 }
 
 // Secteurs rouges/noirs sur la cible (doubles/triples = rouge, simple = noir)
-const RED_NUMBERS = new Set([20, 18, 13, 10, 2, 3, 7, 8, 14, 12])
 
 const pressedKey = ref(null)
 let _pressTimer = null
@@ -101,7 +101,7 @@ function zoneKey(seg) {
 function zoneClass(seg) {
   if (seg.ring === 'bull-outer') return 'dartboard__zone--bull-outer'
   if (seg.ring === 'bull-inner') return 'dartboard__zone--bull-inner'
-  const isRed = RED_NUMBERS.has(seg.sector)
+  const isRed = RED_SECTORS.has(seg.sector)
   if (seg.ring === 'double' || seg.ring === 'triple') {
     return isRed ? 'dartboard__zone--red' : 'dartboard__zone--green'
   }
