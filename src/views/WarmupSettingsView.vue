@@ -2,9 +2,11 @@
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
-import ZonePicker from '../components/ZonePicker.vue'
+import OptionSelector from '../components/OptionSelector.vue'
+import StartButton from '../components/StartButton.vue'
+import ZoneTypePicker from '../components/zone/ZoneTypePicker.vue'
+import ZoneBoard from '../components/zone/ZoneBoard.vue'
 import { useGameStore } from '../store/gameStore.js'
-import AppButton from '../components/AppButton.vue'
 
 const router    = useRouter()
 const gameStore = useGameStore()
@@ -36,36 +38,35 @@ function startGame() {
 
 <template>
   <div class="settings">
-    <AppHeader title="ECHAUFFEMENT" @back="router.push({ name: 'home' })" />
+    <AppHeader title="Échauffement" tone="blue" @back="router.push({ name: 'home' })" />
 
     <main class="settings__main">
-      <div class="settings__card">
-        <div class="settings__section-label">Durée de la session</div>
-        <div class="settings__duration">
-          <div class="settings__duration-row">
-            <AppButton v-for="opt in durationOptions.slice(0, 3)" :key="opt.value" size="small" variant="ghost"
-              :active="settings.duration === opt.value" @click="settings.duration = opt.value">{{ opt.label }}
-            </AppButton>
-          </div>
-          <div class="settings__duration-custom">
-            <AppButton size="small" variant="ghost" :active="isCustomDuration" @click="settings.duration = 'custom'">
-              Custom</AppButton>
-            <div class="settings__custom-field" :class="{ 'settings__custom-field--visible': isCustomDuration }">
-              <input type="number" v-model="customMinutes" min="1" max="120" class="settings__custom-input"
-                placeholder="min" />
-              <span class="settings__custom-label">min</span>
-            </div>
-          </div>
+      <section class="settings__duration">
+        <OptionSelector label="Durée de la session" tone="blue" :options="durationOptions" v-model="settings.duration" />
+        <label v-if="isCustomDuration" class="settings__custom">
+          <span class="settings__custom-label">Durée personnalisée</span>
+          <input v-model="customMinutes" type="number" min="1" max="120" class="settings__custom-input" />
+          <span class="settings__custom-label">min</span>
+        </label>
+      </section>
+
+      <section class="settings__section">
+        <h2 class="settings__label">Type de zones</h2>
+        <ZoneTypePicker v-model="settings.zones" multiple />
+      </section>
+
+      <section class="settings__section settings__section--board">
+        <div class="settings__board-head">
+          <h2 class="settings__label">Zones à travailler</h2>
+          <span class="settings__hint">Touche la cible</span>
         </div>
-      </div>
+        <div class="settings__board">
+          <ZoneBoard v-model="settings.zones" multiple />
+        </div>
+      </section>
 
-      <div class="settings__card zone-picker__card">
-        <div class="settings__section-label">Zones à travailler</div>
-        <ZonePicker :multiple="true" v-model="settings.zones" />
-      </div>
+      <StartButton class="settings__start" tone="blue" @click="startGame" />
     </main>
-
-    <AppButton @click="startGame">COMMENCER</AppButton>
   </div>
 </template>
 
@@ -73,127 +74,108 @@ function startGame() {
 .settings {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
-  gap: $gap-xl;
-  @include nav-safe-bottom;
+  height: 100dvh;
+  @include safe-bottom($padding-md);
 
   &__main {
     flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    width: 100%;
-    margin: 0 auto;
-    gap: $gap-xl;
+    gap: $gap-lg;
+    padding: $padding-lg $padding-md 0;
   }
 
-  &__card {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-md;
-    &.zone-picker__card {
-      flex: 1;
-    }
-  }
-
-  &__section-label {
-    @include title-lg;
-    color: $white;
-  }
-
-  &__duration {
+  &__duration,
+  &__section {
     display: flex;
     flex-direction: column;
     gap: $gap-xs;
   }
 
-  &__duration-row {
-    display: flex;
-    gap: $gap-xs;
-
-    :deep(.btn) {
-      flex: 1;
-    }
+  &__label {
+    @include title-sm;
+    color: $muted;
   }
 
-  &__duration-custom {
-    display: flex;
-    align-items: center;
-
-    :deep(.btn) {
-      flex: 1;
-      min-width: 0;
-      transition: flex-grow 0.3s ease;
-    }
-  }
-
-  &__custom-field {
-    flex: 0 1 0%;
-    min-width: 0;
-    overflow: hidden;
+  &__custom {
     display: flex;
     align-items: center;
     gap: $gap-xs;
-    opacity: 0;
-    margin-left: 0;
-    transition: flex-grow 0.3s ease, opacity 0.25s ease, margin-left 0.3s ease;
+  }
 
-    &--visible {
-      flex-grow: 1;
-      opacity: 1;
-      margin-left: $gap-xs;
-    }
+  &__custom-label {
+    @include title-sm;
+    color: $muted;
   }
 
   &__custom-input {
-    flex: 1;
-    min-width: 0;
-    background: rgba($white, 0.05);
-    border: none;
-    border-radius: $radius-sm;
-    color: $text-color;
     @include title-md;
-    padding: $padding-xs $padding-sm;
+    width: 80px;
+    height: 44px;
+    padding: 0 $padding-xs;
+    border: $border-md solid $border-color;
+    border-radius: $radius-sm;
+    background: transparent;
+    color: $text-color;
     text-align: center;
 
     &:focus {
       outline: none;
-      border-color: $orange;
+      border-color: $blue;
     }
   }
 
-  &__custom-label {
-    @include title-md;
-    white-space: nowrap;
+  &__board-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
   }
-}
 
-@media (min-width: $bp-tablet) {
-  .settings {
-    padding: $padding-xl $padding-xl 0;
-    @include nav-safe-bottom($padding-xl);
-
-    &__section-label {
-      @include title-xl;
-    }
+  &__hint {
+    @include title-sm;
+    color: $blue;
   }
-}
 
-// Écran assez grand (tablette / desktop) : on borne à 100dvh et la grille de
-// zones remplit la hauteur restante au lieu de déborder (les secteurs carrés ne
-// restent que sur les petits écrans). Les cartes restent empilées. En dessous
-// (téléphone, y compris paysage), la page scrolle si le contenu dépasse.
-@media (min-width: $bp-tablet) and (min-height: $bp-mobile) {
-  .settings {
-    height: 100dvh;
+  // The board takes the height left between the pickers and the start button
+  &__section--board {
+    flex: 1;
+    min-height: 240px;
+  }
+
+  &__board {
+    flex: 1;
     min-height: 0;
-    overflow: hidden;
+  }
+
+  &__start {
+    margin-top: auto;
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .settings {
+    @include safe-bottom(0px);
 
     &__main {
-      min-height: 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: auto auto 1fr auto;
+      column-gap: $gap-xxl;
+      row-gap: $gap-xxl;
+      padding: $padding-xxl;
     }
 
-    &__card {
-      min-height: 0;
+    &__section--board {
+      grid-column: 2;
+      grid-row: 1 / -1;
+      gap: $gap-sm;
+    }
+
+    &__start {
+      grid-column: 1;
+      grid-row: 4;
     }
   }
 }
