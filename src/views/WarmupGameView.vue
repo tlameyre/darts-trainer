@@ -6,13 +6,12 @@ import { useWarmup, formatZonesLabel } from '../composables/useWarmup.js'
 import { useDbStore } from '../store/dbStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
-import StatsCard from '../components/game/StatsCard.vue'
-import DartSlotsHeader from '../components/game/DartSlotsHeader.vue'
-import WarmupInput from '../components/warmup/WarmupInput.vue'
-import WarmupRecap from '../components/warmup/WarmupRecap.vue'
-import WarmupMenuModal from '../components/warmup/WarmupMenuModal.vue'
 import AppIcon from '../components/AppIcon.vue'
 import AppHeader from '../components/AppHeader.vue'
+import WarmupHero from '../components/warmup/WarmupHero.vue'
+import WarmupThrowPad from '../components/warmup/WarmupThrowPad.vue'
+import WarmupZoneSheet from '../components/warmup/WarmupZoneSheet.vue'
+import WarmupEndRecap from '../components/warmup/WarmupEndRecap.vue'
 
 const router     = useRouter()
 const gameStore  = useGameStore()
@@ -23,7 +22,7 @@ if (!gameStore.gameSettings) router.replace({ name: 'warmup-settings' })
 
 const {
   timeDisplay, isUnlimited, isUrgent, gameOver,
-  currentZones, currentZoneStats, zoneRecapStats, sessionStats, totalDurationMs,
+  currentZones, currentZoneStats, currentStreak, zoneRecapStats, sessionStats, totalDurationMs,
   darts, recordDart, undoLast, changeZones, startTimer, pauseTimer, resumeTimer, endSession, cleanup,
 } = useWarmup(gameStore.gameSettings ?? { duration: 5, zones: [{ sector: 20, type: 'D' }] })
 
@@ -51,29 +50,37 @@ watch(gameOver, async (val) => {
   }
 })
 
-const showMenuModal = ref(false)
+const showZoneSheet = ref(false)
+const newBadges     = ref([])
 
-function openMenu() {
+// A zone change asked mid-volley waits for the volley to end
+const pendingZones = ref(null)
+const midVolley    = computed(() => darts.value.length % 3 !== 0)
+
+function openZoneSheet() {
   pauseTimer()
-  showMenuModal.value = true
+  showZoneSheet.value = true
 }
 
-function closeMenu() {
-  showMenuModal.value = false
+function closeZoneSheet() {
+  showZoneSheet.value = false
   resumeTimer()
 }
 
+function onZoneChange(zones) {
+  if (midVolley.value) pendingZones.value = zones
+  else changeZones(zones)
+}
+
 function handleQuit() {
-  showMenuModal.value = false
+  showZoneSheet.value = false
   router.push({ name: 'warmup-settings' })
 }
 
 function handleFinish() {
-  showMenuModal.value = false
+  showZoneSheet.value = false
   endSession()
 }
-
-const newBadges = ref([])
 
 const justCompleted = ref(false)
 let _justCompletedTimer = null
@@ -83,6 +90,10 @@ watch(() => darts.value.length, async (newLen, oldLen) => {
   if (newLen > oldLen && newLen > 0 && newLen % 3 === 0) {
     justCompleted.value = true
     _justCompletedTimer = setTimeout(() => { justCompleted.value = false }, 700)
+    if (pendingZones.value) {
+      changeZones(pendingZones.value)
+      pendingZones.value = null
+    }
     // Vérification des lancers spéciaux à chaque fin de volée
     const special = await badgeStore.checkSpecialThrow(darts.value)
     if (special.length) newBadges.value = [...newBadges.value, ...special]
@@ -96,20 +107,26 @@ const tourNumber = computed(() => {
   return Math.floor(darts.value.length / 3) + 1
 })
 
-const hideStats = computed(() => currentZones.value.length > 3)
-
-const statsRows = computed(() => [
-  { label: 'Fléchettes jetées', value: currentZoneStats.value.total },
-  { label: 'Fléchettes touchées', value: currentZoneStats.value.hits },
-  { label: 'Taux de réussite', value: `${currentZoneStats.value.accuracy}%` },
-])
-
 const displayedDarts = computed(() => {
   if (darts.value.length === 0) return []
   if (justCompleted.value) return darts.value.slice(-3)
   const inTurn = darts.value.length % 3
   return inTurn > 0 ? darts.value.slice(-inTurn) : []
 })
+
+// Last 5 completed volleys, newest first — every recorded non-miss dart is a hit
+const recentRounds = computed(() => {
+  const completed = Math.floor(darts.value.length / 3)
+  return Array.from({ length: Math.min(completed, 5) }, (_, i) => {
+    const tour = completed - i
+    const volley = darts.value.slice((tour - 1) * 3, tour * 3)
+    return { tour, hits: volley.filter(d => d.type !== 'miss').length }
+  })
+})
+
+function recordMiss() {
+  recordDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })
+}
 
 onMounted(() => startTimer())
 onUnmounted(() => {
@@ -120,44 +137,60 @@ onUnmounted(() => {
 
 <template>
   <div class="warmup">
-
-    <AppHeader :title="gameOver ? 'FIN DE PARTIE' : 'ECHAUFFEMENT'" back-icon="exit" @back="router.push({ name: 'warmup-settings' })">
-      <template #right>
-        <button v-if="!gameOver" class="warmup__gear-btn" @click="openMenu">
+    <AppHeader
+      :title="gameOver ? 'Fin de partie' : 'Échauffement'"
+      tone="blue"
+      back-icon="exit"
+      @back="router.push({ name: 'warmup-settings' })"
+    >
+      <template v-if="!gameOver" #right>
+        <button class="warmup__gear-btn" aria-label="Choisir la prochaine zone" @click="openZoneSheet">
           <AppIcon name="gear" :width="22" :height="22" />
         </button>
       </template>
     </AppHeader>
 
-    <div v-if="!gameOver" class="warmup__game">
-      <StatsCard class="warmup__stats-card" :class="{ 'warmup__stats-card--compact': hideStats }" color="#1D4ED8" :rows="statsRows">
-        {{ formatZonesLabel(currentZones) }}
-      </StatsCard>
-      <div class="warmup__game-main">
-        <DartSlotsHeader :tour-number="tourNumber">
-          <template #right>
-            <div v-if="!isUnlimited" class="warmup__timer" :class="{ 'warmup__timer--urgent': isUrgent }">
-              <AppIcon name="clock" :width="24" :height="24" />
-              <span class="warmup__timer-text">{{ timeDisplay }}</span>
-            </div>
-          </template>
-        </DartSlotsHeader>
-        <WarmupInput
-          :darts="displayedDarts"
-          :locked="justCompleted"
-          :zones="currentZones"
-          @dart="recordDart"
-          @miss="recordDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })"
-          @undo="undoLast"
-        />
-      </div>
-    </div>
+    <WarmupEndRecap
+      v-if="gameOver"
+      :zone-recap-stats="zoneRecapStats"
+      :session-stats="sessionStats"
+      :duration-ms="totalDurationMs"
+      @restart="router.push({ name: 'warmup-settings' })"
+      @home="router.push({ name: 'home' })"
+    />
 
-    <WarmupRecap v-else :zoneRecapStats="zoneRecapStats" :sessionStats="sessionStats"
-      @restart="router.push({ name: 'warmup-settings' })" @home="router.push({ name: 'home' })" />
+    <main v-else class="warmup__main">
+      <WarmupHero
+        class="warmup__hero"
+        :tour="tourNumber"
+        :streak="currentStreak"
+        :time-display="timeDisplay"
+        :is-unlimited="isUnlimited"
+        :is-urgent="isUrgent"
+        :target="formatZonesLabel(currentZones)"
+        :stats="currentZoneStats"
+        :rounds="recentRounds"
+      />
+      <WarmupThrowPad
+        class="warmup__pad"
+        :darts="displayedDarts"
+        :zones="currentZones"
+        :locked="justCompleted || showZoneSheet"
+        @dart="recordDart"
+        @miss="recordMiss"
+        @undo="undoLast"
+      />
+    </main>
 
-    <WarmupMenuModal :show="showMenuModal" :zones="currentZones" @close="closeMenu"
-      @zone-change="changeZones" @finish="handleFinish" @quit="handleQuit" />
+    <WarmupZoneSheet
+      :show="showZoneSheet"
+      :zones="pendingZones ?? currentZones"
+      :mid-volley="midVolley"
+      @close="closeZoneSheet"
+      @zone-change="onZoneChange"
+      @finish="handleFinish"
+      @quit="handleQuit"
+    />
 
     <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
   </div>
@@ -167,89 +200,57 @@ onUnmounted(() => {
 .warmup {
   display: flex;
   flex-direction: column;
-  gap: $gap-md;
   height: 100dvh;
   overflow: hidden;
-  padding: $padding-md;
-}
 
-.warmup__gear-btn {
-  color: $text-color;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.15s;
+  &__gear-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: $padding-xxs;
+    color: $white;
+    transition: opacity 0.15s;
 
-  &:active {
-    opacity: 0.6;
+    &:active {
+      opacity: 0.6;
+    }
   }
-}
 
-.warmup__game {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: $gap-md;
-}
-
-.warmup__stats-card {
-  flex: 1;
-  min-height: 0;
-
-  &--compact {
-    flex: 0 0 auto;
+  &__main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
-}
 
-.warmup__game-main {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: $gap-md;
-}
-
-.warmup__timer {
-  @include title-md;
-  display: flex;
-  align-items: center;
-  gap: $gap-xs;
-  transition: color 0.3s;
-
-  &--urgent {
-    color: $error;
+  &__hero {
+    flex: 1;
+    padding: $padding-xs $padding-md $padding-md;
+    background: $blue;
   }
-}
 
-.warmup__timer-text {
-  display: inline-block;
-  min-width: 4ch;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+  &__pad {
+    flex: 1;
+    padding: $padding-sm $padding-md;
+    @include safe-bottom($padding-lg);
+  }
 }
 
 @media (min-width: $bp-laptop) {
   .warmup {
-    padding: $padding-xl;
-  }
+    &__main {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 
-  .warmup__game {
-    flex-direction: row;
-    align-items: stretch;
-  }
+    &__hero {
+      padding: $padding-xl $padding-xxl $padding-xxl;
+    }
 
-  .warmup__stats-card {
-    flex: 1;
-    min-height: 50%;
-  }
-
-  .warmup__game-main {
-    flex: 1;
-  }
-
-  .warmup__timer {
-    @include title-lg;
+    &__pad {
+      padding: $padding-xl $padding-xxl;
+      @include safe-bottom($padding-xxl);
+    }
   }
 }
 </style>

@@ -4,7 +4,7 @@
 // --- Typography mixins ---
 @mixin _font($size, $type) {
   @if $type == display {
-    font-size: map.get(('xs': $display-xs, 'sm': $display-sm, 'md': $display-md, 'lg': $display-lg, 'xl': $display-xl), $size);
+    font-size: map.get(('xs': $display-xs, 'sm': $display-sm, 'md': $display-md, 'lg': $display-lg, 'xl': $display-xl, 'xxl': $display-xxl), $size);
     font-weight: 800;
     font-family: $font-title;
   }
@@ -87,6 +87,7 @@
 @mixin display-md { @include _font('md', display); }
 @mixin display-lg { @include _font('lg', display); }
 @mixin display-xl { @include _font('xl', display); }
+@mixin display-xxl { @include _font('xxl', display); }
 
 
 // --- Fonts face ---

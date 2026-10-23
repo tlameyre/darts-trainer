@@ -105,6 +105,18 @@ export function useWarmup({ duration, zones: initialZones }) {
 
   const bestStreaks = computed(() => computeBestStreaks(darts.value));
 
+  // Consecutive hits on the current zones, counted back from the last dart
+  const currentStreak = computed(() => {
+    let run = 0;
+    for (let i = darts.value.length - 1; i >= 0; i--) {
+      const d = darts.value[i];
+      const zones = d.zones ?? [d.zone];
+      if (!zonesArrayMatch(zones, currentZones.value) || !isHit(d, zones)) break;
+      run++;
+    }
+    return run;
+  });
+
   const zoneRecapStats = computed(() => {
     const seen = [];
     periods.value.forEach((p) => {
@@ -226,6 +238,7 @@ export function useWarmup({ duration, zones: initialZones }) {
     isUnlimited,
     isUrgent,
     currentZoneStats,
+    currentStreak,
     zoneRecapStats,
     sessionStats,
     totalDurationMs,
