@@ -25,7 +25,7 @@ const FORMAT_LABELS = { bracket: 'Bracket', championship: 'Championnat' }
 <template>
   <button class="tournament-card" @click="$emit('click')">
     <div class="tournament-card__icon" :class="{ 'tournament-card__icon--done': tournament.status === 'completed' }">
-      <AppIcon name="trophy" :width="20" :height="20" />
+      <AppIcon name="trophy" :width="22" :height="22" />
     </div>
     <div class="tournament-card__info">
       <span class="tournament-card__name">{{ tournament.name }}</span>
@@ -33,10 +33,9 @@ const FORMAT_LABELS = { bracket: 'Bracket', championship: 'Championnat' }
         {{ FORMAT_LABELS[tournament.format] ?? 'Bracket' }} · {{ playerCount }} joueur{{ playerCount > 1 ? 's' : '' }} · {{ formatDate(tournament.created_at) }}
       </span>
     </div>
-    <span class="tournament-card__status" :class="{ 'tournament-card__status--done': tournament.status === 'completed' }">
+    <span class="tournament-card__status" :class="`tournament-card__status--${tournament.status}`">
       {{ STATUS_LABELS[tournament.status] ?? tournament.status }}
     </span>
-    <AppIcon name="arrow-left" :width="16" :height="16" class="tournament-card__arrow" />
   </button>
 </template>
 
@@ -45,30 +44,27 @@ const FORMAT_LABELS = { bracket: 'Bracket', championship: 'Championnat' }
   display: flex;
   align-items: center;
   gap: $gap-sm;
-  padding: $padding-md;
+  padding: $padding-xs;
   border-radius: $radius-sm;
-  background: rgba($white, 0.05);
+  background: $surface;
+  color: $text-color;
   text-align: left;
   transition: background 0.15s;
-  color: $white;
 
-  &:active { background: rgba($white, 0.08); }
+  &:active { background: $border-color; }
 
   &__icon {
-    width: 40px;
-    height: 40px;
-    border-radius: $radius-pill;
-    background: rgba(#7C3AED, 0.2);
-    color: #7C3AED;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: $radius-sm;
+    background: $mode-tournament;
+    color: $white;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
 
-    &--done {
-      background: rgba($orange, 0.2);
-      color: $orange;
-    }
+    &--done { background: $orange; }
   }
 
   &__info {
@@ -76,13 +72,11 @@ const FORMAT_LABELS = { bracket: 'Bracket', championship: 'Championnat' }
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
   }
 
   &__name {
-    @include title-sm;
-    color: $text-color;
-    font-weight: 600;
+    @include title-lg;
+    line-height: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -94,23 +88,33 @@ const FORMAT_LABELS = { bracket: 'Bracket', championship: 'Championnat' }
   }
 
   &__status {
-    @include text-xs;
-    color: $orange;
-    background: rgba($orange, 0.12);
-    border-radius: $radius-pill;
-    padding: 2px 8px;
     flex-shrink: 0;
+    padding: $padding-xxs $padding-xs;
+    border-radius: $radius-sm;
+    background: $border-color;
+    @include title-sm;
 
-    &--done {
-      color: $muted;
-      background: rgba($white, 0.08);
+    &--in_progress {
+      background: $error;
+      color: $white;
     }
-  }
 
-  &__arrow {
-    color: $muted;
-    transform: rotate(180deg);
-    flex-shrink: 0;
+    &--completed { color: $muted; }
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .tournament-card {
+    padding: $padding-sm;
+
+    &__icon {
+      width: 48px;
+      height: 48px;
+    }
+
+    &__name { @include title-xl; line-height: 1; }
+    &__meta { @include text-sm; }
+    &__status { @include title-md; }
   }
 }
 </style>
