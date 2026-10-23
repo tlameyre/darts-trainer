@@ -57,12 +57,11 @@ const unseenTournamentCount = computed(() => tournamentStore.unseenTournamentCou
   bottom: 0;
   left: 0;
   right: 0;
-  border-top: 2px solid $white;
   display: flex;
   align-items: stretch;
   z-index: 50;
   padding-bottom: env(safe-area-inset-bottom);
-  background: $bg;
+  background: $black;
 
   &__tab {
     flex: 1;
@@ -72,11 +71,11 @@ const unseenTournamentCount = computed(() => tournamentStore.unseenTournamentCou
     justify-content: center;
     padding: $padding-sm 0;
     gap: $gap-xxs;
-    color: $white;
+    color: $bg;
     text-decoration: none;
     transition: color 0.15s;
 
-    &--active { color: $orange; }
+    &--active { color: $error-light; }
   }
 
   &__icon-wrap {
@@ -93,14 +92,14 @@ const unseenTournamentCount = computed(() => tournamentStore.unseenTournamentCou
     width: 8px;
     height: 8px;
     border-radius: $radius-pill;
-    background: $orange;
-    border: 1.5px solid $bg;
+    background: $error-light;
+    border: $border-md solid $black;
   }
 
   &__label {
     @include title-sm;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: $tracking-sm;
   }
 }
 </style>
