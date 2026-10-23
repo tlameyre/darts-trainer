@@ -4,13 +4,14 @@ import AppIcon from './AppIcon.vue'
 defineProps({
   title: { type: String, default: 'DARTS TRAINER' },
   backIcon: { type: String, default: 'arrow-left' },
+  tone: { type: String, default: 'orange', validator: v => ['orange', 'blue'].includes(v) },
 })
 
 defineEmits(['back'])
 </script>
 
 <template>
-  <header class="app-header">
+  <header class="app-header" :class="`app-header--${tone}`">
     <button class="app-header__back" @click="$emit('back')">
       <AppIcon :name="backIcon" :width="24" :height="24" />
     </button>
@@ -31,6 +32,10 @@ defineEmits(['back'])
   align-items: center;
   padding: $padding-md;
   background: $orange;
+
+  &--blue {
+    background: $blue;
+  }
 
   &__back {
     color: $white;

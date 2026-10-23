@@ -3,13 +3,14 @@ defineProps({
   label: { type: String, required: true },
   options: { type: Array, required: true },
   modelValue: { required: true },
+  tone: { type: String, default: 'orange', validator: v => ['orange', 'blue'].includes(v) },
 })
 
 defineEmits(['update:modelValue'])
 </script>
 
 <template>
-  <div class="option-selector">
+  <div class="option-selector" :class="`option-selector--${tone}`">
     <div class="option-selector__label">{{ label }}</div>
     <div class="option-selector__options">
       <button
@@ -61,6 +62,11 @@ defineEmits(['update:modelValue'])
       border-color: $orange;
       color: $white;
     }
+  }
+
+  &--blue &__option--active {
+    background: $blue;
+    border-color: $blue;
   }
 }
 

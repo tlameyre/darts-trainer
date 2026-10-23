@@ -2,9 +2,9 @@
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
-import AppIcon from '../components/AppIcon.vue'
 import OptionSelector from '../components/OptionSelector.vue'
 import OptionTile from '../components/OptionTile.vue'
+import StartButton from '../components/StartButton.vue'
 import { useGameStore } from '../store/gameStore.js'
 
 const router = useRouter()
@@ -101,10 +101,7 @@ function startGame() {
         </div>
       </section>
 
-      <button class="settings__start" @click="startGame">
-        Commencer
-        <AppIcon name="arrow-right" :width="20" :height="20" />
-      </button>
+      <StartButton class="settings__start" @click="startGame" />
     </main>
   </div>
 </template>
@@ -216,22 +213,7 @@ function startGame() {
   }
 
   &__start {
-    @include title-xl;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xs;
-    height: 56px;
-    flex-shrink: 0;
     margin-top: auto;
-    border-radius: $radius-sm;
-    background: $orange;
-    color: $white;
-    transition: background 0.15s;
-
-    &:active {
-      background: $orange-dark;
-    }
   }
 }
 
@@ -306,9 +288,7 @@ function startGame() {
     }
 
     &__start {
-      @include title-xxl;
       grid-column: 1;
-      height: 64px;
       margin: $padding-xxl;
     }
   }
