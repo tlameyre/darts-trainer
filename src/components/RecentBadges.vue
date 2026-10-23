@@ -1,44 +1,53 @@
 <script setup>
+import { computed } from 'vue'
 import { BADGES } from '../data/badges.js'
-import { computed } from "vue";
-import AppIcon from './AppIcon.vue'
+import SectionTitle from './SectionTitle.vue'
 
 const props = defineProps({
   badges:    { type: Array,  required: true },
   emptyText: { type: String, default: 'Aucun badge encore — commence à jouer !' },
 })
 
-const recentBadges = computed(() => props.badges.slice(0, 4))
 defineEmits(['badge-click', 'view-all'])
+
+const recentBadges = computed(() => props.badges.slice(0, 4))
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+function unlockedWhen(iso) {
+  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  const days = Math.round((startOfDay(new Date()) - startOfDay(new Date(iso))) / DAY_MS)
+  if (days <= 0) return "Aujourd'hui"
+  if (days === 1) return 'Hier'
+  if (days < 7) return `Il y a ${days} j`
+  if (days < 30) return `Il y a ${Math.floor(days / 7)} sem.`
+  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
 </script>
 
 <template>
   <section class="recent-badges">
-    <div class="recent-badges__header">
-      <h2 class="recent-badges__title">
-        Badges <span class="recent-badges__count">{{ badges.length }}/{{ BADGES.length }}</span>
-      </h2>
-      <button class="recent-badges__more" @click="$emit('view-all')">
-        Voir tout
-      </button>
-    </div>
+    <SectionTitle title="Badges" action="Voir tout" @action="$emit('view-all')">
+      <span class="recent-badges__count">{{ badges.length }}/{{ BADGES.length }}</span>
+    </SectionTitle>
 
-    <div v-if="badges.length" class="recent-badges__grid">
-      <button
-        v-for="badge in recentBadges"
-        :key="badge.id"
-        class="recent-badges__badge"
-        @click="$emit('badge-click', badge)"
-      >
-        <span class="recent-badges__icon">{{ badge.icon }}</span>
-        <span class="recent-badges__label">{{ badge.label }}</span>
-      </button>
-    </div>
+    <template v-if="badges.length">
+      <span class="recent-badges__caption">Derniers obtenus</span>
+      <div class="recent-badges__grid">
+        <button
+          v-for="badge in recentBadges"
+          :key="badge.id"
+          class="recent-badges__badge"
+          @click="$emit('badge-click', badge)"
+        >
+          <span class="recent-badges__icon">{{ badge.icon }}</span>
+          <span class="recent-badges__label">{{ badge.label }}</span>
+          <span class="recent-badges__when">{{ unlockedWhen(badge.unlockedAt) }}</span>
+        </button>
+      </div>
+    </template>
 
-    <button v-else class="recent-badges__empty" @click="$emit('view-all')">
-      <span>{{ emptyText }}</span>
-      <AppIcon name="arrow-left" :width="14" :height="14" class="recent-badges__arrow" />
-    </button>
+    <button v-else class="recent-badges__empty" @click="$emit('view-all')">{{ emptyText }}</button>
   </section>
 </template>
 
@@ -46,99 +55,88 @@ defineEmits(['badge-click', 'view-all'])
 .recent-badges {
   display: flex;
   flex-direction: column;
-  gap: $gap-sm;
-
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  &__title {
-    @include title-sm;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
+  gap: $gap-xs;
 
   &__count {
-    color: $orange;
-    margin-left: $gap-xs;
+    margin-left: $gap-xxs;
+    color: $error;
   }
 
-  &__more {
-    @include title-sm;
-    color: $orange;
+  &__caption {
+    @include text-xs;
+    font-weight: 600;
+    letter-spacing: $tracking-lg;
+    text-transform: uppercase;
+    color: $muted;
   }
 
   &__grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: $gap-sm;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: $gap-xs;
   }
 
   &__badge {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: $radius-sm;
-    padding: $padding-sm;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     gap: $gap-xxs;
+    padding: $padding-sm $padding-xxs $padding-xs;
+    border: $border-md solid $border-color;
+    border-radius: $radius-sm;
+    background: $surface;
+    color: $text-color;
     text-align: center;
     transition: background 0.15s;
 
-    &:active { background: rgba(255, 255, 255, 0.09); }
+    &:active { background: $border-color; }
   }
 
   &__icon {
-    @include title-xxl;
-    line-height: 1;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-pill;
+    background: $bg;
+    @include text-xl;
   }
 
   &__label {
     @include title-sm;
+    line-height: 1.05;
+    hyphens: auto;
+  }
+
+  &__when {
+    @include text-xxs;
     color: $muted;
-    line-height: 1.3;
   }
 
   &__empty {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: $radius-sm;
     padding: $padding-md;
-    @include title-sm;
+    border-radius: $radius-sm;
+    background: $surface;
+    @include text-sm;
     color: $muted;
-    transition: background 0.15s;
-
-    &:active { background: rgba(255, 255, 255, 0.08); }
-  }
-
-  &__arrow {
-    color: rgba(255, 255, 255, 0.6);
-    transform: rotate(180deg);
-    flex-shrink: 0;
+    text-align: left;
   }
 }
 
 @media (min-width: $bp-laptop) {
   .recent-badges {
-    &__title { @include title-md; }
-    &__more  { @include title-md; }
-    &__grid  { gap: $gap-md; }
+    &__caption { @include text-sm; font-weight: 600; }
 
-    &__badge {
-      padding: $padding-md;
-      gap: $gap-xs;
+    &__icon {
+      width: 48px;
+      height: 48px;
+      @include text-xxl;
     }
 
-    &__icon  { @include title-xxl; }
-    &__label { @include title-sm; }
-
-    &__empty { @include title-md; }
+    &__label { @include title-md; line-height: 1.05; }
+    &__when { @include text-xs; }
+    &__empty { @include text-md; }
   }
 }
 </style>

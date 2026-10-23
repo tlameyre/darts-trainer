@@ -3,22 +3,48 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/authStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
+import { useDbStore } from '../store/dbStore.js'
 import { useTournamentStore } from '../store/tournamentStore.js'
 import { GAME_MODES } from '../data/gameModes.js'
-import AppIcon from '../components/AppIcon.vue'
+import { weekActivity, dayStreak } from '../utils/activity.js'
+import HomeHeader from '../components/home/HomeHeader.vue'
+import WeekActivity from '../components/home/WeekActivity.vue'
+import ModeSection from '../components/home/ModeSection.vue'
+import SectionTitle from '../components/SectionTitle.vue'
+import TournamentListCard from '../components/tournament/TournamentListCard.vue'
 import RecentBadges from '../components/RecentBadges.vue'
-import ActiveTournaments from '../components/ActiveTournaments.vue'
+
+// Optional mock props — only used by /dev to preview without auth
+const props = defineProps({
+  mockActivity:    { type: Array, default: null },
+  mockBadges:      { type: Array, default: null },
+  mockTournaments: { type: Array, default: null },
+})
 
 const router          = useRouter()
 const authStore       = useAuthStore()
 const badgeStore      = useBadgeStore()
+const dbStore         = useDbStore()
 const tournamentStore = useTournamentStore()
-const userBadges      = ref([])
-const activeTournaments = ref([])
+
+const activity          = ref(props.mockActivity ?? [])
+const userBadges        = ref(props.mockBadges ?? [])
+const activeTournaments = ref(props.mockTournaments ?? [])
+
+// Long enough to cover any realistic day streak
+const ACTIVITY_DAYS = 365
 
 onMounted(async () => {
-  userBadges.value        = await badgeStore.fetchUserBadges()
-  activeTournaments.value = await tournamentStore.fetchActiveTournaments()
+  if (props.mockActivity) return
+  const since = new Date(Date.now() - ACTIVITY_DAYS * 24 * 60 * 60 * 1000).toISOString()
+  const [sessions, badges, tournaments] = await Promise.all([
+    dbStore.fetchActivity(since),
+    badgeStore.fetchUserBadges(),
+    tournamentStore.fetchActiveTournaments(),
+  ])
+  activity.value          = sessions
+  userBadges.value        = badges
+  activeTournaments.value = tournaments
 })
 
 const displayName = computed(() => {
@@ -36,67 +62,63 @@ const initials = computed(() => {
   return (p.username?.[0] ?? authStore.user?.email?.[0] ?? '?').toUpperCase()
 })
 
-const trainModes = computed(() => GAME_MODES.filter((m) => m.group === 'train'))
-const playModes  = computed(() => GAME_MODES.filter((m) => m.group !== 'train'))
+const WIKI_TILE = { id: 'checkout-wiki', label: 'Encyclopédie', icon: 'book', color: '#14110F', settingsRoute: 'checkout-wiki' }
+
+const trainModes = [...GAME_MODES.filter((m) => m.group === 'train'), WIKI_TILE]
+const playModes  = GAME_MODES.filter((m) => m.group !== 'train')
+
+const activityModes = new Set(['score-training', 'warmup', 'checkout', 'x01'])
+const weekModes     = GAME_MODES.filter((m) => activityModes.has(m.id))
+
+const week   = computed(() => weekActivity(activity.value))
+const streak = computed(() => dayStreak(activity.value))
 </script>
 
 <template>
   <div class="home">
-    <header class="home__header">
-      <button class="home__avatar" @click="router.push({ name: 'profile' })">
-        {{ initials }}
-      </button>
-      <div>
-        <p class="home__greeting">Bonjour,</p>
-        <h1 class="home__name">{{ displayName }}</h1>
-      </div>
-    </header>
+    <HomeHeader
+      :name="displayName"
+      :initials="initials"
+      :streak="streak"
+      @profile="router.push({ name: 'profile' })"
+    />
 
     <main class="home__main">
+      <div class="home__column">
+        <ModeSection
+          class="home__train"
+          title="S'entraîner"
+          :modes="trainModes"
+          @select="mode => router.push({ name: mode.settingsRoute })"
+        />
+        <ModeSection
+          class="home__play"
+          title="Jouer"
+          :modes="playModes"
+          @select="mode => router.push({ name: mode.settingsRoute })"
+        />
 
-      <!-- Raccourcis : s'entraîner -->
-      <section class="home__section">
-        <h2 class="home__section-title">S'entraîner</h2>
-        <div class="home__modes">
-          <button v-for="mode in trainModes" :key="mode.id" class="home__mode-card"
-            :style="{ '--mode-color': mode.color }" @click="router.push({ name: mode.settingsRoute })">
-            <AppIcon :name="mode.icon" :width="24" :height="24" class="home__mode-icon" />
-            <span class="home__mode-label">{{ mode.title.replace('\n', ' ') }}</span>
-          </button>
+        <section v-if="activeTournaments.length" class="home__tournaments">
+          <SectionTitle title="Tournois en cours" action="Voir tout" @action="router.push({ name: 'tournaments' })" />
+          <div class="home__tournament-list">
+            <TournamentListCard
+              v-for="t in activeTournaments" :key="t.id"
+              :tournament="t"
+              @click="router.push({ name: 'tournament-detail', params: { id: t.id } })"
+            />
+          </div>
+        </section>
+      </div>
 
-          <button class="home__mode-card home__mode-card--ghost" @click="router.push({ name: 'checkout-wiki' })">
-            <AppIcon name="book" :width="24" :height="24" class="home__mode-icon" />
-            <span class="home__mode-label">Checkouts — consulter</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- Raccourcis : jouer -->
-      <section class="home__section">
-        <h2 class="home__section-title">Jouer</h2>
-        <div class="home__modes">
-          <button v-for="mode in playModes" :key="mode.id" class="home__mode-card"
-            :style="{ '--mode-color': mode.color }" @click="router.push({ name: mode.settingsRoute })">
-            <AppIcon :name="mode.icon" :width="24" :height="24" class="home__mode-icon" />
-            <span class="home__mode-label">{{ mode.title.replace('\n', ' ') }}</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- Tournois en cours -->
-      <ActiveTournaments
-        :tournaments="activeTournaments"
-        @tournament-click="id => router.push({ name: 'tournament-detail', params: { id } })"
-        @view-all="router.push({ name: 'tournaments' })"
-      />
-
-      <!-- Badges récents -->
-      <RecentBadges
-        :badges="userBadges"
-        @badge-click="router.push({ name: 'badges' })"
-        @view-all="router.push({ name: 'badges' })"
-      />
-
+      <div class="home__column home__column--aside">
+        <WeekActivity class="home__week" :days="week" :modes="weekModes" />
+        <RecentBadges
+          class="home__badges"
+          :badges="userBadges"
+          @badge-click="router.push({ name: 'badges' })"
+          @view-all="router.push({ name: 'badges' })"
+        />
+      </div>
     </main>
   </div>
 </template>
@@ -106,175 +128,61 @@ const playModes  = computed(() => GAME_MODES.filter((m) => m.group !== 'train'))
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: $padding-lg $padding-md 0;
-  gap: $padding-xl;
   @include nav-safe-bottom;
 
-  &__header {
-    padding-top: $padding-lg;
-    display: flex;
-    align-items: center;
-    gap: $gap-md;
-  }
-
-  &__avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: $radius-pill;
-    background: $orange;
-    color: $white;
-    @include title-lg;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: opacity 0.15s;
-
-    &:active {
-      opacity: 0.7;
-    }
-  }
-
-  &__greeting {
-    @include text-sm;
-    color: $muted;
-  }
-
-  &__name {
-    @include title-xxl;
-    line-height: 1;
-  }
-
   &__main {
-    flex: 1;
     display: flex;
     flex-direction: column;
     gap: $gap-xl;
+    padding: $padding-lg $padding-md 0;
   }
 
-  // --- Section ---
-  &__section {
+  // Mobile stacks both columns into one ordered list
+  &__column { display: contents; }
+
+  &__week        { order: 1; }
+  &__train       { order: 2; }
+  &__play        { order: 3; }
+  &__tournaments { order: 4; }
+  &__badges      { order: 5; }
+
+  &__tournaments {
     display: flex;
     flex-direction: column;
-    gap: $gap-sm;
+    gap: $gap-xs;
   }
 
-  &__section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  &__section-title {
-    @include title-sm;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  &__section-count {
-    color: $orange;
-    margin-left: $gap-xs;
-  }
-
-  &__section-link {
-    @include title-sm;
-    color: $orange;
-  }
-
-  // --- Modes ---
-  &__modes {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: $gap-sm;
-  }
-
-  &__mode-card {
+  &__tournament-list {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: $gap-sm;
-    min-height: 96px;
-    background: var(--mode-color);
-    border-radius: $radius-sm;
-    padding: $padding-md;
-    transition: opacity 0.15s;
-    color: $white;
-
-    &:active {
-      opacity: 0.8;
-    }
-
-    &--ghost {
-      grid-column: 1 / -1;
-      flex-direction: row;
-      align-items: center;
-      min-height: 0;
-      background: rgba($white, 0.05);
-      border: $border-sm solid rgba($white, 0.08);
-    }
+    gap: $gap-xs;
   }
-
-  &__mode-icon {
-    color: rgba(255, 255, 255, 0.8);
-    flex-shrink: 0;
-  }
-
-  &__mode-label {
-    @include title-sm;
-    color: $white;
-    text-align: left;
-  }
-
 }
 
 @media (min-width: $bp-laptop) {
   .home {
-    padding: $padding-xxl $padding-xxl 0;
-    gap: $padding-xxl;
-    @include nav-safe-bottom($padding-xl);
-
-    &__header {
-      padding-top: 0;
-    }
-
-    &__avatar {
-      width: 64px;
-      height: 64px;
-      @include title-xl;
-    }
-
-    &__greeting {
-      @include text-md;
-    }
-
-    &__name {
-      @include title-xxxl;
-    }
-
-    &__section-title {
-      @include title-md;
-    }
+    @include nav-safe-bottom($padding-xxl);
 
     &__main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 420px;
+      align-items: start;
+      gap: $gap-xxl;
+      padding: $padding-xxl $padding-xxl 0;
+    }
+
+    &__column {
+      display: flex;
+      flex-direction: column;
       gap: $gap-xl;
+      min-width: 0;
     }
 
-    &__mode-card {
-      gap: $gap-md;
-      min-height: 120px;
-      padding: $padding-xl;
+    &__tournament-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: $gap-sm;
     }
-
-    &__mode-label {
-      @include title-lg;
-    }
-
-    &__section-link {
-      @include title-lg;
-    }
-
   }
 }
 </style>

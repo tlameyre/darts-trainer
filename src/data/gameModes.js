@@ -1,11 +1,13 @@
 /**
  * Définition des modes de jeu.
  * Pour ajouter un mode : ajouter un objet ici + les routes dans router/index.js
- * `group` : "train" (s'entraîner) ou "play" (jouer) — sert au regroupement du lobby.
+ * `group` : "train" (s'entraîner) ou "play" (jouer) — sert au regroupement du lobby et de l'accueil.
+ * `label` : nom court affiché sur les tuiles de l'accueil.
  */
 export const GAME_MODES = [
   {
     id: "score-training",
+    label: "Calcul",
     title: "ENTRAINEMENT\nCALCUL",
     description:
       "Calcule le total de ta volée et entraîne-toi à compter rapidement.",
@@ -15,7 +17,19 @@ export const GAME_MODES = [
     group: "train",
   },
   {
+    id: "warmup",
+    label: "Échauffement",
+    title: "ECHAUFFEMENT",
+    description:
+      "Travaille une zone de la cible sur une durée définie et suis ta précision.",
+    color: "#1D4ED8",
+    icon: "dartboard",
+    settingsRoute: "warmup-settings",
+    group: "train",
+  },
+  {
     id: "checkout",
+    label: "Checkouts",
     title: "CHECKOUTS",
     description:
       "Révise et teste les combinaisons de finish, de 2 à 170. Flashcards ou quiz noté sur la cible.",
@@ -25,17 +39,8 @@ export const GAME_MODES = [
     group: "train",
   },
   {
-    id: "warmup",
-    title: "ECHAUFFEMENT",
-    description:
-      "Travaille une zone de la cible sur une durée définie et suis ta précision.",
-    color: "#1D4ED8",
-    icon: "dartboard",
-    settingsRoute: "warmup-settings",
-    group: "play",
-  },
-  {
     id: "x01",
+    label: "501",
     title: "501",
     description:
       "Descends de 501 (ou 301) à 0 en comptant tes volées. Analyse tes moyennes et tes checkouts.",
@@ -46,6 +51,7 @@ export const GAME_MODES = [
   },
   {
     id: "x01-online",
+    label: "501 en ligne",
     title: "501 EN LIGNE",
     description:
       "Défie un ami à distance : chacun joue sur son propre appareil, les scores se synchronisent en direct.",
@@ -56,6 +62,7 @@ export const GAME_MODES = [
   },
   {
     id: "tactics",
+    label: "Tactics",
     title: "TACTICS",
     description:
       "Ferme les zones 20 à 12 puis Double, Triple et Bull, le plus vite possible. Façon cricket.",
@@ -66,6 +73,7 @@ export const GAME_MODES = [
   },
   {
     id: "tournament",
+    label: "Tournoi",
     title: "TOURNOI",
     description:
       "Affronte un groupe de joueurs en bracket à élimination directe ou en championnat par journées, et suis la progression jusqu'au vainqueur.",

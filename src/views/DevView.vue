@@ -23,6 +23,7 @@ import X01Result from '../components/x01/X01Result.vue'
 import { buildMatchStats } from '../composables/useX01MatchStats.js'
 import { analyzeLegs, ALL_SEGMENTS } from '../composables/useCheckoutAnalysis.js'
 import FriendsView from './FriendsView.vue'
+import HomeView from './HomeView.vue'
 import StatsWarmupDetailView from './StatsWarmupDetailView.vue'
 import StatsSessionDetail from '../components/stats/StatsSessionDetail.vue'
 import TournamentView from './TournamentView.vue'
@@ -34,6 +35,20 @@ import { useGameStore } from '../store/gameStore.js'
 
 const router    = useRouter()
 const gameStore = useGameStore()
+
+// --- Preview HomeView (semaine, série, tournois, badges fictifs) ---
+const showHomePreview = ref(false)
+const daysAgo = (n) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString()
+const mockHomeActivity = [
+  { mode: 'warmup', playedAt: daysAgo(0) }, { mode: 'checkout', playedAt: daysAgo(0) },
+  { mode: 'score-training', playedAt: daysAgo(1) }, { mode: 'x01', playedAt: daysAgo(2) },
+  { mode: 'x01', playedAt: daysAgo(2) }, { mode: 'warmup', playedAt: daysAgo(3) },
+]
+const mockHomeBadges = BADGES.slice(0, 4).map((b, i) => ({ ...b, unlockedAt: daysAgo([1, 3, 8, 15][i]) }))
+const mockHomeTournaments = [
+  { id: 'mock-t1', name: 'Ligue du jeudi', format: 'championship', status: 'in_progress', player_count: 8, created_at: daysAgo(20) },
+  { id: 'mock-t2', name: "Coupe d'hiver", format: 'bracket', status: 'in_progress', player_count: 6, created_at: daysAgo(6) },
+]
 
 // --- Preview FriendsView ---
 const showFriendsPreview = ref(false)
@@ -430,6 +445,14 @@ const mockSent = [
       </div>
     </section>
 
+    <!-- HomeView — aperçu plein écran avec données fictives -->
+    <section class="dev__section">
+      <h2 class="dev__section-title">Accueil (preview)</h2>
+      <div class="dev__buttons">
+        <button class="dev__btn" @click="showHomePreview = true">Ouvrir l'accueil</button>
+      </div>
+    </section>
+
     <!-- FriendsView — aperçu plein écran avec données fictives -->
     <section class="dev__section">
       <h2 class="dev__section-title">Vue Amis (preview)</h2>
@@ -550,6 +573,16 @@ const mockSent = [
     <X01DoublesModal :show="showDoublesModal" @confirm="showDoublesModal = false" />
     <X01CheckoutModal :show="showCheckoutModal" :default-darts="2" :checkout-score="40"
       @confirm="showCheckoutModal = false" />
+
+    <!-- HomeView plein écran -->
+    <div v-if="showHomePreview" class="dev__fullscreen-preview">
+      <HomeView
+        :mock-activity="mockHomeActivity"
+        :mock-badges="mockHomeBadges"
+        :mock-tournaments="mockHomeTournaments"
+      />
+      <button class="dev__close-preview" @click="showHomePreview = false">✕ Fermer</button>
+    </div>
 
     <!-- FriendsView plein écran -->
     <div v-if="showFriendsPreview" class="dev__fullscreen-preview">

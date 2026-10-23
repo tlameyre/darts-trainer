@@ -566,6 +566,26 @@ export const useDbStore = defineStore('db', () => {
     return data
   }
 
+  // Played date of every session since `since`, tagged with its game mode id
+  async function fetchActivity(since) {
+    const user = getUser()
+    if (!user) return []
+    const tables = {
+      game_sessions:     'score-training',
+      warmup_sessions:   'warmup',
+      checkout_sessions: 'checkout',
+      x01_sessions:      'x01',
+    }
+    const results = await Promise.all(Object.keys(tables).map(table =>
+      supabase.from(table).select('played_at').eq('user_id', user.id).gte('played_at', since)
+    ))
+    return Object.values(tables).flatMap((mode, i) => {
+      const { data, error } = results[i]
+      if (error) console.error('[dbStore] fetchActivity:', error.message)
+      return (data ?? []).map(r => ({ mode, playedAt: r.played_at }))
+    })
+  }
+
   async function fetchTournamentDetail(tournamentId) {
     const [
       { data: tournament, error: tError },
@@ -734,7 +754,7 @@ export const useDbStore = defineStore('db', () => {
     fetchGameSessions, fetchWarmupSessions, fetchWarmupSessionsForChart, fetchX01Sessions, fetchTacticsSessions, fetchCheckoutSessions,
     fetchProfileStats, fetchGlobalStats,
     createTournamentRecord, createTournamentParticipants, createTournamentMatches,
-    updateTournamentMatchPointers, fetchTournaments, fetchActiveTournaments, fetchTournamentDetail,
+    updateTournamentMatchPointers, fetchTournaments, fetchActiveTournaments, fetchTournamentDetail, fetchActivity,
     updateTournament,
     addTournamentParticipant, assignParticipantSeeds, leaveTournament, deleteTournamentParticipant, deleteTournament,
     addTournamentHost, removeTournamentHost, fetchTournamentHosts,
