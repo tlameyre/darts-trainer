@@ -1,6 +1,4 @@
 <script setup>
-import AppButton from './AppButton.vue'
-
 defineProps({
   label: { type: String, required: true },
   options: { type: Array, required: true },
@@ -14,16 +12,16 @@ defineEmits(['update:modelValue'])
   <div class="option-selector">
     <div class="option-selector__label">{{ label }}</div>
     <div class="option-selector__options">
-      <AppButton
+      <button
         v-for="opt in options"
         :key="opt.value"
-        size="small"
-        variant="ghost"
-        :active="modelValue === opt.value"
+        class="option-selector__option"
+        :class="{ 'option-selector__option--active': modelValue === opt.value }"
+        :aria-pressed="modelValue === opt.value"
         @click="$emit('update:modelValue', opt.value)"
       >
         {{ opt.label }}
-      </AppButton>
+      </button>
     </div>
   </div>
 </template>
@@ -32,18 +30,44 @@ defineEmits(['update:modelValue'])
 .option-selector {
   display: flex;
   flex-direction: column;
-  gap: $gap-md;
+  gap: $gap-xs;
 
   &__label {
-    @include title-lg;
-    color: $white;
+    @include title-sm;
+    color: $muted;
   }
 
   &__options {
     display: flex;
     gap: $gap-xs;
+  }
 
-    :deep(.btn) { flex: 1; }
+  &__option {
+    @include title-md;
+    flex: 1;
+    height: 44px;
+    border: $border-md solid $border-color;
+    border-radius: $radius-sm;
+    background: transparent;
+    color: $text-color;
+    transition: background 0.15s, border-color 0.15s;
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    &--active {
+      background: $orange;
+      border-color: $orange;
+      color: $white;
+    }
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .option-selector__option {
+    @include title-xl;
+    height: 56px;
   }
 }
 </style>
