@@ -2,15 +2,18 @@
 import { computed } from 'vue'
 import { BADGES } from '../data/badges.js'
 import SectionTitle from './SectionTitle.vue'
+import BadgeIcon from './badges/BadgeIcon.vue'
 
 const props = defineProps({
   badges:    { type: Array,  required: true },
   emptyText: { type: String, default: 'Aucun badge encore — commence à jouer !' },
+  ruled:     { type: Boolean, default: false }, // heavy rule under the title + progress bar (profile)
 })
 
 defineEmits(['badge-click', 'view-all'])
 
 const recentBadges = computed(() => props.badges.slice(0, 4))
+const percent = computed(() => Math.round((props.badges.length / BADGES.length) * 100))
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -27,9 +30,14 @@ function unlockedWhen(iso) {
 
 <template>
   <section class="recent-badges">
-    <SectionTitle title="Badges" action="Voir tout" @action="$emit('view-all')">
+    <SectionTitle title="Badges" action="Voir tout" :ruled="ruled" @action="$emit('view-all')">
       <span class="recent-badges__count">{{ badges.length }}/{{ BADGES.length }}</span>
     </SectionTitle>
+
+    <div v-if="ruled" class="recent-badges__progress">
+      <div class="recent-badges__bar"><div class="recent-badges__fill" :style="{ width: `${percent}%` }" /></div>
+      <span class="recent-badges__percent">{{ percent }} %</span>
+    </div>
 
     <template v-if="badges.length">
       <span class="recent-badges__caption">Derniers obtenus</span>
@@ -40,7 +48,7 @@ function unlockedWhen(iso) {
           class="recent-badges__badge"
           @click="$emit('badge-click', badge)"
         >
-          <span class="recent-badges__icon">{{ badge.icon }}</span>
+          <BadgeIcon :badge="badge" class="recent-badges__icon" />
           <span class="recent-badges__label">{{ badge.label }}</span>
           <span class="recent-badges__when">{{ unlockedWhen(badge.unlockedAt) }}</span>
         </button>
@@ -60,6 +68,31 @@ function unlockedWhen(iso) {
   &__count {
     margin-left: $gap-xxs;
     color: $error;
+  }
+
+  &__progress {
+    display: flex;
+    align-items: center;
+    gap: $gap-sm;
+  }
+
+  &__bar {
+    flex: 1;
+    height: 8px;
+    border-radius: $radius-xs;
+    background: $border-color;
+    overflow: hidden;
+  }
+
+  &__fill {
+    height: 100%;
+    background: $error;
+  }
+
+  &__percent {
+    @include text-xs;
+    font-weight: 600;
+    color: $muted;
   }
 
   &__caption {
@@ -92,16 +125,7 @@ function unlockedWhen(iso) {
     &:active { background: $border-color; }
   }
 
-  &__icon {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: $radius-pill;
-    background: $bg;
-    @include text-xl;
-  }
+  &__icon { --badge-icon-size: 40px; }
 
   &__label {
     @include title-sm;
@@ -127,13 +151,12 @@ function unlockedWhen(iso) {
 @media (min-width: $bp-laptop) {
   .recent-badges {
     &__caption { @include text-sm; font-weight: 600; }
+    &__bar     { height: 10px; }
+    &__percent { @include text-sm; }
 
-    &__icon {
-      width: 48px;
-      height: 48px;
-      @include text-xxl;
-    }
-
+    &__icon  { --badge-icon-size: 52px; }
+    &__grid  { gap: $gap-sm; }
+    &__badge { padding: $padding-md $padding-xs $padding-sm; gap: $gap-xs; }
     &__label { @include title-md; line-height: 1.05; }
     &__when { @include text-xs; }
     &__empty { @include text-md; }

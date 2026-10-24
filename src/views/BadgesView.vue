@@ -1,11 +1,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { BADGES } from '../data/badges.js'
+import { BADGES, BADGE_CATEGORIES } from '../data/badges.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import { useDbStore } from '../store/dbStore.js'
 import AppHeader from '../components/AppHeader.vue'
+import AppIcon from '../components/AppIcon.vue'
 import BadgeDetailModal from '../components/badges/BadgeDetailModal.vue'
+import BadgeIcon from '../components/badges/BadgeIcon.vue'
+import SectionTitle from '../components/SectionTitle.vue'
 
 const router      = useRouter()
 const badgeStore  = useBadgeStore()
@@ -30,13 +33,17 @@ function enrichBadge(badge) {
 }
 
 // Badges groupés par catégorie
-const categories = computed(() => {
-  const cats = [...new Set(BADGES.map(b => b.category))]
-  return cats.map(cat => ({
-    name:   cat,
-    badges: BADGES.filter(b => b.category === cat).map(enrichBadge),
-  }))
-})
+const categories = computed(() =>
+  BADGE_CATEGORIES.map(cat => {
+    const badges = BADGES.filter(b => b.category === cat.name).map(enrichBadge)
+    return { ...cat, badges, unlocked: badges.filter(b => b.unlockedAt).length }
+  })
+)
+
+function progressPercent(badge) {
+  const p = getBadgeProgress(badge.id, stats.value)
+  return p ? Math.min(Math.round((p.current / p.target) * 100), 100) : null
+}
 
 function openBadge(badge) {
   selectedBadge.value = badge
@@ -50,19 +57,24 @@ const selectedProgress = computed(() =>
 )
 
 const unlockedCount = computed(() => userBadges.value.length)
+const percent = computed(() => Math.round((unlockedCount.value / BADGES.length) * 100))
 </script>
 
 <template>
   <div class="badges">
-    <AppHeader title="BADGES" @back="router.back()">
-      <template #right>
-        <span class="badges__count">{{ unlockedCount }}/{{ BADGES.length }}</span>
-      </template>
-    </AppHeader>
+    <AppHeader title="BADGES" tone="ink" @back="router.back()" />
+
+    <section class="badges__progress" aria-label="Progression">
+      <div class="badges__total">
+        <span class="badges__total-value">{{ unlockedCount }}<span class="badges__total-max"> / {{ BADGES.length }}</span></span>
+        <span class="badges__total-label">badges obtenus</span>
+      </div>
+      <div class="badges__bar"><div class="badges__fill" :style="{ width: `${percent}%` }" /></div>
+    </section>
 
     <main class="badges__main">
       <section v-for="cat in categories" :key="cat.name" class="badges__category">
-        <h2 class="badges__category-title">{{ cat.name }}</h2>
+        <SectionTitle :title="cat.name" :count="`${cat.unlocked} / ${cat.badges.length}`" ruled class="badges__category-title" :style="{ '--cat-color': cat.color }" />
 
         <div class="badges__grid">
           <button
@@ -70,30 +82,25 @@ const unlockedCount = computed(() => userBadges.value.length)
             :key="badge.id"
             class="badges__item"
             :class="{ 'badges__item--locked': !badge.unlockedAt }"
+            :aria-label="badge.label"
+            :style="{ '--cat-color': cat.color }"
             @click="openBadge(badge)"
           >
-            <span class="badges__item-icon">{{ badge.icon }}</span>
+            <BadgeIcon :badge="badge" :locked="!badge.unlockedAt" class="badges__item-icon" />
             <span class="badges__item-label">{{ badge.label }}</span>
 
-            <!-- Barre de progression si non débloqué et progression dispo -->
-            <template v-if="!badge.unlockedAt">
-              <div
-                v-if="getBadgeProgress(badge.id, stats)"
-                class="badges__item-progress"
-              >
-                <div
-                  class="badges__item-progress-fill"
-                  :style="{
-                    width: Math.min(
-                      Math.round((getBadgeProgress(badge.id, stats).current / getBadgeProgress(badge.id, stats).target) * 100),
-                      100
-                    ) + '%'
-                  }"
-                />
-              </div>
-            </template>
-
-            <span v-else class="badges__item-check">✓</span>
+            <span v-if="badge.unlockedAt" class="badges__item-state badges__item-state--done">
+              <AppIcon name="check" :width="14" :height="14" />
+              Obtenu
+            </span>
+            <span v-else-if="progressPercent(badge) !== null" class="badges__item-progress">
+              <span class="badges__item-bar"><span class="badges__item-fill" :style="{ width: `${progressPercent(badge)}%` }" /></span>
+              <span class="badges__item-percent">{{ progressPercent(badge) }}%</span>
+            </span>
+            <span v-else class="badges__item-state">
+              <AppIcon name="lock" :width="12" :height="12" />
+              À débloquer
+            </span>
           </button>
         </div>
       </section>
@@ -113,18 +120,55 @@ const unlockedCount = computed(() => userBadges.value.length)
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: $padding-md;
-  gap: $gap-md;
 
-  &__count {
-    @include title-sm;
-    color: $orange;
+  &__progress {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-sm;
+    padding: 0 $padding-md $padding-lg;
+    background: $black;
+    color: $bg;
+  }
+
+  &__total {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  &__total-value {
+    @include display-xs;
+    line-height: 0.9;
+  }
+
+  &__total-max {
+    @include title-xxl;
+    opacity: 0.6;
+  }
+
+  &__total-label {
+    @include text-xs;
+    padding-bottom: $padding-xxs;
+    opacity: 0.75;
+  }
+
+  &__bar {
+    height: 8px;
+    border-radius: $radius-xs;
+    background: rgba($bg, 0.2);
+    overflow: hidden;
+  }
+
+  &__fill {
+    height: 100%;
+    background: $error-light;
   }
 
   &__main {
     display: flex;
     flex-direction: column;
     gap: $gap-xl;
+    padding: $padding-lg $padding-md 0;
     @include nav-safe-bottom;
   }
 
@@ -134,96 +178,123 @@ const unlockedCount = computed(() => userBadges.value.length)
     gap: $gap-sm;
   }
 
-  &__category-title {
-    @include title-sm;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding-bottom: $gap-xs;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  // Coloured square before the category name
+  &__category-title :deep(.section-title__text)::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-right: $gap-xs;
+    border-radius: $radius-xs;
+    background: var(--cat-color);
   }
 
   &__grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: $gap-sm;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: $gap-xs;
   }
 
   &__item {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: $radius-sm;
-    padding: $padding-sm $padding-md $padding-xs;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: $gap-xxs;
-    text-align: left;
-    transition: background 0.15s;
+    align-items: center;
+    gap: $gap-xs;
+    min-height: 124px;
+    padding: $padding-sm $padding-xxs $padding-xs;
+    background: $surface;
+    border: $border-md solid $surface;
+    border-radius: $radius-sm;
+    color: $text-color;
+    text-align: center;
+    transition: border-color 0.15s;
 
-    &:active { background: rgba(255, 255, 255, 0.09); }
+    &:active { border-color: $black; }
 
     &--locked {
-      opacity: 0.45;
+      background: transparent;
+      border-color: $border-color;
+      color: $muted;
     }
   }
 
-  &__item-icon {
-    @include title-xxl;
-    line-height: 1;
-    margin-bottom: $gap-xxs;
-  }
+  &__item-icon { --badge-icon-size: 40px; }
 
   &__item-label {
     @include title-sm;
-    color: $text-color;
-    @include title-sm;
-    line-height: 1.3;
+    flex: 1;
+    line-height: 1.05;
+    text-transform: uppercase;
+    hyphens: auto;
   }
 
-  &__item-check {
-    @include title-sm;
-    color: $accent;
-    margin-top: 2px;
+  &__item-state {
+    @include text-xxs;
+    display: flex;
+    align-items: center;
+    gap: $gap-xxs;
+    color: $muted;
+
+    &--done {
+      font-weight: 600;
+      color: $accent;
+    }
   }
 
   &__item-progress {
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
     width: 100%;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: $radius-pill;
-    overflow: hidden;
-    margin-top: $gap-xxs;
   }
 
-  &__item-progress-fill {
+  &__item-bar {
+    flex: 1;
+    height: 6px;
+    border-radius: $radius-xs;
+    background: $border-color;
+    overflow: hidden;
+  }
+
+  &__item-fill {
+    display: block;
     height: 100%;
-    background: $orange;
-    border-radius: $radius-pill;
+    background: var(--cat-color);
+  }
+
+  &__item-percent {
+    @include text-xxs;
+    font-weight: 600;
+    color: $muted;
   }
 }
 
 @media (min-width: $bp-laptop) {
   .badges {
-    padding: $padding-xl;
-    gap: $gap-lg;
+    &__progress { padding: 0 $padding-xxl $padding-xl; }
+    &__total-value { @include display-sm; }
+    &__total-max { @include title-xxxl; }
+    &__total-label { @include text-sm; }
+    &__bar { height: 10px; }
 
-    &__count          { @include title-md; }
-
-    &__main           { gap: $gap-xxl; }
-
-    &__category-title { @include title-md; }
-
-    &__grid {
-      grid-template-columns: repeat(4, 1fr);
-      gap: $gap-md;
+    &__main {
+      width: 100%;
+      max-width: 1120px;
+      margin: 0 auto;
+      gap: $gap-xxl;
+      padding: $padding-xxl 0 0;
+      @include nav-safe-bottom($padding-xl);
     }
 
-    &__item       { padding: $padding-md $padding-lg $padding-sm; gap: $gap-xs; }
-    &__item-icon  { @include display-xs; }
-    &__item-label { @include title-md; }
-    &__item-check { @include title-sm; }
+    &__grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: $gap-sm;
+    }
 
-    &__item-progress { height: 6px; margin-top: $gap-xs; }
+    &__item { min-height: 148px; padding: $padding-md $padding-xxs $padding-sm; }
+    &__item-icon { --badge-icon-size: 52px; }
+    &__item-label { @include title-md; }
+    &__item-state, &__item-percent { @include text-xs; }
   }
 }
 </style>

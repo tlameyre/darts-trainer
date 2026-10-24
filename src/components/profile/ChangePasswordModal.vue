@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue'
-import AppButton from '../AppButton.vue'
 import AppModal from '../AppModal.vue'
 
 defineProps({
@@ -38,8 +37,8 @@ function onClose() {
 
 <template>
   <AppModal :show title="Changer de mot de passe" @close="onClose">
-    <div class="cp-modal__field">
-      <label class="cp-modal__label">Nouveau mot de passe</label>
+    <label class="cp-modal__field">
+      <span class="cp-modal__label">Nouveau mot de passe</span>
       <input
         v-model="newPassword"
         class="cp-modal__input"
@@ -47,10 +46,10 @@ function onClose() {
         placeholder="••••••••"
         autocomplete="new-password"
       />
-    </div>
+    </label>
 
-    <div class="cp-modal__field">
-      <label class="cp-modal__label">Confirmer</label>
+    <label class="cp-modal__field">
+      <span class="cp-modal__label">Confirmer</span>
       <input
         v-model="confirmPassword"
         class="cp-modal__input"
@@ -58,11 +57,11 @@ function onClose() {
         placeholder="••••••••"
         autocomplete="new-password"
       />
-    </div>
+    </label>
 
     <p v-if="error" class="cp-modal__error">{{ error }}</p>
 
-    <AppButton variant="primary" @click="onSave">Mettre à jour</AppButton>
+    <button class="cp-modal__submit" @click="onSave">Mettre à jour</button>
   </AppModal>
 </template>
 
@@ -71,39 +70,56 @@ function onClose() {
   &__field {
     display: flex;
     flex-direction: column;
-    gap: $gap-xxs;
+    gap: $gap-xs;
   }
 
   &__label {
-    @include text-sm;
+    @include text-xs;
+    font-weight: 600;
     color: $muted;
   }
 
   &__input {
-    @include text-sm;
-    background: rgba($white, 0.07);
-    border: $border-sm solid rgba($white, 0.15);
+    @include text-md;
+    height: 48px;
+    padding: 0 $padding-sm;
+    background: $white;
+    border: $border-md solid $border-color;
     border-radius: $radius-sm;
     color: $text-color;
-    padding: $padding-sm $padding-md;
     outline: none;
     transition: border-color 0.15s;
 
-    &::placeholder { color: rgba($white, 0.2); }
-    &:focus { border-color: rgba($white, 0.4); }
+    &::placeholder { color: $input-placeholder; }
+    &:focus { border-color: $black; }
   }
 
   &__error {
     @include text-sm;
     color: $error;
   }
+
+  &__submit {
+    @include title-xl;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 56px;
+    border-radius: $radius-sm;
+    background: $black;
+    color: $bg;
+    text-transform: uppercase;
+    transition: opacity 0.15s;
+
+    &:active { opacity: 0.85; }
+  }
 }
 
 @media (min-width: $bp-laptop) {
   .cp-modal {
-    &__label { @include text-md; }
-    &__input  { @include text-md; padding: $padding-md $padding-lg; }
-    &__error  { @include text-md; }
+    &__label { @include text-sm; }
+    &__input { @include text-lg; height: 52px; }
+    &__error { @include text-md; }
   }
 }
 </style>

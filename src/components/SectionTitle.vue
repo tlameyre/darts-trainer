@@ -3,6 +3,7 @@ defineProps({
   title: { type: String, required: true },
   action: { type: String, default: null },
   count:  { type: String, default: null },
+  badge:  { type: Number, default: 0 },    // pill next to the action (pending items)
   ruled:  { type: Boolean, default: false }, // heavy rule under the title (stats)
 })
 
@@ -16,7 +17,10 @@ defineEmits(['action'])
       <slot />
     </h2>
     <span v-if="count" class="section-title__count">{{ count }}</span>
-    <button v-if="action" class="section-title__action" @click="$emit('action')">{{ action }}</button>
+    <button v-if="action" class="section-title__action" @click="$emit('action')">
+      {{ action }}
+      <span v-if="badge" class="section-title__badge">{{ badge }}</span>
+    </button>
   </div>
 </template>
 
@@ -42,6 +46,19 @@ defineEmits(['action'])
   &__text {
     @include title-lg;
     color: $muted;
+  }
+
+  &__badge {
+    @include text-xs;
+    display: inline-block;
+    min-width: 18px;
+    margin-left: $gap-xxs;
+    padding: 1px 6px;
+    border-radius: $radius-pill;
+    background: $error;
+    color: $white;
+    line-height: 1.4;
+    text-align: center;
   }
 
   &__action {

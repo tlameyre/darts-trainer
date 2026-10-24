@@ -1,5 +1,7 @@
 <script setup>
 import AppIcon from '../AppIcon.vue'
+import SectionTitle from '../SectionTitle.vue'
+import { avatarColor } from '../../utils/avatarColor.js'
 
 defineProps({
   friends: { type: Array, required: true },
@@ -13,30 +15,27 @@ function displayName(f) {
 }
 
 function initial(f) {
-  const name = f.first_name || f.username || f.friend_code || '?'
-  return name[0].toUpperCase()
+  return displayName(f)[0].toUpperCase()
 }
 </script>
 
 <template>
   <section class="pf-section">
-    <div class="pf-section__header">
-      <h2 class="pf-section__title">Amis <span>{{ friends.length }}</span></h2>
-      <button class="pf-section__more" @click="$emit('see-all')">
-        Voir tout
-        <span v-if="pendingCount" class="pf-section__pending">{{ pendingCount }}</span>
-      </button>
-    </div>
+    <SectionTitle title="Amis" action="Voir tout" ruled :badge="pendingCount" @action="$emit('see-all')">
+      <span class="pf-section__count">{{ friends.length }}</span>
+    </SectionTitle>
 
     <div v-if="friends.length" class="pf-section__list">
-      <div
+      <button
         v-for="f in friends.slice(0, 5)"
         :key="f.friendshipId"
         class="pf-section__friend"
+        @click="$emit('see-all')"
       >
-        <div class="pf-section__avatar">{{ initial(f) }}</div>
+        <span class="pf-section__avatar" :style="{ background: avatarColor(f.id ?? displayName(f)) }">{{ initial(f) }}</span>
         <span class="pf-section__name">{{ displayName(f) }}</span>
-      </div>
+        <AppIcon name="angle-down" :width="20" :height="20" class="pf-section__chevron" />
+      </button>
     </div>
 
     <button v-else class="pf-section__empty" @click="$emit('see-all')">
@@ -50,82 +49,57 @@ function initial(f) {
 .pf-section {
   display: flex;
   flex-direction: column;
-  gap: $gap-sm;
+  gap: $gap-xs;
 
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  &__title {
-    @include title-sm;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-
-    span {
-      color: $orange;
-      margin-left: $gap-xs;
-    }
-  }
-
-  &__more {
-    display: flex;
-    align-items: center;
-    gap: $gap-xs;
-    @include title-sm;
-    color: $orange;
-    transition: opacity 0.15s;
-    &:active { opacity: 0.7; }
-  }
-
-  &__pending {
-    @include text-xs;
-    color: $white;
-    background: $orange;
-    border-radius: $radius-pill;
-    padding: 1px 6px;
-    min-width: 18px;
-    text-align: center;
-    line-height: 1.4;
+  &__count {
+    margin-left: $gap-xxs;
+    color: $error;
   }
 
   &__list {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-xs;
+    border-radius: $radius-sm;
+    background: $surface;
+    overflow: hidden;
   }
 
   &__friend {
     display: flex;
     align-items: center;
     gap: $gap-sm;
-    padding: $padding-xs $padding-sm;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: $radius-sm;
+    width: 100%;
+    min-height: 56px;
+    padding: 0 $padding-sm;
+    color: $text-color;
+    text-align: left;
+    transition: background 0.15s;
+
+    & + & { border-top: $border-sm solid $border-color; }
+    &:active { background: $border-color; }
   }
 
   &__avatar {
     @include title-sm;
-    width: 32px;
-    height: 32px;
-    border-radius: $radius-pill;
-    background: rgba(255, 255, 255, 0.1);
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    color: $text-color;
+    border-radius: $radius-pill;
+    color: $white;
   }
 
   &__name {
-    @include text-sm;
-    color: $text-color;
+    @include text-md;
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  &__chevron { transform: rotate(-90deg); }
 
   &__empty {
     @include text-sm;
@@ -133,23 +107,23 @@ function initial(f) {
     align-items: center;
     justify-content: center;
     gap: $gap-sm;
-    color: $muted;
-    background: rgba(255, 255, 255, 0.03);
-    border: $border-sm dashed rgba(255, 255, 255, 0.12);
-    border-radius: $radius-sm;
-    padding: $padding-md;
     width: 100%;
+    padding: $padding-md;
+    border: $border-md dashed $border-color;
+    border-radius: $radius-sm;
+    color: $muted;
     transition: background 0.15s;
-    &:active { background: rgba(255, 255, 255, 0.06); }
+
+    &:active { background: $surface; }
   }
 }
 
 @media (min-width: $bp-laptop) {
   .pf-section {
-    &__title { @include title-md; }
-    &__more  { @include title-md; }
-    &__name  { @include text-md; }
-    &__empty { @include text-md; }
+    &__friend { min-height: 64px; padding: 0 $padding-md; gap: $gap-md; }
+    &__avatar { width: 40px; height: 40px; }
+    &__name   { @include title-lg; text-transform: uppercase; }
+    &__empty  { @include text-md; }
   }
 }
 </style>

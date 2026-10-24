@@ -1,11 +1,12 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/authStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import AppHeader from '../components/AppHeader.vue'
 import AppIcon from '../components/AppIcon.vue'
+import SectionTitle from '../components/SectionTitle.vue'
 import ChangeEmailModal from '../components/profile/ChangeEmailModal.vue'
 import ChangePasswordModal from '../components/profile/ChangePasswordModal.vue'
 
@@ -22,6 +23,12 @@ const newBadges   = ref([])
 
 const showEmailModal    = ref(false)
 const showPasswordModal = ref(false)
+
+const fullName = computed(() => [firstName.value, lastName.value].filter(v => v.trim()).join(' ') || username.value)
+const initials = computed(() => {
+  const letters = [firstName.value, lastName.value].map(v => v.trim()[0] ?? '').join('')
+  return (letters || username.value.trim()[0] || '?').toUpperCase()
+})
 
 // Sync si le profil se charge après le montage
 watch(() => authStore.profile, (p) => {
@@ -78,60 +85,70 @@ async function onPasswordSave(newPassword) {
 
 <template>
   <div class="profile-edit">
-    <AppHeader title="MODIFIER LE PROFIL" @back="router.back()">
-      <template #right>
-        <button class="profile-edit__save-btn" :disabled="saveLoading" @click="onSave">
-          {{ saveLoading ? '…' : 'OK' }}
-        </button>
-      </template>
-    </AppHeader>
+    <AppHeader title="MODIFIER LE PROFIL" tone="ink" @back="router.back()" />
 
     <main class="profile-edit__main">
 
-      <!-- Identité -->
-      <section class="profile-edit__section">
-        <h2 class="profile-edit__section-title">Identité</h2>
-
-        <div class="profile-edit__field">
-          <label class="profile-edit__label">Prénom</label>
-          <input v-model="firstName" class="profile-edit__input" type="text" placeholder="Ton prénom" autocomplete="given-name" />
+      <div class="profile-edit__identity">
+        <span class="profile-edit__avatar">{{ initials }}</span>
+        <div class="profile-edit__names">
+          <span class="profile-edit__fullname">{{ fullName }}</span>
+          <span class="profile-edit__hint">Initiales générées depuis ton prénom et ton nom</span>
         </div>
+      </div>
 
-        <div class="profile-edit__field">
-          <label class="profile-edit__label">Nom</label>
-          <input v-model="lastName" class="profile-edit__input" type="text" placeholder="Ton nom" autocomplete="family-name" />
-        </div>
+      <div class="profile-edit__columns">
+        <section class="profile-edit__section">
+          <SectionTitle title="Identité" ruled />
 
-        <div class="profile-edit__field">
-          <label class="profile-edit__label">Surnom</label>
-          <input v-model="username" class="profile-edit__input" type="text" placeholder="Ton surnom" autocomplete="nickname" />
-        </div>
-      </section>
+          <div class="profile-edit__names-row">
+            <label class="profile-edit__field">
+              <span class="profile-edit__label">Prénom</span>
+              <input v-model="firstName" class="profile-edit__input" type="text" placeholder="Ton prénom" autocomplete="given-name" />
+            </label>
 
-      <!-- Compte -->
-      <section class="profile-edit__account">
-        <h2 class="profile-edit__section-title">Compte</h2>
-
-        <button class="profile-edit__account-item" @click="showEmailModal = true">
-          <div>
-            <p class="profile-edit__account-label">Adresse email</p>
-            <p class="profile-edit__account-value">{{ authStore.user?.email }}</p>
+            <label class="profile-edit__field">
+              <span class="profile-edit__label">Nom</span>
+              <input v-model="lastName" class="profile-edit__input" type="text" placeholder="Ton nom" autocomplete="family-name" />
+            </label>
           </div>
-          <AppIcon name="arrow-left" :width="16" :height="16" class="profile-edit__arrow" />
-        </button>
 
-        <button class="profile-edit__account-item" @click="showPasswordModal = true">
-          <div>
-            <p class="profile-edit__account-label">Mot de passe</p>
-            <p class="profile-edit__account-value">••••••••</p>
-          </div>
-          <AppIcon name="arrow-left" :width="16" :height="16" class="profile-edit__arrow" />
-        </button>
-      </section>
+          <label class="profile-edit__field">
+            <span class="profile-edit__label">Surnom</span>
+            <input v-model="username" class="profile-edit__input" type="text" placeholder="Ton surnom" autocomplete="nickname" />
+          </label>
+        </section>
+
+        <section class="profile-edit__section">
+          <SectionTitle title="Compte" ruled />
+
+          <button class="profile-edit__account-item" aria-haspopup="dialog" @click="showEmailModal = true">
+            <span class="profile-edit__account-icon"><AppIcon name="mail" :width="18" :height="18" /></span>
+            <span class="profile-edit__account-text">
+              <span class="profile-edit__account-label">Adresse email</span>
+              <span class="profile-edit__account-value">{{ authStore.user?.email }}</span>
+            </span>
+            <AppIcon name="angle-down" :width="20" :height="20" class="profile-edit__chevron" />
+          </button>
+
+          <button class="profile-edit__account-item" aria-haspopup="dialog" @click="showPasswordModal = true">
+            <span class="profile-edit__account-icon"><AppIcon name="lock" :width="18" :height="18" /></span>
+            <span class="profile-edit__account-text">
+              <span class="profile-edit__account-label">Mot de passe</span>
+              <span class="profile-edit__account-value">••••••••</span>
+            </span>
+            <AppIcon name="angle-down" :width="20" :height="20" class="profile-edit__chevron" />
+          </button>
+        </section>
+      </div>
 
       <p v-if="feedback" class="profile-edit__feedback">{{ feedback }}</p>
 
     </main>
+
+    <button class="profile-edit__save-btn" :disabled="saveLoading" @click="onSave">
+      {{ saveLoading ? '…' : 'Enregistrer' }}
+    </button>
 
     <ChangeEmailModal
       :show="showEmailModal"
@@ -155,102 +172,168 @@ async function onPasswordSave(newPassword) {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: $padding-md;
-  gap: $gap-md;
 
+  // Floating above the BottomNav
   &__save-btn {
-    @include title-sm;
-    color: $orange;
-    padding: $padding-xxs;
+    @include title-xl;
+    position: fixed;
+    left: $padding-md;
+    right: $padding-md;
+    bottom: calc(#{$bottom-nav-height} + env(safe-area-inset-bottom) + #{$padding-md});
+    z-index: 10;
+    height: 56px;
+    border-radius: $radius-sm;
+    background: $black;
+    color: $bg;
+    text-transform: uppercase;
     transition: opacity 0.15s;
+
     &:disabled { opacity: 0.5; }
-    &:active { opacity: 0.6; }
+    &:active { opacity: 0.85; }
   }
 
   &__main {
     display: flex;
     flex-direction: column;
-    gap: $gap-lg;
-    @include nav-safe-bottom;
+    gap: $gap-md;
+    padding: $padding-md $padding-md 0;
+    @include nav-safe-bottom($padding-xxl * 2 + $padding-md);
+  }
+
+  &__identity {
+    display: flex;
+    align-items: center;
+    gap: $gap-md;
+  }
+
+  &__avatar {
+    @include title-xxl;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-pill;
+    background: $error;
+    color: $bg;
+  }
+
+  &__names {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xxs;
+    min-width: 0;
+  }
+
+  &__fullname {
+    @include title-xxl;
+    line-height: 1;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+  }
+
+  &__hint {
+    @include text-xs;
+    color: $muted;
+  }
+
+  &__columns {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xl;
   }
 
   &__section {
     display: flex;
     flex-direction: column;
-    gap: $gap-sm;
+    gap: $gap-xs;
   }
 
-  &__section-title {
-    @include title-sm;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding-bottom: $gap-xs;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  &__names-row {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-sm;
   }
 
   &__field {
     display: flex;
     flex-direction: column;
-    gap: $gap-xxs;
+    gap: $gap-xs;
   }
 
   &__label {
-    @include text-sm;
+    @include text-xs;
+    font-weight: 600;
     color: $muted;
   }
 
   &__input {
-    @include text-sm;
-    background: rgba(255, 255, 255, 0.07);
-    border: $border-sm solid rgba(255, 255, 255, 0.15);
+    @include text-md;
+    height: 48px;
+    padding: 0 $padding-sm;
+    background: $white;
+    border: $border-md solid $border-color;
     border-radius: $radius-sm;
     color: $text-color;
-    padding: $padding-sm $padding-md;
     outline: none;
     transition: border-color 0.15s;
 
-    &::placeholder { color: rgba(255, 255, 255, 0.2); }
-    &:focus { border-color: rgba(255, 255, 255, 0.4); }
-  }
-
-  &__account {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
+    &::placeholder { color: $input-placeholder; }
+    &:focus { border-color: $black; }
   }
 
   &__account-item {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) 20px;
+    align-items: center;
+    gap: $gap-sm;
     width: 100%;
+    min-height: 60px;
+    padding: $padding-xs $padding-sm;
+    background: $surface;
+    border: $border-md solid $border-color;
+    border-radius: $radius-sm;
+    color: $text-color;
+    text-align: left;
+    transition: border-color 0.15s;
+
+    &:active { border-color: $black; }
+  }
+
+  &__account-icon {
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    background: rgba(255, 255, 255, 0.05);
-    color: $white;
+    justify-content: center;
     border-radius: $radius-sm;
-    padding: $padding-sm $padding-md;
-    text-align: left;
-    transition: background 0.15s;
+    background: $black;
+    color: $bg;
+  }
 
-    &:active { background: rgba(255, 255, 255, 0.08); }
+  &__account-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
   }
 
   &__account-label {
     @include text-xs;
+    font-weight: 600;
     color: $muted;
-    margin-bottom: 2px;
   }
 
   &__account-value {
-    @include text-sm;
-    color: $text-color;
+    @include text-md;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  &__arrow {
-    transform: rotate(180deg);
-    color: $muted;
-    flex-shrink: 0;
-  }
+  &__chevron { transform: rotate(-90deg); }
 
   &__feedback {
     @include text-sm;
@@ -261,25 +344,36 @@ async function onPasswordSave(newPassword) {
 
 @media (min-width: $bp-laptop) {
   .profile-edit {
-    padding: $padding-xl;
-    gap: $gap-lg;
-
-    &__save-btn    { @include title-md; }
-
-    &__main { gap: $gap-xl; }
-
-    &__section-title { @include title-md; }
-
-    &__label { @include text-md; }
-    &__input {
-      @include text-md;
-      padding: $padding-md $padding-lg;
+    &__save-btn {
+      left: max(#{$padding-xxl}, calc((100% - 1040px) / 2));
+      right: max(#{$padding-xxl}, calc((100% - 1040px) / 2));
+      height: 60px;
     }
 
-    &__account-item  { padding: $padding-md $padding-lg; }
-    &__account-label { @include text-sm; }
-    &__account-value { @include text-md; }
+    &__main {
+      width: 100%;
+      max-width: 1040px;
+      margin: 0 auto;
+      gap: $gap-xl;
+      padding: $padding-xxl 0 0;
+      @include nav-safe-bottom($padding-xxl * 2 + $padding-xl);
+    }
 
+    &__avatar { @include title-xxxl; width: 80px; height: 80px; }
+    &__fullname { @include title-xxxl; }
+    &__hint { @include text-sm; }
+
+    &__columns {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: $gap-xxl;
+      align-items: start;
+    }
+
+    &__section { gap: $gap-md; }
+    &__names-row { flex-direction: row; > * { flex: 1; } gap: $gap-md; }
+    &__label { @include text-sm; }
+    &__input { height: 52px; }
     &__feedback { @include text-md; }
   }
 }

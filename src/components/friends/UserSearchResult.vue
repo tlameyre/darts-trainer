@@ -1,5 +1,6 @@
 <script setup>
 import AppIcon from '../AppIcon.vue'
+import { avatarColor } from '../../utils/avatarColor.js'
 
 const props = defineProps({
   user:    { type: Object,  required: true },
@@ -16,15 +17,13 @@ function displayName(u) {
 }
 
 function initials(u) {
-  if (u.first_name) return u.first_name[0].toUpperCase()
-  if (u.username)   return u.username[0].toUpperCase()
-  return '?'
+  return displayName(u)[0].toUpperCase()
 }
 </script>
 
 <template>
   <div class="user-result">
-    <div class="user-result__avatar">{{ initials(user) }}</div>
+    <div class="user-result__avatar" :style="{ background: avatarColor(user.id ?? displayName(user)) }">{{ initials(user) }}</div>
 
     <div class="user-result__info">
       <p class="user-result__name">{{ displayName(user) }}</p>
@@ -34,11 +33,12 @@ function initials(u) {
     <button
       class="user-result__btn"
       :disabled="loading || sent"
+      :aria-label="`Envoyer une demande à ${displayName(user)}`"
       @click="emit('add', user)"
     >
-      <span v-if="sent">✓</span>
-      <span v-else-if="loading">…</span>
-      <AppIcon v-else name="user-plus" :width="16" :height="16" />
+      <template v-if="sent"><AppIcon name="check" :width="16" :height="16" />Envoyée</template>
+      <template v-else-if="loading">…</template>
+      <template v-else><AppIcon name="user-plus" :width="18" :height="18" />Ajouter</template>
     </button>
   </div>
 </template>
@@ -48,32 +48,35 @@ function initials(u) {
   display: flex;
   align-items: center;
   gap: $gap-sm;
-  padding: $padding-sm $padding-md;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: $radius-sm;
-  border: $border-sm solid rgba(255, 255, 255, 0.07);
+  min-height: 64px;
+  padding: 0 $padding-xs 0 $padding-sm;
+
+  & + & { border-top: $border-sm solid $border-color; }
 
   &__avatar {
-    @include title-md;
+    @include title-sm;
     width: 40px;
     height: 40px;
     border-radius: $radius-pill;
-    background: rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: $text-color;
+    color: $white;
   }
 
   &__info {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
 
   &__name {
-    @include title-sm;
-    color: $text-color;
+    @include title-lg;
+    line-height: 1;
+    text-transform: uppercase;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -81,25 +84,37 @@ function initials(u) {
 
   &__code {
     @include text-xs;
+    letter-spacing: $tracking-sm;
     color: $muted;
-    margin-top: 2px;
   }
 
   &__btn {
-    width: 36px;
-    height: 36px;
-    border-radius: $radius-pill;
-    background: rgba($orange, 0.15);
-    color: $orange;
+    @include title-sm;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: $gap-xs;
+    height: 40px;
+    margin-right: $padding-xs;
+    padding: 0 $padding-sm;
     flex-shrink: 0;
-    transition: background 0.15s, opacity 0.15s;
-    @include text-sm;
+    border-radius: $radius-sm;
+    background: $black;
+    color: $bg;
+    text-transform: uppercase;
+    transition: opacity 0.15s;
 
     &:disabled { opacity: 0.4; }
-    &:not(:disabled):active { background: rgba($orange, 0.25); }
+    &:not(:disabled):active { opacity: 0.85; }
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .user-result {
+    min-height: 72px;
+    padding: 0 $padding-sm 0 $padding-md;
+
+    &__code { @include text-sm; }
+    &__btn { @include title-md; height: 44px; padding: 0 $padding-md; }
   }
 }
 </style>

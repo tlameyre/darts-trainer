@@ -191,6 +191,116 @@
         <path d="M12 9.33L11.4 8.53A5.78 5.78 0 1 0 11.4 15.47L12 14.67L12.6 15.47A5.78 5.78 0 1 0 12.6 8.53ZM10 12L8.84 10.45A2.58 2.58 0 1 0 8.84 13.55ZM14 12L15.16 10.45A2.58 2.58 0 1 1 15.16 13.55Z" fill="currentColor" fill-rule="evenodd"/>
       </symbol>
 
+
+      <symbol id="icon-badge-first-game" viewBox="0 0 24 24" fill="none">
+        <path d="M19.2 12C19.2 8.02496 15.975 4.79996 12 4.79996C8.02496 4.79996 4.79996 8.02496 4.79996 12C4.79996 15.975 8.02496 19.2 12 19.2C15.975 19.2 19.2 15.975 19.2 12ZM2.39996 12C2.39996 6.69746 6.69746 2.39996 12 2.39996C17.3025 2.39996 21.6 6.69746 21.6 12C21.6 17.3025 17.3025 21.6 12 21.6C6.69746 21.6 2.39996 17.3025 2.39996 12ZM12 15C13.6575 15 15 13.6575 15 12C15 10.3425 13.6575 8.99996 12 8.99996C10.3425 8.99996 8.99996 10.3425 8.99996 12C8.99996 13.6575 10.3425 15 12 15ZM12 6.59996C14.9812 6.59996 17.4 9.01871 17.4 12C17.4 14.9812 14.9812 17.4 12 17.4C9.01871 17.4 6.59996 14.9812 6.59996 12C6.59996 9.01871 9.01871 6.59996 12 6.59996ZM10.8 12C10.8 11.3362 11.3362 10.8 12 10.8C12.6637 10.8 13.2 11.3362 13.2 12C13.2 12.6637 12.6637 13.2 12 13.2C11.3362 13.2 10.8 12.6637 10.8 12Z" fill="currentColor"/>
+      </symbol>
+
+      <symbol id="icon-badge-first-warmup" viewBox="0 0 24 24" fill="none">
+        <path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5 1-8.5z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-profile-complete" viewBox="0 0 24 24" fill="none">
+        <path d="M12.0001 11.7C14.4863 11.7 16.5001 9.68623 16.5001 7.19998C16.5001 4.71373 14.4863 2.69998 12.0001 2.69998C9.51382 2.69998 7.50007 4.71373 7.50007 7.19998C7.50007 9.68623 9.51382 11.7 12.0001 11.7ZM10.8863 13.8C7.19257 13.8 4.20007 16.7925 4.20007 20.4862C4.20007 21.1012 4.69882 21.6 5.31382 21.6H18.6863C19.3013 21.6 19.8001 21.1012 19.8001 20.4862C19.8001 16.7925 16.8076 13.8 13.1138 13.8H10.8863Z" fill="currentColor"/>
+      </symbol>
+
+      <symbol id="icon-badge-sessions-10" viewBox="0 0 24 24" fill="none">
+        <path d="M5 6h14v13H5zM5 10h14M9 4v4M15 4v4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-sessions-50" viewBox="0 0 24 24" fill="none">
+        <path d="M7.81125 2.40001H16.2112C17.205 2.40001 18.015 3.21751 17.9775 4.20751C17.97 4.40626 17.9625 4.60501 17.9512 4.80001H19.8112C20.79 4.80001 21.6525 5.61001 21.5775 6.66751C21.2962 10.5563 19.3087 12.6938 17.1525 13.8113C16.56 14.1188 15.9562 14.3475 15.3825 14.5163C14.625 15.5888 13.8375 16.155 13.2112 16.4588V19.2H15.6112C16.275 19.2 16.8112 19.7363 16.8112 20.4C16.8112 21.0638 16.275 21.6 15.6112 21.6H8.41125C7.7475 21.6 7.21125 21.0638 7.21125 20.4C7.21125 19.7363 7.7475 19.2 8.41125 19.2H10.8112V16.4588C10.2112 16.17 9.465 15.6338 8.7375 14.6475C8.0475 14.4675 7.2975 14.1938 6.56625 13.7813C4.5375 12.645 2.7075 10.5038 2.445 6.66001C2.37375 5.60626 3.2325 4.79626 4.21125 4.79626H6.07125C6.06 4.60126 6.0525 4.40626 6.045 4.20376C6.0075 3.21001 6.8175 2.39626 7.81125 2.39626V2.40001ZM6.20625 6.60001H4.24125C4.47375 9.77625 5.9325 11.3663 7.43625 12.21C6.89625 10.8113 6.45 8.985 6.20625 6.60001ZM16.65 12.03C18.1687 11.1375 19.5412 9.55125 19.7737 6.60001H17.8125C17.58 8.88375 17.16 10.6575 16.65 12.03Z" fill="currentColor"/>
+      </symbol>
+
+      <symbol id="icon-badge-sessions-100" viewBox="0 0 24 24" fill="none">
+        <path d="M4 17h16M5 17L4 8l5 4 3-6 3 6 5-4-1 9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-total-darts-1000" viewBox="0 0 24 24" fill="none">
+        <path d="M4 8v8M8 8h3v8H8zM15 8h3v8h-3z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-total-darts-5000" viewBox="0 0 24 24" fill="none">
+        <path d="M13 3L5 13h6l-1 8 8-10h-6z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-x01-sessions-50" viewBox="0 0 24 24" fill="none">
+        <path d="M8 3l4 6 4-6M12 21a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM12 12.5v5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-x01-darts-1000" viewBox="0 0 24 24" fill="none">
+        <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-warmup-sessions-100" viewBox="0 0 24 24" fill="none">
+        <path d="M4 8l8-4 8 4-8 4zM4 12l8 4 8-4M4 16l8 4 8-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-precise" viewBox="0 0 512 512" fill="none">
+        <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM256 96a160 160 0 1 1 0 320 160 160 0 1 1 0-320zM256 336a80 80 0 1 0 0-160 80 80 0 1 0 0 160zm0-48a32 32 0 1 1 0-64 32 32 0 1 1 0 64z" fill="currentColor"/>
+      </symbol>
+
+      <symbol id="icon-badge-sniper" viewBox="0 0 24 24" fill="none">
+        <path d="M7 4h10l4 5-9 11L3 9zM3 9h18M9.5 4L8 9l4 11 4-11-1.5-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-perfect-warmup" viewBox="0 0 24 24" fill="none">
+        <path d="M12 3.5l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 16.9l-5.3 2.7 1-5.8-4.2-4.1 5.9-.9z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-avg-80" viewBox="0 0 24 24" fill="none">
+        <path d="M9.59997 5.40004C9.59997 4.40629 10.4062 3.60004 11.4 3.60004H12.6C13.5937 3.60004 14.4 4.40629 14.4 5.40004V18.6C14.4 19.5938 13.5937 20.4 12.6 20.4H11.4C10.4062 20.4 9.59997 19.5938 9.59997 18.6V5.40004ZM2.39996 12.6C2.39996 11.6063 3.20621 10.8 4.19996 10.8H5.39996C6.39371 10.8 7.19996 11.6063 7.19996 12.6V18.6C7.19996 19.5938 6.39371 20.4 5.39996 20.4H4.19996C3.20621 20.4 2.39996 19.5938 2.39996 18.6V12.6ZM18.6 6.00004H19.8C20.7937 6.00004 21.6 6.80629 21.6 7.80004V18.6C21.6 19.5938 20.7937 20.4 19.8 20.4H18.6C17.6062 20.4 16.8 19.5938 16.8 18.6V7.80004C16.8 6.80629 17.6062 6.00004 18.6 6.00004Z" fill="currentColor"/>
+      </symbol>
+
+      <symbol id="icon-badge-game-sessions-10" viewBox="0 0 448 512" fill="none">
+        <path d="M96 0C43 0 0 43 0 96L0 416c0 53 43 96 96 96l320 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l0-67.6c18.6-13.9 32-36.3 32-60.4l0-224c0-53-43-96-96-96L96 0zM64 416c0-17.7 14.3-32 32-32l288 0 0 64L96 448c-17.7 0-32-14.3-32-32zM128 120c0-13.3 10.7-24 24-24l176 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-176 0c-13.3 0-24-10.7-24-24zm24 72l176 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-176 0c-13.3 0-24-10.7-24-24s10.7-24 24-24z" fill="currentColor"/>
+      </symbol>
+
+      <symbol id="icon-badge-game-sessions-100" viewBox="0 0 384 512" fill="none">
+        <path d="M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-384c0-35.3-28.7-64-64-64L64 0zM96 64l192 0c17.7 0 32 14.3 32 32l0 32c0 17.7-14.3 32-32 32L96 160c-17.7 0-32-14.3-32-32l0-32c0-17.7 14.3-32 32-32zm32 160a32 32 0 1 1 -64 0 32 32 0 1 1 64 0zM96 352a32 32 0 1 1 0-64 32 32 0 1 1 0 64zM64 416c0-17.7 14.3-32 32-32l96 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-96 0c-17.7 0-32-14.3-32-32zM192 256a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm32 64a32 32 0 1 1 -64 0 32 32 0 1 1 64 0zm64-64a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm32 64a32 32 0 1 1 -64 0 32 32 0 1 1 64 0zM288 448a32 32 0 1 1 0-64 32 32 0 1 1 0 64z" fill="currentColor"/>
+      </symbol>
+
+      <symbol id="icon-badge-streak-50" viewBox="0 0 24 24" fill="none">
+        <path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a2 2 0 0 0-3-1zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-correct-100" viewBox="0 0 24 24" fill="none">
+        <path d="M4 18l6-6 4 4 6-8M15 8h5v5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-correct-1000" viewBox="0 0 24 24" fill="none">
+        <path d="M2 10l10-5 10 5-10 5zM6 12v4c2 2 10 2 12 0v-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-questions-50" viewBox="0 0 24 24" fill="none">
+        <path d="M9 9a3 3 0 1 1 4 2.8c-.7.3-1 1-1 1.7V15M12 19v.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-white-horse" viewBox="0 0 24 24" fill="none">
+        <path d="M8 20l1-6-4-2 3-7 5 1 5 4-2 3-3-1 1 8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-bullseye" viewBox="0 0 24 24" fill="none">
+        <path d="M12 3L3 20h18zM12 3v17M9 20l3-6 3 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-badge-big-fish" viewBox="0 0 24 24" fill="none">
+        <path d="M3 12c3-4 8-6 13-3l5-3v12l-5-3c-5 3-10 1-13-3zM14 11.5v.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+
+      <symbol id="icon-mail" viewBox="0 0 24 24" fill="none">
+        <path d="M4 6h16v12H4zM4 7l8 6 8-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-lock" viewBox="0 0 24 24" fill="none">
+        <path d="M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <symbol id="icon-search" viewBox="0 0 24 24" fill="none">
+        <path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
     </defs>
   </svg>
 </template>

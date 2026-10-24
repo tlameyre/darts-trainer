@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
+import BadgeIcon from './badges/BadgeIcon.vue'
 
 const props = defineProps({
   badges: { type: Array, default: () => [] },
@@ -33,7 +34,7 @@ function next() {
       <div class="badge-overlay__card">
         <p class="badge-overlay__eyebrow">Badge débloqué !</p>
 
-        <div class="badge-overlay__icon">{{ badges[current].icon }}</div>
+        <BadgeIcon :badge="badges[current]" class="badge-overlay__icon" />
 
         <h2 class="badge-overlay__label">{{ badges[current].label }}</h2>
         <p class="badge-overlay__desc">{{ badges[current].description }}</p>
@@ -76,15 +77,11 @@ function next() {
     letter-spacing: 0.1em;
   }
 
-  &__icon {
-    @include display-lg;
-    line-height: 1;
-    filter: drop-shadow(0 0 24px rgba($orange, 0.4));
-  }
+  &__icon { --badge-icon-size: 104px; }
 
   &__label {
     @include title-xl;
-    color: $text-color;
+    color: $bg;
   }
 
   &__desc {
@@ -95,7 +92,7 @@ function next() {
 
   &__hint {
     @include text-xs;
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba($white, 0.6);
     margin-top: $gap-sm;
   }
 
@@ -134,7 +131,7 @@ function next() {
   }
 
   .badge-overlay__icon {
-    @include display-xl;
+    --badge-icon-size: 120px;
   }
 
   .badge-overlay__label {

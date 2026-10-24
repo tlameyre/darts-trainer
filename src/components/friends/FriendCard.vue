@@ -1,5 +1,6 @@
 <script setup>
 import AppIcon from '../AppIcon.vue'
+import { avatarColor } from '../../utils/avatarColor.js'
 
 const props = defineProps({
   friend: { type: Object, required: true },
@@ -16,15 +17,13 @@ function displayName(f) {
 }
 
 function initials(f) {
-  if (f.first_name) return f.first_name[0].toUpperCase()
-  if (f.username)   return f.username[0].toUpperCase()
-  return '?'
+  return displayName(f)[0].toUpperCase()
 }
 </script>
 
 <template>
   <div class="friend-card" :class="`friend-card--${variant}`">
-    <div class="friend-card__avatar">{{ initials(friend) }}</div>
+    <div class="friend-card__avatar" :style="{ background: avatarColor(friend.id ?? displayName(friend)) }">{{ initials(friend) }}</div>
 
     <div class="friend-card__info">
       <p class="friend-card__name">{{ displayName(friend) }}</p>
@@ -33,26 +32,25 @@ function initials(f) {
 
     <div class="friend-card__actions">
       <template v-if="variant === 'received'">
-        <button class="friend-card__btn friend-card__btn--accept" @click="emit('accept', friend.friendshipId)" aria-label="Accepter">
-          <AppIcon name="check" :width="16" :height="16" />
+        <button class="friend-card__btn friend-card__btn--accept" @click="emit('accept', friend.friendshipId)" :aria-label="`Accepter ${displayName(friend)}`">
+          <AppIcon name="check" :width="18" :height="18" />
         </button>
-        <button class="friend-card__btn friend-card__btn--decline" @click="emit('remove', friend.friendshipId)" aria-label="Refuser">
+        <button class="friend-card__btn" @click="emit('remove', friend.friendshipId)" :aria-label="`Refuser ${displayName(friend)}`">
           <AppIcon name="close" :width="14" :height="14" />
         </button>
       </template>
 
       <template v-else-if="variant === 'sent'">
         <span class="friend-card__pending">En attente</span>
-        <button class="friend-card__btn friend-card__btn--decline" @click="emit('remove', friend.friendshipId)" aria-label="Annuler">
+        <button class="friend-card__btn" @click="emit('remove', friend.friendshipId)" :aria-label="`Annuler la demande à ${displayName(friend)}`">
           <AppIcon name="close" :width="14" :height="14" />
         </button>
       </template>
 
-      <template v-else>
-        <button class="friend-card__btn friend-card__btn--decline" @click="emit('remove', friend.friendshipId)" aria-label="Retirer">
-          <AppIcon name="close" :width="14" :height="14" />
-        </button>
-      </template>
+      <button v-else class="friend-card__btn friend-card__btn--remove" @click="emit('remove', friend.friendshipId)" :aria-label="`Retirer ${displayName(friend)}`">
+        <AppIcon name="close" :width="14" :height="14" />
+        <span class="friend-card__btn-label">Retirer</span>
+      </button>
     </div>
   </div>
 </template>
@@ -62,32 +60,35 @@ function initials(f) {
   display: flex;
   align-items: center;
   gap: $gap-sm;
-  padding: $padding-sm $padding-md;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: $radius-sm;
-  border: $border-sm solid rgba(255, 255, 255, 0.07);
+  min-height: 64px;
+  padding: 0 $padding-xs 0 $padding-sm;
+
+  & + & { border-top: $border-sm solid $border-color; }
 
   &__avatar {
-    @include title-md;
+    @include title-sm;
     width: 40px;
     height: 40px;
     border-radius: $radius-pill;
-    background: rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: $text-color;
+    color: $white;
   }
 
   &__info {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
 
   &__name {
-    @include title-sm;
-    color: $text-color;
+    @include title-lg;
+    line-height: 1;
+    text-transform: uppercase;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -95,43 +96,61 @@ function initials(f) {
 
   &__code {
     @include text-xs;
+    letter-spacing: $tracking-sm;
     color: $muted;
-    margin-top: 2px;
   }
 
   &__actions {
     display: flex;
     align-items: center;
-    gap: $gap-md;
     flex-shrink: 0;
   }
 
   &__btn {
-    width: 32px;
-    height: 32px;
-    border-radius: $radius-pill;
+    width: 44px;
+    height: 44px;
+    border-radius: $radius-sm;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: $muted;
     transition: background 0.15s;
 
-    &--accept {
-      background: rgba($accent, 0.15);
-      color: $accent;
-      &:active { background: rgba($accent, 0.25); }
-    }
+    &:active { background: $border-color; }
 
-    &--decline {
-      background: rgba(255, 255, 255, 0.07);
-      color: $muted;
-      &:active { background: rgba(255, 255, 255, 0.12); }
-    }
+    &--accept { color: $accent; }
+
+    &--remove .friend-card__btn-label { display: none; }
   }
 
   &__pending {
-    @include text-xs;
-    color: $muted;
-    font-style: italic;
+    @include title-xxs;
+    padding: $padding-xxs $padding-xs;
+    border-radius: $radius-sm;
+    background: $border-color;
+    color: $text-color;
+    text-transform: uppercase;
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .friend-card {
+    min-height: 72px;
+    padding: 0 $padding-sm 0 $padding-md;
+
+    &__code { @include text-sm; }
+
+    &__btn--remove {
+      @include text-sm;
+      width: auto;
+      height: 40px;
+      gap: $gap-xs;
+      padding: 0 $padding-sm;
+      border: $border-md solid $border-color;
+      font-weight: 600;
+
+      .friend-card__btn-label { display: inline; }
+    }
   }
 }
 </style>

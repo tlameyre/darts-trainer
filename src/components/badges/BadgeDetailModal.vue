@@ -1,6 +1,9 @@
 <script setup>
+import { computed } from 'vue'
+import { BADGE_CATEGORIES } from '../../data/badges.js'
 import AppModal from '../AppModal.vue'
 import AppIcon from '../AppIcon.vue'
+import BadgeIcon from './BadgeIcon.vue'
 
 const props = defineProps({
   show:     { type: Boolean, required: true },
@@ -10,8 +13,10 @@ const props = defineProps({
 
 defineEmits(['close'])
 
+const categoryColor = computed(() => BADGE_CATEGORIES.find(c => c.name === props.badge?.category)?.color)
+
 function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 function pct(progress) {
@@ -21,143 +26,162 @@ function pct(progress) {
 </script>
 
 <template>
-  <AppModal :show="show && !!badge" size="lg" @close="$emit('close')">
-    <button class="bd-modal__close" @click="$emit('close')">
-      <AppIcon name="close" :width="24" :height="24" />
-    </button>
+  <AppModal :show="show && !!badge" size="lg" centered width="520px" @close="$emit('close')">
+    <template v-if="badge">
+      <button class="app-modal__close bd-modal__close" aria-label="Fermer" @click="$emit('close')">
+        <AppIcon name="close" :width="16" :height="16" />
+      </button>
 
-    <div class="bd-modal__icon" :class="{ 'bd-modal__icon--locked': !badge?.unlockedAt }">
-      {{ badge?.icon }}
-    </div>
-
-    <h2 class="bd-modal__label">{{ badge?.label }}</h2>
-    <p class="bd-modal__desc">{{ badge?.description }}</p>
-
-    <div v-if="badge?.unlockedAt" class="bd-modal__unlocked">
-      <AppIcon name="check" :width="14" :height="14" />
-      Débloqué le {{ formatDate(badge.unlockedAt) }}
-    </div>
-
-    <div v-else-if="progress" class="bd-modal__progress">
-      <div class="bd-modal__progress-header">
-        <span>Progression</span>
-        <span class="bd-modal__progress-values">
-          {{ progress.current }}{{ progress.suffix }} / {{ progress.target }}{{ progress.suffix }}
-        </span>
+      <div class="bd-modal__head">
+        <BadgeIcon :badge="badge" :locked="!badge.unlockedAt" class="bd-modal__icon" />
+        <div class="bd-modal__titles">
+          <span class="bd-modal__category">
+            <span class="bd-modal__category-dot" :style="{ background: categoryColor }" />
+            {{ badge.category }}
+          </span>
+          <h2 class="bd-modal__label">{{ badge.label }}</h2>
+        </div>
       </div>
-      <div class="bd-modal__progress-bar">
-        <div class="bd-modal__progress-fill" :style="{ width: pct(progress) + '%' }" />
-      </div>
-    </div>
 
-    <div v-else class="bd-modal__locked">
-      Non débloqué
-    </div>
+      <p class="bd-modal__desc">{{ badge.description }}</p>
+
+      <div v-if="badge.unlockedAt" class="bd-modal__unlocked">
+        <AppIcon name="check" :width="18" :height="18" />
+        Débloqué le {{ formatDate(badge.unlockedAt) }}
+      </div>
+
+      <div v-else-if="progress" class="bd-modal__progress">
+        <div class="bd-modal__progress-header">
+          <span>Progression</span>
+          <span class="bd-modal__progress-values">
+            {{ progress.current }}{{ progress.suffix }} / {{ progress.target }}{{ progress.suffix }}
+          </span>
+        </div>
+        <div class="bd-modal__progress-bar">
+          <div class="bd-modal__progress-fill" :style="{ width: pct(progress) + '%', background: categoryColor }" />
+        </div>
+      </div>
+
+      <div v-else class="bd-modal__locked">
+        <AppIcon name="lock" :width="16" :height="16" />
+        À débloquer
+      </div>
+    </template>
   </AppModal>
 </template>
 
 <style lang="scss" scoped>
 .bd-modal {
-  &__close {
-    position: absolute;
-    top: $padding-md;
-    right: $padding-md;
-    color: $muted;
+  &__close { align-self: flex-end; margin-bottom: -$gap-md; }
+
+  &__head {
     display: flex;
-    &:active { color: $text-color; }
+    align-items: center;
+    gap: $gap-md;
   }
 
-  &__icon {
-    @include display-md;
-    line-height: 1;
-    margin-bottom: $gap-xs;
+  &__icon { --badge-icon-size: 80px; }
 
-    &--locked {
-      filter: grayscale(1);
-      opacity: 0.4;
-    }
+  &__titles {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
+    min-width: 0;
+  }
+
+  &__category {
+    @include text-xs;
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+    gap: $gap-xs;
+    padding: 3px $padding-xs;
+    border-radius: $radius-sm;
+    background: $surface;
+    font-weight: 600;
+    letter-spacing: $tracking-sm;
+    text-transform: uppercase;
+    color: $muted;
+  }
+
+  &__category-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: $radius-xs;
   }
 
   &__label {
-    @include title-xl;
-    color: $text-color;
+    @include title-xxxl;
+    line-height: 0.9;
+    overflow-wrap: anywhere;
   }
 
   &__desc {
-    @include text-sm;
-    color: $muted;
-    line-height: 1.5;
+    @include text-md;
+    line-height: 1.45;
   }
 
   &__unlocked {
+    @include text-sm;
     display: flex;
     align-items: center;
     gap: $gap-xs;
-    @include text-sm;
-    color: $accent;
-    margin-top: $gap-xs;
+    padding: $padding-sm;
+    border-radius: $radius-sm;
+    background: $accent;
+    color: $white;
+    font-weight: 600;
   }
 
   &__locked {
     @include text-sm;
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
+    padding: $padding-sm;
+    border-radius: $radius-sm;
+    background: $surface;
     color: $muted;
-    margin-top: $gap-xs;
+    font-weight: 600;
   }
 
   &__progress {
-    width: 100%;
     display: flex;
     flex-direction: column;
     gap: $gap-xs;
-    margin-top: $gap-xs;
+    padding: $padding-sm;
+    border-radius: $radius-sm;
+    background: $surface;
   }
 
   &__progress-header {
+    @include text-sm;
     display: flex;
     justify-content: space-between;
-    @include title-sm;
+    font-weight: 600;
     color: $muted;
   }
 
   &__progress-values { color: $text-color; }
 
   &__progress-bar {
-    height: 6px;
-    background: rgba($white, 0.1);
-    border-radius: $radius-pill;
+    height: 8px;
+    border-radius: $radius-xs;
+    background: $border-color;
     overflow: hidden;
   }
 
   &__progress-fill {
     height: 100%;
-    background: $orange;
-    border-radius: $radius-pill;
     transition: width 0.4s ease;
   }
 }
 
-// Override sheet layout for centered badge content
-:deep(.app-modal__sheet) {
-  align-items: center;
-  text-align: center;
-  padding-top: $padding-xxl;
-}
-
 @media (min-width: $bp-laptop) {
-  :deep(.app-modal__sheet) {
-    align-items: center;
-    justify-content: center;
-    min-height: 50%;
+  .bd-modal {
+    &__icon { --badge-icon-size: 96px; }
+    &__desc { @include text-lg; }
+    &__unlocked, &__locked, &__progress-header { @include text-md; }
   }
-
-  .bd-modal__icon    { @include display-lg; }
-  .bd-modal__label   { @include title-xxl; }
-  .bd-modal__desc    { @include text-lg; }
-  .bd-modal__unlocked { @include text-lg; gap: $gap-sm; }
-  .bd-modal__locked  { @include text-lg; }
-  .bd-modal__progress { gap: $gap-md; }
-  .bd-modal__progress-header { @include title-xl; }
-  .bd-modal__progress-bar { height: 12px; }
-  .bd-modal__progress-values { @include title-xl; }
 }
 </style>

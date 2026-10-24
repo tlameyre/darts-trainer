@@ -110,6 +110,7 @@ function select(tab, e) {
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    border-radius: $radius-sm;
 
     &::-webkit-scrollbar { display: none; }
 
@@ -121,16 +122,18 @@ function select(tab, e) {
     }
   }
 
-  // ── Underline (FriendsView) ───────────────────────────────────────────────
+  // ── Underline — heavy ink underline on the active tab (FriendsView) ───────
   &--underline {
-    border-bottom: $border-sm solid rgba($white, 0.07);
+    padding: 0 $padding-xs;
+    border-bottom: $border-sm solid $border-color;
 
     .app-tabs__tab {
-      @include title-sm;
+      @include title-md;
       flex: 1;
-      padding: $padding-sm 0;
+      height: 48px;
       color: $muted;
-      border-bottom: 2px solid transparent;
+      text-transform: uppercase;
+      border-bottom: 3px solid transparent;
       transition: color 0.15s, border-color 0.15s;
       display: flex;
       align-items: center;
@@ -138,8 +141,8 @@ function select(tab, e) {
       gap: $gap-xs;
 
       &--active {
-        color: $orange-dark;
-        border-bottom-color: $orange;
+        color: $text-color;
+        border-bottom-color: $black;
       }
 
       &:active { opacity: 0.7; }
@@ -170,7 +173,7 @@ function select(tab, e) {
   }
 
   .app-tabs--underline .app-tabs__tab {
-    @include title-md;
+    @include title-lg;
   }
 }
 </style>

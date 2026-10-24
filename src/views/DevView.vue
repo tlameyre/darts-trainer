@@ -23,6 +23,7 @@ import X01MatchEnd from '../components/x01/X01MatchEnd.vue'
 import { buildMatchStats } from '../composables/useX01MatchStats.js'
 import { analyzeLegs, ALL_SEGMENTS } from '../composables/useCheckoutAnalysis.js'
 import FriendsView from './FriendsView.vue'
+import ProfileView from './ProfileView.vue'
 import HomeView from './HomeView.vue'
 import LobbyView from './LobbyView.vue'
 import StatsWarmupDetailView from './StatsWarmupDetailView.vue'
@@ -66,6 +67,9 @@ const mockHomeTournaments = [
 
 // --- Preview FriendsView ---
 const showFriendsPreview = ref(false)
+
+// --- Preview ProfileView ---
+const showProfilePreview = ref(false)
 
 // --- Preview TournamentView (bracket avec byes + double élimination + pending) ---
 const MOCK_HOSTS = [{ user_id: 'mock-me', role: 'creator' }]
@@ -458,6 +462,15 @@ const mockReceived = [
 const mockSent = [
   { friendshipId: '4', id: 'u4', first_name: null,      username: 'pro180',   friend_code: 'DMC-D5P3' },
 ]
+
+// --- Mock data ProfileView ---
+const mockProfileData = {
+  profile: { first_name: 'Théotime', last_name: 'Lameyre', username: 'Lameyreguez' },
+  stats: { totalSessions: 68, totalDarts: 7358, avgAccuracy: 37 },
+  friends: mockFriends,
+  pendingCount: mockReceived.length,
+  badges: BADGES.slice(0, 22).map((b, i) => ({ ...b, unlockedAt: daysAgo(i + 1) })).reverse(),
+}
 </script>
 
 <template>
@@ -516,6 +529,14 @@ const mockSent = [
       <h2 class="dev__section-title">Vue Amis (preview)</h2>
       <div class="dev__buttons">
         <button class="dev__btn" @click="showFriendsPreview = true">Ouvrir la vue Amis</button>
+      </div>
+    </section>
+
+    <!-- ProfileView — aperçu plein écran avec données fictives -->
+    <section class="dev__section">
+      <h2 class="dev__section-title">Vue Profil (preview)</h2>
+      <div class="dev__buttons">
+        <button class="dev__btn" @click="showProfilePreview = true">Ouvrir la vue Profil</button>
       </div>
     </section>
 
@@ -664,6 +685,12 @@ const mockSent = [
         :mock-friend-code="'DMC-X7K2'"
       />
       <button class="dev__close-preview" @click="showFriendsPreview = false">✕ Fermer</button>
+    </div>
+
+    <!-- ProfileView plein écran -->
+    <div v-if="showProfilePreview" class="dev__fullscreen-preview">
+      <ProfileView :mock-data="mockProfileData" />
+      <button class="dev__close-preview" @click="showProfilePreview = false">✕ Fermer</button>
     </div>
 
     <!-- CheckoutRecap plein écran -->
