@@ -6,7 +6,7 @@ const props = defineProps({
   dart: { type: Object, required: true },
   size: { type: String, default: 'md', validator: v => ['sm', 'md'].includes(v) },
   // 'board' paints the pill with the dartboard colors of the hit segment
-  tone: { type: String, default: 'board', validator: v => ['board', 'neutral', 'light', 'cyan', 'orange', 'green'].includes(v) },
+  tone: { type: String, default: 'board', validator: v => ['board', 'neutral', 'light', 'cyan', 'ink', 'orange', 'green'].includes(v) },
   showPoints: { type: Boolean, default: false },
 })
 const colors = computed(() => {
@@ -73,6 +73,7 @@ const colors = computed(() => {
   &--neutral { background: $surface; color: $text-color; }
   &--light   { background: $white;   color: $text-color; }
   &--cyan    { background: $mode-checkout; color: $white; }
+  &--ink     { background: $black; color: $white; }
   &--orange  { background: $orange; color: $white; }
   &--green   { background: $accent; color: $white; }
 }

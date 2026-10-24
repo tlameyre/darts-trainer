@@ -8,6 +8,7 @@ const props = defineProps({
   selectable: { type: Boolean, default: false },
   selected: { type: Array, default: null }, // Dart[] shown on the board when selectable
   played: { type: Array, default: null }, // Dart[] actually thrown (quiz) — tags its row
+  tone: { type: String, default: 'cyan', validator: (v) => ['cyan', 'ink'].includes(v) },
 })
 
 const emit = defineEmits(['select'])
@@ -31,7 +32,7 @@ const isActive = (row) => isPlayed(row) || (props.selectable && formatRoute(row.
 </script>
 
 <template>
-  <div v-if="rows.length" class="route-card">
+  <div v-if="rows.length" class="route-card" :class="`route-card--${tone}`">
     <component
       :is="selectable ? 'button' : 'div'"
       v-for="row in rows"
@@ -49,7 +50,7 @@ const isActive = (row) => isPlayed(row) || (props.selectable && formatRoute(row.
           v-for="(d, j) in row.route"
           :key="j"
           :dart="d"
-          :tone="isActive(row) ? 'cyan' : 'neutral'"
+          :tone="isActive(row) ? tone : 'neutral'"
           show-points
         />
         <span v-if="row.leaves != null" class="route-card__leaves">→ laisse {{ row.leaves }}</span>
@@ -61,6 +62,8 @@ const isActive = (row) => isPlayed(row) || (props.selectable && formatRoute(row.
 
 <style lang="scss" scoped>
 .route-card {
+  --route-color: #{$mode-checkout};
+
   display: flex;
   flex-direction: column;
   gap: $gap-xs;
@@ -79,7 +82,7 @@ const isActive = (row) => isPlayed(row) || (props.selectable && formatRoute(row.
     text-align: left;
     transition: border-color 0.15s;
 
-    &--active { border-color: $mode-checkout; }
+    &--active { border-color: var(--route-color); }
   }
 
   button.route-card__row:active { opacity: 0.7; }
@@ -96,7 +99,9 @@ const isActive = (row) => isPlayed(row) || (props.selectable && formatRoute(row.
   }
 
   &__row--active:not(&__row--played) &__tag,
-  &__played-tag { color: $mode-checkout; }
+  &__played-tag { color: var(--route-color); }
+
+  &--ink { --route-color: #{$black}; }
 
   &__darts {
     display: flex;

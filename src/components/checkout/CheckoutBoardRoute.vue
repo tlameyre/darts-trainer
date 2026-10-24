@@ -1,77 +1,19 @@
 <script setup>
 import { computed } from 'vue'
-import {
-  BOARD_SIZE,
-  BOARD_BACKGROUND_PATH,
-  NUMBER_LABEL_PATHS,
-  DARTBOARD_SECTORS,
-  SECTOR_ORDER,
-  RED_SECTORS,
-} from '../../data/dartboardSectors.js'
+import DartboardFace from '../game/DartboardFace.vue'
+import { BOARD_SIZE, bandPath, bandCenter } from '../../data/dartboardSectors.js'
 
 const props = defineProps({
   route: { type: Array, default: () => [] }, // Dart[] { type, sector, pts, label }
+  tone: { type: String, default: 'cyan', validator: (v) => ['cyan', 'ink'].includes(v) },
 })
 
-const C = BOARD_SIZE / 2
-
-// Rayons des bandes visibles (cf. géométrie de dartboardSectors.js)
-const BAND = {
-  double: [161.45, 170.55],
-  'single-outer': [107.55, 161.45],
-  triple: [98.45, 107.55],
-  'single-inner': [16.45, 98.45],
-  'bull-outer': [6.9, 16.45],
-  'bull-inner': [0, 6.9],
-}
-
-// Mêmes couleurs que SvgDartboard.vue
-
-function zoneKey(seg) {
-  return `${seg.ring}-${seg.sector}`
-}
-
-function zoneClass(seg) {
-  if (seg.ring === 'bull-outer') return 'board__zone--bull-outer'
-  if (seg.ring === 'bull-inner') return 'board__zone--bull-inner'
-  const isRed = RED_SECTORS.has(seg.sector)
-  if (seg.ring === 'double' || seg.ring === 'triple') {
-    return isRed ? 'board__zone--red' : 'board__zone--green'
-  }
-  return isRed ? 'board__zone--black' : 'board__zone--cream'
-}
-
-// Fléchette -> ring visé (single = grande bande externe)
+// Dart -> aimed band (a single aims at the big outer single)
 function ringOf(dart) {
   if (dart.type === 'double') return 'double'
   if (dart.type === 'triple') return 'triple'
   if (dart.type === 'bull') return dart.pts === 50 ? 'bull-inner' : 'bull-outer'
   return 'single-outer'
-}
-
-const polar = (a, r) => ({ x: C + r * Math.sin(a), y: C - r * Math.cos(a) })
-
-// Chemin d'une bande annulaire (secteur i, ring)
-function bandPath(sector, ring) {
-  const [rIn, rOut] = BAND[ring]
-  if (sector == null) {
-    // bull : cercle plein (inner) ou anneau approché par un disque
-    return `M ${C - rOut} ${C} A ${rOut} ${rOut} 0 1 0 ${C + rOut} ${C} A ${rOut} ${rOut} 0 1 0 ${C - rOut} ${C} Z`
-  }
-  const i = SECTOR_ORDER.indexOf(sector)
-  const a1 = ((i * 18 - 9) * Math.PI) / 180
-  const a2 = ((i * 18 + 9) * Math.PI) / 180
-  const p1 = polar(a1, rOut)
-  const p2 = polar(a2, rOut)
-  const p3 = polar(a2, rIn)
-  const p4 = polar(a1, rIn)
-  return `M ${p1.x} ${p1.y} A ${rOut} ${rOut} 0 0 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${rIn} ${rIn} 0 0 0 ${p4.x} ${p4.y} Z`
-}
-
-function badgeCenter(sector, ring) {
-  if (sector == null) return { x: C, y: C }
-  const [rIn, rOut] = BAND[ring]
-  return polar((SECTOR_ORDER.indexOf(sector) * 18 * Math.PI) / 180, (rIn + rOut) / 2)
 }
 
 function dartTarget(dart) {
@@ -80,7 +22,7 @@ function dartTarget(dart) {
   return { ring, sector, key: `${ring}:${sector}` }
 }
 
-// Fléchettes regroupées par zone : deux fléchettes au même endroit -> une seule pastille "1·2".
+// Darts grouped by band: two darts on the same spot share one "1 - 2" badge
 const marks = computed(() => {
   const groups = new Map()
   props.route.forEach((dart, i) => {
@@ -89,7 +31,7 @@ const marks = computed(() => {
       groups.set(t.key, {
         key: t.key,
         path: bandPath(t.sector, t.ring),
-        ...badgeCenter(t.sector, t.ring),
+        ...bandCenter(t.sector, t.ring),
         orders: [],
       })
     }
@@ -103,25 +45,18 @@ const linePoints = computed(() => {
   return props.route
     .map((dart) => {
       const t = dartTarget(dart)
-      const c = badgeCenter(t.sector, t.ring)
+      const c = bandCenter(t.sector, t.ring)
       return `${c.x},${c.y}`
     })
     .join(' ')
 })
 
-const badgeW = (label) => 34 + Math.max(0, label.length - 1) * 7
+const badgeW = (label) => 24 + Math.max(0, label.length - 1) * 6
 </script>
 
 <template>
-  <svg class="board" :viewBox="`0 0 ${BOARD_SIZE} ${BOARD_SIZE}`" xmlns="http://www.w3.org/2000/svg">
-    <path class="board__bg" :d="BOARD_BACKGROUND_PATH" />
-    <path
-      v-for="seg in DARTBOARD_SECTORS"
-      :key="zoneKey(seg)"
-      class="board__zone"
-      :class="zoneClass(seg)"
-      :d="seg.d"
-    />
+  <svg class="board" :class="`board--${tone}`" :viewBox="`0 0 ${BOARD_SIZE} ${BOARD_SIZE}`" xmlns="http://www.w3.org/2000/svg">
+    <DartboardFace />
 
     <path v-for="m in marks" :key="`hl-${m.key}`" class="board__target" :d="m.path" />
     <template v-if="linePoints">
@@ -129,15 +64,13 @@ const badgeW = (label) => 34 + Math.max(0, label.length - 1) * 7
       <polyline class="board__link" :points="linePoints" />
     </template>
 
-    <path v-for="(d, i) in NUMBER_LABEL_PATHS" :key="i" class="board__label" :d="d" />
-
     <g v-for="m in marks" :key="`badge-${m.key}`" class="board__badge">
       <rect
         :x="m.x - badgeW(m.label) / 2"
-        :y="m.y - 15"
+        :y="m.y - 12"
         :width="badgeW(m.label)"
-        height="30"
-        rx="15"
+        height="24"
+        rx="12"
       />
       <text :x="m.x" :y="m.y">{{ m.label }}</text>
     </g>
@@ -146,33 +79,23 @@ const badgeW = (label) => 34 + Math.max(0, label.length - 1) * 7
 
 <style lang="scss" scoped>
 .board {
+  // Target cells / badge outline, and the dashed route line
+  --route-target: #{$mode-checkout};
+  --route-line: #{$mode-checkout};
+
   display: block;
   width: min(100%, 100cqh);
   aspect-ratio: 1;
   margin: 0 auto;
-}
 
-.board__bg { fill: $dart-black; }
-
-.board__zone {
-  stroke: $dart-border;
-  stroke-width: 1.1;
-
-  &--red { fill: $dart-red; }
-  &--green { fill: $dart-green; }
-  &--black { fill: $dart-black; }
-  &--cream { fill: $dart-cream; }
-  &--bull-outer { fill: $dart-green; }
-  &--bull-inner { fill: $dart-red; }
-}
-
-.board__label {
-  fill: $white;
-  pointer-events: none;
+  &--ink {
+    --route-target: #{$error-light};
+    --route-line: #{$black};
+  }
 }
 
 .board__target {
-  fill: $mode-checkout;
+  fill: var(--route-target);
   stroke: $dart-border;
   stroke-width: 1.1;
 }
@@ -180,27 +103,27 @@ const badgeW = (label) => 34 + Math.max(0, label.length - 1) * 7
 // Dashed cyan route over a white halo so it reads on every segment color
 .board__link {
   fill: none;
-  stroke: $mode-checkout;
-  stroke-width: 5;
-  stroke-dasharray: 4 12;
+  stroke: var(--route-line);
+  stroke-width: 4;
+  stroke-dasharray: 3 9;
   stroke-linecap: round;
 
   &--halo {
     stroke: $white;
-    stroke-width: 9;
+    stroke-width: 7;
   }
 }
 
 .board__badge {
   rect {
     fill: $black;
-    stroke: $mode-checkout;
-    stroke-width: 3;
+    stroke: var(--route-target);
+    stroke-width: 2.5;
   }
 
   text {
     fill: $white;
-    @include title-lg;
+    @include title-sm;
     text-anchor: middle;
     dominant-baseline: central;
   }

@@ -1,14 +1,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import {
-  BOARD_SIZE,
-  BOARD_BACKGROUND_PATH,
-  NUMBER_LABEL_PATHS,
-  DARTBOARD_SECTORS,
-  SECTOR_ORDER,
-  RED_SECTORS,
-} from '../../data/dartboardSectors.js'
+import { BOARD_SIZE, cellAt } from '../../data/dartboardSectors.js'
 import AppIcon from '../AppIcon.vue'
+import DartboardFace from '../game/DartboardFace.vue'
 
 const props = defineProps({
   locked: { type: Boolean, default: false },
@@ -28,18 +22,6 @@ const emit = defineEmits(['dart'])
 const ZOOM = 3
 const HOLD_MS = 250 // press held this long zooms in
 const TAP_SLOP = 10 // px of travel still counts as a tap; more cancels the zoom
-
-// Ring radii in the 453-unit board space (centre = BOARD_SIZE / 2). Matches the
-// geometry baked into DARTBOARD_SECTORS / CheckoutBoardRoute.
-const C = BOARD_SIZE / 2
-const RING_BY_RADIUS = [
-  { max: 6.9, ring: 'bull-inner' },
-  { max: 16.45, ring: 'bull-outer' },
-  { max: 98.45, ring: 'single-inner' },
-  { max: 107.55, ring: 'triple' },
-  { max: 161.45, ring: 'single-outer' },
-  { max: 170.55, ring: 'double' },
-]
 
 const zoomEnabled = props.zoomable && window.matchMedia?.('(pointer: coarse)').matches
 
@@ -67,46 +49,13 @@ function clientToSvg(cx, cy) {
   }
 }
 
-// Zone at a point in SVG coords, computed from board geometry (frame-accurate,
-// no dependency on the rendered DOM). Returns null outside the scoring area.
-function segAtSvg(x, y) {
-  const dx = x - C
-  const dy = y - C
-  const r = Math.hypot(dx, dy)
-  const band = RING_BY_RADIUS.find((b) => r <= b.max)
-  if (!band) return null
-  if (band.ring === 'bull-inner' || band.ring === 'bull-outer') {
-    return sectors.value.find((s) => s.ring === band.ring) ?? null
-  }
-  let deg = (Math.atan2(dx, -dy) * 180) / Math.PI
-  if (deg < 0) deg += 360
-  const sector = SECTOR_ORDER[Math.round(deg / 18) % 20]
-  return sectors.value.find((s) => s.ring === band.ring && s.sector === sector) ?? null
-}
-
 function segAtClient(cx, cy) {
   const p = clientToSvg(cx, cy)
-  return segAtSvg(p.x, p.y)
+  return cellAt(p.x, p.y)
 }
-
-// Secteurs rouges/noirs sur la cible (doubles/triples = rouge, simple = noir)
 
 const pressedKey = ref(null)
 let _pressTimer = null
-
-function zoneKey(seg) {
-  return `${seg.ring}-${seg.sector}`
-}
-
-function zoneClass(seg) {
-  if (seg.ring === 'bull-outer') return 'dartboard__zone--bull-outer'
-  if (seg.ring === 'bull-inner') return 'dartboard__zone--bull-inner'
-  const isRed = RED_SECTORS.has(seg.sector)
-  if (seg.ring === 'double' || seg.ring === 'triple') {
-    return isRed ? 'dartboard__zone--red' : 'dartboard__zone--green'
-  }
-  return isRed ? 'dartboard__zone--black' : 'dartboard__zone--cream'
-}
 
 function buildDart(seg) {
   if (seg.ring === 'bull-outer') return { type: 'bull', sector: null, pts: 25, label: 'Outer' }
@@ -118,7 +67,7 @@ function buildDart(seg) {
 
 function flash(seg) {
   clearTimeout(_pressTimer)
-  pressedKey.value = zoneKey(seg)
+  pressedKey.value = seg.key
   _pressTimer = setTimeout(() => { pressedKey.value = null }, 160)
 }
 
@@ -181,7 +130,7 @@ function resetZoom() {
 
 watch(() => props.locked, (v) => { if (v) { resetZoom(); endGesture() } })
 
-const sectors = computed(() => DARTBOARD_SECTORS)
+const cellClass = (cell) => (cell.key === pressedKey.value ? 'dartboard__cell--pressed' : null)
 </script>
 
 <template>
@@ -198,11 +147,7 @@ const sectors = computed(() => DARTBOARD_SECTORS)
       @pointercancel="endGesture"
       @contextmenu.prevent
     >
-      <path class="dartboard__bg" :d="BOARD_BACKGROUND_PATH" />
-      <path v-for="seg in sectors" :key="zoneKey(seg)" class="dartboard__zone" :class="[zoneClass(seg), {
-        'dartboard__zone--pressed': pressedKey === zoneKey(seg),
-      }]" :d="seg.d" />
-      <path v-for="(d, i) in NUMBER_LABEL_PATHS" :key="i" class="dartboard__label" :d="d" />
+      <DartboardFace :cell-class="cellClass" />
     </svg>
     <button v-if="zoomed" type="button" class="dartboard__reset" @click="resetZoom">
       <AppIcon name="zoom-out" :width="18" :height="18" />
@@ -232,6 +177,7 @@ const sectors = computed(() => DARTBOARD_SECTORS)
   aspect-ratio: 1;
   touch-action: manipulation;
   user-select: none;
+  cursor: pointer;
 
   &--zoomable {
     touch-action: pan-y;
@@ -251,41 +197,17 @@ const sectors = computed(() => DARTBOARD_SECTORS)
   align-items: center;
   gap: $gap-xxs;
   padding: $padding-xxs $padding-sm;
-  border: $border-sm solid $white;
-  border-radius: $radius-pill;
-  background: $bg;
+  border-radius: $radius-sm;
+  background: $black;
   color: $white;
-  @include text-xs;
+  @include title-sm;
   transition: opacity 0.15s;
 
   &:active { opacity: 0.6; }
 }
 
-.dartboard__bg {
-  fill: $dart-black;
-}
-
-.dartboard__zone {
-  stroke: $dart-border;
-  stroke-width: 1.1;
-  cursor: pointer;
-  transition: filter 0.1s;
-
-  &--red { fill: $dart-red; }
-  &--green { fill: $dart-green; }
-  &--black { fill: $dart-black; }
-  &--cream { fill: $dart-cream; }
-  &--bull-outer { fill: $dart-green; }
-  &--bull-inner { fill: $dart-red; }
-
-  &--pressed {
-    filter: brightness(1.45);
-  }
-}
-
-.dartboard__label {
-  fill: $white;
-  pointer-events: none;
+.dartboard :deep(.dartboard__cell--pressed) {
+  opacity: 0.6;
 }
 
 @media (min-width: $bp-laptop) {

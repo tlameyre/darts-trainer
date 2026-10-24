@@ -5,13 +5,18 @@ import AppHeader from '../components/AppHeader.vue'
 import AppIcon from '../components/AppIcon.vue'
 import CheckoutBoardRoute from '../components/checkout/CheckoutBoardRoute.vue'
 import CheckoutRouteCard from '../components/checkout/CheckoutRouteCard.vue'
-import { CHECKOUT_SCORES, getCheckout } from '../composables/useCheckouts.js'
+import { CHECKOUT_SCORES, bracketOf, getCheckout } from '../composables/useCheckouts.js'
 
 const route = useRoute()
 const router = useRouter()
 
 const score = computed(() => Number(route.params.score))
 const checkout = computed(() => getCheckout(score.value))
+
+const bracketTag = computed(() => {
+  const b = bracketOf(score.value)
+  return b ? `${b.label} · ${b.points} pt${b.points > 1 ? 's' : ''}` : null
+})
 
 // Score inconnu (impossible ou hors barème) : retour à la liste.
 watchEffect(() => {
@@ -48,35 +53,46 @@ function goBack() {
 
 <template>
   <div v-if="checkout" class="co-detail">
-    <AppHeader :title="String(score)" @back="goBack" />
+    <AppHeader title="Checkout" tone="ink" @back="goBack" />
 
     <main class="co-detail__main">
-      <div class="co-detail__board">
-        <CheckoutBoardRoute :route="selectedRoute || []" />
+      <div class="co-detail__card">
+        <div class="co-detail__band">
+          <span class="co-detail__band-score">
+            <span class="co-detail__kicker">Reste à finir</span>
+            <span class="co-detail__score">{{ score }}</span>
+          </span>
+          <span v-if="bracketTag" class="co-detail__tag">{{ bracketTag }}</span>
+        </div>
+        <div class="co-detail__board">
+          <CheckoutBoardRoute :route="selectedRoute || []" tone="ink" />
+        </div>
       </div>
 
-      <div class="co-detail__info">
-        <div class="co-detail__score">{{ score }}</div>
-        <CheckoutRouteCard
-          :checkout="checkout"
-          selectable
-          :selected="selectedRoute"
-          class="co-detail__routes"
-          @select="selectedRoute = $event"
-        />
+      <div class="co-detail__side">
+        <div class="co-detail__routes">
+          <span class="co-detail__label">Routes · clique pour l'afficher sur la cible</span>
+          <CheckoutRouteCard
+            :checkout="checkout"
+            selectable
+            tone="ink"
+            :selected="selectedRoute"
+            @select="selectedRoute = $event"
+          />
+        </div>
+
+        <nav class="co-detail__nav">
+          <button type="button" class="co-detail__nav-btn" :disabled="prevScore == null" @click="goto(prevScore)">
+            <AppIcon name="arrow-left" :width="20" :height="20" />
+            {{ prevScore ?? '—' }}
+          </button>
+          <button type="button" class="co-detail__nav-btn" :disabled="nextScore == null" @click="goto(nextScore)">
+            {{ nextScore ?? '—' }}
+            <AppIcon name="arrow-right" :width="20" :height="20" />
+          </button>
+        </nav>
       </div>
     </main>
-
-    <nav class="co-detail__nav">
-      <button type="button" class="co-detail__nav-btn" :disabled="prevScore == null" @click="goto(prevScore)">
-        <AppIcon name="arrow-left" :width="20" :height="20" />
-        <span>{{ prevScore ?? '—' }}</span>
-      </button>
-      <button type="button" class="co-detail__nav-btn" :disabled="nextScore == null" @click="goto(nextScore)">
-        <span>{{ nextScore ?? '—' }}</span>
-        <AppIcon name="arrow-right" :width="20" :height="20" />
-      </button>
-    </nav>
   </div>
 </template>
 
@@ -86,119 +102,162 @@ function goBack() {
   flex-direction: column;
   height: 100dvh;
   overflow: hidden;
-  padding: $padding-md;
-  gap: $gap-md;
 
   &__main {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    gap: $gap-sm;
+    padding: $padding-md $padding-md 0;
+    @include safe-bottom($padding-xl);
+  }
+
+  &__card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $gap-sm;
+  }
+
+  &__band {
+    display: flex;
     align-items: center;
-    gap: $gap-md;
-    overflow: hidden;
+    gap: $gap-sm;
+    padding: $padding-sm $padding-md;
+    border-radius: $radius-sm;
+    background: $black;
+    color: $bg;
+  }
+
+  &__band-score {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__kicker {
+    @include text-xs;
+    font-weight: 600;
+    letter-spacing: $tracking-lg;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+
+  &__score {
+    @include display-xs;
+    line-height: 0.9;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__tag {
+    margin-left: auto;
+    padding: 2px $padding-xs;
+    border-radius: $radius-sm;
+    background: rgba($bg, 0.16);
+    @include title-sm;
   }
 
   &__board {
-    flex: 3;
+    flex: 1;
     min-height: 0;
-    width: 100%;
     display: flex;
-    align-items: center;
     justify-content: center;
     container-type: size;
   }
 
-  &__info {
+  &__side {
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: $gap-sm;
-    flex: 2;
-    min-height: 0;
-    width: 100%;
   }
 
-  &__score {
-    @include display-sm;
-    color: $white;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-    flex-shrink: 0;
-  }
-
+  // Long route lists scroll so the board keeps its room
   &__routes {
-    width: 100%;
-    max-width: 460px;
-    flex: 1;
-    min-height: 0;
+    max-height: 40dvh;
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
     overflow-y: auto;
-    padding-bottom: $padding-sm;
+  }
+
+  &__label {
+    display: none;
+    @include title-sm;
+    color: $muted;
   }
 
   &__nav {
-    display: flex;
-    gap: $gap-sm;
-    flex-shrink: 0;
-
-    > * { flex: 1; }
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: $gap-xs;
   }
 
   &__nav-btn {
+    height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: $gap-xs;
-    height: 48px;
+    border: $border-md solid $text-color;
     border-radius: $radius-sm;
-    background: rgba($white, 0.05);
-    border: $border-sm solid rgba($white, 0.08);
-    color: $white;
-    @include title-sm;
+    color: $text-color;
+    @include title-lg;
     font-variant-numeric: tabular-nums;
-    transition: filter 0.15s, opacity 0.15s;
+    transition: opacity 0.15s;
 
-    &:active { filter: brightness(1.2); }
-
-    &:disabled {
-      opacity: 0.35;
-      pointer-events: none;
-    }
+    &:active { opacity: 0.7; }
+    &:disabled { opacity: 0.3; pointer-events: none; }
   }
 }
 
 @media (min-width: $bp-laptop) {
+  // Board card on the left, routes and score navigation on the right
   .co-detail {
-    padding: $padding-xl;
-
     &__main {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: stretch;
+      grid-template-columns: minmax(0, 1fr) 440px;
+      gap: $gap-xxl + $gap-xs;
+      padding: $padding-xxl $padding-xxl 0;
+      @include safe-bottom($padding-xxl);
+    }
+
+    &__card {
+      gap: 0;
+      border-radius: $radius-sm;
+      background: $surface;
+      overflow: hidden;
+    }
+
+    &__band {
+      gap: $gap-md;
+      padding: $padding-md $padding-xl;
+      border-radius: 0;
+    }
+
+    &__kicker { @include text-sm; }
+    &__score  { @include display-md; }
+    &__tag    { padding: $padding-xxs $padding-xs; @include title-lg; }
+    &__board  { padding: $padding-sm; }
+
+    &__side {
+      min-height: 0;
       gap: $gap-xl;
     }
 
-    &__board {
-      min-width: 0;
+    &__routes {
+      max-height: none;
       min-height: 0;
     }
 
-    &__info {
-      min-width: 0;
-      align-items: stretch;
+    &__label { display: block; }
+
+    &__nav {
+      margin-top: auto;
+      gap: $gap-sm;
     }
 
-    &__score {
-      @include display-md;
-      text-align: center;
-    }
-
-    &__routes { max-width: none; }
-
-    &__nav-btn {
-      height: 52px;
-      @include title-md;
-    }
+    &__nav-btn { height: 64px; @include title-xxl; }
   }
 }
 </style>
