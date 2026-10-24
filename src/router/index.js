@@ -106,7 +106,12 @@ const routes = [
     component: OnlineSettingsView,
     meta: { hideNav: true },
   },
-  { path: "/501/online/:id", name: "online-match", component: OnlineMatchLobbyView },
+  {
+    path: "/501/online/:id",
+    name: "online-match",
+    component: OnlineMatchLobbyView,
+    meta: { hideNav: true },
+  },
   {
     path: "/checkouts",
     name: "checkout-settings",
