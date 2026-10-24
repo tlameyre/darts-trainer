@@ -59,7 +59,6 @@ function goBack() {
         <div class="co-detail__score">{{ score }}</div>
         <CheckoutRouteCard
           :checkout="checkout"
-          size="md"
           selectable
           :selected="selectedRoute"
           class="co-detail__routes"

@@ -2,7 +2,9 @@
 import { reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
-import AppButton from '../components/AppButton.vue'
+import OptionSelector from '../components/OptionSelector.vue'
+import OptionTile from '../components/OptionTile.vue'
+import StartButton from '../components/StartButton.vue'
 import AppIcon from '../components/AppIcon.vue'
 import { useGameStore } from '../store/gameStore.js'
 import { CHECKOUT_BRACKETS, CHECKOUT_DATA_SOURCE } from '../composables/useCheckouts.js'
@@ -19,10 +21,6 @@ const settings = reactive({
 
 const customCount = ref(15)
 
-const variantOptions = [
-  { value: 'review', label: 'Révision libre' },
-  { value: 'quiz', label: 'Quiz noté' },
-]
 const orderOptions = [
   { value: 'asc', label: 'Croissant' },
   { value: 'random', label: 'Aléatoire' },
@@ -30,8 +28,8 @@ const orderOptions = [
 const countOptions = [
   { value: 'all', label: 'Tout' },
   { value: 20, label: '20' },
-  { value: 'custom', label: 'Custom' },
-  { value: Infinity, label: 'Infini' },
+  { value: 'custom', label: 'Perso' },
+  { value: Infinity, label: 'Infini', icon: 'infinity' },
 ]
 
 const isCustomCount = computed(() => settings.count === 'custom')
@@ -44,8 +42,6 @@ function toggleBracket(label) {
     settings.brackets.push(label)
   }
 }
-
-const canStart = computed(() => settings.brackets.length > 0)
 
 function startGame() {
   const brackets = CHECKOUT_BRACKETS
@@ -68,7 +64,7 @@ function startGame() {
 
 <template>
   <div class="settings">
-    <AppHeader title="CHECKOUTS" @back="router.push({ name: 'home' })">
+    <AppHeader title="Checkouts" tone="cyan" @back="router.push({ name: 'home' })">
       <template #right>
         <button type="button" class="settings__wiki-btn" aria-label="Consulter les checkouts"
           @click="router.push({ name: 'checkout-wiki' })">
@@ -78,53 +74,83 @@ function startGame() {
     </AppHeader>
 
     <main class="settings__main">
-      <div class="settings__card">
-        <div class="settings__section-label">Mode</div>
-        <div class="settings__row">
-          <AppButton v-for="opt in variantOptions" :key="opt.value" size="small" variant="ghost"
-            :active="settings.variant === opt.value" @click="settings.variant = opt.value">
-            {{ opt.label }}
-          </AppButton>
+      <section class="settings__mode">
+        <span class="settings__label">Mode</span>
+        <div class="settings__tiles">
+          <OptionTile
+            tone="cyan"
+            title="Révision libre"
+            description="Parcours les checkouts à ton rythme, la route est affichée"
+            :show-badge="false"
+            :model-value="settings.variant === 'review'"
+            @update:model-value="settings.variant = 'review'"
+          >
+            <template #preview>
+              <span class="settings__demo">
+                <span class="settings__demo-score">81</span>→<span class="settings__demo-route">T15 · D18</span>
+              </span>
+            </template>
+          </OptionTile>
+          <OptionTile
+            tone="cyan"
+            title="Quiz noté"
+            description="Trouve la route de chaque score, points selon la difficulté"
+            :show-badge="false"
+            :model-value="settings.variant === 'quiz'"
+            @update:model-value="settings.variant = 'quiz'"
+          >
+            <template #preview>
+              <span class="settings__demo">
+                <span class="settings__demo-score">81</span>→<span class="settings__demo-blank" /><span class="settings__demo-pts">+4 pts</span>
+              </span>
+            </template>
+          </OptionTile>
         </div>
-      </div>
+      </section>
 
-      <div class="settings__card">
-        <div class="settings__section-label">Tranches de checkout</div>
+      <section class="settings__brackets-block">
+        <div class="settings__head">
+          <span class="settings__label">Tranches de checkout</span>
+          <span class="settings__hint">{{ settings.brackets.length }} sélectionnée{{ settings.brackets.length > 1 ? 's' : '' }}</span>
+        </div>
         <div class="settings__brackets">
-          <AppButton v-for="b in CHECKOUT_BRACKETS" :key="b.label" size="small" variant="ghost"
-            :active="settings.brackets.includes(b.label)" @click="toggleBracket(b.label)">
-            {{ b.label }}
-          </AppButton>
+          <button
+            v-for="b in CHECKOUT_BRACKETS"
+            :key="b.label"
+            class="settings__bracket"
+            :class="{ 'settings__bracket--on': settings.brackets.includes(b.label) }"
+            :aria-pressed="settings.brackets.includes(b.label)"
+            @click="toggleBracket(b.label)"
+          >
+            <AppIcon v-if="settings.brackets.includes(b.label)" class="settings__bracket-check" name="check" :width="14" :height="14" />
+            <span class="settings__bracket-label">{{ b.label }}</span>
+            <span class="settings__bracket-pts">{{ b.points }} pt{{ b.points > 1 ? 's' : '' }}</span>
+          </button>
         </div>
-      </div>
+      </section>
 
-      <div class="settings__card">
-        <div class="settings__section-label">Ordre</div>
-        <div class="settings__row">
-          <AppButton v-for="opt in orderOptions" :key="opt.value" size="small" variant="ghost"
-            :active="settings.order === opt.value" @click="settings.order = opt.value">
-            {{ opt.label }}
-          </AppButton>
-        </div>
-      </div>
+      <OptionSelector v-model="settings.order" class="settings__order" label="Ordre" :options="orderOptions" tone="cyan" />
 
-      <div v-if="settings.variant === 'quiz'" class="settings__card">
-        <div class="settings__section-label">Nombre de checkouts</div>
-        <div class="settings__row">
-          <AppButton v-for="opt in countOptions" :key="String(opt.value)" size="small" variant="ghost"
-            :active="settings.count === opt.value" @click="settings.count = opt.value">
-            {{ opt.label }}
-          </AppButton>
-        </div>
+      <section class="settings__count">
+        <OptionSelector
+          v-model="settings.count"
+          label="Nombre de checkouts"
+          :options="countOptions"
+          tone="cyan"
+          :class="{ 'settings__count--off': settings.variant !== 'quiz' }"
+        />
+        <span v-if="settings.variant !== 'quiz'" class="settings__hint">Quiz uniquement</span>
         <div v-if="isCustomCount" class="settings__custom">
-          <input type="number" v-model="customCount" min="1" max="200" class="settings__custom-input" />
+          <input v-model="customCount" type="number" min="1" max="200" class="settings__custom-input" />
           <span class="settings__custom-label">checkouts</span>
         </div>
+      </section>
+
+      <div class="settings__start">
+        <StartButton tone="cyan" @click="startGame" />
+        <p class="settings__source">Données : {{ CHECKOUT_DATA_SOURCE }}</p>
       </div>
     </main>
-
-    <AppButton :disabled="!canStart" @click="startGame">COMMENCER</AppButton>
-    <p class="settings__source">Données : {{ CHECKOUT_DATA_SOURCE }}</p>
   </div>
 </template>
 
@@ -133,44 +159,130 @@ function startGame() {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: $padding-md $padding-md 0;
-  gap: $gap-xl;
-  @include safe-bottom;
 
   &__main {
     flex: 1;
     display: flex;
     flex-direction: column;
-    width: 100%;
-    margin: 0 auto;
-    gap: $gap-xl;
+    gap: $gap-lg;
+    padding: $padding-lg $padding-md 0;
+    @include safe-bottom($padding-xl);
   }
 
-  &__card {
+  &__wiki-btn {
+    display: flex;
+    color: $white;
+    padding: $padding-xxs;
+    transition: opacity 0.15s;
+
+    &:active { opacity: 0.6; }
+  }
+
+  &__mode,
+  &__brackets-block,
+  &__count {
     display: flex;
     flex-direction: column;
-    gap: $gap-md;
-  }
-
-  &__section-label {
-    @include title-lg;
-    color: $white;
-  }
-
-  &__row {
-    display: flex;
     gap: $gap-xs;
+  }
 
-    :deep(.btn) { flex: 1; }
+  &__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  &__label {
+    @include title-sm;
+    color: $muted;
+  }
+
+  &__hint {
+    @include text-xs;
+    color: $muted;
+  }
+
+  &__tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: $gap-xs;
+  }
+
+  &__demo {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $gap-xxs;
+    padding: 0 $padding-xs;
+    @include text-xs;
+  }
+
+  &__demo-score { @include title-xl; }
+  &__demo-route { @include title-sm; }
+
+  &__demo-blank {
+    width: 32px;
+    height: 20px;
+    flex-shrink: 0;
+    border: $border-md dashed currentColor;
+    border-radius: $radius-sm;
+    opacity: 0.6;
+  }
+
+  &__demo-pts {
+    @include title-xxs;
+    white-space: nowrap;
+    padding: 2px $padding-xxs;
+    border-radius: $radius-sm;
+    background: rgba($white, 0.2);
   }
 
   &__brackets {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: $gap-xs;
-
-    :deep(.btn) { flex: 1 1 28%; }
   }
+
+  &__bracket {
+    position: relative;
+    height: 56px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: $border-md solid $border-color;
+    border-radius: $radius-sm;
+    color: $text-color;
+
+    // Last bracket alone on its row takes the full width
+    &:last-child { grid-column: 1 / -1; }
+
+    &--on {
+      background: $mode-checkout;
+      border-color: $mode-checkout;
+      color: $white;
+    }
+  }
+
+  &__bracket-check {
+    position: absolute;
+    top: $padding-xxs;
+    right: $padding-xxs;
+  }
+
+  &__bracket-label {
+    @include title-md;
+    line-height: 1;
+  }
+
+  &__bracket-pts {
+    @include text-xxs;
+    opacity: 0.75;
+  }
+
+  &__count--off { opacity: 0.4; }
 
   &__custom {
     display: flex;
@@ -181,47 +293,66 @@ function startGame() {
   &__custom-input {
     flex: 1;
     min-width: 0;
-    background: rgba($white, 0.05);
-    border: none;
+    height: 44px;
+    border: $border-md solid $border-color;
     border-radius: $radius-sm;
+    background: $white;
     color: $text-color;
     @include title-md;
-    padding: $padding-xs $padding-sm;
     text-align: center;
 
-    &:focus { outline: none; }
+    &:focus { outline: none; border-color: $mode-checkout; }
   }
 
-  &__custom-label {
-    @include title-md;
-    white-space: nowrap;
-  }
+  &__custom-label { @include title-md; }
 
-  &__wiki-btn {
+  &__start {
+    margin-top: auto;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    color: $text-color;
-    padding: $padding-xxs;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
+    flex-direction: column;
+    gap: $gap-sm;
   }
 
   &__source {
     @include text-xs;
     color: $muted;
     text-align: center;
-    margin-top: $gap-xs;
   }
 }
 
-@media (min-width: $bp-tablet) {
+@media (min-width: $bp-laptop) {
+  // Number, order and brackets on the left; mode and start on the right
   .settings {
-    padding: $padding-xl $padding-xl 0;
-    @include safe-bottom($padding-xl);
+    &__main {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: auto auto minmax(0, 1fr);
+      grid-template-areas:
+        'count    mode'
+        'order    start'
+        'brackets start';
+      align-content: start;
+      gap: $gap-xxl $gap-xxl * 2;
+      padding: $padding-xxl;
+    }
 
-    &__section-label { @include title-xl; }
+    &__mode           { grid-area: mode; }
+    &__brackets-block { grid-area: brackets; }
+    &__order          { grid-area: order; }
+    &__count          { grid-area: count; }
+    &__start          { grid-area: start; align-self: end; }
+
+    &__label        { @include title-md; }
+    &__hint         { @include text-sm; }
+    &__demo         { min-height: 48px; @include text-sm; }
+    &__demo-score   { @include title-xxl; }
+    &__demo-route   { @include title-md; }
+    &__bracket      { height: 64px; }
+    &__bracket-label { @include title-xl; }
+    &__bracket-pts  { @include text-xs; }
+    &__custom-input { height: 56px; @include title-lg; }
+    &__custom-label { @include title-lg; }
+    &__source       { @include text-sm; }
   }
 }
 </style>

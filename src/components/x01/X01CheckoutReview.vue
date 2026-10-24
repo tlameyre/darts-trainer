@@ -121,7 +121,7 @@ const pctLabel = (pct) => (pct == null ? '–' : `${pct} %`)
     gap: $gap-xxs;
     padding: $padding-sm;
     border-radius: $radius-sm;
-    background: rgba($white, 0.06);
+    background: $surface;
   }
 
   &__line {
@@ -132,7 +132,7 @@ const pctLabel = (pct) => (pct == null ? '–' : `${pct} %`)
 
   &__remaining {
     @include title-sm;
-    color: $white;
+    color: $text-color;
     min-width: 72px;
   }
 

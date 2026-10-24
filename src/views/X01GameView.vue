@@ -11,10 +11,8 @@ import { buildMatchStats, checkoutPct, computePlayerStats, lastVolleyLabel, thre
 import { useDbStore } from '../store/dbStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import { useTournamentStore } from '../store/tournamentStore.js'
-import DartSlotsHeader from '../components/game/DartSlotsHeader.vue'
 import GameInput from '../components/game/GameInput.vue'
-import X01Result from '../components/x01/X01Result.vue'
-import X01LegRecap from '../components/x01/X01LegRecap.vue'
+import X01MatchEnd from '../components/x01/X01MatchEnd.vue'
 import X01DoublesModal from '../components/x01/X01DoublesModal.vue'
 import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
 import X01PlayerSplitCard from '../components/x01/X01PlayerSplitCard.vue'
@@ -60,7 +58,6 @@ const {
   phase,
   legRemaining,
   volleyRemaining,
-  volleyNumber,
   volleyCompleting,
   pendingDoublesPrompt,
   pendingCheckout,
@@ -81,7 +78,6 @@ const {
   meIndex,
   allCompletedLegs,
   allVolleys,
-  lastLegWinnerIndex,
   legClosed,
   applyVolley,
   removeLastVolley,
@@ -103,7 +99,6 @@ const isOpponentTurn = computed(() => isOnline && !online.isMyTurn.value)
 const {
   aiRemaining,
   aiLegsWon,
-  aiLastVolley,
   aiTurn,
   aiWonLeg,
   aiWonGame,
@@ -122,7 +117,10 @@ const {
   startNextLeg,
 })
 
-const headerTitle = `${settings.startScore} · ${settings.legsToWin} manche${settings.legsToWin > 1 ? 's' : ''}`
+const legNumber = computed(() => 1 + (isMulti
+  ? allCompletedLegs.reduce((sum, legs) => sum + legs.value.length, 0)
+  : completedLegs.value.length + aiLegsWon.value))
+const headerTitle = computed(() => `${settings.startScore} · Manche ${legNumber.value}`)
 
 const isBust   = computed(() => phase.value === 'bust')
 const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.value || isOpponentTurn.value)
@@ -185,14 +183,16 @@ const matchStats = computed(() => {
   return result.legs.length ? result : null
 })
 
-const resultTitle = computed(() => {
-  if (isMulti) return multiWinnerName.value ? `${multiWinnerName.value} a gagné la partie !` : 'Partie terminée'
-  return aiWonGame.value ? 'L\'IA a gagné la partie !' : 'Bien joué !'
+// Index in matchStats.players; null when the game was stopped before anyone won
+const resultWinnerIndex = computed(() => {
+  if (isMulti) return multiWinnerIndex.value
+  if (aiWonGame.value) return 1
+  return completedLegs.value.length >= settings.legsToWin ? 0 : null
 })
 
 const resultSubtitle = computed(() => {
   const legs = matchStats.value?.legs.length ?? 0
-  return `${settings.startScore} pts · ${legs} manche${legs > 1 ? 's' : ''}`
+  return `${settings.startScore} · premier à ${settings.legsToWin} manche${settings.legsToWin > 1 ? 's' : ''} · ${legs} jouée${legs > 1 ? 's' : ''}`
 })
 
 const isLeagueMatch = isTournamentMatch
@@ -244,9 +244,9 @@ function quitGame() {
 }
 
 watch(aiWonLeg, (val) => {
-  if (val && aiLegHumanSnapshot.value?.volleys?.length) {
-    addLostLegVolleys(aiLegHumanSnapshot.value.volleys)
-  }
+  if (!val) return
+  if (aiLegHumanSnapshot.value?.volleys?.length) addLostLegVolleys(aiLegHumanSnapshot.value.volleys)
+  handleAILegContinue()
 })
 
 // ── Lancers spéciaux en temps réel (utilisateur connecté = meIndex) ────────
@@ -359,12 +359,12 @@ const humanLastScore = computed(() => lastVolleyLabel(volleys.value))
 // Average and checkout % over the whole game so far (current leg included)
 function averageLabel(idx) {
   const avg = threeDartAverage(legsForAnalysis(idx).flatMap(l => l.volleys))
-  return avg == null ? '–' : avg.toFixed(2)
+  return avg == null ? '–' : avg.toFixed(1).replace('.', ',')
 }
 
 function checkoutPctLabel(idx) {
   const pct = checkoutPct(computePlayerStats(legsForAnalysis(idx), settings.startScore))
-  return pct == null ? '–' : `${pct}%`
+  return pct == null ? '–' : `${Math.round(pct)} %`
 }
 
 // Build player cards for X01PlayerSplitCard
@@ -384,7 +384,6 @@ const playerCards = computed(() => {
           name:       p.name,
           remaining:  legRemaining.value,
           legsWon:    allCompletedLegs[i].value.length,
-          legsToWin:  settings.legsToWin,
           avgVolley:  averageLabel(i),
           lastScore:  humanLastScore.value,
           totalDarts: humanTotalDarts.value,
@@ -398,7 +397,6 @@ const playerCards = computed(() => {
           name:       p.name,
           remaining:  pRemaining,
           legsWon:    allCompletedLegs[i].value.length,
-          legsToWin:  settings.legsToWin,
           avgVolley:  averageLabel(i),
           lastScore:  lastVolleyLabel(pVols),
           totalDarts: pVols.reduce((sum, v) => sum + volleyDarts(v), 0),
@@ -413,7 +411,6 @@ const playerCards = computed(() => {
       name:       authStore.profile?.username ?? 'Toi',
       remaining:  legRemaining.value,
       legsWon:    completedLegs.value.length,
-      legsToWin:  settings.legsToWin,
       avgVolley:  averageLabel(meIndex),
       lastScore:  humanLastScore.value,
       totalDarts: humanTotalDarts.value,
@@ -451,36 +448,13 @@ const doublesPromptStartRemaining = computed(() => {
   return last ? legRemaining.value + (last.bust ? 0 : last.score) : null
 })
 
-// ── Données récap de manche ────────────────────────────────────────────────
-const showLegRecap = computed(() => phase.value === 'leg-recap' || aiWonLeg.value)
-const legWinner    = computed(() => aiWonLeg.value ? 'ai' : 'human')
-const lastLeg      = computed(() => completedLegs.value[completedLegs.value.length - 1])
-
-const recapVolleys = computed(() =>
-  legWinner.value === 'ai'
-    ? (aiLegHumanSnapshot.value?.volleys ?? [])
-    : (lastLeg.value?.volleys ?? [])
-)
-
-const recapTotalDarts = computed(() =>
-  legWinner.value === 'ai'
-    ? recapVolleys.value.reduce((sum, v) => sum + volleyDarts(v), 0)
-    : (lastLeg.value?.totalDarts ?? 0)
-)
-
-// Multi-player leg recap: use tracked winner index from useX01
-const multiLegWinner = computed(() => {
-  if (!isMulti || lastLegWinnerIndex.value == null) return null
-  const i    = lastLegWinnerIndex.value
-  const legs = allCompletedLegs[i].value
-  const last = legs[legs.length - 1] ?? null
-  return last ? { playerIndex: i, name: players[i]?.name, leg: last } : null
-})
-
-function startNextLegWithAI() {
+// ── Enchaînement des manches (pas de récap entre deux manches) ────────────
+// A human win closes the AI's leg in useX01AIOpponent first (its watcher was registered earlier)
+watch(phase, (val) => {
+  if (val !== 'leg-recap') return
   aiRemaining.value = settings.startScore
   startNextLeg()
-}
+})
 
 // Winner in multi-player
 const multiWinnerIndex = computed(() => {
@@ -502,99 +476,47 @@ const multiWinnerName = computed(() =>
 <template>
   <div class="x01">
 
-    <AppHeader :title="headerTitle" back-icon="exit" @back="router.push({ name: settingsRoute })">
-      <template v-if="phase !== 'game-over'" #right>
-        <button class="x01__menu-btn" @click="showMenu = true">
-          <AppIcon name="gear" :width="22" :height="22" />
-        </button>
-      </template>
-    </AppHeader>
-
     <!-- ── Jeu ──────────────────────────────────────────────────────────────── -->
-    <div v-if="phase === 'playing' || isBust" class="x01__game">
+    <section class="x01__panel">
+      <AppHeader :title="headerTitle" tone="green" back-icon="exit" @back="router.push({ name: settingsRoute })">
+        <template v-if="phase !== 'game-over'" #right>
+          <button class="x01__menu-btn" aria-label="Menu" @click="showMenu = true">
+            <AppIcon name="gear" :width="22" :height="22" />
+          </button>
+        </template>
+      </AppHeader>
 
-      <div class="x01__game-left">
-        <X01PlayerSplitCard
-          :players="playerCards"
-          :active-index="activeCardIndex"
-        />
+      <div class="x01__players">
+        <X01PlayerSplitCard :players="playerCards" :active-index="activeCardIndex" />
+
+        <p v-if="targeting" class="x01__status">Où vises-tu ?</p>
+        <p v-else-if="pendingTarget" class="x01__status">Visé {{ pendingTarget.label }} · touché ?</p>
+        <p v-else-if="isOpponentTurn" class="x01__status">
+          {{ online.loading.value ? 'Connexion…' : `${activePlayerName} joue…` }}
+          <span v-if="!online.loading.value && !online.opponentOnline.value" class="x01__offline">hors ligne</span>
+        </p>
       </div>
+    </section>
 
-      <div class="x01__game-main">
-        <DartSlotsHeader :tour-number="isBust ? volleyNumber - 1 : volleyNumber">
-          <template #right>
-            <span v-if="targeting" class="x01__turn-label x01__turn-label--target">
-              Où vises-tu ?
-            </span>
-            <span v-else-if="pendingTarget" class="x01__turn-label x01__turn-label--target">
-              Visé {{ pendingTarget.label }} · touché ?
-            </span>
-            <span v-else-if="isOpponentTurn" class="x01__turn-label x01__turn-label--ai">
-              {{ online.loading.value ? 'Connexion…' : `${activePlayerName} joue…` }}
-              <span v-if="!online.loading.value && !online.opponentOnline.value" class="x01__offline">
-                hors ligne
-              </span>
-            </span>
-            <span
-              v-else
-              class="x01__turn-label"
-              :class="{ 'x01__turn-label--ai': aiTurn && !isMulti }"
-            >
-              {{ aiTurn && !isMulti ? 'DartBot...' : `${activePlayerName} !` }}
-            </span>
-          </template>
-        </DartSlotsHeader>
-        <button v-if="online?.canUndoRemote.value" class="x01__remote-undo" @click="online.publishUndo">
-          <AppIcon name="undo" :width="16" :height="16" />
-          Annuler ma dernière volée
-        </button>
-        <GameInput
-          :darts="currentVolleyDarts"
-          value-key="label"
-          :bust="isBust"
-          :locked="isLocked || (aiTurn && !isMulti)"
-          toggleable
-          :force-dart="analysisZone"
-          :targeting="targeting"
-          @dart="handleDart"
-          @miss="handleMiss"
-          @bust="bustVolley"
-          @validate="confirmVolleyTotal"
-          @undo="handleUndo"
-        />
-      </div>
-    </div>
-
-    <!-- ── Récap de manche (vs AI) ──────────────────────────────────────────── -->
-    <X01LegRecap
-      v-if="!isMulti"
-      :show="showLegRecap"
-      :leg-winner="legWinner"
-      :has-a-i="!!aiProfile"
-      :human-remaining="aiLegHumanSnapshot?.remaining ?? legRemaining"
-      :ai-remaining="aiRemaining"
-      :total-darts="recapTotalDarts"
-      :checkout-score="lastLeg?.checkoutScore ?? null"
-      :ai-darts-used="aiLastVolley?.dartsUsed ?? null"
-      :volleys="recapVolleys"
-      @next="legWinner === 'ai' ? handleAILegContinue() : startNextLegWithAI()"
-    />
-
-    <!-- ── Récap de manche (multi-player) ────────────────────────────────────── -->
-    <X01LegRecap
-      v-if="isMulti"
-      :show="phase === 'leg-recap'"
-      leg-winner="human"
-      :winner-name="multiLegWinner?.name ?? null"
-      :has-a-i="false"
-      :human-remaining="0"
-      :ai-remaining="0"
-      :total-darts="multiLegWinner?.leg?.totalDarts ?? 0"
-      :checkout-score="multiLegWinner?.leg?.checkoutScore ?? null"
-      :ai-darts-used="null"
-      :volleys="multiLegWinner?.leg?.volleys ?? []"
-      @next="startNextLeg"
-    />
+    <main class="x01__entry">
+      <button v-if="online?.canUndoRemote.value" class="x01__remote-undo" @click="online.publishUndo">
+        <AppIcon name="undo" :width="16" :height="16" />
+        Annuler ma dernière volée
+      </button>
+      <GameInput
+        :darts="currentVolleyDarts"
+        value-key="label"
+        :bust="isBust"
+        :locked="isLocked || (aiTurn && !isMulti)"
+        :force-dart="analysisZone"
+        :targeting="targeting"
+        @dart="handleDart"
+        @miss="handleMiss"
+        @bust="bustVolley"
+        @validate="confirmVolleyTotal"
+        @undo="handleUndo"
+      />
+    </main>
 
     <!-- ── Modales ──────────────────────────────────────────────────────────── -->
     <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
@@ -613,6 +535,7 @@ const multiWinnerName = computed(() =>
     />
     <X01CheckoutModal
       :show="!!pendingCheckout"
+      :winner-name="activePlayerName"
       :default-darts="pendingCheckout?.defaultDarts ?? 3"
       :checkout-score="pendingCheckout?.checkoutScore ?? 0"
       @confirm="confirmCheckout"
@@ -620,20 +543,17 @@ const multiWinnerName = computed(() =>
 
     <!-- ── Résultats finaux ────────────────────────────────────────────────── -->
     <Transition name="slide-up">
-      <div v-if="phase === 'game-over'" class="x01__overlay">
-
-        <X01Result
-          :match-stats="matchStats"
-          :title="resultTitle"
-          :subtitle="resultSubtitle"
-          :emoji="aiWonGame ? '🤖' : '🏆'"
-          :title-color="aiWonGame ? 'orange' : null"
-          :replay-label="isTournamentMatch ? (isLeagueMatch ? 'Retour aux journées' : 'Retour au bracket') : 'Rejouer'"
-          :checkout-analysis="checkoutAnalysis"
-          @replay="handleReplay"
-          @home="router.push({ name: 'home' })"
-        />
-      </div>
+      <X01MatchEnd
+        v-if="phase === 'game-over'"
+        class="x01__result"
+        :match-stats="matchStats"
+        :winner-index="resultWinnerIndex"
+        :subtitle="resultSubtitle"
+        :replay-label="isTournamentMatch ? (isLeagueMatch ? 'Retour aux journées' : 'Retour au bracket') : 'Rejouer'"
+        :checkout-analysis="checkoutAnalysis"
+        @replay="handleReplay"
+        @home="router.push({ name: 'home' })"
+      />
     </Transition>
 
   </div>
@@ -643,13 +563,29 @@ const multiWinnerName = computed(() =>
 .x01 {
   display: flex;
   flex-direction: column;
-  gap: $gap-md;
   height: 100dvh;
   overflow: hidden;
-  padding: $padding-md;
+  background: $bg;
+
+  &__panel {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: $accent;
+  }
+
+  &__players {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
+    padding: 0 $padding-md $padding-sm;
+  }
 
   &__menu-btn {
-    color: $text-color;
+    color: $white;
     display: flex;
     align-items: center;
     transition: opacity 0.15s;
@@ -657,46 +593,29 @@ const multiWinnerName = computed(() =>
     &:active { opacity: 0.6; }
   }
 
-  &__game {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-md;
-  }
-
-  &__game-left {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
-    min-height: 0;
-    overflow-y: auto;
-  }
-
-  &__game-main {
+  &__status {
     flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-md;
-    flex: 1;
-  }
-
-  &__turn-label {
     @include title-sm;
-    font-weight: 700;
-    color: $orange;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-
-    &--ai     { color: $muted; }
-    &--target { color: $accent; }
+    color: $white;
+    text-align: center;
   }
 
   &__offline {
     @include text-xs;
-    color: $error;
+    color: $error-light;
     text-transform: none;
-    letter-spacing: 0;
+  }
+
+  // Same height whatever the input mode, so the score panel never jumps
+  &__entry {
+    flex-shrink: 0;
+    height: 480px;
+    max-height: 62dvh;
+    display: flex;
+    flex-direction: column;
+    gap: $gap-sm;
+    padding: $padding-sm $padding-md 0;
+    @include safe-bottom($padding-md);
   }
 
   &__remote-undo {
@@ -706,46 +625,42 @@ const multiWinnerName = computed(() =>
     gap: $gap-xs;
     @include text-sm;
     color: $text-color;
-    padding: $padding-sm $padding-md;
-    border: $border-sm solid rgba($white, 0.12);
-    border-radius: $radius-pill;
+    padding: $padding-xs $padding-md;
+    border: $border-md solid $border-color;
+    border-radius: $radius-sm;
     transition: opacity 0.15s;
 
     &:active { opacity: 0.6; }
   }
 
-  &__overlay {
+  &__result {
     position: fixed;
     inset: 0;
-    background: $bg;
     z-index: 90;
-    display: flex;
-    padding: $padding-md;
-  }
-}
-
-@media (min-width: $bp-tablet) {
-  .x01__game {
-    flex-direction: row;
-    align-items: stretch;
-    gap: $gap-lg;
-  }
-
-  .x01__game-left,
-  .x01__game-main {
-    flex: 1;
   }
 }
 
 @media (min-width: $bp-laptop) {
   .x01 {
-    padding: $padding-xl;
-  }
+    flex-direction: row;
 
-  .x01__game        { gap: $gap-xl; }
-  .x01__turn-label  { @include title-md; }
-  .x01__offline     { @include text-sm; }
-  .x01__remote-undo { @include text-md; }
+    &__panel   { flex: 1; min-width: 0; padding: $padding-md; }
+    &__players { padding: 0 $padding-md $padding-md; gap: $gap-md; }
+    &__status  { @include title-md; }
+    &__offline { @include text-sm; }
+
+    &__entry {
+      flex: 1;
+      min-width: 0;
+      height: auto;
+      max-height: none;
+      gap: $gap-md;
+      padding: $padding-xxl $padding-xxl 0;
+      @include safe-bottom($padding-xxl);
+    }
+
+    &__remote-undo { @include text-md; }
+  }
 }
 
 .slide-up-enter-active { transition: transform 0.3s ease, opacity 0.3s; }

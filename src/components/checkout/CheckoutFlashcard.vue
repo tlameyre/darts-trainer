@@ -1,8 +1,10 @@
 <script setup>
-import { ref, shallowRef, computed, watch } from 'vue'
+import { ref, shallowRef, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import AppIcon from '../AppIcon.vue'
 import CheckoutRouteCard from './CheckoutRouteCard.vue'
 import CheckoutBoardRoute from './CheckoutBoardRoute.vue'
+import { bracketOf } from '../../composables/useCheckouts.js'
+import { useMediaQuery } from '../../composables/useMediaQuery.js'
 
 const props = defineProps({
   score: { type: Number, default: null },
@@ -15,6 +17,14 @@ const props = defineProps({
 const emit = defineEmits(['toggle', 'grade']) // grade payload: true = acquis, false = à revoir
 
 const fillPct = computed(() => Math.round((props.done / props.total) * 100))
+
+const bracketTag = computed(() => {
+  const b = bracketOf(props.score)
+  return b ? `${b.label} · ${b.points} pt${b.points > 1 ? 's' : ''}` : null
+})
+
+// Same value as $bp-laptop: the route list moves from the card to the side column
+const isLaptop = useMediaQuery('(min-width: 1025px)')
 
 // Route affichée sur la cible — remise sur la recommandée à chaque carte.
 const selectedRoute = shallowRef(null)
@@ -121,13 +131,30 @@ function grade(known) {
     setTimeout(() => { animating.value = false }, 50)
   }, FLY_MS)
 }
+
+// Desktop shortcuts: Space reveals, ← / → grade the revealed card
+function onKey(e) {
+  if (e.target.closest?.('input, textarea')) return
+  if (e.code === 'Space') {
+    e.preventDefault()
+    if (!props.revealed) emit('toggle')
+  } else if (props.revealed && e.key === 'ArrowLeft') {
+    grade(false)
+  } else if (props.revealed && e.key === 'ArrowRight') {
+    grade(true)
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', onKey))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </script>
 
 <template>
   <div class="deck">
-    <div class="deck__top">
-      <div class="deck__bar"><div class="deck__bar-fill" :style="{ width: fillPct + '%' }" /></div>
-      <span class="deck__counter">{{ done }} / {{ total }}</span>
+    <div class="deck__progress">
+      <span class="deck__side-label">Progression</span>
+      <span class="deck__bar"><span class="deck__bar-fill" :style="{ width: fillPct + '%' }" /></span>
+      <span class="deck__counter"><b>{{ done }}</b> / {{ total }} acquis</span>
     </div>
 
     <div
@@ -139,44 +166,77 @@ function grade(known) {
       @pointerup="onUp"
       @pointercancel="onUp"
     >
-      <div class="deck__face" :class="{ 'deck__face--hidden': revealed, 'deck__face--no-transition': animating }">
-        <div class="deck__score">{{ score }}</div>
-        <p class="deck__hint">Tape pour révéler la sortie</p>
+      <div class="deck__face deck__face--front" :class="{ 'deck__face--hidden': revealed, 'deck__face--no-transition': animating }">
+        <span v-if="bracketTag" class="deck__tag deck__tag--corner">{{ bracketTag }}</span>
+        <span class="deck__kicker">Reste à finir</span>
+        <span class="deck__score">{{ score }}</span>
+        <span class="deck__hint">{{ isLaptop ? 'Clique' : 'Touche' }} la carte pour révéler les routes</span>
       </div>
-      <button v-if="revealed" type="button" class="deck__back" aria-label="Revenir au score" @click="emit('toggle')">
-        <AppIcon name="arrow-left" :width="22" :height="22" />
-      </button>
 
       <div class="deck__face deck__face--back" :class="{ 'deck__face--hidden': !revealed, 'deck__face--no-transition': animating }">
-        <button type="button" class="deck__board-btn" @click="emit('toggle')">
-          <CheckoutBoardRoute :route="selectedRoute || []" />
-        </button>
-        <div class="deck__detail">
-          <div class="deck__value">{{ score }}</div>
-          <CheckoutRouteCard
-            :checkout="checkout"
-            size="md"
-            selectable
-            :selected="selectedRoute"
-            class="deck__routes"
-            @select="selectedRoute = $event"
-          />
+        <div class="deck__band">
+          <button type="button" class="deck__back" aria-label="Revenir au score" @click="emit('toggle')">
+            <AppIcon name="arrow-left" :width="22" :height="22" />
+          </button>
+          <span class="deck__band-score">
+            <span class="deck__kicker">Reste à finir</span>
+            <span class="deck__value">{{ score }}</span>
+          </span>
+          <span v-if="bracketTag" class="deck__tag">{{ bracketTag }}</span>
         </div>
+        <div class="deck__board">
+          <CheckoutBoardRoute :route="selectedRoute || []" />
+        </div>
+        <CheckoutRouteCard
+          v-if="!isLaptop"
+          :checkout="checkout"
+          selectable
+          :selected="selectedRoute"
+          class="deck__routes"
+          @select="selectedRoute = $event"
+        />
       </div>
     </div>
 
-    <div class="deck__actions">
-      <template v-if="revealed">
-        <div class="deck__grades">
-          <button class="deck__grade deck__grade--again" @click="grade(false)">
-            <AppIcon name="undo" :width="18" :height="18" /> À revoir
-          </button>
-          <button class="deck__grade deck__grade--good" @click="grade(true)">
-            <AppIcon name="check" :width="18" :height="18" /> Acquis
-          </button>
+    <div class="deck__side">
+      <template v-if="isLaptop">
+        <div v-if="revealed" class="deck__side-block">
+          <span class="deck__side-label">Routes · clique pour l'afficher sur la cible</span>
+          <CheckoutRouteCard
+            :checkout="checkout"
+            selectable
+            :selected="selectedRoute"
+            @select="selectedRoute = $event"
+          />
         </div>
+        <template v-else>
+          <p class="deck__help">
+            Trouve la sortie de tête, puis révèle les routes pour vérifier.
+            Marque ensuite la carte comme acquise ou à revoir.
+          </p>
+          <div class="deck__keys">
+            <span class="deck__key-line"><kbd class="deck__key">Espace</kbd> révéler</span>
+            <span class="deck__key-line">
+              <kbd class="deck__key">←</kbd> à revoir · <kbd class="deck__key">→</kbd> acquis
+            </span>
+          </div>
+        </template>
       </template>
-      <button v-else class="deck__reveal" @click="emit('toggle')">Révéler</button>
+
+      <div class="deck__actions">
+        <template v-if="revealed">
+          <div class="deck__grades">
+            <button class="deck__btn deck__btn--again" @click="grade(false)">
+              <AppIcon name="undo" :width="20" :height="20" /> À revoir
+            </button>
+            <button class="deck__btn deck__btn--good" @click="grade(true)">
+              <AppIcon name="check" :width="20" :height="20" /> Acquis
+            </button>
+          </div>
+          <span v-if="!isLaptop" class="deck__swipe-hint">ou glisse la carte : ← à revoir · acquis →</span>
+        </template>
+        <button v-else class="deck__btn deck__btn--reveal" @click="emit('toggle')">Révéler</button>
+      </div>
     </div>
   </div>
 </template>
@@ -189,43 +249,45 @@ function grade(known) {
   flex-direction: column;
   gap: $gap-md;
 
-  &__top {
+  &__progress {
     display: flex;
     align-items: center;
     gap: $gap-sm;
     flex-shrink: 0;
   }
 
+  &__side-label {
+    display: none;
+    @include title-sm;
+    color: $muted;
+  }
+
   &__bar {
     flex: 1;
-    height: 6px;
-    border-radius: $radius-pill;
-    background: rgba($white, 0.12);
-    overflow: hidden;
+    height: 8px;
+    display: flex;
+    border-radius: $radius-sm;
+    background: $surface;
   }
 
   &__bar-fill {
-    height: 100%;
-    border-radius: $radius-pill;
-    background: $accent;
+    border-radius: $radius-sm;
+    background: $mode-checkout;
     transition: width 0.25s ease;
   }
 
   &__counter {
-    @include text-xs;
+    @include text-sm;
     color: $muted;
     font-variant-numeric: tabular-nums;
-    flex-shrink: 0;
+
+    b { color: $text-color; font-weight: 600; }
   }
 
   &__card {
     position: relative;
     flex: 1;
     min-height: 0;
-    background: rgba($white, 0.05);
-    border: $border-sm solid rgba($white, 0.08);
-    border-radius: $radius-lg;
-    overflow: hidden;
     touch-action: pan-y;
     user-select: none;
     will-change: transform;
@@ -236,185 +298,259 @@ function grade(known) {
     inset: 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-md;
-    padding: $padding-lg;
+    border-radius: $radius-sm;
+    overflow: hidden;
     transition: opacity 0.15s ease;
-
-    &--back {
-      justify-content: flex-start;
-      gap: $gap-md;
-      overflow: hidden;
-      padding-bottom: 0;
-    }
 
     &--hidden {
       opacity: 0;
       pointer-events: none;
     }
 
-    &--no-transition {
-      transition: none;
+    &--no-transition { transition: none; }
+  }
+
+  &__face--front {
+    align-items: center;
+    justify-content: center;
+    gap: $gap-sm;
+    background: $mode-checkout;
+    color: $white;
+    cursor: pointer;
+  }
+
+  &__face--back {
+    gap: $gap-sm;
+    padding-bottom: $padding-sm;
+    background: $surface;
+  }
+
+  &__tag {
+    margin-left: auto;
+    padding: 2px $padding-xs;
+    border-radius: $radius-sm;
+    background: rgba($white, 0.2);
+    @include title-sm;
+
+    &--corner {
+      position: absolute;
+      top: $padding-sm;
+      left: $padding-sm;
+      margin: 0;
     }
+  }
+
+  &__kicker {
+    @include text-xs;
+    font-weight: 600;
+    letter-spacing: $tracking-lg;
+    text-transform: uppercase;
+    opacity: 0.8;
   }
 
   &__score {
     @include display-xl;
-    color: $white;
+    line-height: 0.85;
     font-variant-numeric: tabular-nums;
-    line-height: 1;
   }
 
   &__hint {
+    margin-top: $gap-xs;
+    padding: $padding-xs $padding-sm;
+    border-radius: $radius-sm;
+    background: rgba($white, 0.16);
     @include text-sm;
-    color: $muted;
+    font-weight: 600;
+  }
+
+  &__band {
+    display: flex;
+    align-items: center;
+    gap: $gap-sm;
+    padding: $padding-sm;
+    background: $mode-checkout;
+    color: $white;
   }
 
   &__back {
-    position: absolute;
-    top: $padding-sm;
-    left: $padding-sm;
-    z-index: 2;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
     border-radius: $radius-sm;
-    background: rgba($white, 0.08);
+    background: rgba($white, 0.2);
     color: $white;
-    cursor: pointer;
     transition: opacity 0.15s;
 
     &:active { opacity: 0.6; }
   }
 
-  &__board-btn {
-    flex: 3;
-    min-height: 0;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    container-type: size;
-    cursor: pointer;
-
-    &:active { opacity: 0.85; }
-  }
-
-  &__detail {
+  &__band-score {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: $gap-md;
-    flex: 2;
-    min-height: 0;
-    width: 100%;
   }
 
   &__value {
-    @include display-sm;
-    color: $white;
+    @include title-xxxl;
+    line-height: 0.9;
     font-variant-numeric: tabular-nums;
-    line-height: 1;
-    flex-shrink: 0;
   }
 
-  &__routes {
-    width: 100%;
-    max-width: 460px;
+  &__board {
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
-    padding-bottom: $padding-lg;
+    display: flex;
+    justify-content: center;
+    container-type: size;
   }
+
+  // Long route lists scroll so the board keeps most of the card
+  &__routes {
+    flex-shrink: 0;
+    max-height: 40%;
+    padding: 0 $padding-sm;
+    overflow-y: auto;
+  }
+
+  &__side { display: contents; }
 
   &__actions {
     display: flex;
     flex-direction: column;
-    gap: $gap-sm;
+    gap: $gap-xs;
     flex-shrink: 0;
   }
 
-  &__ask {
-    @include text-sm;
-    color: $muted;
-    text-align: center;
-  }
-
   &__grades {
-    display: flex;
-    gap: $gap-sm;
-
-    > * { flex: 1; }
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: $gap-xs;
   }
 
-  &__reveal,
-  &__grade {
+  &__btn {
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: $gap-xs;
-    height: 48px;
     border-radius: $radius-sm;
-    @include title-sm;
-    font-weight: 700;
-    text-transform: uppercase;
-    transition: filter 0.15s;
+    @include title-lg;
+    transition: opacity 0.15s;
 
-    &:active { filter: brightness(1.15); }
+    &:active { opacity: 0.8; }
+
+    &--reveal {
+      background: $black;
+      color: $white;
+      @include title-xl;
+      letter-spacing: $tracking-sm;
+    }
+
+    &--again {
+      border: $border-md solid $text-color;
+      color: $text-color;
+    }
+
+    &--good {
+      background: $mode-checkout;
+      color: $white;
+    }
   }
 
-  &__reveal {
-    background: $orange;
-    color: $white;
-  }
-
-  &__grade--again {
-    background: rgba($error, 0.18);
-    color: $error-light;
-    border: $border-sm solid rgba($error, 0.4);
-  }
-
-  &__grade--good {
-    background: rgba($accent, 0.2);
-    color: $accent-light;
-    border: $border-sm solid rgba($accent, 0.5);
+  &__swipe-hint {
+    @include text-xs;
+    color: $muted;
+    text-align: center;
   }
 }
 
 @media (min-width: $bp-laptop) {
   .deck {
-    &__counter { @include text-sm; }
-    &__hint { @include text-md; }
-    &__reveal, &__grade { height: 52px; @include title-md; }
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 440px;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: $gap-xl $gap-xxl + $gap-xs;
 
-    // Verso : cible à gauche, finish + routes à droite
-    &__face--back {
-      flex-direction: row;
-      align-items: stretch;
+    &__card { grid-row: 1 / span 2; grid-column: 1; }
+
+    &__side {
+      grid-row: 2;
+      grid-column: 2;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
       gap: $gap-xl;
-      padding: $padding-xl;
     }
 
-    &__board-btn {
-      flex: 1;
-      min-width: 0;
-      width: auto;
-      align-items: center;
-    }
-
-    &__detail {
-      flex: 1;
-      min-width: 0;
+    &__progress {
+      grid-row: 1;
+      grid-column: 2;
+      flex-direction: column;
       align-items: stretch;
-      gap: $gap-lg;
+      gap: $gap-xs;
     }
 
-    &__value { text-align: center; }
+    &__side-label { display: block; @include title-sm; }
+    &__bar        { flex: none; height: 10px; }
+    &__counter    { @include text-md; }
 
-    &__routes { max-width: none; }
+    &__tag              { padding: $padding-xxs $padding-xs; @include title-lg; }
+    &__tag--corner      { top: $padding-lg; left: $padding-lg; }
+    &__kicker           { @include text-sm; }
+    &__score            { @include display-xxl; }
+    &__hint             { padding: $padding-xs $padding-md; @include text-md; }
+    &__band             { gap: $gap-md; padding: $padding-md $padding-lg; }
+    &__back             { width: 48px; height: 48px; }
+    &__value            { @include display-xs; }
+    &__face--back       { padding-bottom: 0; }
+    &__board            { padding: $padding-sm; }
+
+    &__side-block {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: $gap-xs;
+      overflow-y: auto;
+    }
+
+    &__help {
+      @include text-md;
+      line-height: 1.45;
+      color: $muted;
+    }
+
+    &__keys {
+      display: flex;
+      flex-direction: column;
+      gap: $gap-xs;
+      @include text-md;
+      color: $muted;
+    }
+
+    &__key-line {
+      display: flex;
+      align-items: center;
+      gap: $gap-xs;
+    }
+
+    &__key {
+      min-width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 $padding-xxs;
+      border: $border-md solid $border-color;
+      border-radius: $radius-sm;
+      background: $white;
+      color: $text-color;
+      @include title-sm;
+    }
+
+    &__actions { margin-top: auto; }
+    &__btn     { height: 64px; @include title-xxl; }
   }
 }
 </style>

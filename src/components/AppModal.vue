@@ -19,10 +19,11 @@ defineEmits(['close'])
       <div v-if="show" class="app-modal" :class="{ 'app-modal--centered': centered }" :style="{ zIndex }">
         <div class="app-modal__backdrop" @click="$emit('close')" />
         <div class="app-modal__sheet" :class="`app-modal__sheet--${size}`" :style="minHeight ? { minHeight } : undefined">
+          <span class="app-modal__handle" />
           <div v-if="title" class="app-modal__header">
-            <span class="app-modal__title">{{ title }}</span>
-            <button class="app-modal__close" @click="$emit('close')">
-              <AppIcon name="close" :width="24" :height="24" />
+            <h2 class="app-modal__title">{{ title }}</h2>
+            <button class="app-modal__close" aria-label="Fermer" @click="$emit('close')">
+              <AppIcon name="close" :width="16" :height="16" />
             </button>
           </div>
           <slot />
@@ -39,24 +40,18 @@ defineEmits(['close'])
   display: flex;
   align-items: flex-end;
 
-  &--centered {
-    @media (min-width: $bp-tablet) {
-      align-items: center;
-      justify-content: center;
-    }
-  }
-
   &__backdrop {
     position: absolute;
     inset: 0;
-    background: rgba($black, 0.65);
+    background: rgba($black, 0.6);
   }
 
   &__sheet {
     position: relative;
     width: 100%;
     margin: 0 auto;
-    background: #1e2b28;
+    background: $bg;
+    color: $text-color;
     border-radius: $radius-lg $radius-lg 0 0;
     display: flex;
     flex-direction: column;
@@ -64,63 +59,84 @@ defineEmits(['close'])
     overflow-y: auto;
 
     &--sm {
-      padding: $padding-md $padding-md $padding-xxl;
+      padding: $padding-sm $padding-md $padding-xxl;
       gap: $gap-md;
 
       @media (min-width: $bp-laptop) {
-        padding: $padding-xl $padding-xl $padding-xxl;
+        padding: $padding-sm $padding-xl $padding-xxl;
         gap: $gap-lg;
       }
     }
 
     &--lg {
-      padding: $padding-xl $padding-md calc($padding-xl + env(safe-area-inset-bottom, 0px));
+      padding: $padding-sm $padding-md calc(#{$padding-xl} + env(safe-area-inset-bottom, 0px));
       gap: $gap-lg;
 
       @media (min-width: $bp-laptop) {
-        padding: $padding-xxl $padding-xl calc($padding-xxl + env(safe-area-inset-bottom, 0px));
+        padding: $padding-sm $padding-xl calc(#{$padding-xxl} + env(safe-area-inset-bottom, 0px));
         gap: $gap-xl;
       }
     }
   }
 
-  &--centered &__sheet {
-    @media (min-width: $bp-tablet) {
-      width: auto;
-      min-width: 50%;
-      border-radius: $radius-lg;
-    }
+  &__handle {
+    align-self: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 4px;
+    border-radius: $radius-pill;
+    background: $border-color;
   }
 
   &__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: $gap-sm;
-    border-bottom: 1px solid rgba($white, 0.08);
+    gap: $gap-sm;
     position: sticky;
     top: 0;
-    background: #1e2b28;
+    background: $bg;
     z-index: 1;
   }
 
   &__title {
-    @include title-sm;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-
-    @media (min-width: $bp-laptop) { @include title-md; }
+    @include title-xxl;
+    line-height: 1;
   }
 
   &__close {
-    color: $muted;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
-    flex-shrink: 0;
+    justify-content: center;
+    border-radius: $radius-sm;
+    background: $surface;
+    color: $text-color;
 
-    &:active {
-      color: $text-color;
+    &:active { background: $border-color; }
+  }
+}
+
+// Desktop: a centered dialog instead of a bottom sheet
+@media (min-width: $bp-laptop) {
+  .app-modal--centered {
+    align-items: center;
+    justify-content: center;
+
+    .app-modal__sheet {
+      width: 560px;
+      padding-top: $padding-xl;
+      border-radius: $radius-lg;
+    }
+
+    .app-modal__handle { display: none; }
+    .app-modal__title { @include title-xxxl; line-height: 1; }
+
+    .app-modal__close {
+      width: 44px;
+      height: 44px;
     }
   }
 }
@@ -140,6 +156,13 @@ defineEmits(['close'])
 
   .app-modal__sheet {
     transform: translateY(100%);
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .app-sheet-enter-from.app-modal--centered,
+  .app-sheet-leave-to.app-modal--centered {
+    .app-modal__sheet { transform: translateY(16px); }
   }
 }
 </style>

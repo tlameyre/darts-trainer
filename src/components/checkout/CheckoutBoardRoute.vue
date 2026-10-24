@@ -123,10 +123,11 @@ const badgeW = (label) => 34 + Math.max(0, label.length - 1) * 7
       :d="seg.d"
     />
 
-    <circle v-if="marks.length" class="board__dim" :cx="C" :cy="C" r="212" />
-
     <path v-for="m in marks" :key="`hl-${m.key}`" class="board__target" :d="m.path" />
-    <polyline v-if="linePoints" class="board__link" :points="linePoints" />
+    <template v-if="linePoints">
+      <polyline class="board__link board__link--halo" :points="linePoints" />
+      <polyline class="board__link" :points="linePoints" />
+    </template>
 
     <path v-for="(d, i) in NUMBER_LABEL_PATHS" :key="i" class="board__label" :d="d" />
 
@@ -170,38 +171,36 @@ const badgeW = (label) => 34 + Math.max(0, label.length - 1) * 7
   pointer-events: none;
 }
 
-.board__dim {
-  fill: rgba(#000, 0.42);
-  pointer-events: none;
-}
-
 .board__target {
-  fill: rgba($accent, 0.5);
-  stroke: $accent;
-  stroke-width: 4;
-  stroke-linejoin: round;
-  paint-order: stroke;
+  fill: $mode-checkout;
+  stroke: $dart-border;
+  stroke-width: 1.1;
 }
 
+// Dashed cyan route over a white halo so it reads on every segment color
 .board__link {
   fill: none;
-  stroke: $white;
-  stroke-width: 3.5;
-  stroke-dasharray: 3 8;
+  stroke: $mode-checkout;
+  stroke-width: 5;
+  stroke-dasharray: 4 12;
   stroke-linecap: round;
+
+  &--halo {
+    stroke: $white;
+    stroke-width: 9;
+  }
 }
 
 .board__badge {
   rect {
-    fill: $accent;
-    stroke: $white;
-    stroke-width: 2.5;
+    fill: $black;
+    stroke: $mode-checkout;
+    stroke-width: 3;
   }
 
   text {
     fill: $white;
-    font-weight: 700;
-    font-size: 19px;
+    @include title-lg;
     text-anchor: middle;
     dominant-baseline: central;
   }

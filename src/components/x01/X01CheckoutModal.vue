@@ -6,6 +6,7 @@ import AppIcon from '../AppIcon.vue'
 
 const props = defineProps({
   show:          { type: Boolean, required: true },
+  winnerName:    { type: String,  default: null },
   defaultDarts:  { type: Number,  default: 3 },
   checkoutScore: { type: Number,  default: 0 },
 })
@@ -43,10 +44,13 @@ function confirm() {
 <template>
   <AppModal :show :z-index="110" size="lg" @close="confirm">
     <div class="co-modal__header">
-      <span class="co-modal__trophy">🏆</span>
-      <p class="co-modal__title">Checkout {{ checkoutScore }} !</p>
-      <button class="co-modal__close" @click="confirm">
-        <AppIcon name="close" :width="16" :height="16" />
+      <span class="co-modal__trophy"><AppIcon name="trophy" :width="24" :height="24" /></span>
+      <div class="co-modal__heading">
+        <span v-if="winnerName" class="co-modal__label">{{ winnerName }} remporte la manche</span>
+        <p class="co-modal__title">Checkout {{ checkoutScore }} !</p>
+      </div>
+      <button class="co-modal__close" aria-label="Fermer" @click="confirm">
+        <AppIcon name="close" :width="22" :height="22" />
       </button>
     </div>
 
@@ -57,10 +61,8 @@ function confirm() {
           v-for="n in [1, 2, 3]"
           :key="n"
           class="co-modal__btn"
-          :class="{
-            'co-modal__btn--active':   dartsToFinish === n,
-            'co-modal__btn--disabled': n < minDarts,
-          }"
+          :class="{ 'co-modal__btn--active': dartsToFinish === n }"
+          :aria-pressed="dartsToFinish === n"
           :disabled="n < minDarts"
           @click="dartsToFinish = n"
         >
@@ -70,16 +72,14 @@ function confirm() {
     </div>
 
     <div class="co-modal__group">
-      <p class="co-modal__label">Dont sur un double</p>
+      <p class="co-modal__label">Dont tentées sur un double</p>
       <div class="co-modal__options">
         <button
           v-for="n in [1, 2, 3]"
           :key="n"
           class="co-modal__btn"
-          :class="{
-            'co-modal__btn--active':   doublesThrown === n,
-            'co-modal__btn--disabled': n > maxDoubles,
-          }"
+          :class="{ 'co-modal__btn--active': doublesThrown === n }"
+          :aria-pressed="doublesThrown === n"
           :disabled="n > maxDoubles"
           @click="doublesThrown = n"
         >
@@ -88,7 +88,7 @@ function confirm() {
       </div>
     </div>
 
-    <button class="co-modal__confirm" @click="confirm">Confirmer</button>
+    <button class="co-modal__confirm" @click="confirm">Valider la manche</button>
   </AppModal>
 </template>
 
@@ -100,66 +100,85 @@ function confirm() {
     gap: $gap-sm;
   }
 
-  &__trophy { @include title-xxl; line-height: 1; flex-shrink: 0; }
-
-  &__title {
-    @include title-xl;
-    color: $white;
-    flex: 1;
-  }
-
-  &__close {
-    color: $muted;
+  &__trophy {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: $radius-sm;
+    background: $accent;
+    color: $white;
+  }
+
+  &__heading {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__title {
+    @include title-xxl;
+    line-height: 1.05;
+  }
+
+  &__close {
+    color: $text-color;
+    display: flex;
     padding: $padding-xxs;
     flex-shrink: 0;
-    transition: color 0.15s;
-    &:active { color: $white; }
+    transition: opacity 0.15s;
+    &:active { opacity: 0.6; }
   }
 
   &__group {
     display: flex;
     flex-direction: column;
-    gap: $gap-sm;
+    gap: $gap-xs;
   }
 
   &__label {
-    @include title-sm;
+    @include text-xs;
+    font-weight: 600;
     color: $muted;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: $tracking-lg;
   }
 
   &__options {
-    display: flex;
-    gap: $gap-sm;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: $gap-xs;
   }
 
   &__btn {
-    flex: 1;
-    background: rgba($white, 0.07);
+    height: 64px;
     border-radius: $radius-sm;
-    padding: $padding-md;
-    @include title-xxl;
-    font-weight: 700;
-    color: $white;
-    transition: background 0.12s, transform 0.1s;
+    border: $border-md solid $text-color;
+    color: $text-color;
+    @include title-xxxl;
+    transition: transform 0.1s;
 
     &:active:not(:disabled) { transform: scale(0.96); }
-    &--active   { background: $orange; }
-    &--disabled { opacity: 0.2; cursor: default; }
+
+    &--active {
+      background: $accent;
+      border-color: $accent;
+      color: $white;
+    }
+
+    &:disabled { opacity: 0.2; cursor: default; }
   }
 
   &__confirm {
-    background: $orange;
+    height: 56px;
     border-radius: $radius-sm;
-    padding: $padding-md;
-    @include title-md;
-    font-weight: 700;
-    text-transform: uppercase;
+    background: $accent;
     color: $white;
+    @include title-lg;
+    letter-spacing: $tracking-sm;
     transition: opacity 0.15s;
 
     &:active { opacity: 0.8; }
@@ -168,10 +187,10 @@ function confirm() {
 
 @media (min-width: $bp-laptop) {
   .co-modal {
-    &__title   { @include title-xxl; }
-    &__label   { @include title-md; }
-    &__btn     { @include display-xs; padding: $padding-lg; }
-    &__confirm { @include title-lg; padding: $padding-lg; }
+    &__title   { @include title-xxxl; }
+    &__label   { @include text-sm; }
+    &__btn     { height: 80px; @include display-xs; }
+    &__confirm { height: 64px; @include title-xl; }
   }
 }
 </style>

@@ -12,42 +12,64 @@ defineEmits(['finish', 'quit', 'close'])
 </script>
 
 <template>
-  <AppModal :show title="Partie en cours" @close="$emit('close')">
-    <button class="gm-modal__item gm-modal__item--finish" @click="$emit('finish')">
-      <AppIcon name="check" :width="20" :height="20" />
-      {{ finishLabel }}
-    </button>
+  <AppModal :show title="Partie en cours" centered @close="$emit('close')">
+    <div class="gm-modal">
+      <button class="gm-modal__item gm-modal__item--finish" @click="$emit('finish')">
+        <AppIcon name="check" :width="22" :height="22" />
+        {{ finishLabel }}
+      </button>
 
-    <button class="gm-modal__item gm-modal__item--quit" @click="$emit('quit')">
-      <AppIcon name="exit" :width="20" :height="20" />
-      {{ quitLabel }}
-    </button>
+      <button class="gm-modal__item gm-modal__item--quit" @click="$emit('quit')">
+        <AppIcon name="exit" :width="22" :height="22" />
+        {{ quitLabel }}
+      </button>
+
+      <button class="gm-modal__item" @click="$emit('close')">
+        <AppIcon name="arrow-left" :width="22" :height="22" />
+        Reprendre la partie
+      </button>
+    </div>
   </AppModal>
 </template>
 
 <style lang="scss" scoped>
 .gm-modal {
+  display: flex;
+  flex-direction: column;
+  gap: $gap-xs;
+
   &__item {
+    height: 56px;
     display: flex;
     align-items: center;
     gap: $gap-sm;
-    @include text-sm;
-    padding: $padding-md;
+    padding: 0 $padding-md;
     border-radius: $radius-sm;
-    transition: background 0.15s;
+    border: $border-md solid $text-color;
+    color: $text-color;
+    @include title-lg;
     text-align: left;
+    transition: opacity 0.15s;
 
-    &:active { background: rgba($white, 0.06); }
+    &:active { opacity: 0.75; }
 
-    &--finish { color: $accent; }
-    &--quit   { color: $error; }
+    &--finish {
+      background: $accent;
+      border-color: $accent;
+      color: $white;
+    }
+
+    &--quit {
+      border-color: $error;
+      color: $error;
+    }
   }
 }
 
 @media (min-width: $bp-laptop) {
   .gm-modal__item {
-    @include text-md;
-    padding: $padding-lg;
+    height: 64px;
+    @include title-xl;
   }
 }
 </style>

@@ -1,98 +1,81 @@
 <script setup>
 import AppIcon from './AppIcon.vue'
 
-const emit = defineEmits(['digit', 'delete', 'validate'])
+defineProps({
+  locked: { type: Boolean, default: false },
+})
 
-const rows = [
-  [
-    { label: '1', action: () => emit('digit', '1') },
-    { label: '2', action: () => emit('digit', '2') },
-    { label: '3', action: () => emit('digit', '3') },
-  ],
-  [
-    { label: '4', action: () => emit('digit', '4') },
-    { label: '5', action: () => emit('digit', '5') },
-    { label: '6', action: () => emit('digit', '6') },
-  ],
-  [
-    { label: '7', action: () => emit('digit', '7') },
-    { label: '8', action: () => emit('digit', '8') },
-    { label: '9', action: () => emit('digit', '9') },
-  ],
-  [
-    { icon: 'delete', mod: 'del', action: () => emit('delete') },
-    { label: '0', action: () => emit('digit', '0') },
-    { icon: 'check', mod: 'validate', action: () => emit('validate') },
-  ],
+const emit = defineEmits(['digit', 'undo', 'validate'])
+
+const keys = [
+  ...['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(d => ({ label: d, action: () => emit('digit', d) })),
+  { icon: 'undo', mod: 'undo', aria: 'Volée précédente', action: () => emit('undo') },
+  { label: '0', action: () => emit('digit', '0') },
+  { icon: 'check', mod: 'validate', aria: 'Valider la volée', action: () => emit('validate') },
 ]
 </script>
 
 <template>
   <div class="numpad">
-    <div v-for="(row, ri) in rows" :key="ri" class="numpad__row">
-      <div class="numpad__row-keys">
-        <button v-for="key in row" :key="key.icon ?? key.label" class="numpad__key"
-          :class="key.mod && `numpad__key--${key.mod}`" @click="key.action">
-          <AppIcon v-if="key.icon" :name="key.icon" :width="32" :height="32" />
-          <template v-else>{{ key.label }}</template>
-        </button>
-      </div>
-    </div>
+    <button
+      v-for="key in keys"
+      :key="key.icon ?? key.label"
+      class="numpad__key"
+      :class="key.mod && `numpad__key--${key.mod}`"
+      :aria-label="key.aria"
+      :disabled="locked && key.mod !== 'undo'"
+      @click="key.action"
+    >
+      <AppIcon v-if="key.icon" :name="key.icon" :width="28" :height="28" />
+      <template v-else>{{ key.label }}</template>
+    </button>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .numpad {
-  display: flex;
   flex: 1;
-  flex-direction: column;
-
-  &__row {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-
-    &:not(:last-child) .numpad__row-keys {
-      border-bottom: $border-md solid $white;
-    }
-  }
-
-  &__row-keys {
-    display: grid;
-    flex: 1;
-    grid-template-columns: repeat(3, 1fr);
-  }
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: $gap-xs;
 
   &__key {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
-    border: none;
+    border-radius: $radius-sm;
+    border: $border-md solid $text-color;
+    background: $bg;
     color: $text-color;
     @include title-xxl;
-    padding: 0;
-    transition: background 0.1s, transform 0.08s;
+    transition: transform 0.08s, opacity 0.15s;
 
-    &:not(:last-child) {
-      border-right: $border-md solid $white;
-    }
+    &:active:not(:disabled) { transform: scale(0.96); }
+    &:disabled { opacity: 0.4; }
 
-    &:active {
-      background: rgba($white, 0.06);
-    }
-
-    &--del {
-      color: $white;
+    &--undo {
+      background: $surface;
+      border-color: $border-color;
     }
 
     &--validate {
-      color: $accent;
+      background: $accent;
+      border-color: $accent;
+      color: $white;
     }
   }
 }
 
 @media (min-width: $bp-laptop) {
-  .numpad__key { @include display-xs; }
+  .numpad__key {
+    @include display-xs;
+
+    :deep(svg) {
+      width: 44px;
+      height: 44px;
+    }
+  }
 }
 </style>

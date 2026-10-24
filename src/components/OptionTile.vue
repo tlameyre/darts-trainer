@@ -3,6 +3,9 @@ defineProps({
   modelValue: Boolean,
   title: { type: String, required: true },
   description: String,
+  // Radio-like tiles (one choice among several) don't need the on/off badge
+  showBadge: { type: Boolean, default: true },
+  tone: { type: String, default: 'orange', validator: v => ['orange', 'green', 'cyan'].includes(v) },
 })
 
 defineEmits(['update:modelValue'])
@@ -11,16 +14,16 @@ defineEmits(['update:modelValue'])
 <template>
   <button
     class="option-tile"
-    :class="{ 'option-tile--on': modelValue }"
+    :class="[`option-tile--${tone}`, { 'option-tile--on': modelValue }]"
     :aria-pressed="modelValue"
     @click="$emit('update:modelValue', !modelValue)"
   >
-    <div class="option-tile__preview">
+    <div v-if="$slots.preview" class="option-tile__preview">
       <slot name="preview" />
     </div>
     <span class="option-tile__title">{{ title }}</span>
     <span v-if="description" class="option-tile__desc">{{ description }}</span>
-    <span class="option-tile__badge">{{ modelValue ? 'Activé' : 'Désactivé' }}</span>
+    <span v-if="showBadge" class="option-tile__badge">{{ modelValue ? 'Activé' : 'Désactivé' }}</span>
   </button>
 </template>
 
@@ -69,9 +72,13 @@ defineEmits(['update:modelValue'])
     letter-spacing: $tracking-sm;
   }
 
+  &--orange { --tone: #{$orange}; }
+  &--green { --tone: #{$accent}; }
+  &--cyan { --tone: #{$mode-checkout}; }
+
   &--on {
-    background: $orange;
-    border-color: $orange;
+    background: var(--tone);
+    border-color: var(--tone);
     color: $white;
 
     .option-tile__preview {
@@ -84,7 +91,7 @@ defineEmits(['update:modelValue'])
 
     .option-tile__badge {
       background: $white;
-      color: $orange;
+      color: var(--tone);
     }
   }
 }

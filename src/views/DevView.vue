@@ -20,6 +20,7 @@ import SvgDartboard from '../components/x01/SvgDartboard.vue'
 import GameInput from '../components/game/GameInput.vue'
 import X01CheckoutReview from '../components/x01/X01CheckoutReview.vue'
 import X01Result from '../components/x01/X01Result.vue'
+import X01MatchEnd from '../components/x01/X01MatchEnd.vue'
 import { buildMatchStats } from '../composables/useX01MatchStats.js'
 import { analyzeLegs, ALL_SEGMENTS } from '../composables/useCheckoutAnalysis.js'
 import FriendsView from './FriendsView.vue'
@@ -32,6 +33,8 @@ import OnlineMatchLobbyView from './OnlineMatchLobbyView.vue'
 import { generateBracket, resolveMatches } from '../composables/useTournamentBracket.js'
 import { generateLeagueSchedule, computeStandings } from '../composables/useChampionship.js'
 import { useGameStore } from '../store/gameStore.js'
+import CheckoutRecap from '../components/checkout/CheckoutRecap.vue'
+import { getCheckout } from '../composables/useCheckouts.js'
 
 const router    = useRouter()
 const gameStore = useGameStore()
@@ -250,6 +253,32 @@ function openMockCheckoutGame(variant = 'review') {
   router.push({ name: 'checkout-game' })
 }
 
+// --- Preview CheckoutRecap (fin de quiz / révision, résultats fictifs) ---
+const checkoutRecapPreview = ref(null) // null | 'quiz' | 'review'
+const MOCK_CHECKOUT_ANSWERS = [
+  { score: 81, outcome: 'optimal' }, { score: 64, outcome: 'optimal' }, { score: 97, outcome: 'optimal' },
+  { score: 81, outcome: 'valid', darts: [{ type: 'triple', sector: 15, pts: 45, label: 'T15' }, { type: 'double', sector: 18, pts: 36, label: 'D18' }] },
+  { score: 58, outcome: 'missed', darts: [{ type: 'single', sector: 18, pts: 18, label: '18' }, { type: 'double', sector: 18, pts: 36, label: 'D18' }] },
+  { score: 110, outcome: 'optimal' },
+]
+const mockCheckoutResults = MOCK_CHECKOUT_ANSWERS.map(({ score, outcome, darts }) => {
+  const bracketPts = score > 100 ? 8 : score > 90 ? 5 : score > 80 ? 4 : score > 60 ? 3 : 2
+  return {
+    score,
+    darts: darts ?? getCheckout(score).primary,
+    correct: outcome !== 'missed',
+    optimal: outcome === 'optimal',
+    points: outcome === 'missed' ? 0 : bracketPts * (outcome === 'optimal' ? 2 : 1),
+  }
+})
+const mockCheckoutStats = {
+  questions: mockCheckoutResults.length,
+  correct: mockCheckoutResults.filter(r => r.correct).length,
+  optimal: mockCheckoutResults.filter(r => r.optimal).length,
+  bestStreak: 4,
+  points: mockCheckoutResults.reduce((s, r) => s + r.points, 0),
+}
+
 // --- Preview SvgDartboard ---
 const showDartboardPreview = ref(false)
 const lastDart = ref(null)
@@ -291,6 +320,18 @@ const mockMatchStats = buildMatchStats({
       mockLeg([60, 100, 81, 140, 60, 40, 20], { won: true, dartsToFinish: 3, doubles: 2 }),
       mockLeg([41, 60, 85, 100], { doubles: 0 }),
     ],
+  ],
+})
+// ─── X01MatchEnd — fin de match fictive (2 ou 4 joueurs) ──────────────────────
+const matchEndPreview = ref(null) // null | 2 | 4
+const mockMatchStats4 = buildMatchStats({
+  startScore: 501,
+  players: [{ name: 'Theotime', isMe: true }, { name: 'Pakitou' }, { name: 'Léa' }, { name: 'Max' }],
+  legsByPlayer: [
+    [mockLeg([100, 85, 60, 140, 45, 41, 30], { won: true, dartsToFinish: 2, doubles: 3 }), mockLeg([60, 81, 45, 100, 26], { doubles: 1 }), mockLeg([180, 140, 60, 81, 40], { won: true, dartsToFinish: 1, doubles: 1 })],
+    [mockLeg([45, 60, 41, 26, 85, 100], { doubles: 0 }), mockLeg([60, 100, 81, 140, 60, 60], { won: true, dartsToFinish: 3, doubles: 2 }), mockLeg([41, 60, 85, 100], { doubles: 0 })],
+    [mockLeg([60, 41, 45, 60, 26, 81], { doubles: 1 }), mockLeg([45, 26, 60, 41, 85], { doubles: 0 }), mockLeg([60, 60, 45, 26], { doubles: 0 })],
+    [mockLeg([26, 45, 41, 60, 45, 26], { doubles: 0 }), mockLeg([41, 60, 26, 45, 60], { doubles: 1 }), mockLeg([45, 41, 60, 26], { doubles: 0 })],
   ],
 })
 const seg    = (label) => ALL_SEGMENTS.find(s => s.label === label)
@@ -504,6 +545,8 @@ const mockSent = [
       <div class="dev__buttons">
         <button class="dev__btn" @click="openMockCheckoutGame('review')">Checkouts — révision libre</button>
         <button class="dev__btn" @click="openMockCheckoutGame('quiz')">Checkouts — quiz noté</button>
+        <button class="dev__btn" @click="checkoutRecapPreview = 'quiz'">Récap — quiz</button>
+        <button class="dev__btn" @click="checkoutRecapPreview = 'review'">Récap — révision</button>
       </div>
     </section>
 
@@ -536,6 +579,15 @@ const mockSent = [
       <h2 class="dev__section-title">X01 — Stats de fin de match (preview)</h2>
       <div class="dev__buttons">
         <button class="dev__btn" @click="showX01ResultPreview = true">Ouvrir le résultat</button>
+      </div>
+    </section>
+
+    <!-- X01MatchEnd — fin de match Nouvelle DA avec données fictives -->
+    <section class="dev__section">
+      <h2 class="dev__section-title">X01 — Fin de match (preview)</h2>
+      <div class="dev__buttons">
+        <button class="dev__btn" @click="matchEndPreview = 2">2 joueurs</button>
+        <button class="dev__btn" @click="matchEndPreview = 4">4 joueurs</button>
       </div>
     </section>
 
@@ -595,6 +647,21 @@ const mockSent = [
       <button class="dev__close-preview" @click="showFriendsPreview = false">✕ Fermer</button>
     </div>
 
+    <!-- CheckoutRecap plein écran -->
+    <div v-if="checkoutRecapPreview" class="dev__fullscreen-preview dev__co-recap">
+      <CheckoutRecap
+        :variant="checkoutRecapPreview"
+        :session-stats="mockCheckoutStats"
+        :results="mockCheckoutResults"
+        :reviewed-count="14"
+        :review-total="20"
+        @exit="checkoutRecapPreview = null"
+        @restart="checkoutRecapPreview = null"
+        @home="checkoutRecapPreview = null"
+      />
+      <button class="dev__close-preview" @click="checkoutRecapPreview = null">✕ Fermer</button>
+    </div>
+
     <!-- SvgDartboard plein écran -->
     <div v-if="showDartboardPreview" class="dev__fullscreen-preview dev__dartboard-preview">
       <SvgDartboard zoomable @dart="lastDart = $event" />
@@ -606,7 +673,6 @@ const mockSent = [
     <div v-if="showGameInputPreview" class="dev__fullscreen-preview dev__gameinput-preview">
       <GameInput
         :darts="mockDarts"
-        toggleable
         @dart="onMockDart"
         @miss="onMockDart({ type: 'miss', sector: null, pts: 0, label: 'Miss' })"
         @undo="mockDarts = mockDarts.slice(0, -1)"
@@ -622,6 +688,19 @@ const mockSent = [
         hide-actions
       />
       <button class="dev__close-preview" @click="showX01ResultPreview = false">✕ Fermer</button>
+    </div>
+
+    <div v-if="matchEndPreview" class="dev__fullscreen-preview">
+      <X01MatchEnd
+        class="dev__match-end"
+        :match-stats="matchEndPreview === 4 ? mockMatchStats4 : mockMatchStats"
+        :winner-index="0"
+        subtitle="501 · premier à 2 manches · 3 jouées"
+        :checkout-analysis="matchEndPreview === 2 ? mockCheckoutAnalysis : null"
+        @home="matchEndPreview = null"
+        @replay="matchEndPreview = null"
+      />
+      <button class="dev__close-preview" @click="matchEndPreview = null">✕ Fermer</button>
     </div>
 
     <!-- StatsWarmupDetailView plein écran -->
@@ -752,6 +831,15 @@ const mockSent = [
     background: $bg;
     overflow-y: auto;
     z-index: 90;
+  }
+
+  &__match-end {
+    height: 100%;
+  }
+
+  &__co-recap {
+    display: flex;
+    flex-direction: column;
   }
 
   &__gameinput-preview {

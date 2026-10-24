@@ -1,17 +1,16 @@
 <script setup>
 import { ref, watch } from 'vue'
-import DartSlotsBar from './DartSlotsBar.vue'
-import SectorGrid from './SectorGrid.vue'
+import GameEntryBar from './GameEntryBar.vue'
+import SectorPad from './SectorPad.vue'
 import SvgDartboard from '../x01/SvgDartboard.vue'
 import NumPad from '../NumPad.vue'
-import GameBottomBar from './GameBottomBar.vue'
+import AppIcon from '../AppIcon.vue'
 
 const props = defineProps({
   darts:      { type: Array,   required: true },
   valueKey:   { type: String,  default: 'label' },
   bust:       { type: Boolean, default: false },
   locked:     { type: Boolean, default: false },
-  toggleable: { type: Boolean, default: false },
   // Dart-by-dart input only (no volley total), e.g. when each dart must be analysed
   forceDart:  { type: Boolean, default: false },
   // Next tap picks the aimed target, not the hit: miss/bust are disabled
@@ -30,7 +29,7 @@ watch(() => props.locked, (locked) => {
 
 watch(() => props.forceDart, (forced) => {
   if (!forced || mode.value !== 'volley') return
-  mode.value = 'board'
+  mode.value = 'dart'
   volleyStr.value = ''
 }, { immediate: true })
 
@@ -47,56 +46,66 @@ function appendDigit(d) {
   volleyStr.value = next
 }
 
-function deleteDigit() {
-  volleyStr.value = volleyStr.value.slice(0, -1)
-}
-
 function submitVolley() {
   if (props.locked || props.bust || !volleyStr.value) return
   emit('validate', Number(volleyStr.value))
   volleyStr.value = ''
 }
 
-function handleUndo() {
-  if (mode.value === 'volley' && volleyStr.value.length > 0) {
-    deleteDigit()
-  } else {
-    emit('undo')
-  }
+function erase() {
+  if (mode.value === 'volley') volleyStr.value = volleyStr.value.slice(0, -1)
+  else emit('undo')
+}
+
+// Undo key: back to the previous visit (or dart), dropping any typed total
+function undo() {
+  volleyStr.value = ''
+  emit('undo')
 }
 </script>
 
 <template>
   <div class="game-input" :class="{ 'game-input--targeting': targeting }">
-    <DartSlotsBar
+    <GameEntryBar
       :mode="mode"
       :modes="forceDart ? ['dart', 'board'] : undefined"
       :darts="darts"
       :value-key="valueKey"
       :value="volleyStr"
       :bust="bust"
-      :toggleable="toggleable"
+      :locked="locked"
       @select="selectMode"
-      @validate="submitVolley"
+      @erase="erase"
     />
 
-    <SectorGrid v-if="mode === 'dart'" :locked="locked || bust" @dart="$emit('dart', $event)" />
+    <template v-if="mode === 'volley'">
+      <button class="game-input__bust" :disabled="locked || bust" @click="emit('bust')">Bust</button>
+      <NumPad :locked="locked || bust" @digit="appendDigit" @undo="undo" @validate="submitVolley" />
+    </template>
 
-    <SvgDartboard v-else-if="mode === 'board'" class="game-input__dartboard" :locked="locked || bust" @dart="$emit('dart', $event)" />
+    <SectorPad
+      v-else-if="mode === 'dart'"
+      class="game-input__target"
+      :locked="locked || bust"
+      :miss-locked="targeting"
+      @dart="emit('dart', $event)"
+      @miss="emit('miss')"
+      @undo="emit('undo')"
+    />
 
-    <NumPad v-else class="game-input__numpad" @digit="appendDigit" @delete="deleteDigit" @validate="submitVolley" />
-
-    <GameBottomBar
-      :bust-mode="mode === 'volley'"
-      :locked="locked || targeting"
-      @undo="handleUndo"
-      @miss="$emit('miss')"
-      @bust="$emit('bust')"
-    >
-      <template #right>
-        <slot name="right" />
-      </template>
-    </GameBottomBar>
+    <template v-else>
+      <div class="game-input__board game-input__target">
+        <SvgDartboard fill :locked="locked || bust" @dart="emit('dart', $event)" />
+      </div>
+      <div class="game-input__board-actions">
+        <button class="game-input__key game-input__key--undo" aria-label="Annuler" @click="emit('undo')">
+          <AppIcon name="undo" :width="24" :height="24" />
+        </button>
+        <button class="game-input__key game-input__key--miss" :disabled="locked || bust || targeting" @click="emit('miss')">
+          Raté
+        </button>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -106,26 +115,72 @@ function handleUndo() {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: $gap-md;
+  gap: $gap-sm;
 
-  &--targeting &__dartboard,
-  &--targeting :deep(.sector-grid) {
+  &--targeting &__target {
     outline: $border-md dashed $accent;
     outline-offset: $padding-xxs;
     border-radius: $radius-sm;
   }
 
-  &__numpad {
-    min-height: 0;
-    border-top: $border-md solid $white;
+  &__bust {
+    flex-shrink: 0;
+    height: 52px;
+    border-radius: $radius-sm;
+    background: $black;
+    color: $white;
+    @include title-lg;
+    letter-spacing: $tracking-sm;
+    transition: opacity 0.15s;
+
+    &:active:not(:disabled) { opacity: 0.8; }
+    &:disabled { opacity: 0.4; }
   }
 
-  &__dartboard {
+  &__board {
     flex: 1;
     min-height: 0;
+    container-type: size;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  &__board-actions {
+    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: $gap-xs;
+  }
+
+  &__key {
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-sm;
+    border: $border-md solid $text-color;
+    background: $bg;
+    color: $text-color;
+    @include title-xl;
+
+    &:disabled { opacity: 0.4; }
+
+    &--undo {
+      background: $surface;
+      border-color: $border-color;
+    }
+
+    &--miss { grid-column: span 4; }
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .game-input {
+    gap: $gap-md;
+
+    &__bust { height: 60px; @include title-xxl; }
+    &__key  { height: 64px; @include title-xxxl; }
   }
 }
 </style>

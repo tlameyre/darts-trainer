@@ -2,8 +2,10 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
-import AppButton from '../components/AppButton.vue'
-import ToggleSwitch from '../components/ToggleSwitch.vue'
+import AppIcon from '../components/AppIcon.vue'
+import OptionSelector from '../components/OptionSelector.vue'
+import OptionTile from '../components/OptionTile.vue'
+import StartButton from '../components/StartButton.vue'
 import X01BotConfigModal from '../components/x01/X01BotConfigModal.vue'
 import X01PlayerPicker from '../components/x01/X01PlayerPicker.vue'
 import X01PlayerOrderList from '../components/x01/X01PlayerOrderList.vue'
@@ -16,7 +18,8 @@ const gameStore   = useGameStore()
 const authStore   = useAuthStore()
 const friendStore = useFriendStore()
 
-const SCORE_OPTIONS = [101, 170, 301, 501]
+const SCORE_OPTIONS = [101, 170, 301, 501].map(value => ({ value, label: String(value) }))
+  .concat({ value: 'custom', label: 'Perso' })
 const MIN_LEGS      = 1
 const MAX_LEGS      = 9
 const MAX_PLAYERS   = 4
@@ -48,6 +51,15 @@ const effectiveScore = computed(() =>
 )
 
 const canAddMore = computed(() => players.value.length < MAX_PLAYERS)
+const canAddBot  = computed(() => !aiProfile.value && players.value.length === 1)
+
+const legsHint = computed(() => {
+  const legs = `${settings.legsToWin} manche${settings.legsToWin > 1 ? 's' : ''}`
+  return players.value.length > 1 || aiProfile.value ? `Premier à ${legs}` : `Partie en ${legs}`
+})
+
+// Checkout analysis tile preview: the targets announced on a 81 finish
+const SAMPLE_AIMS = ['T15', 'D18', '—']
 
 function decrementLegs() {
   settings.legsToWin = Math.max(MIN_LEGS, settings.legsToWin - 1)
@@ -91,15 +103,14 @@ function startGame() {
 
 <template>
   <div class="settings">
-    <AppHeader title="501" @back="router.push({ name: 'play' })" />
+    <AppHeader title="501" tone="green" @back="router.push({ name: 'play' })" />
 
     <main class="settings__main">
-
-      <!-- Joueurs -->
-      <div class="settings__card">
-        <div class="settings__section-label">Joueurs</div>
-
-        <p class="settings__hint">Glisse pour définir l'ordre des joueurs.</p>
+      <section class="settings__players">
+        <div class="settings__head">
+          <h2 class="settings__label">Joueurs</h2>
+          <span class="settings__hint">Glisse pour changer l'ordre</span>
+        </div>
 
         <X01PlayerOrderList
           v-model="players"
@@ -110,82 +121,79 @@ function startGame() {
           @remove-bot="aiProfile = null"
         />
 
-        <!-- Bouton DartBot -->
-        <button
-          v-if="!aiProfile && players.length === 1"
-          class="settings__add-player"
-          @click="showBotConfig = true"
-        >
-          + Jouer contre DartBot
-        </button>
-        <!-- Bouton joueur -->
-        <button v-if="canAddMore && !aiProfile" class="settings__add-player" @click="openPicker">
-          + Ajouter un joueur
-        </button>
+        <div v-if="canAddMore && !aiProfile" class="settings__add">
+          <button class="settings__add-btn" @click="openPicker">
+            <AppIcon name="plus" :width="16" :height="16" />Joueur
+          </button>
+          <button v-if="canAddBot" class="settings__add-btn" @click="showBotConfig = true">
+            <AppIcon name="plus" :width="16" :height="16" />DartBot
+          </button>
+        </div>
         <p v-else-if="!aiProfile" class="settings__hint">Maximum {{ MAX_PLAYERS }} joueurs atteint.</p>
+      </section>
 
-      </div>
+      <div class="settings__side">
+        <section class="settings__section">
+          <OptionSelector v-model="settings.scoreKey" label="Score de départ" :options="SCORE_OPTIONS" tone="green" />
+          <Transition name="slide-fade">
+            <label v-if="isCustomScore" class="settings__custom">
+              <input
+                v-model.number="customScore"
+                type="number" min="1" max="9999"
+                class="settings__custom-input"
+                placeholder="ex : 701"
+              />
+              <span class="settings__custom-unit">pts</span>
+            </label>
+          </Transition>
+        </section>
 
-      <!-- Score de départ -->
-      <div class="settings__card">
-        <div class="settings__section-label">Score de départ</div>
-        <div class="settings__row">
-          <AppButton
-            v-for="s in SCORE_OPTIONS" :key="s"
-            size="small" variant="ghost" :active="settings.scoreKey === s"
-            @click="settings.scoreKey = s"
-          >{{ s }}</AppButton>
-          <AppButton size="small" variant="ghost" :active="isCustomScore" @click="settings.scoreKey = 'custom'">
-            Custom
-          </AppButton>
-        </div>
-        <Transition name="slide-fade">
-          <div v-if="isCustomScore" class="settings__custom-field">
-            <input
-              v-model.number="customScore"
-              type="number" min="1" max="9999"
-              class="settings__custom-input"
-              placeholder="ex: 701"
-            />
-            <span class="settings__custom-label">pts</span>
+        <section class="settings__section">
+          <div class="settings__head">
+            <h2 class="settings__label">Manches à gagner</h2>
+            <span class="settings__hint">{{ legsHint }}</span>
           </div>
-        </Transition>
+          <div class="settings__stepper">
+            <button
+              class="settings__step-btn"
+              aria-label="Moins de manches"
+              :disabled="settings.legsToWin <= MIN_LEGS"
+              @click="decrementLegs"
+            ><AppIcon name="minus" :width="24" :height="24" /></button>
+            <span class="settings__step-value">{{ settings.legsToWin }}</span>
+            <button
+              class="settings__step-btn settings__step-btn--up"
+              aria-label="Plus de manches"
+              :disabled="settings.legsToWin >= MAX_LEGS"
+              @click="incrementLegs"
+            ><AppIcon name="plus" :width="24" :height="24" /></button>
+          </div>
+        </section>
+
+        <section class="settings__section">
+          <h2 class="settings__label">Options</h2>
+          <OptionTile
+            v-model="settings.checkoutAnalysis"
+            tone="green"
+            title="Analyse des checkouts"
+            description="Sous 170, indique ta cible avant chaque fléchette : revue de tes placements en fin de partie"
+          >
+            <template #preview>
+              <div class="settings__aims">
+                <span class="settings__preview-caption">Ex. · Reste 81</span>
+                <span v-for="(aim, i) in SAMPLE_AIMS" :key="i" class="settings__aim">
+                  <span class="settings__aim-caption">Visé</span>
+                  {{ aim }}
+                </span>
+              </div>
+            </template>
+          </OptionTile>
+        </section>
+
+        <StartButton class="settings__start" tone="green" @click="startGame" />
       </div>
-
-      <!-- Manches à gagner -->
-      <div class="settings__card">
-        <div class="settings__section-label">Manches à gagner</div>
-        <div class="settings__stepper">
-          <button
-            class="settings__stepper-btn"
-            :disabled="settings.legsToWin <= MIN_LEGS"
-            @click="decrementLegs"
-          >−</button>
-          <span class="settings__stepper-value">{{ settings.legsToWin }}</span>
-          <button
-            class="settings__stepper-btn"
-            :disabled="settings.legsToWin >= MAX_LEGS"
-            @click="incrementLegs"
-          >+</button>
-        </div>
-        <p class="settings__hint">
-          <template v-if="players.length > 1 || aiProfile">
-            Le premier à {{ settings.legsToWin }} manche{{ settings.legsToWin > 1 ? 's' : '' }} gagne la partie.
-          </template>
-          <template v-else>
-            La partie se termine après {{ settings.legsToWin }} manche{{ settings.legsToWin > 1 ? 's' : '' }}.
-          </template>
-        </p>
-      </div>
-
-      <ToggleSwitch v-model="settings.checkoutAnalysis" title="Analyse des checkouts"
-        description="Sous 170, indique ta cible avant chaque fléchette : revue de tes placements en fin de partie" />
-
     </main>
 
-    <AppButton @click="startGame">COMMENCER</AppButton>
-
-    <!-- Picker amis/invités -->
     <X01PlayerPicker
       :show="showPicker"
       :friends="friendStore.friends"
@@ -195,7 +203,6 @@ function startGame() {
       @select="onPlayersSelected"
     />
 
-    <!-- Config DartBot -->
     <X01BotConfigModal
       :show="showBotConfig"
       :model-value="aiProfile"
@@ -210,134 +217,206 @@ function startGame() {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: $padding-md $padding-md 0;
-  gap: $gap-xl;
-  @include safe-bottom;
+  @include safe-bottom($padding-md);
 
   &__main {
     flex: 1;
     display: flex;
     flex-direction: column;
-    width: 100%;
-    margin: 0 auto;
-    gap: $gap-md;
+    gap: $gap-lg;
+    padding: $padding-lg $padding-md 0;
   }
 
-  &__card {
+  &__players,
+  &__section {
     display: flex;
     flex-direction: column;
-    gap: $gap-md;
-  }
-
-  &__section-label {
-    @include title-lg;
-    color: $white;
-  }
-
-  &__row {
-    display: flex;
     gap: $gap-xs;
-
-    :deep(.btn) { flex: 1; }
   }
 
-  &__stepper {
+  &__side {
+    flex: 1;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
     gap: $gap-lg;
   }
 
-  &__stepper-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: $radius-pill;
-    border: $border-md solid rgba($white, 0.15);
-    background: rgba($white, 0.05);
-    color: $text-color;
-    @include title-lg;
+  &__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: $gap-sm;
+  }
+
+  &__label {
+    @include title-sm;
+    color: $muted;
+  }
+
+  &__hint {
+    @include text-xs;
+    color: $muted;
+  }
+
+  &__add {
+    display: flex;
+    gap: $gap-xs;
+  }
+
+  &__add-btn {
+    @include title-sm;
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+    gap: $gap-xs;
+    height: 44px;
+    border: $border-md dashed $border-color;
+    border-radius: $radius-sm;
+    color: $text-color;
 
-    &:active:not(:disabled) {
-      border-color: $orange;
-      color: $orange;
-    }
-
-    &:disabled {
-      opacity: 0.3;
-    }
+    &:active { border-color: $accent; }
   }
 
-  &__stepper-value {
-    @include display-sm;
-    color: $white;
-    min-width: 48px;
-    text-align: center;
-  }
-
-  &__custom-field {
+  &__custom {
     display: flex;
     align-items: center;
     gap: $gap-sm;
   }
 
   &__custom-input {
+    @include title-lg;
     flex: 1;
-    background: rgba($white, 0.05);
-    border: $border-md solid rgba($white, 0.15);
+    min-width: 0;
+    height: 44px;
+    padding: 0 $padding-sm;
+    border: $border-md solid $border-color;
     border-radius: $radius-sm;
+    background: $white;
     color: $text-color;
-    @include title-md;
-    padding: $padding-xs $padding-sm;
     text-align: center;
 
     &:focus {
       outline: none;
-      border-color: $orange;
+      border-color: $accent;
     }
   }
 
-  &__custom-label {
+  &__custom-unit {
     @include title-md;
     color: $muted;
-    white-space: nowrap;
   }
 
-  &__hint {
-    @include title-sm;
-    color: $muted;
+  &__stepper {
+    display: grid;
+    grid-template-columns: 56px 1fr 56px;
+    gap: $gap-xs;
   }
 
-  &__add-player {
-    @include text-sm;
-    color: $muted;
-    padding: $padding-sm $padding-md;
+  &__step-btn {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: $border-md solid $border-color;
     border-radius: $radius-sm;
-    border: $border-sm dashed rgba($white, 0.2);
-    text-align: center;
-    transition: border-color 0.15s, color 0.15s;
+    color: $text-color;
 
-    &:active {
-      border-color: $orange;
-      color: $orange;
+    &--up {
+      border-color: $accent;
+      background: $accent;
+      color: $white;
     }
+
+    &:disabled { opacity: 0.4; }
+  }
+
+  &__step-value {
+    @include display-xs;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-sm;
+    background: $surface;
+    line-height: 1;
+  }
+
+  // Preview content — colors follow the tile's on/off state through currentColor
+  &__aims {
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
+  }
+
+  &__preview-caption {
+    @include text-xxs;
+    flex: 1;
+    letter-spacing: $tracking-sm;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  &__aim {
+    @include title-md;
+    min-width: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: $padding-xxs 0;
+    border-radius: $radius-sm;
+    background: $bg;
+    line-height: 1;
+  }
+
+  &__aim-caption {
+    @include text-xxs;
+    opacity: 0.75;
+    text-transform: uppercase;
+  }
+
+  &__start {
+    margin-top: auto;
   }
 }
 
-@media (min-width: $bp-tablet) {
-  .settings {
-    padding: $padding-xl $padding-xl 0;
-    @include safe-bottom($padding-xl);
+.option-tile--on .settings__aim {
+  background: rgba($white, 0.16);
+}
 
-    &__section-label  { @include title-xl; }
-    &__stepper-btn    { @include title-xl; }
-    &__stepper-value  { @include display-md; }
-    &__custom-input   { @include title-lg; padding: $padding-sm $padding-md; }
-    &__custom-label   { @include title-lg; }
-    &__hint           { @include title-md; }
+@media (min-width: $bp-laptop) {
+  .settings {
+    @include safe-bottom(0px);
+
+    &__main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      padding: 0;
+    }
+
+    &__players,
+    &__side {
+      padding: $padding-xxl;
+    }
+
+    &__side {
+      gap: $gap-xxl;
+      border-left: $border-sm solid $border-color;
+    }
+
+    &__players { gap: $gap-sm; }
+    &__label { @include title-md; }
+    &__hint { @include text-sm; }
+    &__add-btn { @include title-md; height: 56px; }
+    &__custom-input { @include title-xl; height: 56px; }
+    &__custom-unit { @include title-lg; }
+    &__stepper { grid-template-columns: 64px 1fr 64px; }
+    &__step-btn { height: 64px; }
+    &__step-value { @include display-sm; height: 64px; }
+    &__preview-caption { @include text-xs; }
+    &__aim { @include title-xl; min-width: 56px; }
+    &__aim-caption { @include text-xs; }
   }
 }
 

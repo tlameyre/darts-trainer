@@ -5,11 +5,9 @@ import { formatRoute } from '../../composables/useCheckouts.js'
 
 const props = defineProps({
   checkout: { type: Object, default: null },
-  highlightPrimary: { type: Boolean, default: true },
-  size: { type: String, default: 'sm', validator: (v) => ['sm', 'md'].includes(v) },
   selectable: { type: Boolean, default: false },
-  selected: { type: Array, default: null }, // Dart[] actif quand selectable
-  played: { type: Array, default: null }, // Dart[] réellement lancées (quiz) — marque la ligne
+  selected: { type: Array, default: null }, // Dart[] shown on the board when selectable
+  played: { type: Array, default: null }, // Dart[] actually thrown (quiz) — tags its row
 })
 
 const emit = defineEmits(['select'])
@@ -29,14 +27,7 @@ const selectedKey = computed(() => (props.selected ? formatRoute(props.selected)
 const playedKey = computed(() => (props.played?.length ? formatRoute(props.played) : null))
 
 const isPlayed = (row) => playedKey.value != null && formatRoute(row.route) === playedKey.value
-
-function rowClass(row) {
-  return {
-    'route-card__row--strong': row.key === 'primary' && props.highlightPrimary,
-    'route-card__row--active': props.selectable && formatRoute(row.route) === selectedKey.value,
-    'route-card__row--played': isPlayed(row),
-  }
-}
+const isActive = (row) => isPlayed(row) || (props.selectable && formatRoute(row.route) === selectedKey.value)
 </script>
 
 <template>
@@ -46,7 +37,7 @@ function rowClass(row) {
       v-for="row in rows"
       :key="row.key"
       class="route-card__row"
-      :class="rowClass(row)"
+      :class="{ 'route-card__row--active': isActive(row), 'route-card__row--played': isPlayed(row) }"
       @click="selectable && emit('select', row.route)"
     >
       <span class="route-card__tag">
@@ -54,7 +45,13 @@ function rowClass(row) {
         <span v-if="isPlayed(row)" class="route-card__played-tag">· jouée</span>
       </span>
       <span class="route-card__darts">
-        <DartPill v-for="(d, j) in row.route" :key="j" :dart="d" :size="size" />
+        <DartPill
+          v-for="(d, j) in row.route"
+          :key="j"
+          :dart="d"
+          :tone="isActive(row) ? 'cyan' : 'neutral'"
+          show-points
+        />
         <span v-if="row.leaves != null" class="route-card__leaves">→ laisse {{ row.leaves }}</span>
       </span>
     </component>
@@ -71,61 +68,46 @@ function rowClass(row) {
 
   &__row {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: $gap-xs;
+    gap: $gap-sm;
     width: 100%;
-    background: rgba($white, 0.05);
-    border: $border-sm solid transparent;
+    padding: $padding-xs $padding-sm;
+    border: $border-md solid $border-color;
     border-radius: $radius-sm;
-    padding: $padding-sm;
-    transition: border-color 0.15s, background 0.15s;
+    background: $bg;
+    color: $text-color;
+    text-align: left;
+    transition: border-color 0.15s;
 
-    &--strong {
-      background: rgba($accent, 0.15);
-      border-color: rgba($accent, 0.4);
-    }
-
-    &--active {
-      background: rgba($accent, 0.2);
-      border-color: $accent;
-    }
-
-    &--played {
-      border-color: $orange;
-    }
+    &--active { border-color: $mode-checkout; }
   }
 
-  button.route-card__row {
-    cursor: pointer;
-
-    &:active { opacity: 0.7; }
-  }
+  button.route-card__row:active { opacity: 0.7; }
 
   &__tag {
-    align-self: flex-start;
+    min-width: 88px;
+    flex-shrink: 0;
     @include text-xs;
-    color: $muted;
+    font-weight: 600;
+    letter-spacing: $tracking-sm;
+    white-space: nowrap;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    color: $muted;
   }
 
-  &__played-tag {
-    color: $orange;
-  }
+  &__row--active:not(&__row--played) &__tag,
+  &__played-tag { color: $mode-checkout; }
 
   &__darts {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: center;
-    gap: $gap-xxs;
+    gap: $gap-xs;
   }
 
   &__leaves {
-    @include text-xs;
+    @include text-sm;
     color: $muted;
-    margin-left: $gap-xxs;
   }
 
   &__none {
@@ -137,8 +119,10 @@ function rowClass(row) {
 
 @media (min-width: $bp-laptop) {
   .route-card {
-    &__tag { @include text-sm; }
-    &__leaves { @include text-sm; }
+    &__row    { gap: $gap-md; padding: $padding-xs $padding-sm; }
+    &__tag    { min-width: 110px; @include text-sm; }
+    &__leaves { @include text-md; }
+    &__none   { @include text-md; }
   }
 }
 </style>

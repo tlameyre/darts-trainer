@@ -16,10 +16,14 @@ export const CHECKOUT_BRACKETS = [
   { range: [131, 170], points: 10, label: "131–170" },
 ];
 
+/** Tranche contenant `score`, ou null hors de 2–170. */
+export function bracketOf(score) {
+  return CHECKOUT_BRACKETS.find(({ range: [min, max] }) => score >= min && score <= max) ?? null;
+}
+
 /** Poids en points de la tranche contenant `score`. */
 export function bracketPoints(score) {
-  const b = CHECKOUT_BRACKETS.find(({ range: [min, max] }) => score >= min && score <= max);
-  return b ? b.points : 1;
+  return bracketOf(score)?.points ?? 1;
 }
 
 /** Entrée de checkout d'un score, ou null si aucune route connue. */

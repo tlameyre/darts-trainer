@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import AppModal from '../AppModal.vue'
-import AppButton from '../AppButton.vue'
 import AppIcon from '../AppIcon.vue'
 import { useFriendStore } from '../../store/friendStore.js'
 
@@ -194,117 +193,101 @@ function removeSelected(item) {
 </script>
 
 <template>
-  <AppModal :show="show" title="Ajouter des joueurs" size="lg" @close="handleClose">
+  <AppModal :show="show" title="Ajouter des joueurs" size="lg" centered @close="handleClose">
     <div class="picker">
 
-      <!-- Joueurs sélectionnés (tout en haut, tous types confondus) -->
+      <!-- Everything selected so far, all kinds together -->
       <div v-if="selectedPlayers.length" class="picker__section">
-        <div class="picker__section-label">Joueurs sélectionnés</div>
-        <div class="picker__list">
-          <div v-for="item in selectedPlayers" :key="item.key" class="picker__item picker__item--guest">
-            <div class="picker__avatar" :class="{ 'picker__avatar--guest': item.kind === 'guest' }">
-              <AppIcon v-if="item.kind === 'guest'" name="user" :width="16" :height="16" />
-              <template v-else>{{ item.letter }}</template>
-            </div>
-            <span class="picker__name">{{ item.name }}</span>
-            <button class="picker__remove" @click="removeSelected(item)">
-              <AppIcon name="close" :width="14" :height="14" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Amis -->
-      <div v-if="availableFriends.length" class="picker__section">
-        <div class="picker__section-label">Amis</div>
-        <div class="picker__list">
+        <div class="picker__label">Sélectionnés</div>
+        <div class="picker__chips">
           <button
-            v-for="friend in availableFriends"
-            :key="friend.id"
-            class="picker__item"
-            :class="{ 'picker__item--selected': selectedFriendIds.includes(friend.id) }"
-            :disabled="limitReached && !selectedFriendIds.includes(friend.id)"
-            @click="toggleFriend(friend)"
+            v-for="item in selectedPlayers" :key="item.key"
+            class="picker__chip"
+            :aria-label="`Retirer ${item.name}`"
+            @click="removeSelected(item)"
           >
-            <div class="picker__avatar">{{ avatarLetter(friend) }}</div>
-            <div class="picker__info">
-              <span class="picker__name">{{ friend.username || friend.first_name }}</span>
-              <span class="picker__code">{{ friend.friend_code }}</span>
-            </div>
-            <div class="picker__check">
-              <AppIcon v-if="selectedFriendIds.includes(friend.id)" name="check" :width="16" :height="16" />
-            </div>
+            <span class="picker__chip-avatar">
+              <AppIcon v-if="item.kind === 'guest'" name="user" :width="12" :height="12" />
+              <template v-else>{{ item.letter }}</template>
+            </span>
+            {{ item.name }}
+            <AppIcon name="close" :width="12" :height="12" />
           </button>
         </div>
       </div>
 
-      <div v-else-if="!friends.length" class="picker__empty">
-        Tu n'as pas encore d'amis.<br>Ajoute-en depuis l'onglet Profil !
+      <div v-if="availableFriends.length" class="picker__section">
+        <div class="picker__label">Amis</div>
+        <div class="picker__grid">
+          <button
+            v-for="friend in availableFriends"
+            :key="friend.id"
+            class="picker__row"
+            :class="{ 'picker__row--selected': selectedFriendIds.includes(friend.id) }"
+            :disabled="limitReached && !selectedFriendIds.includes(friend.id)"
+            @click="toggleFriend(friend)"
+          >
+            <span class="picker__avatar">{{ avatarLetter(friend) }}</span>
+            <span class="picker__name">{{ friend.username || friend.first_name }}</span>
+            <span class="picker__check">
+              <AppIcon name="check" :width="16" :height="16" />
+            </span>
+          </button>
+        </div>
       </div>
 
-      <!-- Recherche par pseudo -->
+      <p v-else-if="!friends.length" class="picker__status">
+        Tu n'as pas encore d'amis. Ajoute-en depuis l'onglet Profil !
+      </p>
+
       <div class="picker__section">
-        <div class="picker__section-label">Rechercher un joueur</div>
-        <input
-          v-model="searchQuery"
-          class="picker__guest-input"
-          placeholder="Pseudo..."
-        />
-        <p v-if="searchLoading" class="picker__search-status">Recherche...</p>
-        <div v-else-if="searchQuery.trim().length >= 2 && !availableSearchResults.length" class="picker__search-status">
+        <div class="picker__label">Rechercher un joueur</div>
+        <input v-model="searchQuery" class="picker__input" placeholder="Pseudo…" />
+        <p v-if="searchLoading" class="picker__status">Recherche…</p>
+        <p v-else-if="searchQuery.trim().length >= 2 && !availableSearchResults.length" class="picker__status">
           Aucun joueur trouvé.
-        </div>
-        <div v-else-if="availableSearchResults.length" class="picker__list">
-          <div v-for="user in availableSearchResults" :key="user.id" class="picker__item">
-            <button class="picker__item-select" :disabled="limitReached" @click="toggleSearchResult(user)">
-              <div class="picker__avatar">{{ avatarLetter(user) }}</div>
-              <div class="picker__info">
-                <span class="picker__name">{{ user.username || user.first_name }}</span>
-              </div>
+        </p>
+        <div v-else-if="availableSearchResults.length" class="picker__grid">
+          <div v-for="user in availableSearchResults" :key="user.id" class="picker__row">
+            <button class="picker__row-select" :disabled="limitReached" @click="toggleSearchResult(user)">
+              <span class="picker__avatar">{{ avatarLetter(user) }}</span>
+              <span class="picker__name">{{ user.username || user.first_name }}</span>
             </button>
             <button
               class="picker__friend-btn"
+              aria-label="Demander en ami"
               :disabled="friendRequestLoadingIds.includes(user.id) || sentFriendRequestIds.includes(user.id)"
               @click="sendFriendRequest(user)"
             >
-              <span v-if="sentFriendRequestIds.includes(user.id)">✓</span>
-              <span v-else-if="friendRequestLoadingIds.includes(user.id)">…</span>
-              <AppIcon v-else name="user-plus" :width="16" :height="16" />
+              <AppIcon :name="sentFriendRequestIds.includes(user.id) ? 'check' : 'user-plus'" :width="16" :height="16" />
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Ajouter invité -->
-      <div class="picker__guest-add">
-        <Transition name="slide-fade">
-          <div v-if="allowGuests && showGuestInput" class="picker__guest-input-row">
+      <div v-if="allowGuests" class="picker__section">
+        <Transition name="slide-fade" mode="out-in">
+          <div v-if="showGuestInput" class="picker__guest-row">
             <input
               v-model="newGuestName"
-              class="picker__guest-input"
+              class="picker__input"
               placeholder="Prénom ou pseudo"
               maxlength="20"
               @keyup.enter="addGuest"
             />
-            <AppButton size="small" @click="addGuest">OK</AppButton>
+            <button class="picker__guest-ok" @click="addGuest">OK</button>
           </div>
+          <button v-else class="picker__dashed" :disabled="limitReached" @click="showGuestInput = true">
+            <AppIcon name="plus" :width="16" :height="16" />Ajouter un invité
+          </button>
         </Transition>
-        <p v-if="guestError" class="picker__guest-error">{{ guestError }}</p>
-        <button
-          v-if="allowGuests && !showGuestInput"
-          class="picker__add-guest-btn"
-          :disabled="limitReached"
-          @click="showGuestInput = true"
-        >
-          + Ajouter un invité
-        </button>
-        <p v-if="limitReached" class="picker__search-status">Limite de joueurs atteinte.</p>
+        <p v-if="guestError" class="picker__status picker__status--error">{{ guestError }}</p>
       </div>
+      <p v-if="limitReached" class="picker__status">Limite de joueurs atteinte.</p>
 
-      <!-- Confirmer -->
-      <AppButton :disabled="!hasSelection" @click="confirm">
-        Ajouter {{ hasSelection ? `(${selectedFriendIds.length + selectedSearchIds.length + guestNames.length})` : '' }}
-      </AppButton>
+      <button class="picker__confirm" :disabled="!hasSelection" @click="confirm">
+        Ajouter{{ hasSelection ? ` (${selectionCount})` : '' }}
+      </button>
 
     </div>
   </AppModal>
@@ -312,200 +295,212 @@ function removeSelected(item) {
 
 <style lang="scss" scoped>
 .picker {
+  --picker-accent: #{$accent};
   display: flex;
   flex-direction: column;
   gap: $gap-lg;
-  padding: $padding-md;
 
   &__section {
     display: flex;
     flex-direction: column;
-    gap: $gap-sm;
-  }
-
-  &__section-label {
-    @include title-sm;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  &__list {
-    display: flex;
-    flex-direction: column;
     gap: $gap-xs;
   }
 
-  &__item {
+  &__label {
+    @include title-sm;
+    color: $muted;
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $gap-xs;
+  }
+
+  &__chip {
+    @include title-sm;
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
+    padding: $padding-xxs $padding-xs $padding-xxs $padding-xxs;
+    border-radius: $radius-sm;
+    background: var(--picker-accent);
+    color: $white;
+  }
+
+  &__chip-avatar {
+    @include title-xxs;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-pill;
+    background: rgba($white, 0.2);
+  }
+
+  &__grid {
+    display: grid;
+    gap: $gap-xs;
+  }
+
+  &__row {
     display: flex;
     align-items: center;
     gap: $gap-sm;
-    padding: $padding-sm $padding-md;
+    padding: $padding-xs $padding-sm $padding-xs $padding-xs;
+    border: $border-md solid $surface;
     border-radius: $radius-sm;
-    background: rgba($white, 0.05);
-    border: $border-sm solid transparent;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
+    background: $surface;
+    color: $text-color;
     text-align: left;
-    width: 100%;
 
-    &--selected {
-      background: rgba($orange, 0.15);
-      border-color: $orange;
-    }
+    &:disabled { opacity: 0.4; }
 
-    &--guest {
-      cursor: default;
-    }
+    &--selected { border-color: var(--picker-accent); }
+  }
 
-    &:disabled {
-      opacity: 0.4;
-      cursor: default;
-    }
+  &__row-select {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: $gap-sm;
+    color: inherit;
+    text-align: left;
+
+    &:disabled { opacity: 0.4; }
   }
 
   &__avatar {
+    @include title-sm;
     width: 36px;
     height: 36px;
-    border-radius: $radius-pill;
-    background: $orange;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    @include title-sm;
-    font-weight: 700;
+    border-radius: $radius-pill;
+    background: $blue;
     color: $white;
-    flex-shrink: 0;
-
-    &--guest {
-      background: rgba($white, 0.15);
-    }
-  }
-
-  &__info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
   }
 
   &__name {
-    @include title-sm;
-    color: $text-color;
-    font-weight: 600;
-  }
-
-  &__code {
-    @include text-xs;
-    color: $muted;
+    @include title-lg;
+    flex: 1;
+    min-width: 0;
+    line-height: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__check {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: $orange;
-    flex-shrink: 0;
+    border: $border-md solid $muted;
+    border-radius: $radius-sm;
+    color: transparent;
   }
 
-  &__item-select {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: $gap-sm;
-    min-width: 0;
-    text-align: left;
-    cursor: pointer;
-
-    &:disabled {
-      opacity: 0.4;
-      cursor: default;
-    }
+  &__row--selected &__check {
+    border-color: var(--picker-accent);
+    background: var(--picker-accent);
+    color: $white;
   }
 
   &__friend-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: $radius-pill;
-    background: rgba($orange, 0.15);
-    color: $orange;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    @include text-sm;
-    transition: background 0.15s, opacity 0.15s;
-
-    &:disabled { opacity: 0.4; }
-    &:not(:disabled):active { background: rgba($orange, 0.25); }
-  }
-
-  &__remove {
-    color: $muted;
-    display: flex;
-    align-items: center;
-    padding: $padding-xs;
-
-    &:active { opacity: 0.6; }
-  }
-
-  &__empty {
-    @include text-sm;
-    color: $muted;
-    text-align: center;
-    padding: $padding-lg 0;
-    line-height: 1.6;
-  }
-
-  &__search-status {
-    @include text-xs;
-    color: $muted;
-  }
-
-  &__guest-error {
-    @include text-xs;
-    color: $error;
-  }
-
-  &__guest-add {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
-  }
-
-  &__guest-input-row {
-    display: flex;
-    gap: $gap-sm;
-    align-items: center;
-  }
-
-  &__guest-input {
-    flex: 1;
-    background: rgba($white, 0.05);
-    border: $border-md solid rgba($white, 0.15);
     border-radius: $radius-sm;
+    background: $bg;
     color: $text-color;
+
+    &:disabled { color: var(--picker-accent); }
+  }
+
+  &__input {
     @include text-md;
-    padding: $padding-xs $padding-sm;
+    min-width: 0;
+    height: 44px;
+    padding: 0 $padding-sm;
+    border: $border-md solid $border-color;
+    border-radius: $radius-sm;
+    background: $white;
+    color: $text-color;
+
+    &::placeholder { color: $input-placeholder; }
 
     &:focus {
       outline: none;
-      border-color: $orange;
+      border-color: var(--picker-accent);
     }
   }
 
-  &__add-guest-btn {
+  &__guest-row {
+    display: flex;
+    gap: $gap-xs;
+
+    // Only here: in the column sections flex: 1 would collapse the input's height
+    .picker__input { flex: 1; }
+  }
+
+  &__guest-ok {
+    @include title-md;
+    padding: 0 $padding-md;
+    border-radius: $radius-sm;
+    background: var(--picker-accent);
+    color: $white;
+  }
+
+  &__dashed {
+    @include title-sm;
+    height: 44px;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: $gap-xs;
+    border: $border-md dashed $border-color;
+    border-radius: $radius-sm;
+    color: $text-color;
+
+    &:disabled { opacity: 0.4; }
+  }
+
+  &__status {
     @include text-sm;
     color: $muted;
-    padding: $padding-xs 0;
 
-    &:active { opacity: 0.7; }
+    &--error { color: $error; }
+  }
+
+  &__confirm {
+    @include title-xl;
+    height: 56px;
+    flex-shrink: 0;
+    border-radius: $radius-sm;
+    background: var(--picker-accent);
+    color: $white;
+
     &:disabled { opacity: 0.4; }
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .picker {
+    &__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    &__label { @include title-md; }
+    &__name { @include title-xl; line-height: 1; }
+    &__status { @include text-md; }
+    &__confirm { @include title-xxl; height: 64px; }
   }
 }
 

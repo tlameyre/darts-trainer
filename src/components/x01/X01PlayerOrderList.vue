@@ -34,14 +34,18 @@ function avatarLetter(player) {
           <AppIcon name="drag-handle" :width="18" :height="18" />
         </span>
         <span class="player-order__position">{{ i + 1 }}</span>
-        <div class="player-order__avatar" :class="{ 'player-order__avatar--guest': player.isGuest }">
+        <div
+          class="player-order__avatar"
+          :class="{ 'player-order__avatar--me': player.isMe, 'player-order__avatar--guest': player.isGuest }"
+        >
           {{ avatarLetter(player) }}
         </div>
         <span class="player-order__name">{{ player.name }}</span>
-        <span v-if="player.isMe" class="player-order__tag">Toi</span>
+        <span v-if="player.isMe" class="player-order__tag player-order__tag--me">Toi</span>
         <span v-else-if="player.isFriend" class="player-order__tag">Ami</span>
         <span v-else-if="player.isRegistered" class="player-order__tag">Joueur</span>
-        <button v-if="removable && !player.isMe" class="player-order__remove" @click="emit('remove', i)">
+        <span v-else-if="player.isGuest" class="player-order__tag">Invité</span>
+        <button v-if="removable && !player.isMe" class="player-order__action" aria-label="Retirer" @click="emit('remove', i)">
           <AppIcon name="close" :width="14" :height="14" />
         </button>
       </div>
@@ -55,10 +59,10 @@ function avatarLetter(player) {
     </div>
     <span class="player-order__name">DartBot</span>
     <span class="player-order__tag">{{ bot.label }}</span>
-    <button class="player-order__gear" @click="emit('edit-bot')">
-      <AppIcon name="gear" :width="14" :height="14" />
+    <button class="player-order__action" aria-label="Régler le DartBot" @click="emit('edit-bot')">
+      <AppIcon name="gear" :width="16" :height="16" />
     </button>
-    <button class="player-order__remove" @click="emit('remove-bot')">
+    <button class="player-order__action" aria-label="Retirer le DartBot" @click="emit('remove-bot')">
       <AppIcon name="close" :width="14" :height="14" />
     </button>
   </div>
@@ -74,92 +78,101 @@ function avatarLetter(player) {
     display: flex;
     align-items: center;
     gap: $gap-sm;
-    padding: $padding-sm $padding-md;
+    padding: $padding-xs $padding-sm $padding-xs $padding-xs;
+    border: $border-md solid $surface;
     border-radius: $radius-sm;
-    background: rgba($white, 0.05);
-    color: $white;
+    background: $surface;
+    color: $text-color;
 
-    &--me {
-      background: rgba($orange, 0.12);
-      border: $border-sm solid rgba($orange, 0.3);
-    }
+    &--me { border-color: var(--player-accent, #{$accent}); }
 
-    &--ghost {
-      opacity: 0.4;
-    }
+    &--ghost { opacity: 0.4; }
   }
 
   &__handle {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
     color: $muted;
     cursor: grab;
     touch-action: none;
-    flex-shrink: 0;
 
     &:active { cursor: grabbing; }
   }
 
   &__position {
-    @include text-xs;
-    color: $muted;
-    width: 16px;
-    text-align: center;
+    @include title-sm;
+    width: 22px;
+    height: 22px;
     flex-shrink: 0;
-  }
-
-  &__avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: $radius-pill;
-    background: $orange;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: $radius-sm;
+    background: $black;
+    color: $bg;
+  }
+
+  &__avatar {
     @include title-sm;
-    font-weight: 700;
-    color: $white;
+    width: 36px;
+    height: 36px;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-pill;
+    background: $blue;
+    color: $white;
 
-    &--guest {
-      background: rgba($white, 0.15);
-    }
-
-    &--bot {
-      background: rgba($white, 0.15);
-    }
+    &--me { background: $error; }
+    &--guest { background: $muted; }
+    &--bot { background: $black; }
   }
 
   &__name {
+    @include title-lg;
     flex: 1;
-    @include text-sm;
-    font-weight: 600;
-    color: $text-color;
+    min-width: 0;
+    line-height: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__tag {
-    @include text-xs;
-    color: $muted;
-    background: rgba($white, 0.08);
-    border-radius: $radius-pill;
-    padding: 2px 8px;
+    @include title-xxs;
+    flex-shrink: 0;
+    padding: 2px $padding-xxs;
+    border-radius: $radius-sm;
+    background: $border-color;
+    letter-spacing: $tracking-sm;
+
+    &--me {
+      background: var(--player-accent, #{$accent});
+      color: $white;
+    }
   }
 
-  &__remove, &__gear {
-    color: $muted;
+  &__action {
     display: flex;
     align-items: center;
+    padding: $padding-xxs;
+    color: $muted;
 
-    &:active { opacity: 0.6; }
+    &:active { color: $text-color; }
   }
 }
 
 @media (min-width: $bp-laptop) {
   .player-order {
-    &__name {
-      @include text-md;
-      font-weight: 600;
-    }
+    gap: $gap-sm;
+
+    &__item { padding-top: $padding-sm; padding-bottom: $padding-sm; }
+    &__position { @include title-md; width: 26px; height: 26px; }
+    &__avatar { @include title-md; width: 44px; height: 44px; }
+    &__name { @include title-xl; line-height: 1; }
+    &__tag { @include title-sm; }
   }
 }
 </style>

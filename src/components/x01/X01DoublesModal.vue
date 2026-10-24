@@ -24,7 +24,7 @@ defineEmits(['confirm'])
     <div class="db-modal__header">
       <p class="db-modal__title">Combien de doubles tentés ?</p>
       <button class="db-modal__close" @click="$emit('confirm', 0)">
-        <AppIcon name="close" :width="16" :height="16" />
+        <AppIcon name="close" :width="22" :height="22" />
       </button>
     </div>
     <p class="db-modal__hint">Incluant les doubles manqués dans cette volée</p>
@@ -50,45 +50,40 @@ defineEmits(['confirm'])
     justify-content: space-between;
   }
 
-  &__title {
-    @include title-lg;
-    color: $white;
-  }
+  &__title { @include title-xl; }
 
   &__close {
-    color: $muted;
+    color: $text-color;
     display: flex;
-    align-items: center;
-    justify-content: center;
     padding: $padding-xxs;
-    transition: color 0.15s;
-    &:active { color: $white; }
+    transition: opacity 0.15s;
+    &:active { opacity: 0.6; }
   }
 
   &__hint {
-    @include title-sm;
+    @include text-sm;
     color: $muted;
-    text-align: center;
     margin-top: -$gap-xs;
   }
 
   &__options {
-    display: flex;
-    gap: $gap-sm;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: $gap-xs;
   }
 
   &__btn {
-    flex: 1;
-    background: rgba($white, 0.08);
+    height: 64px;
     border-radius: $radius-sm;
-    padding: $padding-lg;
-    @include text-xxl;
-    font-weight: 700;
-    color: $white;
+    border: $border-md solid $text-color;
+    color: $text-color;
+    @include title-xxxl;
     transition: background 0.15s, transform 0.1s;
 
     &:active:not(:disabled) {
-      background: $orange;
+      background: $accent;
+      border-color: $accent;
+      color: $white;
       transform: scale(0.96);
     }
 
@@ -98,9 +93,9 @@ defineEmits(['confirm'])
 
 @media (min-width: $bp-laptop) {
   .db-modal {
-    &__title { @include title-xl; }
-    &__hint  { @include title-md; }
-    &__btn   { @include text-xxl; padding: $padding-xl; }
+    &__title { @include title-xxl; }
+    &__hint  { @include text-md; }
+    &__btn   { height: 80px; @include display-xs; }
   }
 }
 </style>

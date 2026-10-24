@@ -1,9 +1,11 @@
 <script setup>
+import AppIcon from './AppIcon.vue'
+
 defineProps({
   label: { type: String, required: true },
   options: { type: Array, required: true },
   modelValue: { required: true },
-  tone: { type: String, default: 'orange', validator: v => ['orange', 'blue'].includes(v) },
+  tone: { type: String, default: 'orange', validator: v => ['orange', 'blue', 'green', 'cyan'].includes(v) },
 })
 
 defineEmits(['update:modelValue'])
@@ -19,9 +21,11 @@ defineEmits(['update:modelValue'])
         class="option-selector__option"
         :class="{ 'option-selector__option--active': modelValue === opt.value }"
         :aria-pressed="modelValue === opt.value"
+        :aria-label="opt.icon ? opt.label : undefined"
         @click="$emit('update:modelValue', opt.value)"
       >
-        {{ opt.label }}
+        <AppIcon v-if="opt.icon" :name="opt.icon" :width="22" :height="22" />
+        <template v-else>{{ opt.label }}</template>
       </button>
     </div>
   </div>
@@ -46,7 +50,11 @@ defineEmits(['update:modelValue'])
   &__option {
     @include title-md;
     flex: 1;
+    min-width: 0;
     height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border: $border-md solid $border-color;
     border-radius: $radius-sm;
     background: transparent;
@@ -67,6 +75,16 @@ defineEmits(['update:modelValue'])
   &--blue &__option--active {
     background: $blue;
     border-color: $blue;
+  }
+
+  &--green &__option--active {
+    background: $accent;
+    border-color: $accent;
+  }
+
+  &--cyan &__option--active {
+    background: $mode-checkout;
+    border-color: $mode-checkout;
   }
 }
 

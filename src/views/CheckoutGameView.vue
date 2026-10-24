@@ -28,7 +28,7 @@ const settings = gameStore.gameSettings ?? {
 const {
   isQuiz, currentScore, currentCheckout, gameOver, progress,
   revealed, toggleReveal, grade, reviewDone, reviewTotal,
-  attemptDarts, answered, pushDart, undoDart, submit, lastResult, sessionStats,
+  attemptDarts, answered, pushDart, undoDart, submit, results, lastResult, sessionStats,
   next, endSession, cleanup,
 } = useCheckoutTrainer(settings)
 
@@ -55,47 +55,55 @@ onUnmounted(() => cleanup())
 
 <template>
   <div class="co-game">
-    <AppHeader :title="gameOver ? 'TERMINÉ' : 'CHECKOUTS'" back-icon="exit" @back="backToSettings">
-      <template v-if="!gameOver" #right>
-        <button class="co-game__end-btn" @click="endSession">
-          <AppIcon name="check" :width="22" :height="22" />
-        </button>
-      </template>
-    </AppHeader>
-
     <CheckoutRecap
       v-if="gameOver"
       :variant="isQuiz ? 'quiz' : 'review'"
       :session-stats="sessionStats"
+      :results="results"
       :reviewed-count="reviewDone"
+      :review-total="reviewTotal"
+      @exit="backToSettings"
       @restart="backToSettings"
       @home="router.push({ name: 'home' })"
     />
 
-    <CheckoutQuizInput
-      v-else-if="isQuiz"
-      :score="currentScore"
-      :checkout="currentCheckout"
-      :attempt-darts="attemptDarts"
-      :answered="answered"
-      :last-result="lastResult"
-      :progress="progress"
-      @dart="pushDart"
-      @undo="undoDart"
-      @submit="submit"
-      @next="next"
-    />
+    <template v-else>
+      <AppHeader :title="isQuiz ? 'Quiz noté' : 'Révision'" tone="cyan" back-icon="exit" @back="backToSettings">
+        <template #right>
+          <button class="co-game__end-btn" aria-label="Terminer" @click="endSession">
+            <AppIcon name="check" :width="24" :height="24" />
+          </button>
+        </template>
+      </AppHeader>
 
-    <CheckoutFlashcard
-      v-else
-      :score="currentScore"
-      :checkout="currentCheckout"
-      :revealed="revealed"
-      :done="reviewDone"
-      :total="reviewTotal"
-      @toggle="toggleReveal"
-      @grade="grade"
-    />
+      <main class="co-game__main">
+        <CheckoutQuizInput
+          v-if="isQuiz"
+          :score="currentScore"
+          :checkout="currentCheckout"
+          :attempt-darts="attemptDarts"
+          :answered="answered"
+          :last-result="lastResult"
+          :progress="progress"
+          :points="sessionStats.points"
+          @dart="pushDart"
+          @undo="undoDart"
+          @submit="submit"
+          @next="next"
+        />
+
+        <CheckoutFlashcard
+          v-else
+          :score="currentScore"
+          :checkout="currentCheckout"
+          :revealed="revealed"
+          :done="reviewDone"
+          :total="reviewTotal"
+          @toggle="toggleReveal"
+          @grade="grade"
+        />
+      </main>
+    </template>
   </div>
 </template>
 
@@ -103,16 +111,22 @@ onUnmounted(() => cleanup())
 .co-game {
   display: flex;
   flex-direction: column;
-  gap: $gap-md;
   height: 100dvh;
   overflow: hidden;
-  padding: $padding-md;
+
+  &__main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: $padding-md $padding-md 0;
+    @include safe-bottom($padding-xl);
+  }
 
   &__end-btn {
-    color: $text-color;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: $padding-xxs;
+    color: $white;
     transition: opacity 0.15s;
 
     &:active { opacity: 0.6; }
@@ -120,6 +134,9 @@ onUnmounted(() => cleanup())
 }
 
 @media (min-width: $bp-laptop) {
-  .co-game { padding: $padding-xl; }
+  .co-game__main {
+    padding: $padding-xxl $padding-xxl 0;
+    @include safe-bottom($padding-xxl);
+  }
 }
 </style>

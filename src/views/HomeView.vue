@@ -34,17 +34,13 @@ const activeTournaments = ref(props.mockTournaments ?? [])
 // Long enough to cover any realistic day streak
 const ACTIVITY_DAYS = 365
 
-onMounted(async () => {
+onMounted(() => {
   if (props.mockActivity) return
   const since = new Date(Date.now() - ACTIVITY_DAYS * 24 * 60 * 60 * 1000).toISOString()
-  const [sessions, badges, tournaments] = await Promise.all([
-    dbStore.fetchActivity(since),
-    badgeStore.fetchUserBadges(),
-    tournamentStore.fetchActiveTournaments(),
-  ])
-  activity.value          = sessions
-  userBadges.value        = badges
-  activeTournaments.value = tournaments
+  // Independent loads: a failing or slow request must not hold back the other sections
+  badgeStore.fetchUserBadges().then((badges) => { userBadges.value = badges })
+  tournamentStore.fetchActiveTournaments().then((tournaments) => { activeTournaments.value = tournaments })
+  dbStore.fetchActivity(since).then((sessions) => { activity.value = sessions })
 })
 
 const displayName = computed(() => {
