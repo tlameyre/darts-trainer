@@ -5,7 +5,7 @@ defineProps({
   label: { type: String, required: true },
   options: { type: Array, required: true },
   modelValue: { required: true },
-  tone: { type: String, default: 'orange', validator: v => ['orange', 'blue', 'green', 'cyan'].includes(v) },
+  tone: { type: String, default: 'orange', validator: v => ['orange', 'blue', 'green', 'cyan', 'online'].includes(v) },
 })
 
 defineEmits(['update:modelValue'])
@@ -80,6 +80,11 @@ defineEmits(['update:modelValue'])
   &--green &__option--active {
     background: $accent;
     border-color: $accent;
+  }
+
+  &--online &__option--active {
+    background: $mode-online;
+    border-color: $mode-online;
   }
 
   &--cyan &__option--active {

@@ -6,8 +6,10 @@ import { useDbStore } from '../store/dbStore.js'
 import { useGameStore } from '../store/gameStore.js'
 import { useOnlineMatchStore, profileName } from '../store/onlineMatchStore.js'
 import AppHeader from '../components/AppHeader.vue'
-import AppButton from '../components/AppButton.vue'
-import AppIcon from '../components/AppIcon.vue'
+import OnlineVersusHero from '../components/online/OnlineVersusHero.vue'
+import OnlineStepper from '../components/online/OnlineStepper.vue'
+import OnlineStatusCard from '../components/online/OnlineStatusCard.vue'
+import OnlineStarterTiles from '../components/online/OnlineStarterTiles.vue'
 
 const props = defineProps({
   // Preview /dev uniquement : { match, myId }
@@ -29,10 +31,18 @@ const myId     = computed(() => props.mock?.myId ?? authStore.user?.id)
 const isHost   = computed(() => match.value?.host_id === myId.value)
 const opponent   = computed(() => match.value && profileName(isHost.value ? match.value.guest : match.value.host))
 const opponentId = computed(() => match.value && (isHost.value ? match.value.guest_id : match.value.host_id))
-const summary  = computed(() => {
-  if (!match.value) return ''
+const me = computed(() => {
+  const profile = isHost.value ? match.value?.host : match.value?.guest
+  return { id: myId.value, name: profileName(profile) }
+})
+const opponentPlayer = computed(() => ({ id: opponentId.value, name: opponent.value }))
+
+const chips = computed(() => {
+  if (!match.value) return []
   const { startScore, legsToWin } = match.value.settings
-  return `${startScore} · ${legsToWin} manche${legsToWin > 1 ? 's' : ''} gagnante${legsToWin > 1 ? 's' : ''}`
+  const list = [String(startScore), `Premier à ${legsToWin} manche${legsToWin > 1 ? 's' : ''}`]
+  if (match.value.tournament_match_id) list.push('Match de tournoi')
+  return list
 })
 
 // L'ordre de players n'est définitif qu'une fois le match démarré
@@ -87,63 +97,103 @@ if (!props.mock) {
     if (status === 'active') startGame()
   })
 }
+
+// What the status card, stepper and hero kicker say for each state of the match
+const stage = computed(() => {
+  const status = match.value?.status
+  const name   = opponent.value
+  const closed = CLOSED_MESSAGES[status]
+
+  if (status === 'invited' && isHost.value) return {
+    kicker: 'Défi envoyé', step: 1, tone: 'wait', title: `En attente de ${name}…`,
+    text: 'Le défi est arrivé sur son appareil. La partie se lance dès qu\'il accepte.',
+  }
+  if (status === 'invited') return {
+    kicker: `${name} te défie !`, step: 1, tone: 'ok', title: 'Nouveau défi',
+    text: `Accepte pour lancer la partie. ${name} choisira ensuite qui commence.`,
+  }
+  if (status === 'accepted') return {
+    kicker: 'Défi accepté', step: 2, tone: 'wait', title: `${name} choisit qui commence…`,
+    text: 'Au bull ou au hasard. La partie démarre automatiquement après son choix.',
+  }
+  if (status === 'active') return {
+    kicker: 'Match en cours', step: 3, tone: 'ok', title: 'Match en cours', text: starterLabel.value,
+  }
+  if (status === 'declined') return {
+    kicker: 'Défi refusé', step: 1, tone: 'error',
+    title: isHost.value ? `${name} a refusé l'invitation` : 'Invitation refusée',
+    text: isHost.value ? 'Tu peux lui renvoyer un défi plus tard ou défier un autre ami.' : '',
+  }
+  return {
+    kicker: status === 'completed' ? 'Match terminé' : 'Match fermé',
+    step: status === 'completed' ? 4 : 1,
+    tone: status === 'completed' ? 'ok' : 'error',
+    title: closed ?? '', text: '',
+  }
+})
 </script>
 
 <template>
   <div class="lobby">
-    <AppHeader title="Match en ligne" @back="router.push({ name: 'online-settings' })" />
+    <div class="lobby__aside">
+      <AppHeader title="Match en ligne" tone="online" @back="router.push({ name: 'online-settings' })" />
+      <OnlineVersusHero
+        v-if="match"
+        :kicker="stage.kicker"
+        :me="me"
+        :opponent="opponentPlayer"
+        :chips="chips"
+        :opponent-dimmed="match.status === 'declined'"
+      />
+    </div>
 
     <main class="lobby__main">
-      <p v-if="loading" class="lobby__muted">Chargement…</p>
+      <p v-if="loading" class="lobby__message">Chargement…</p>
 
       <template v-else-if="match">
-        <div class="lobby__card">
-          <AppIcon name="globe" :width="40" :height="40" class="lobby__icon" />
-          <h2 class="lobby__opponent">{{ isHost ? `Défi lancé à ${opponent}` : `${opponent} te défie !` }}</h2>
-          <p class="lobby__muted">{{ summary }}</p>
-          <p v-if="starterLabel" class="lobby__muted">{{ starterLabel }}</p>
-          <p v-if="match.tournament_match_id" class="lobby__muted">Match de tournoi</p>
+        <OnlineStepper :step="stage.step" :error="stage.tone === 'error'" />
 
-          <p v-if="CLOSED_MESSAGES[match.status]" class="lobby__status">{{ CLOSED_MESSAGES[match.status] }}</p>
-          <p v-else-if="match.status === 'invited' && isHost" class="lobby__waiting">
-            En attente de {{ opponent }}…
+        <section v-if="match.status === 'accepted' && isHost" class="lobby__starter">
+          <div class="lobby__starter-head">
+            <h2 class="lobby__starter-title">Qui commence ?</h2>
+            <span class="lobby__starter-hint">{{ opponent }} a accepté</span>
+          </div>
+          <p class="lobby__starter-text">
+            Faites le bull chacun de votre côté, puis indique qui l'a gagné. Ou laisse le hasard décider.
           </p>
-        </div>
+          <OnlineStarterTiles
+            :me="me"
+            :opponent="opponentPlayer"
+            :disabled="busy"
+            @choose="run(onlineMatchStore.chooseStarter, $event === 'random' ? randomStarter() : $event)"
+          />
+        </section>
+        <OnlineStatusCard v-else :tone="stage.tone" :title="stage.title">{{ stage.text }}</OnlineStatusCard>
 
-        <div v-if="match.status === 'accepted'" class="lobby__card">
-          <h3 class="lobby__bull-title">Qui commence ?</h3>
-          <p v-if="isHost" class="lobby__muted">Faites le bull et indique qui l'a gagné, ou tire au sort.</p>
-          <p v-else class="lobby__waiting">{{ opponent }} choisit qui commence (bull ou tirage au sort)…</p>
-        </div>
-
-        <template v-if="match.status === 'invited'">
-          <template v-if="isHost">
-            <AppButton variant="secondary" :disabled="busy" @click="run(onlineMatchStore.cancel)">
-              Annuler l'invitation
-            </AppButton>
+        <div class="lobby__actions">
+          <template v-if="match.status === 'invited' && !isHost">
+            <button class="lobby__btn" :disabled="busy" @click="run(onlineMatchStore.decline)">Refuser</button>
+            <button class="lobby__btn lobby__btn--primary" :disabled="busy" @click="run(onlineMatchStore.accept)">Accepter</button>
           </template>
+          <button
+            v-else-if="match.status === 'invited'"
+            class="lobby__btn" :disabled="busy" @click="run(onlineMatchStore.cancel)"
+          >Annuler l'invitation</button>
+          <button
+            v-else-if="match.status === 'accepted'"
+            class="lobby__btn" :disabled="busy" @click="run(onlineMatchStore.cancel, 'accepted')"
+          >Annuler le match</button>
+          <button v-else-if="match.status === 'active'" class="lobby__btn lobby__btn--primary" @click="startGame">
+            Reprendre le match
+          </button>
           <template v-else>
-            <AppButton :disabled="busy" @click="run(onlineMatchStore.accept)">Accepter</AppButton>
-            <AppButton variant="secondary" :disabled="busy" @click="run(onlineMatchStore.decline)">Refuser</AppButton>
+            <button class="lobby__btn" @click="router.push({ name: 'play' })">Retour</button>
+            <button class="lobby__btn lobby__btn--primary" @click="router.push({ name: 'online-settings' })">Nouveau défi</button>
           </template>
-        </template>
-        <template v-else-if="match.status === 'accepted'">
-          <template v-if="isHost">
-            <AppButton :disabled="busy" @click="run(onlineMatchStore.chooseStarter, myId)">Moi</AppButton>
-            <AppButton :disabled="busy" @click="run(onlineMatchStore.chooseStarter, opponentId)">{{ opponent }}</AppButton>
-            <AppButton variant="secondary" :disabled="busy" @click="run(onlineMatchStore.chooseStarter, randomStarter())">
-              Au hasard
-            </AppButton>
-          </template>
-          <AppButton variant="ghost" :disabled="busy" @click="run(onlineMatchStore.cancel, 'accepted')">
-            Annuler le match
-          </AppButton>
-        </template>
-        <AppButton v-else-if="match.status === 'active'" @click="startGame">Reprendre le match</AppButton>
-        <AppButton v-else variant="secondary" @click="router.push({ name: 'online-settings' })">Nouveau défi</AppButton>
+        </div>
       </template>
 
-      <p v-else class="lobby__status">Match introuvable.</p>
+      <p v-else class="lobby__message lobby__message--error">Match introuvable.</p>
     </main>
   </div>
 </template>
@@ -153,57 +203,119 @@ if (!props.mock) {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  margin: 0 auto;
-  padding: $padding-lg $padding-md 0;
-  gap: $gap-md;
-  @include nav-safe-bottom;
+
+  &__aside {
+    display: flex;
+    flex-direction: column;
+    background: $mode-online;
+  }
 
   &__main {
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     gap: $gap-md;
+    padding: $padding-md;
+    @include safe-bottom($padding-xl);
   }
 
-  &__card {
+  &__message {
+    @include text-sm;
+    color: $muted;
+    text-align: center;
+
+    &--error { color: $error; }
+  }
+
+  &__starter {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: $gap-sm;
-    padding: $padding-xl;
-    background: rgba($white, 0.05);
-    border-radius: $radius-sm;
-    text-align: center;
+    gap: $gap-xs;
   }
 
-  &__icon     { color: $orange; }
-  &__opponent   { @include title-lg; color: $text-color; }
-  &__bull-title { @include title-md; color: $orange; text-transform: uppercase; }
-  &__muted    { @include text-sm; color: $muted; text-align: center; }
-  &__status   { @include text-sm; color: $error; text-align: center; }
+  &__starter-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 6px;
+    border-bottom: $border-lg solid $black;
+  }
 
-  &__waiting {
-    @include text-sm;
+  &__starter-title {
+    @include title-lg;
+    color: $text-color;
+  }
+
+  &__starter-hint {
+    @include text-xs;
     color: $accent;
-    animation: lobby-pulse 1.6s ease-in-out infinite;
   }
-}
 
-@keyframes lobby-pulse {
-  50% { opacity: 0.4; }
+  &__starter-text {
+    @include text-sm;
+    color: $muted;
+  }
+
+  &__actions {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: $gap-xs;
+    margin-top: auto;
+  }
+
+  &__btn {
+    @include title-lg;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 56px;
+    border: $border-md solid $black;
+    border-radius: $radius-sm;
+    color: $text-color;
+
+    &--primary {
+      border-color: $mode-online;
+      background: $mode-online;
+      color: $white;
+    }
+
+    &:active:not(:disabled) { opacity: 0.8; }
+    &:disabled { opacity: 0.4; }
+  }
 }
 
 @media (min-width: $bp-laptop) {
   .lobby {
-    padding: $padding-xxl $padding-xxl 0;
-    @include nav-safe-bottom($padding-xl);
+    display: grid;
+    grid-template-columns: 520px minmax(0, 1fr);
 
-    &__opponent   { @include title-xl; }
-    &__bull-title { @include title-lg; }
-    &__muted,
-    &__status,
-    &__waiting  { @include text-md; }
+    &__aside {
+      padding: $padding-xxl $padding-xxl $padding-xxl;
+      gap: $gap-xl;
+
+      :deep(.app-header) { padding: 0; grid-template-columns: 48px 1fr; }
+      :deep(.app-header__title) { text-align: left; }
+    }
+
+    &__main {
+      gap: $gap-xl;
+      padding: 48px;
+      @include safe-bottom($padding-xxl);
+    }
+
+    &__message,
+    &__starter-text { @include text-md; }
+    &__starter-title { @include title-xxl; }
+    &__starter-hint  { @include text-sm; }
+
+    &__actions {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(auto-fit, 280px);
+      justify-content: end;
+    }
+
+    &__btn { @include title-xl; height: 64px; }
   }
 }
 </style>

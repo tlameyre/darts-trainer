@@ -31,6 +31,7 @@ import StatsSessionDetail from '../components/stats/StatsSessionDetail.vue'
 import TournamentView from './TournamentView.vue'
 import TournamentJoinView from './TournamentJoinView.vue'
 import OnlineMatchLobbyView from './OnlineMatchLobbyView.vue'
+import OnlineSettingsView from './OnlineSettingsView.vue'
 import { generateBracket, resolveMatches } from '../composables/useTournamentBracket.js'
 import { generateLeagueSchedule, computeStandings } from '../composables/useChampionship.js'
 import { useGameStore } from '../store/gameStore.js'
@@ -221,6 +222,7 @@ const mockOnlineMatch = (status) => ({
   settings: { startScore: 501, legsToWin: 2, players: [{ id: 'u1', name: 'luca92' }, { id: 'me', name: 'Théotime' }] },
 })
 const onlineLobbyPreview = ref(null) // { match, myId }
+const showOnlineSettingsPreview = ref(false)
 
 const mockJoinPreview = {
   name: 'Tournoi de démonstration', description: 'Preview de la page de rejoindre',
@@ -558,6 +560,7 @@ const mockProfileData = {
     <section class="dev__section">
       <h2 class="dev__section-title">Match en ligne — salle d'attente (preview)</h2>
       <div class="dev__buttons">
+        <button class="dev__btn" @click="showOnlineSettingsPreview = true">Réglages (amis fictifs)</button>
         <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('invited'), myId: 'me' }">Invitation envoyée (hôte)</button>
         <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('invited'), myId: 'u1' }">Invitation reçue (invité)</button>
         <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted'), myId: 'me' }">Bull — choix du premier joueur (hôte)</button>
@@ -800,6 +803,11 @@ const mockProfileData = {
     </div>
 
     <!-- OnlineMatchLobbyView plein écran -->
+    <div v-if="showOnlineSettingsPreview" class="dev__fullscreen-preview">
+      <OnlineSettingsView :mock-friends="mockFriends" />
+      <button class="dev__close-preview" @click="showOnlineSettingsPreview = false">✕ Fermer</button>
+    </div>
+
     <div v-if="onlineLobbyPreview" class="dev__fullscreen-preview">
       <OnlineMatchLobbyView :mock="onlineLobbyPreview" />
       <button class="dev__close-preview" @click="onlineLobbyPreview = null">✕ Fermer</button>
