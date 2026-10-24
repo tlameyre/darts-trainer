@@ -161,6 +161,14 @@ Le router est une exception : Pinia n'est pas disponible au top-level du fichier
 - `meta: { hideNav: true }` pour masquer la BottomNav (vues de jeu)
 - La BottomNav a 5 onglets : Accueil (`/`), Jouer (`/play`), Tournoi (`/tournaments`), Stats (`/stats`), Profil (`/profile`)
 
+## Intégration depuis Claude Design
+
+Quand tu intègres des écrans ou éléments issus de Claude Design (onglet « Nouvelle DA ») :
+
+1. **Réutiliser d'abord** les composants déjà présents (`AppTabs`, `SectionTitle`, `StatCell`, `AppButton`…) et les mettre à la charte Nouvelle DA (variante, props ou restyle) plutôt que d'en recréer.
+2. **Si ce n'est pas possible**, construire un nouveau composant (réutilisable, dans le bon sous-dossier de `components/`).
+3. **Supprimer ce qui n'est plus utile** après l'intégration : composants orphelins, variantes et styles morts, icônes et imports inutilisés (vérifier par grep qu'aucun autre usage ne subsiste).
+
 ## Vue /dev (playground)
 
 `src/views/DevView.vue` est un playground accessible uniquement en mode dev via `/dev`. **Chaque nouvelle vue doit y être référencée.**
