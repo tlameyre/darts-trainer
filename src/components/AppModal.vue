@@ -8,6 +8,7 @@ defineProps({
   size: { type: String, default: 'sm' }, // 'sm' | 'lg'
   centered: { type: Boolean, default: false },
   minHeight: { type: String, default: null },
+  width:     { type: String, default: null }, // desktop dialog width (centered only)
 })
 
 defineEmits(['close'])
@@ -18,7 +19,7 @@ defineEmits(['close'])
     <Transition name="app-sheet">
       <div v-if="show" class="app-modal" :class="{ 'app-modal--centered': centered }" :style="{ zIndex }">
         <div class="app-modal__backdrop" @click="$emit('close')" />
-        <div class="app-modal__sheet" :class="`app-modal__sheet--${size}`" :style="minHeight ? { minHeight } : undefined">
+        <div class="app-modal__sheet" :class="`app-modal__sheet--${size}`" :style="{ minHeight: minHeight ?? undefined, '--modal-width': width ?? undefined }">
           <span class="app-modal__handle" />
           <div v-if="title" class="app-modal__header">
             <h2 class="app-modal__title">{{ title }}</h2>
@@ -126,7 +127,7 @@ defineEmits(['close'])
     justify-content: center;
 
     .app-modal__sheet {
-      width: 560px;
+      width: var(--modal-width, 560px);
       padding-top: $padding-xl;
       border-radius: $radius-lg;
     }

@@ -1,13 +1,18 @@
 <script setup>
 import { computed } from 'vue'
-import StatCell from '../StatCell.vue'
+import { STATS_MODE_COLORS } from '../../data/statsModes.js'
 import AppIcon from '../AppIcon.vue'
+import StatsHero from './StatsHero.vue'
+import StatsHistory from './StatsHistory.vue'
+import StatsHistoryCard from './StatsHistoryCard.vue'
 
 const props = defineProps({
   sessions: { type: Array, default: () => [] },
 })
 
 const emit = defineEmits(['open-detail'])
+
+const COLOR = STATS_MODE_COLORS.x01
 
 const summary = computed(() => {
   const s = props.sessions
@@ -34,324 +39,133 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
 }
 
-function hasBot(s) {
-  return !!s.settings?.aiProfile
+function fmtAvg(v) {
+  return v != null ? Number(v).toFixed(2) : '–'
 }
 
-function humanOpponents(s) {
-  return s.settings?.opponents ?? []
-}
-
-function legsToWin(s) {
-  return s.settings?.legsToWin ?? 0
+// Rows shown on a history card: the human, the DartBot if any, then human opponents
+function players(s) {
+  const toWin = s.settings?.legsToWin ?? 0
+  const rows = [{
+    name: s.settings?.humanName ?? 'Joueur',
+    legs: s.settings?.humanLegsWon ?? '–',
+    avg: fmtAvg(s.avg_volley),
+    won: s.settings?.humanLegsWon != null && s.settings.humanLegsWon >= toWin,
+  }]
+  if (s.settings?.aiProfile) {
+    rows.push({
+      name: 'Dartbot',
+      legs: s.settings?.aiLegsWon ?? '–',
+      avg: fmtAvg(s.settings?.aiAvgVolley),
+      won: s.settings?.aiLegsWon != null && s.settings.aiLegsWon >= toWin,
+    })
+  }
+  for (const opp of s.settings?.opponents ?? []) {
+    rows.push({ name: opp.name, legs: opp.legsWon, avg: fmtAvg(opp.avgVolley), won: opp.legsWon >= toWin })
+  }
+  return rows
 }
 </script>
 
 <template>
-  <section v-if="summary" class="tab__card tab__card--shrink">
-    <h2 class="tab__section-title">Résumé</h2>
-    <div class="tab__grid">
-      <StatCell :value="summary.avgVolley" label="Moyenne volée" />
-      <StatCell :value="summary.avg9darts" label="Moy. 9 premières" />
-      <StatCell :value="summary.pctFinish" label="% de finish" />
-      <StatCell :value="summary.avgHighestFinish" label="Finish moyen" />
-      <StatCell :value="summary.avgDartsToFinish" label="Fléchettes / leg" />
-      <StatCell :value="summary.sessions" label="Parties" />
-    </div>
-  </section>
+  <StatsHero
+    v-if="summary"
+    label="Moyenne volée" :value="summary.avgVolley"
+    :badge-value="summary.sessions" badge-label="parties"
+    :metrics="[
+      { value: summary.avg9darts, label: 'Moy. 9 premières' },
+      { value: summary.pctFinish, label: '% de finish' },
+      { value: summary.avgHighestFinish, label: 'Finish moyen' },
+      { value: summary.avgDartsToFinish, label: 'Fléch. / leg' },
+    ]"
+    :color="COLOR"
+  />
 
-  <section v-if="sessions.length" class="tab__card tab__card--grow">
-    <h2 class="tab__section-title">Historique</h2>
-    <ul class="tab__history">
-      <li v-for="s in sessions" :key="s.id" class="tab__session-card" @click="emit('open-detail', s)">
-        <div class="tab__session-header">
-          <span class="tab__session-title">{{ s.start_score }} – {{ s.legs_played }} manche{{ s.legs_played > 1 ? 's' :
-            '' }}</span>
-          <div class="tab__session-header-right">
-            <span v-if="s.tournament_id" class="tab__session-badge">
-              <AppIcon name="trophy" :width="12" :height="12" />
-              {{ s.tournaments?.name ?? 'Tournoi' }}
-            </span>
-            <span class="tab__session-date">{{ formatDate(s.played_at) }}</span>
-            <AppIcon name="arrow-right" :width="16" :height="16" class="tab__session-arrow" />
-          </div>
+  <StatsHistory :count="sessions.length" unit="parties"
+    empty-text="Lance une partie x01 pour voir tes stats ici.">
+    <StatsHistoryCard
+      v-for="s in sessions" :key="s.id"
+      :title="`${s.start_score} · ${s.legs_played} manche${s.legs_played > 1 ? 's' : ''}`"
+      :date="formatDate(s.played_at)" :color="COLOR"
+      @click="emit('open-detail', s)"
+    >
+      <span v-if="s.tournament_id" class="tab__badge">
+        <AppIcon name="trophy" :width="12" :height="12" />
+        {{ s.tournaments?.name ?? 'Tournoi' }}
+      </span>
+      <div class="tab__players">
+        <div v-for="p in players(s)" :key="p.name" class="tab__player" :class="{ 'tab__player--winner': p.won }">
+          <span class="tab__player-name">{{ p.name }}</span>
+          <AppIcon v-if="p.won" name="trophy" :width="16" :height="16" class="tab__player-trophy" />
+          <span v-else />
+          <span class="tab__player-legs">{{ p.legs }}</span>
+          <span class="tab__player-avg">{{ p.avg }}</span>
         </div>
-        <div class="tab__session-body">
-          <div class="tab__player-row" :class="{ winner: s.settings?.humanLegsWon >= (s.settings?.legsToWin ?? 0) }">
-            <div class="tab__player-infos">
-              <span class="tab__player-name">{{ s.settings?.humanName ?? 'Joueur' }}</span>
-              <AppIcon
-                v-if="s.settings?.humanLegsWon != null && s.settings.humanLegsWon >= (s.settings?.legsToWin ?? 0)"
-                name="trophy" :width="20" :height="20" class="tab__player-trophy" />
-            </div>
-            <div class="tab__player-stats">
-              <span class="tab__player-legs">{{ s.settings?.humanLegsWon ?? '–' }}</span>
-              <span class="tab__player-avg">{{ s.avg_volley != null ? Number(s.avg_volley).toFixed(2) : '–' }}</span>
-            </div>
-          </div>
-          <!-- DartBot opponent -->
-          <div v-if="hasBot(s)" class="tab__player-row"
-            :class="{ winner: s.settings?.aiLegsWon >= legsToWin(s) }">
-            <div class="tab__player-infos">
-              <span class="tab__player-name">Dartbot</span>
-              <AppIcon v-if="s.settings?.aiLegsWon != null && s.settings.aiLegsWon >= legsToWin(s)"
-                name="trophy" :width="20" :height="20" class="tab__player-trophy" />
-            </div>
-            <div class="tab__player-stats">
-              <span class="tab__player-legs">{{ s.settings?.aiLegsWon ?? '–' }}</span>
-              <span class="tab__player-avg">{{ s.settings?.aiAvgVolley != null ?
-                Number(s.settings.aiAvgVolley).toFixed(2) : '–' }}</span>
-            </div>
-          </div>
-          <!-- Human opponents (multi-player) -->
-          <div
-            v-for="(opp, oi) in humanOpponents(s)"
-            :key="oi"
-            class="tab__player-row"
-            :class="{ winner: opp.legsWon >= legsToWin(s) }"
-          >
-            <div class="tab__player-infos">
-              <span class="tab__player-name">{{ opp.name }}</span>
-              <AppIcon v-if="opp.legsWon >= legsToWin(s)"
-                name="trophy" :width="20" :height="20" class="tab__player-trophy" />
-            </div>
-            <div class="tab__player-stats">
-              <span class="tab__player-legs">{{ opp.legsWon }}</span>
-              <span class="tab__player-avg">{{ opp.avgVolley != null ? Number(opp.avgVolley).toFixed(2) : '–' }}</span>
-            </div>
-          </div>
-        </div>
-      </li>
-    </ul>
-  </section>
-
-  <p v-if="!summary && !sessions.length" class="tab__empty">
-    Lance une partie x01 pour voir tes stats ici.
-  </p>
+      </div>
+    </StatsHistoryCard>
+  </StatsHistory>
 </template>
 
 <style lang="scss" scoped>
 .tab {
-  &__card {
-    background: rgba($white, 0.05);
-    border-radius: $radius-lg;
-    padding: $padding-md;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-md;
-
-    &--shrink {
-      flex-shrink: 0;
-    }
-
-    &--grow {
-      flex: 1;
-      min-height: 0;
-      overflow-y: scroll;
-      padding-bottom: 0;
-    }
-  }
-
-  &__section-title {
-    @include title-sm;
-    color: $white;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    flex-shrink: 0;
-  }
-
-  &__grid {
-    display: grid;
-    gap: $gap-md;
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  &__empty {
-    @include text-sm;
-    color: $white;
-    text-align: center;
-    margin-top: $gap-xxl;
-  }
-
-  &__history {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-    padding-bottom: $padding-md;
-  }
-
-  // ── Card session ───────────────────────────────────────────────────────────
-  &__session-card {
-    background: rgba($white, 0.05);
-    border-radius: $radius-sm;
-    padding: $padding-md;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-md;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: opacity 0.15s;
-
-    &:active {
-      opacity: 0.6;
-    }
-  }
-
-  &__session-header {
+  &__badge {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: $gap-md;
-  }
-
-  &__session-title {
-    @include title-md;
-    color: $white;
-  }
-
-  &__session-header-right {
-    display: flex;
-    align-items: center;
-    gap: $gap-md;
-    flex-shrink: 0;
-  }
-
-  &__session-date {
-    @include text-xs;
-    color: $white;
-  }
-
-  &__session-badge {
-    display: flex;
-    align-items: center;
+    align-self: flex-start;
     gap: $gap-xxs;
-    background: rgba($orange, 0.15);
-    color: $orange;
-    border-radius: $radius-pill;
     padding: $padding-xxs $padding-xs;
+    border-radius: $radius-pill;
+    background: rgba($orange, 0.15);
+    color: $orange-dark;
     @include text-xxs;
-    max-width: 100px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex-shrink: 1;
-    min-width: 0;
   }
 
-  &__session-arrow {
-    color: $white;
-  }
-
-  &__session-body {
+  &__players {
     display: flex;
     flex-direction: column;
     gap: $gap-xxs;
   }
 
-  // ── Lignes joueur ──────────────────────────────────────────────────────────
-  &__player-row {
-    display: flex;
+  &__player {
+    display: grid;
+    grid-template-columns: 1fr 20px 32px 56px;
     align-items: center;
-    justify-content: space-between;
-    gap: $gap-sm;
-  }
-
-  &__player-infos,
-  &__player-stats {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     gap: $gap-xs;
+    @include title-md;
+    color: $muted;
+
+    &--winner { color: $text-color; }
   }
 
-  &__player-name {
-    @include text-xs;
-    color: $white;
-  }
+  &__player-trophy { color: $accent; }
 
   &__player-legs {
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    justify-self: center;
+    min-width: 24px;
+    padding: 1px $padding-xs;
+    border-radius: $radius-sm;
+    background: $bg;
+    text-align: center;
+    color: $text-color;
     @include title-sm;
+  }
+
+  &__player--winner &__player-legs {
+    background: $accent;
     color: $white;
-    border-radius: $radius-xs;
-    padding: $padding-xxs;
-    font-variant-numeric: tabular-nums;
   }
 
   &__player-avg {
-    @include title-sm;
-    color: $white;
+    justify-self: end;
     font-variant-numeric: tabular-nums;
-    min-width: 36px;
-    text-align: right;
-  }
-
-  &__player-row.winner {
-    .tab__player-name {
-      @include title-sm;
-    }
-    .tab__player-legs {
-      background: $orange;
-      color: $white;
-    }
   }
 }
 
 @media (min-width: $bp-laptop) {
   .tab {
-    &__card {
-      padding: $padding-xl;
-      gap: $gap-lg;
-    }
-
-    &__section-title {
-      @include title-md;
-    }
-
-    &__empty {
-      @include text-md;
-    }
-
-    &__session-card {
-      padding: $padding-md;
-      gap: $gap-sm;
-    }
-
-    &__session-title {
-      @include title-md;
-    }
-
-    &__session-date {
-      @include text-sm;
-    }
-
-    &__session-badge {
-      @include text-xs;
-      max-width: 140px;
-    }
-
-    &__player-name {
-      @include text-sm;
-    }
-
-    &__player-avg {
-      @include text-sm;
-    }
-
-    &__player-legs {
-      @include title-sm;
-    }
+    &__badge  { @include text-xs; }
+    &__player { @include title-lg; }
+    &__player-legs { @include title-md; }
   }
 }
 </style>

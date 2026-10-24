@@ -3,7 +3,7 @@ defineProps({
   // [{ id, label, color? }]
   tabs:       { type: Array,   required: true },
   modelValue: { type: String,  required: true },
-  variant:    { type: String,  default: 'pill' }, // 'pill' | 'underline'
+  variant:    { type: String,  default: 'pill' }, // 'pill' | 'chip' | 'bar' | 'underline'
   scrollable: { type: Boolean, default: false },  // défile horizontalement + snap
 })
 
@@ -59,7 +59,52 @@ function select(tab, e) {
     }
   }
 
-  // ── Scrollable + snap (combine avec --pill) ───────────────────────────────
+  // ── Chip (StatsView) — outlined, filled with the tab color when active ────
+  &--chip {
+    gap: $gap-xs;
+
+    .app-tabs__tab {
+      flex: 1;
+      height: 40px;
+      padding: 0 $padding-sm;
+      border: $border-md solid $border-color;
+      border-radius: $radius-sm;
+      @include title-sm;
+      text-transform: uppercase;
+      color: $text-color;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+      &--active {
+        background: var(--tab-color, $orange);
+        border-color: var(--tab-color, $orange);
+        color: $white;
+      }
+    }
+  }
+
+  // ── Bar — white underline, for colored backgrounds (warmup detail) ───────
+  &--bar {
+    padding: 0 $padding-sm;
+    border-bottom: $border-sm solid rgba($white, 0.25);
+
+    .app-tabs__tab {
+      flex: 1;
+      height: 44px;
+      @include title-sm;
+      text-transform: uppercase;
+      color: $white;
+      opacity: 0.7;
+      border-bottom: 3px solid transparent;
+      transition: opacity 0.15s, border-color 0.15s;
+
+      &--active {
+        opacity: 1;
+        border-bottom-color: $white;
+      }
+    }
+  }
+
+  // ── Scrollable + snap (combine avec --pill / --chip) ──────────────────────
   &--scrollable {
     overflow-x: auto;
     scroll-snap-type: x mandatory;
@@ -93,7 +138,7 @@ function select(tab, e) {
       gap: $gap-xs;
 
       &--active {
-        color: $orange;
+        color: $orange-dark;
         border-bottom-color: $orange;
       }
 
@@ -106,6 +151,22 @@ function select(tab, e) {
   .app-tabs--pill .app-tabs__tab {
     @include title-md;
     padding: $padding-sm $padding-md;
+  }
+
+  .app-tabs--chip .app-tabs__tab {
+    @include title-md;
+    height: 48px;
+  }
+
+  .app-tabs--bar {
+    padding: 0;
+
+    .app-tabs__tab {
+      @include title-md;
+      flex: none;
+      height: 48px;
+      padding: 0 $padding-lg;
+    }
   }
 
   .app-tabs--underline .app-tabs__tab {

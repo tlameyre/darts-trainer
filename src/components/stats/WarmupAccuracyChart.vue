@@ -7,74 +7,89 @@ const props = defineProps({
   // `points` triés par played_at ascendant ; `sessions` liste les séances brutes derrière un point
   // (plusieurs si regroupées sur un même jour).
   series: { type: Array, default: () => [] },
-  // 'month' : la période affichée est un seul mois → 4 graduations JJ/MM réparties uniformément
-  periodMode: { type: String, default: 'default' },
+  // 'week' | 'month' | 'year' : l'axe X couvre toute la période ; 'all' : de la 1re à la dernière séance
+  mode:   { type: String, default: 'year' },
+  // { start, end } en ms — obligatoire sauf en mode 'all'
+  range:  { type: Object, default: null },
 })
 
 const emit = defineEmits(['open-session'])
 
-const VIEW_W = 320
-const VIEW_H = 160
-const PAD_LEFT = 28
-const PAD_RIGHT = 8
-const PAD_TOP = 12
-const PAD_BOTTOM = 20
-const POINT_INSET = 14 // marge entre le 1er/dernier point et les bords du graphique
+// Mêmes valeurs que $bp-laptop : le graphique change de taille de viewBox sur grand écran
+const LAPTOP_QUERY = '(min-width: 1025px)'
+const isWide = ref(false)
+let mql = null
+const onMql = e => { isWide.value = e.matches }
+
+onMounted(() => {
+  mql = window.matchMedia(LAPTOP_QUERY)
+  isWide.value = mql.matches
+  mql.addEventListener('change', onMql)
+  document.addEventListener('click', handleDocumentClick, true)
+})
+onUnmounted(() => {
+  mql?.removeEventListener('change', onMql)
+  document.removeEventListener('click', handleDocumentClick, true)
+})
+
+const dims = computed(() => isWide.value
+  ? { w: 800, h: 530, left: 40, right: 12, top: 12, bottom: 34, font: 12, popW: 300 }
+  : { w: 342, h: 220, left: 30, right: 10, top: 10, bottom: 24, font: 10, popW: 290 })
+
+const plotLeft = computed(() => dims.value.left)
+const plotRight = computed(() => dims.value.w - dims.value.right)
+const plotTop = computed(() => dims.value.top)
+const baseline = computed(() => dims.value.h - dims.value.bottom)
 
 const activeCoord = ref(null) // { x, y } en unités du viewBox, ou null
 const COINCIDENCE_TOLERANCE = 5 // points considérés "au même endroit" en dessous de cette distance
 
 const allRawPoints = computed(() => props.series.flatMap(s => s.points))
+const times = computed(() => allRawPoints.value.map(p => new Date(p.played_at).getTime()))
 
-const timestamps = computed(() => allRawPoints.value.map(p => new Date(p.played_at).getTime()))
-const minTime = computed(() => Math.min(...timestamps.value))
-const maxTime = computed(() => Math.max(...timestamps.value))
-
-function xFor(time) {
-  const left = PAD_LEFT + POINT_INSET
-  const right = VIEW_W - PAD_RIGHT - POINT_INSET
-  if (maxTime.value === minTime.value) return left + (right - left) / 2
-  return left + ((time - minTime.value) / (maxTime.value - minTime.value)) * (right - left)
-}
-
-// Pas "rond" (1/2/5 × 10^n) pour ~4 graduations sur l'échelle Y
-function niceStep(range) {
-  const rough = range / 4
-  const mag = Math.pow(10, Math.floor(Math.log10(rough || 1)))
-  const norm = rough / mag
-  const step = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10
-  return step * mag
-}
-
-// Échelle Y auto-ajustée aux données de toutes les courbes (évite d'écraser sur un axe 0-100 fixe)
-const yDomain = computed(() => {
-  const values = allRawPoints.value.map(p => Number(p.accuracy))
-  let min = Math.min(...values)
-  let max = Math.max(...values)
-  if (min === max) { min -= 10; max += 10 }
-  const pad = (max - min) * 0.15
-  min = Math.max(0, min - pad)
-  max = Math.min(100, max + pad)
-  const step = niceStep(max - min)
-  return {
-    min: Math.max(0, Math.floor(min / step) * step),
-    max: Math.min(100, Math.ceil(max / step) * step),
-    step,
-  }
+const domain = computed(() => {
+  if (props.mode !== 'all' && props.range) return props.range
+  if (!times.value.length) return { start: 0, end: 1 }
+  return { start: Math.min(...times.value), end: Math.max(...times.value) }
 })
 
+// En mode 'all' les extrémités sont décalées pour que les points ne touchent pas les bords
+const inset = computed(() => (props.mode === 'all' ? 14 : 0))
+
+function xFor(time) {
+  const left = plotLeft.value + inset.value
+  const right = plotRight.value - inset.value
+  const { start, end } = domain.value
+  if (end === start) return left + (right - left) / 2
+  return left + ((time - start) / (end - start)) * (right - left)
+}
+
+const yMax = computed(() => {
+  const max = Math.max(...allRawPoints.value.map(p => Number(p.accuracy)), 0)
+  const step = max <= 50 ? 10 : 20
+  return Math.min(100, Math.max(step * 2, Math.ceil((max + 1) / step) * step))
+})
+
+const yStep = computed(() => (yMax.value <= 50 ? 10 : 20))
+
 const yTicks = computed(() => {
-  const { min, max, step } = yDomain.value
   const ticks = []
-  for (let v = min; v <= max + 0.001; v += step) ticks.push(Math.round(v))
+  for (let v = 0; v <= yMax.value; v += yStep.value) ticks.push(v)
   return ticks
 })
 
 function yFor(accuracy) {
-  const { min, max } = yDomain.value
-  const usableH = VIEW_H - PAD_TOP - PAD_BOTTOM
-  const t = max === min ? 0.5 : (Number(accuracy) - min) / (max - min)
-  return PAD_TOP + (1 - t) * usableH
+  return baseline.value - (Number(accuracy) / yMax.value) * (baseline.value - plotTop.value)
+}
+
+function startOfDay(time) {
+  const d = new Date(time)
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+}
+
+function addDays(time, n) {
+  const d = new Date(time)
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n).getTime()
 }
 
 function startOfMonth(time) {
@@ -87,44 +102,49 @@ function addMonths(time, n) {
   return new Date(d.getFullYear(), d.getMonth() + n, 1).getTime()
 }
 
-// Graduations majeures : chaque début de mois visible dans la période
-const monthTicks = computed(() => {
-  if (props.periodMode === 'month' || allRawPoints.value.length < 2) return []
-  const ticks = []
-  let cur = addMonths(startOfMonth(minTime.value), 1)
-  while (cur <= maxTime.value) {
-    ticks.push({ time: cur, label: new Date(cur).toLocaleDateString('fr-FR', { month: 'short' }) })
-    cur = addMonths(cur, 1)
-  }
-  return ticks
-})
+// Graduations majeures (trait long + label) et mineures (trait court), selon la période affichée
+const ticks = computed(() => {
+  const { start, end } = domain.value
+  const major = []
+  const minor = []
 
-// Graduations mineures (sans label) : tous les quarts de mois
-const quarterTicks = computed(() => {
-  if (props.periodMode === 'month' || allRawPoints.value.length < 2) return []
-  const ticks = []
-  let monthStart = startOfMonth(minTime.value)
-  while (monthStart <= maxTime.value) {
-    const nextMonth = addMonths(monthStart, 1)
-    const dayMs = (nextMonth - monthStart) / 4
-    for (let i = 1; i <= 3; i++) {
-      const t = monthStart + i * dayMs
-      if (t >= minTime.value && t <= maxTime.value) ticks.push(t)
+  if (props.mode === 'week') {
+    for (let t = startOfDay(start); t <= end; t = addDays(t, 1)) {
+      major.push({ time: t, label: new Date(t).toLocaleDateString('fr-FR', { weekday: 'short' }) })
     }
-    monthStart = nextMonth
+  } else if (props.mode === 'month') {
+    for (let t = startOfDay(start); t <= end; t = addDays(t, 1)) {
+      const day = new Date(t).getDate()
+      if ((day - 1) % 7 === 0) {
+        major.push({ time: t, label: new Date(t).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) })
+      } else {
+        minor.push(t)
+      }
+    }
+  } else {
+    // 'year' et 'all' : un début de mois = trait long, quarts de mois = traits courts
+    let cur = startOfMonth(start)
+    if (cur < start) cur = addMonths(cur, 1)
+    const spanMonths = (end - start) / (30 * 86400000)
+    for (; cur <= end; cur = addMonths(cur, 1)) {
+      const d = new Date(cur)
+      const isJan = d.getMonth() === 0
+      if (spanMonths <= 14 || isJan) {
+        const label = spanMonths <= 14
+          ? d.toLocaleDateString('fr-FR', { month: 'short' })
+          : String(d.getFullYear())
+        major.push({ time: cur, label })
+      }
+      if (spanMonths <= 14) {
+        const next = addMonths(cur, 1)
+        for (let i = 1; i <= 3; i++) {
+          const t = cur + (i * (next - cur)) / 4
+          if (t <= end) minor.push(t)
+        }
+      }
+    }
   }
-  return ticks
-})
-
-// Vue "Mois" : 4 graduations JJ/MM réparties uniformément sur la période affichée
-const monthModeTicks = computed(() => {
-  if (props.periodMode !== 'month' || allRawPoints.value.length < 2) return []
-  const ticks = []
-  for (let i = 0; i < 4; i++) {
-    const t = minTime.value + (i / 3) * (maxTime.value - minTime.value)
-    ticks.push({ time: t, label: new Date(t).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) })
-  }
-  return ticks
+  return { major, minor }
 })
 
 const renderedSeries = computed(() =>
@@ -143,13 +163,14 @@ const renderedSeries = computed(() =>
       label: s.label,
       color: s.color,
       points,
-      polyline: points.map(p => `${p.x},${p.y}`).join(' '),
+      path: points.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(''),
     }
   })
 )
 
-function formatShortDate(iso) {
-  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+function formatDay(iso) {
+  const label = new Date(iso).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
+  return label.charAt(0).toUpperCase() + label.slice(1)
 }
 
 function formatTime(iso) {
@@ -206,267 +227,282 @@ const mergedSessionRows = computed(() => {
   return [...map.values()].sort((a, b) => new Date(a.playedAt) - new Date(b.playedAt))
 })
 
+const plotEl = ref(null)
+
+// Bulle sous le point actif, recadrée dans le graphique ; la flèche reste alignée sur le point
+const popoverPos = computed(() => {
+  if (!activeCoord.value || !plotEl.value) return null
+  const scale = plotEl.value.clientWidth / dims.value.w
+  const x = activeCoord.value.x * scale
+  const y = activeCoord.value.y * scale
+  const width = dims.value.popW
+  const left = Math.min(Math.max(x - width / 2, 4), plotEl.value.clientWidth - width - 4)
+  return { left, top: y + 14, arrow: x - left - 7, width }
+})
+
 function handleDocumentClick(event) {
   if (!activeCoord.value) return
   if (event.target.closest('.chart__popover, .chart__point')) return
   activeCoord.value = null
 }
-
-onMounted(() => document.addEventListener('click', handleDocumentClick, true))
-onUnmounted(() => document.removeEventListener('click', handleDocumentClick, true))
 </script>
 
 <template>
   <div class="chart">
-    <div v-if="series.length > 1" class="chart__legend">
-      <div v-for="s in series" :key="s.key" class="chart__legend-item">
-        <span class="chart__legend-swatch" :style="{ background: s.color }" />
-        {{ s.label }}
+    <div class="chart__box">
+      <div ref="plotEl" class="chart__plot">
+        <svg class="chart__svg" :viewBox="`0 0 ${dims.w} ${dims.h}`" role="img" aria-label="Précision par zone">
+          <g v-for="v in yTicks" :key="v">
+            <line :x1="plotLeft" :x2="plotRight" :y1="yFor(v)" :y2="yFor(v)" class="chart__gridline" />
+            <text
+              :x="plotLeft - 6" :y="yFor(v) + dims.font * 0.35" text-anchor="end"
+              class="chart__axis-label" :font-size="dims.font"
+            >{{ v }}%</text>
+          </g>
+
+          <line
+            v-for="t in ticks.minor" :key="`n-${t}`"
+            :x1="xFor(t)" :x2="xFor(t)" :y1="baseline" :y2="baseline + 3"
+            class="chart__tick--minor"
+          />
+          <g v-for="t in ticks.major" :key="`j-${t.time}`">
+            <line :x1="xFor(t.time)" :x2="xFor(t.time)" :y1="baseline" :y2="baseline + 6" class="chart__tick--major" />
+            <text
+              :x="xFor(t.time) + 3" :y="baseline + 6 + dims.font + 1"
+              class="chart__axis-label chart__axis-label--x" :font-size="dims.font"
+            >{{ t.label }}</text>
+          </g>
+
+          <line :x1="plotLeft" :x2="plotRight" :y1="baseline" :y2="baseline" class="chart__baseline" />
+
+          <template v-for="s in renderedSeries" :key="s.key">
+            <path v-if="s.points.length > 1" :d="s.path" class="chart__line" :stroke="s.color" />
+            <g v-for="p in s.points" :key="p.id" class="chart__point" @click="handlePointClick(p)">
+              <circle
+                v-if="activeCoord && isCoincident(activeCoord, p)"
+                :cx="p.x" :cy="p.y" r="9" :fill="s.color" opacity="0.22"
+              />
+              <circle
+                :cx="p.x" :cy="p.y"
+                :r="activeCoord && isCoincident(activeCoord, p) ? 5.5 : 4"
+                :fill="s.color" class="chart__dot"
+              />
+            </g>
+          </template>
+        </svg>
+
+        <div
+          v-if="activeGroup.length && popoverPos"
+          class="chart__popover"
+          role="dialog"
+          :style="{ left: popoverPos.left + 'px', top: popoverPos.top + 'px', width: popoverPos.width + 'px' }"
+        >
+          <span class="chart__popover-arrow" aria-hidden="true" :style="{ left: popoverPos.arrow + 'px' }" />
+          <span class="chart__popover-date">{{ formatDay(activeGroup[0].point.playedAt) }}</span>
+
+          <button
+            v-for="row in mergedSessionRows" :key="row.id"
+            class="chart__popover-row"
+            @click="openSession(row.raw)"
+          >
+            <span class="chart__popover-time">{{ formatTime(row.playedAt) }}</span>
+            <span class="chart__popover-dots">
+              <span v-for="(v, i) in row.values" :key="i" class="chart__popover-dot" :style="{ background: v.color }" />
+            </span>
+            <span class="chart__popover-value">{{ row.values[0].accuracy }} %</span>
+            <span v-if="row.secondaryAccuracy !== null" class="chart__popover-secondary">
+              (session : {{ row.secondaryAccuracy }} %)
+            </span>
+            <AppIcon name="angle-down" :width="18" :height="18" class="chart__popover-chevron" />
+          </button>
+        </div>
       </div>
     </div>
 
-    <svg class="chart__svg" :viewBox="`0 0 ${VIEW_W} ${VIEW_H}`" preserveAspectRatio="xMidYMid meet">
-      <g class="chart__grid">
-        <template v-for="v in yTicks" :key="v">
-          <line
-            :x1="PAD_LEFT" :x2="VIEW_W - PAD_RIGHT"
-            :y1="yFor(v)" :y2="yFor(v)"
-            class="chart__gridline"
-          />
-          <text :x="PAD_LEFT - 4" :y="yFor(v)" class="chart__axis-label chart__axis-label--y">{{ v }}</text>
-        </template>
-      </g>
-
-      <!-- Graduations mineures : un trait tous les quarts de mois -->
-      <line
-        v-for="(t, i) in quarterTicks" :key="`q-${i}`"
-        :x1="xFor(t)" :x2="xFor(t)"
-        :y1="VIEW_H - PAD_BOTTOM" :y2="VIEW_H - PAD_BOTTOM + 3"
-        class="chart__tick--minor"
-      />
-
-      <!-- Graduations majeures : chaque début de mois (vue par défaut) -->
-      <g v-for="(t, i) in monthTicks" :key="`m-${i}`">
-        <line :x1="xFor(t.time)" :x2="xFor(t.time)" :y1="PAD_TOP" :y2="VIEW_H - PAD_BOTTOM" class="chart__gridline--month" />
-        <text :x="xFor(t.time)" :y="VIEW_H - 4" class="chart__axis-label chart__axis-label--x">{{ t.label }}</text>
-      </g>
-
-      <!-- Vue "Mois" : 4 graduations JJ/MM réparties uniformément -->
-      <g v-for="(t, i) in monthModeTicks" :key="`mm-${i}`">
-        <line :x1="xFor(t.time)" :x2="xFor(t.time)" :y1="PAD_TOP" :y2="VIEW_H - PAD_BOTTOM" class="chart__gridline--month" />
-        <text :x="xFor(t.time)" :y="VIEW_H - 4" class="chart__axis-label chart__axis-label--x">{{ t.label }}</text>
-      </g>
-
-      <template v-for="s in renderedSeries" :key="s.key">
-        <polyline v-if="s.points.length > 1" :points="s.polyline" class="chart__line" :style="{ stroke: s.color }" />
-
-        <g v-for="p in s.points" :key="p.id">
-          <circle
-            :cx="p.x" :cy="p.y" r="3"
-            class="chart__point"
-            :class="{ 'chart__point--active': activeCoord && isCoincident(activeCoord, p) }"
-            :style="{ fill: s.color }"
-            @click="handlePointClick(p)"
-          />
-        </g>
-      </template>
-    </svg>
-
-    <div
-      v-if="activeGroup.length"
-      class="chart__popover"
-      :style="{ left: (activeCoord.x / VIEW_W * 100) + '%', top: (activeCoord.y / VIEW_H * 100) + '%' }"
-    >
-      <div class="chart__popover-date">{{ formatShortDate(activeGroup[0].point.playedAt) }}</div>
-
-      <button
-        v-for="row in mergedSessionRows" :key="row.id"
-        class="chart__popover-row"
-        @click="openSession(row.raw)"
-      >
-        <span class="chart__popover-time">{{ formatTime(row.playedAt) }}</span>
-        <span class="chart__popover-value">
-          <span class="chart__popover-dots">
-            <span v-for="(v, i) in row.values" :key="i" class="chart__popover-dot" :style="{ background: v.color }" />
-          </span>
-          {{ row.values[0].accuracy }}%
-          <span v-if="row.secondaryAccuracy !== null" class="chart__popover-secondary">
-            (session : {{ row.secondaryAccuracy }}%)
-          </span>
-        </span>
-        <AppIcon name="arrow-right" :width="14" :height="14" class="chart__popover-arrow" />
-      </button>
+    <div v-if="series.length > 1" class="chart__legend">
+      <span v-for="s in series" :key="s.key" class="chart__legend-item">
+        <span class="chart__legend-swatch" :style="{ background: s.color }" />
+        {{ s.label }}
+      </span>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .chart {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: $gap-sm;
   width: 100%;
 
-  &__legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: $gap-sm;
-    margin-bottom: $gap-xs;
+  &__box {
+    padding-top: $padding-xs;
+    border-radius: $radius-sm;
+    background: $surface;
   }
 
-  &__legend-item {
-    display: flex;
-    align-items: center;
-    gap: $gap-xxs;
-    @include text-xxs;
-    color: $muted;
-  }
-
-  &__legend-swatch {
-    width: 8px;
-    height: 8px;
-    border-radius: $radius-pill;
-    flex-shrink: 0;
+  &__plot {
+    position: relative;
   }
 
   &__svg {
+    display: block;
     width: 100%;
     height: auto;
-    display: block;
-    overflow: visible;
   }
 
   &__gridline {
-    stroke: rgba($white, 0.08);
+    stroke: $border-color;
     stroke-width: 1;
-
-    &--month {
-      stroke: rgba($white, 0.06);
-      stroke-width: 1;
-    }
   }
 
-  &__tick {
-    &--minor {
-      stroke: rgba($white, 0.2);
-      stroke-width: 1;
-    }
+  &__baseline {
+    stroke: $black;
+    stroke-width: 1;
+  }
+
+  &__tick--minor {
+    stroke: $muted;
+    stroke-width: 1;
+  }
+
+  &__tick--major {
+    stroke: $black;
+    stroke-width: 1.5;
   }
 
   &__axis-label {
-    @include text-xxs;
     fill: $muted;
-
-    &--y {
-      text-anchor: end;
-      dominant-baseline: middle;
-    }
+    font-weight: 500;
 
     &--x {
-      text-anchor: middle;
+      fill: $black;
+      font-weight: 600;
     }
   }
 
   &__line {
     fill: none;
-    stroke: $blue;
-    stroke-width: 2;
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
   }
 
-  &__point {
-    fill: $blue;
-    stroke: $bg;
-    stroke-width: 1;
-    cursor: pointer;
-    transition: r 0.15s;
+  &__point { cursor: pointer; }
 
-    &--active {
-      r: 6;
-    }
+  &__dot {
+    stroke: $surface;
+    stroke-width: 2;
   }
 
   &__popover {
     position: absolute;
-    transform: translate(-50%, -100%);
-    margin-top: -$gap-sm;
-    background: $text-color;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
+    box-sizing: border-box;
+    padding: $padding-xs;
+    border: $border-md solid $black;
     border-radius: $radius-sm;
-    overflow: hidden;
-    min-width: 160px;
-    box-shadow: 0 4px 16px rgba($black, 0.4);
-    z-index: 10;
+    background: $white;
+    box-shadow: 0 6px 18px rgba($black, 0.22);
+  }
+
+  &__popover-arrow {
+    position: absolute;
+    top: -9px;
+    width: 14px;
+    height: 14px;
+    background: $white;
+    border-left: $border-md solid $black;
+    border-top: $border-md solid $black;
+    transform: rotate(45deg);
   }
 
   &__popover-date {
-    @include text-xxs;
-    font-weight: 600;
-    color: $bg;
-    opacity: 0.6;
-    padding: $padding-xxs $padding-sm 0;
+    @include title-md;
+    line-height: 1;
   }
 
   &__popover-row {
     display: flex;
     align-items: center;
     gap: $gap-xs;
-    width: 100%;
-    padding: $padding-xxs $padding-sm;
-    color: $bg;
+    padding: $padding-xs;
+    border-radius: $radius-sm;
+    background: $surface;
+    color: $text-color;
+    text-align: left;
     white-space: nowrap;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
   }
 
   &__popover-time {
-    @include text-xs;
+    width: 38px;
+    @include text-sm;
     font-weight: 600;
-    flex-shrink: 0;
-  }
-
-  &__popover-value {
-    @include text-xs;
-    font-weight: 600;
-    flex: 1;
-    text-align: left;
-    display: flex;
-    align-items: center;
-    gap: $gap-xs;
+    color: $muted;
   }
 
   &__popover-dots {
-    display: inline-flex;
-    align-items: center;
+    display: flex;
     gap: 3px;
   }
 
   &__popover-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: $radius-pill;
-    flex-shrink: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: $radius-xs;
+  }
+
+  &__popover-value {
+    @include title-lg;
+    line-height: 1;
   }
 
   &__popover-secondary {
-    font-weight: 400;
-    opacity: 0.7;
+    @include text-xs;
+    color: $muted;
   }
 
-  &__popover-arrow {
-    flex-shrink: 0;
-    opacity: 0.5;
+  &__popover-chevron {
+    margin-left: auto;
+    transform: rotate(-90deg);
+  }
+
+  &__legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: $gap-xxs $gap-md;
+  }
+
+  &__legend-item {
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
+    @include title-sm;
+    text-transform: uppercase;
+  }
+
+  &__legend-swatch {
+    width: 16px;
+    height: 4px;
+    border-radius: $radius-xs;
   }
 }
 
 @media (min-width: $bp-laptop) {
   .chart {
-    // Plafonne la taille réelle du SVG : au-delà, le viewBox fixe (320x160) grossit
-    // proportionnellement texte/traits/hauteur — d'où le rendu "trop haut" en pleine largeur.
-    max-width: 800px;
-    margin: 0 auto;
-
-    &__legend-item { @include text-xs; }
-    &__popover-date { @include text-xs; }
-    &__popover-time { @include text-sm; }
-    &__popover-value { @include text-sm; }
+    &__box { padding: $padding-sm $padding-md $padding-xxs; }
+    &__popover { padding: $padding-sm; }
+    &__popover-date { @include title-lg; }
+    &__popover-time { @include text-md; }
+    &__popover-value { @include title-xl; }
+    &__popover-secondary { @include text-sm; }
+    &__legend { gap: $gap-xxs $gap-lg; }
+    &__legend-item { @include title-md; }
+    &__legend-swatch { width: 18px; }
   }
 }
 </style>

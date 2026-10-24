@@ -1,12 +1,13 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDbStore } from '../store/dbStore.js'
 import { formatZoneLabel } from '../composables/useWarmup.js'
 import AppHeader from '../components/AppHeader.vue'
 import AppIcon from '../components/AppIcon.vue'
-import AppTabs from '../components/AppTabs.vue'
-import StatCell from '../components/StatCell.vue'
+import SectionTitle from '../components/SectionTitle.vue'
+import StatsPeriodHero from '../components/stats/StatsPeriodHero.vue'
+import StatsZoneSheet from '../components/stats/StatsZoneSheet.vue'
 import WarmupAccuracyChart from '../components/stats/WarmupAccuracyChart.vue'
 import StatsSessionDetail from '../components/stats/StatsSessionDetail.vue'
 
@@ -21,9 +22,10 @@ const dbStore = useDbStore()
 
 const allSessions = ref([])
 const loading = ref(true)
-const selectedPeriod = ref('all') // 'all' | year as string | 'month'
-const selectedMonth = ref(null)   // 'YYYY-MM'
-const selectedZones = ref([])     // [`${type}-${sector}`, ...]
+const periodMode = ref('year')   // 'week' | 'month' | 'year' | 'all'
+const periodOffset = ref(0)      // 0 = current period, -1 = the one before…
+const showZoneSheet = ref(false)
+const selectedZones = ref([])    // [`${type}-${sector}`, ...]
 
 onMounted(async () => {
   allSessions.value = isMock.value
@@ -32,52 +34,75 @@ onMounted(async () => {
   loading.value = false
 })
 
-const availableYears = computed(() => [...new Set(
-  allSessions.value.map(s => new Date(s.played_at).getFullYear())
-)].sort((a, b) => b - a))
-
-const periodTabs = computed(() => [
-  { id: 'all', label: 'Tout' },
-  ...availableYears.value.map(y => ({ id: String(y), label: String(y) })),
+const PERIOD_TABS = [
+  { id: 'week', label: 'Semaine' },
   { id: 'month', label: 'Mois' },
-])
+  { id: 'year', label: 'Année' },
+  { id: 'all', label: 'Tout' },
+]
 
-function monthKey(iso) {
-  const d = new Date(iso)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+function setPeriodMode(mode) {
+  periodMode.value = mode
+  periodOffset.value = 0
+}
+
+// Bounds (ms) of the displayed period, null for "all"
+const periodRange = computed(() => {
+  const now = new Date()
+  if (periodMode.value === 'week') {
+    const mondayShift = (now.getDay() + 6) % 7
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - mondayShift + periodOffset.value * 7)
+    return { start: start.getTime(), end: new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7).getTime() - 1 }
+  }
+  if (periodMode.value === 'month') {
+    const start = new Date(now.getFullYear(), now.getMonth() + periodOffset.value, 1)
+    return { start: start.getTime(), end: new Date(start.getFullYear(), start.getMonth() + 1, 1).getTime() - 1 }
+  }
+  if (periodMode.value === 'year') {
+    const year = now.getFullYear() + periodOffset.value
+    return { start: new Date(year, 0, 1).getTime(), end: new Date(year + 1, 0, 1).getTime() - 1 }
+  }
+  return null
+})
+
+function formatDay(time) {
+  return new Date(time).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-const monthOptions = computed(() => {
-  const map = new Map()
-  allSessions.value.forEach(s => {
-    const key = monthKey(s.played_at)
-    if (!map.has(key)) {
-      const d = new Date(s.played_at)
-      const label = capitalize(new Date(d.getFullYear(), d.getMonth(), 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }))
-      map.set(key, { key, label })
-    }
-  })
-  return [...map.values()].sort((a, b) => b.key.localeCompare(a.key))
+const periodLabel = computed(() => {
+  const range = periodRange.value
+  if (!range) return null
+  if (periodMode.value === 'week') return `${formatDay(range.start)} – ${formatDay(range.end)}`
+  if (periodMode.value === 'month') return capitalize(new Date(range.start).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }))
+  return String(new Date(range.start).getFullYear())
 })
 
-// Sélectionne par défaut le mois le plus récent disponible quand on bascule sur l'onglet "Mois"
-watch(selectedPeriod, (val) => {
-  if (val === 'month' && !selectedMonth.value && monthOptions.value.length) {
-    selectedMonth.value = monthOptions.value[0].key
-  }
+const periodCaption = computed(() => {
+  const range = periodRange.value
+  if (!range) return 'toutes périodes'
+  if (periodMode.value === 'week') return `semaine du ${formatDay(range.start)}`
+  if (periodMode.value === 'month') return new Date(range.start).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+  return `année ${periodLabel.value}`
 })
+
+const earliestSession = computed(() =>
+  allSessions.value.length ? Math.min(...allSessions.value.map(s => new Date(s.played_at).getTime())) : null
+)
+
+const canPrev = computed(() => !!periodRange.value && earliestSession.value !== null && periodRange.value.start > earliestSession.value)
+const canNext = computed(() => periodOffset.value < 0)
 
 const periodFilteredSessions = computed(() => {
-  if (selectedPeriod.value === 'all') return allSessions.value
-  if (selectedPeriod.value === 'month') {
-    if (!selectedMonth.value) return []
-    return allSessions.value.filter(s => monthKey(s.played_at) === selectedMonth.value)
-  }
-  return allSessions.value.filter(s => new Date(s.played_at).getFullYear() === Number(selectedPeriod.value))
+  const range = periodRange.value
+  if (!range) return allSessions.value
+  return allSessions.value.filter(s => {
+    const t = new Date(s.played_at).getTime()
+    return t >= range.start && t <= range.end
+  })
 })
 
 function zoneKey(zone) {
@@ -85,7 +110,7 @@ function zoneKey(zone) {
 }
 
 const TYPE_ORDER = { S: 0, D: 1, T: 2, A: 3, SB: 4, B: 5, AB: 6 }
-const ZONE_COLORS = ['#1D4ED8', '#EB6343', '#36cc86', '#F4C430', '#A855F7', '#EC4899', '#14B8A6', '#F97316']
+const ZONE_COLORS = ['#047857', '#B45309', '#14110F', '#1D4ED8', '#EB6343', '#7C3AED', '#0891B2', '#C8001F']
 
 const zoneOptions = computed(() => {
   const map = new Map()
@@ -104,39 +129,8 @@ const zoneOptions = computed(() => {
   ).map((z, i) => ({ ...z, color: ZONE_COLORS[i % ZONE_COLORS.length] }))
 })
 
-const ZONE_CATEGORIES = [
-  { id: 'simple', label: 'Simple', types: ['S'] },
-  { id: 'double', label: 'Double', types: ['D'] },
-  { id: 'triple', label: 'Triple', types: ['T'] },
-  { id: 'other', label: 'Autres', types: ['A', 'B', 'SB', 'AB'] },
-]
-
-// Une ligne par catégorie (simple/double/triple/autres), affichée seulement si elle a des zones jouées
-const zoneCategories = computed(() =>
-  ZONE_CATEGORIES
-    .map(cat => ({ ...cat, zones: zoneOptions.value.filter(z => cat.types.includes(z.zone.type)) }))
-    .filter(cat => cat.zones.length > 0)
-)
-
-function toggleZone(key) {
-  selectedZones.value = selectedZones.value.includes(key)
-    ? selectedZones.value.filter(k => k !== key)
-    : [...selectedZones.value, key]
-}
-
-function isCategoryFullySelected(cat) {
-  return cat.zones.every(z => selectedZones.value.includes(z.key))
-}
-
-function toggleCategoryAll(cat) {
-  const keys = cat.zones.map(z => z.key)
-  selectedZones.value = isCategoryFullySelected(cat)
-    ? selectedZones.value.filter(k => !keys.includes(k))
-    : [...new Set([...selectedZones.value, ...keys])]
-}
-
-function clearZones() {
-  selectedZones.value = []
+function zoneOption(key) {
+  return zoneOptions.value.find(z => z.key === key)
 }
 
 // Périodes d'une session dont la cible incluait la zone choisie (seule ou combinée à d'autres)
@@ -152,6 +146,52 @@ function sessionZoneStats(session, key) {
   const total = periods.reduce((sum, zs) => sum + zs.total, 0)
   const hits = periods.reduce((sum, zs) => sum + zs.hits, 0)
   return { total, hits, accuracy: total > 0 ? Math.round((hits / total) * 100) : 0 }
+}
+
+// Sessions, précision moyenne (pondérée) et meilleure séance d'une zone sur la période affichée
+function zoneStats(key) {
+  const matching = periodFilteredSessions.value.filter(s => matchingZoneRecap(s, key).length > 0)
+  const stats = matching.map(s => sessionZoneStats(s, key))
+  const totalDarts = stats.reduce((acc, z) => acc + z.total, 0)
+  const totalHits = stats.reduce((acc, z) => acc + z.hits, 0)
+  return {
+    sessions: matching.length,
+    accuracy: totalDarts > 0 ? Math.round((totalHits / totalDarts) * 100) : 0,
+    best: stats.length ? Math.max(...stats.map(z => z.accuracy)) : 0,
+  }
+}
+
+const ZONE_CATEGORIES = [
+  { id: 'simple', label: 'Simple', types: ['S'] },
+  { id: 'double', label: 'Double', types: ['D'] },
+  { id: 'triple', label: 'Triple', types: ['T'] },
+  { id: 'other', label: 'Autres', types: ['A', 'B', 'SB', 'AB'] },
+]
+
+// Une catégorie (simple/double/triple/autres) par groupe, seulement si elle a des zones jouées
+const zoneCategories = computed(() =>
+  ZONE_CATEGORIES
+    .map(cat => ({
+      ...cat,
+      zones: zoneOptions.value
+        .filter(z => cat.types.includes(z.zone.type))
+        .map(z => ({ key: z.key, label: z.label, color: z.color, ...zoneStats(z.key) })),
+    }))
+    .filter(cat => cat.zones.length > 0)
+)
+
+function toggleZone(key) {
+  selectedZones.value = selectedZones.value.includes(key)
+    ? selectedZones.value.filter(k => k !== key)
+    : [...selectedZones.value, key]
+}
+
+function toggleCategory(cat) {
+  const keys = cat.zones.map(z => z.key)
+  const full = keys.every(k => selectedZones.value.includes(k))
+  selectedZones.value = full
+    ? selectedZones.value.filter(k => !keys.includes(k))
+    : [...new Set([...selectedZones.value, ...keys])]
 }
 
 function dayKey(iso) {
@@ -188,16 +228,19 @@ const chartSeries = computed(() => {
 
   return selectedZones.value.map(key => {
     const matching = base.filter(s => matchingZoneRecap(s, key).length > 0)
-    const withDisplay = matching.map(s => {
-      const zs = sessionZoneStats(s, key)
-      return { ...s, displayAccuracy: zs.accuracy, secondaryAccuracy: Number(s.accuracy) }
-    })
-    const zoneOpt = zoneOptions.value.find(z => z.key === key)
+    const withDisplay = matching.map(s => ({
+      ...s,
+      displayAccuracy: sessionZoneStats(s, key).accuracy,
+      secondaryAccuracy: Number(s.accuracy),
+    }))
+    const zoneOpt = zoneOption(key)
     return { key, label: zoneOpt?.label ?? key, color: zoneOpt?.color ?? '#1D4ED8', points: groupByDay(withDisplay) }
   })
 })
 
 const hasChartData = computed(() => chartSeries.value.some(s => s.points.length > 0))
+
+const selectedZoneOptions = computed(() => selectedZones.value.map(zoneOption).filter(Boolean))
 
 const selectedSession = ref(null)
 const showDetail = ref(false)
@@ -213,113 +256,108 @@ async function deleteSession(id) {
   showDetail.value = false
 }
 
-// Résumé global de la période — utilisé seulement quand aucune zone n'est sélectionnée
 const periodSummary = computed(() => {
   const s = periodFilteredSessions.value
-  if (!s.length) return null
+  if (!s.length) return { sessions: 0, avgAccuracy: '–', best: '–' }
   return {
     sessions: s.length,
     avgAccuracy: Math.round(s.reduce((acc, r) => acc + Number(r.accuracy), 0) / s.length),
-    bestAccuracy: Math.max(...s.map(r => Number(r.accuracy))),
+    best: `${Math.max(...s.map(r => Number(r.accuracy)))} %`,
   }
 })
 
 // Un résumé par zone sélectionnée, pour coller à ce qui est affiché sur le graphique
-const zoneSummaries = computed(() => selectedZones.value.map(key => {
-  const zoneOpt = zoneOptions.value.find(z => z.key === key)
-  const matching = periodFilteredSessions.value.filter(s => matchingZoneRecap(s, key).length > 0)
-  const stats = matching.map(s => sessionZoneStats(s, key))
-  const totalDarts = stats.reduce((acc, z) => acc + z.total, 0)
-  const totalHits = stats.reduce((acc, z) => acc + z.hits, 0)
-  return {
-    key,
-    label: zoneOpt?.label ?? key,
-    color: zoneOpt?.color ?? '#1D4ED8',
-    sessions: matching.length,
-    avgAccuracy: totalDarts > 0 ? Math.round((totalHits / totalDarts) * 100) : 0,
-    bestAccuracy: stats.length ? Math.max(...stats.map(z => z.accuracy)) : 0,
-  }
-}))
+const zoneSummaries = computed(() => selectedZoneOptions.value.map(z => ({
+  key: z.key,
+  label: z.label,
+  color: z.color,
+  ...zoneStats(z.key),
+})))
 </script>
 
 <template>
   <div class="warmup-detail">
-    <AppHeader title="ÉCHAUFFEMENT — DÉTAIL" @back="router.back()" />
+    <AppHeader title="Échauffement" tone="blue" @back="router.back()" />
 
-    <main class="warmup-detail__main">
-      <div v-if="loading" class="warmup-detail__empty">Chargement…</div>
+    <StatsPeriodHero
+      :tabs="PERIOD_TABS" :mode="periodMode" :label="periodLabel"
+      :can-prev="canPrev" :can-next="canNext"
+      :accuracy="periodSummary.avgAccuracy" :sessions="periodSummary.sessions" :best="periodSummary.best"
+      @update:mode="setPeriodMode" @prev="periodOffset--" @next="periodOffset++"
+    />
 
-      <template v-else-if="allSessions.length">
-        <div class="warmup-detail__filters">
-          <AppTabs :tabs="periodTabs" v-model="selectedPeriod" />
-        </div>
+    <p v-if="loading" class="warmup-detail__empty">Chargement…</p>
 
-        <div v-if="selectedPeriod === 'month'" class="warmup-detail__month-filter">
-          <select class="warmup-detail__month-select" v-model="selectedMonth">
-            <option v-for="m in monthOptions" :key="m.key" :value="m.key">{{ m.label }}</option>
-          </select>
-        </div>
+    <main v-else-if="allSessions.length" class="warmup-detail__main">
+      <button v-if="zoneCategories.length" class="warmup-detail__zone-btn" aria-haspopup="dialog"
+        @click="showZoneSheet = true">
+        <span class="warmup-detail__zone-btn-text">
+          <span class="warmup-detail__zone-btn-label">
+            Zones affichées · {{ selectedZones.length || 'toutes' }}
+          </span>
+          <span v-if="selectedZoneOptions.length" class="warmup-detail__zone-tags">
+            <span v-for="z in selectedZoneOptions" :key="z.key" class="warmup-detail__zone-tag">
+              <span class="warmup-detail__dot" :style="{ background: z.color }" />
+              {{ z.label }}
+            </span>
+          </span>
+        </span>
+        <span class="warmup-detail__zone-btn-action">
+          <AppIcon name="sliders" :width="18" :height="18" />
+          Filtrer
+        </span>
+      </button>
 
-        <div v-if="zoneCategories.length" class="warmup-detail__zones">
-          <div v-for="cat in zoneCategories" :key="cat.id" class="warmup-detail__zone-row">
-            <span class="warmup-detail__zone-row-label">{{ cat.label }}</span>
-            <div class="warmup-detail__zone-chips">
-              <button
-                class="warmup-detail__zone-chip warmup-detail__zone-chip--all"
-                :class="{ 'warmup-detail__zone-chip--active': isCategoryFullySelected(cat) }"
-                @click="toggleCategoryAll(cat)"
-              >
-                Tout
-              </button>
-              <button
-                v-for="z in cat.zones" :key="z.key"
-                class="warmup-detail__zone-chip"
-                :class="{ 'warmup-detail__zone-chip--active': selectedZones.includes(z.key) }"
-                :style="selectedZones.includes(z.key) ? { '--chip-color': z.color } : {}"
-                @click="toggleZone(z.key)"
-              >
-                {{ z.label }}
-              </button>
-            </div>
+      <section class="warmup-detail__chart">
+        <SectionTitle title="Précision par zone" :count="periodCaption" ruled />
+        <WarmupAccuracyChart
+          v-if="hasChartData"
+          :series="chartSeries" :mode="periodMode" :range="periodRange"
+          @open-session="openSession"
+        />
+        <p v-else class="warmup-detail__empty">Aucune session d'échauffement pour cette période.</p>
+      </section>
+
+      <section v-if="zoneSummaries.length" class="warmup-detail__summaries">
+        <SectionTitle title="Résumé par zone" ruled />
+        <article v-for="zs in zoneSummaries" :key="zs.key" class="warmup-detail__summary">
+          <div class="warmup-detail__summary-head">
+            <span class="warmup-detail__summary-label">
+              <span class="warmup-detail__dot warmup-detail__dot--lg" :style="{ background: zs.color }" />
+              {{ zs.label }}
+            </span>
+            <span class="warmup-detail__bar">
+              <span class="warmup-detail__bar-fill" :style="{ width: zs.accuracy + '%', background: zs.color }" />
+            </span>
           </div>
-
-          <button v-if="selectedZones.length" class="warmup-detail__zone-clear" @click="clearZones">
-            <AppIcon name="eraser" :width="14" :height="14" />
-            Tout désélectionner
-          </button>
-        </div>
-
-        <section v-if="hasChartData" class="warmup-detail__chart-card">
-          <WarmupAccuracyChart :series="chartSeries" :period-mode="selectedPeriod === 'month' ? 'month' : 'default'" @open-session="openSession" />
-        </section>
-
-        <section v-if="!selectedZones.length && periodSummary" class="warmup-detail__grid">
-          <StatCell :value="periodSummary.sessions" label="Sessions" />
-          <StatCell :value="periodSummary.avgAccuracy + '%'" label="Précision moy." />
-          <StatCell :value="periodSummary.bestAccuracy + '%'" label="Meilleure séance" />
-        </section>
-
-        <section v-for="zs in zoneSummaries" :key="zs.key" class="warmup-detail__zone-summary">
-          <div class="warmup-detail__zone-summary-label">
-            <span class="warmup-detail__zone-summary-dot" :style="{ background: zs.color }" />
-            {{ zs.label }}
+          <div class="warmup-detail__stats">
+            <span class="warmup-detail__stat">
+              <span class="warmup-detail__stat-label">Sessions</span>
+              <span class="warmup-detail__stat-value">{{ zs.sessions }}</span>
+            </span>
+            <span class="warmup-detail__stat">
+              <span class="warmup-detail__stat-label">Précision moy.</span>
+              <span class="warmup-detail__stat-value">{{ zs.accuracy }}<small class="warmup-detail__stat-unit"> %</small></span>
+            </span>
+            <span class="warmup-detail__stat">
+              <span class="warmup-detail__stat-label">Meilleure</span>
+              <span class="warmup-detail__stat-value">{{ zs.best }}<small class="warmup-detail__stat-unit"> %</small></span>
+            </span>
           </div>
-          <div class="warmup-detail__grid">
-            <StatCell :value="zs.sessions" label="Sessions" />
-            <StatCell :value="zs.avgAccuracy + '%'" label="Précision moy." />
-            <StatCell :value="zs.bestAccuracy + '%'" label="Meilleure séance" />
-          </div>
-        </section>
-
-        <p v-if="!periodFilteredSessions.length" class="warmup-detail__empty">
-          Aucune session d'échauffement pour cette période.
-        </p>
-      </template>
-
-      <p v-else class="warmup-detail__empty">
-        Lance une session d'échauffement pour voir tes stats ici.
-      </p>
+        </article>
+      </section>
     </main>
+
+    <p v-else class="warmup-detail__empty">Lance une session d'échauffement pour voir tes stats ici.</p>
+
+    <StatsZoneSheet
+      :show="showZoneSheet"
+      :categories="zoneCategories" :selected="selectedZones"
+      @close="showZoneSheet = false"
+      @toggle="toggleZone"
+      @toggle-category="toggleCategory"
+      @clear="selectedZones = []"
+    />
 
     <StatsSessionDetail
       :show="showDetail"
@@ -336,138 +374,172 @@ const zoneSummaries = computed(() => selectedZones.value.map(key => {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: $padding-lg $padding-md 0;
-  gap: $gap-md;
-  @include nav-safe-bottom;
 
   &__main {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-md;
+    display: grid;
+    gap: $gap-lg;
+    grid-template-areas: 'btn' 'chart' 'sum';
+    padding: $padding-md $padding-md 0;
+    @include nav-safe-bottom;
   }
 
-  &__filters {
-    overflow-x: auto;
-
-    :deep(.app-tabs) {
-      width: max-content;
-      min-width: 100%;
-    }
-
-    :deep(.app-tabs__tab) {
-      flex: 1;
-      padding-left: $padding-md;
-      padding-right: $padding-md;
-    }
-  }
-
-  &__month-filter {
-    display: flex;
-  }
-
-  &__month-select {
-    flex: 1;
-    background: rgba($white, 0.05);
-    border-radius: $radius-sm;
-    padding: $padding-xs $padding-sm;
-    color: $text-color;
-    @include text-sm;
-  }
-
-  &__zones {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
-  }
-
-  &__zone-row {
+  &__zone-btn {
+    grid-area: btn;
     display: flex;
     align-items: center;
     gap: $gap-sm;
+    min-height: 52px;
+    padding: $padding-xs $padding-xs $padding-xs $padding-sm;
+    border: $border-md solid $black;
+    border-radius: $radius-sm;
+    background: $bg;
+    color: $text-color;
+    text-align: left;
   }
 
-  &__zone-row-label {
-    @include text-xs;
+  &__zone-btn-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__zone-btn-label {
+    @include text-xxs;
+    font-weight: 600;
+    letter-spacing: $tracking-lg;
+    text-transform: uppercase;
     color: $muted;
-    flex-shrink: 0;
-    width: 44px;
   }
 
-  &__zone-chips {
+  &__zone-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: $gap-xs;
-    overflow-x: auto;
+    gap: 6px;
   }
 
-  &__zone-chip {
-    background: rgba($white, 0.05);
-    border-radius: $radius-sm;
-    padding: $padding-xxs $padding-sm;
-    color: $muted;
-    @include text-xs;
-    font-weight: 600;
-    flex-shrink: 0;
-    transition: background 0.15s, color 0.15s;
-
-    &--active {
-      background: var(--chip-color, $blue);
-      color: $white;
-    }
-
-    &--all.warmup-detail__zone-chip--active {
-      background: $orange;
-    }
-  }
-
-  &__zone-clear {
+  &__zone-tag {
     display: flex;
     align-items: center;
-    gap: $gap-xxs;
-    align-self: flex-start;
-    background: $error;
+    gap: 5px;
+    padding: $padding-xxs $padding-xs;
     border-radius: $radius-sm;
-    padding: $padding-xxs $padding-sm;
-    color: $white;
-    @include text-xs;
-    font-weight: 600;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
+    background: $surface;
+    @include title-sm;
+    line-height: 1;
+    text-transform: uppercase;
   }
 
-  &__chart-card {
-    background: rgba($white, 0.05);
-    border-radius: $radius-lg;
-    padding: $padding-md;
+  &__zone-btn-action {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 $padding-sm;
+    border-radius: $radius-sm;
+    background: $black;
+    color: $bg;
+    @include title-sm;
+    text-transform: uppercase;
   }
 
-  &__grid {
-    display: grid;
-    gap: $gap-sm;
-    grid-template-columns: repeat(3, 1fr);
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: $radius-xs;
+    flex-shrink: 0;
+
+    &--lg {
+      width: 12px;
+      height: 12px;
+    }
   }
 
-  &__zone-summary {
+  &__chart {
+    grid-area: chart;
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
+    min-width: 0;
+  }
+
+  &__summaries {
+    grid-area: sum;
     display: flex;
     flex-direction: column;
     gap: $gap-xs;
   }
 
-  &__zone-summary-label {
+  &__summary {
     display: flex;
-    align-items: center;
-    gap: $gap-xxs;
-    @include text-xs;
-    color: $muted;
-    font-weight: 600;
+    flex-direction: column;
+    gap: $gap-xs;
+    padding: $padding-sm;
+    border-radius: $radius-sm;
+    background: $surface;
   }
 
-  &__zone-summary-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: $radius-pill;
+  &__summary-head {
+    display: flex;
+    align-items: center;
+    gap: $gap-sm;
+  }
+
+  &__summary-label {
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
     flex-shrink: 0;
+    min-width: 64px;
+    @include title-xl;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  &__bar {
+    flex: 1;
+    height: 8px;
+    border-radius: $radius-xs;
+    background: $border-color;
+    overflow: hidden;
+  }
+
+  &__bar-fill {
+    display: block;
+    height: 100%;
+  }
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: $gap-xs;
+  }
+
+  &__stat {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xxs;
+    min-width: 0;
+  }
+
+  &__stat-label {
+    @include text-xxs;
+    font-weight: 600;
+    letter-spacing: $tracking-lg;
+    text-transform: uppercase;
+    color: $muted;
+  }
+
+  &__stat-value {
+    @include title-xxl;
+    line-height: 0.95;
+    text-transform: uppercase;
+  }
+
+  &__stat-unit {
+    @include title-sm;
+    font-size: 14px;
   }
 
   &__empty {
@@ -480,15 +552,26 @@ const zoneSummaries = computed(() => selectedZones.value.map(key => {
 
 @media (min-width: $bp-laptop) {
   .warmup-detail {
-    padding: $padding-xxl $padding-xxl 0;
-    @include nav-safe-bottom($padding-xl);
+    &__main {
+      grid-template-columns: minmax(0, 832px) minmax(0, 1fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas: 'chart btn' 'chart sum';
+      align-items: start;
+      column-gap: $gap-xxl + $gap-xs;
+      padding: $padding-xl $padding-xxl 0;
+      @include nav-safe-bottom($padding-xl);
+    }
 
-    &__month-select { @include text-md; }
-    &__zone-row-label { @include text-sm; }
-    &__zone-chip { @include text-sm; }
-    &__zone-clear { @include text-sm; }
-    &__zone-summary-label { @include text-sm; }
-    &__chart-card { padding: $padding-xl; }
+    &__zone-btn {
+      min-height: 60px;
+      padding: $padding-xs $padding-xs $padding-xs $padding-md;
+    }
+
+    &__zone-btn-label { @include text-xs; }
+    &__zone-tag { @include title-md; }
+    &__zone-btn-action { @include title-md; height: 44px; padding: 0 $padding-md; }
+    &__summary { padding: $padding-sm $padding-md; }
+    &__summary-label { @include title-xl; font-size: 24px; min-width: 72px; }
     &__empty { @include text-md; }
   }
 }

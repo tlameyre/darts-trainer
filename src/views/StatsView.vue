@@ -8,6 +8,7 @@ import StatsScoreTab from '../components/stats/StatsScoreTab.vue'
 import StatsWarmupTab from '../components/stats/StatsWarmupTab.vue'
 import StatsX01Tab from '../components/stats/StatsX01Tab.vue'
 import StatsCheckoutTab from '../components/stats/StatsCheckoutTab.vue'
+import { STATS_MODES } from '../data/statsModes.js'
 import StatsSessionDetail from '../components/stats/StatsSessionDetail.vue'
 
 const router     = useRouter()
@@ -37,12 +38,6 @@ onMounted(async () => {
   loading.value          = false
 })
 
-const MODES = [
-  { id: 'score',    label: 'Quiz',  color: '#D64A24' },
-  { id: 'warmup',   label: 'Echauffement', color: '#1D4ED8' },
-  { id: 'x01',      label: 'x01',    color: '#047857' },
-  { id: 'checkout', label: 'Checkouts', color: '#0891B2' },
-]
 const selectedMode = ref('score')
 
 const selectedSession = ref(null)
@@ -85,12 +80,13 @@ async function deleteSession(id) {
 <template>
   <div class="stats">
     <header class="stats__header">
-      <h1 class="stats__title">STATISTIQUES</h1>
-      <AppTabs :tabs="MODES" v-model="selectedMode" scrollable />
+      <h1 class="stats__title">Statistiques</h1>
     </header>
 
     <main class="stats__main">
-      <div v-if="loading" class="stats__empty">Chargement…</div>
+      <AppTabs :tabs="STATS_MODES" v-model="selectedMode" variant="chip" scrollable />
+
+      <p v-if="loading" class="stats__empty">Chargement…</p>
 
       <template v-else>
         <StatsScoreTab
@@ -134,29 +130,24 @@ async function deleteSession(id) {
 .stats {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  overflow: hidden;
-  padding: $padding-lg $padding-md 0;
+  min-height: 100dvh;
 
   &__header {
-    padding-top: $padding-lg;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-md;
-    flex-shrink: 0;
-    padding-bottom: $padding-lg;
+    padding: $padding-xxl $padding-md $padding-md;
+    background: $black;
+    color: $bg;
   }
 
   &__title {
-    @include title-xl;
+    @include title-xxxl;
+    line-height: 0.9;
   }
 
   &__main {
-    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: $gap-md;
-    overflow: hidden;
+    gap: $gap-lg;
+    padding: $padding-md $padding-md 0;
     @include nav-safe-bottom;
   }
 
@@ -170,11 +161,9 @@ async function deleteSession(id) {
 
 @media (min-width: $bp-laptop) {
   .stats {
-    padding: $padding-xl $padding-xl 0;
-
-    &__header { gap: $gap-lg; padding-top: $padding-xl; padding-bottom: $padding-xl; }
-    &__title  { @include title-xxl; }
-    &__main   { gap: $gap-lg; @include nav-safe-bottom; }
+    &__header { padding: $padding-xxl $padding-xxl $padding-xl; }
+    &__title  { @include display-xs; }
+    &__main   { gap: $gap-xl; padding: $padding-xl $padding-xxl 0; @include nav-safe-bottom($padding-xl); }
     &__empty  { @include text-md; }
   }
 }

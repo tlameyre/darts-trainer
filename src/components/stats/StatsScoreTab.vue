@@ -1,5 +1,9 @@
 <script setup>
-import StatCell from '../StatCell.vue'
+import { computed } from 'vue'
+import { STATS_MODE_COLORS } from '../../data/statsModes.js'
+import StatsHero from './StatsHero.vue'
+import StatsHistory from './StatsHistory.vue'
+import StatsHistoryCard from './StatsHistoryCard.vue'
 
 const props = defineProps({
   summary:  { type: Object, default: null },
@@ -8,158 +12,37 @@ const props = defineProps({
 
 const emit = defineEmits(['open-detail'])
 
+const COLOR = STATS_MODE_COLORS.score
+
+const rate = computed(() => {
+  const s = props.summary
+  return s && s.totalQuestions > 0 ? Math.round((s.totalCorrect / s.totalQuestions) * 100) : 0
+})
+
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
-}
-
-function accuracy(correct, total) {
-  return total > 0 ? Math.round((correct / total) * 100) : 0
 }
 </script>
 
 <template>
-  <section v-if="summary" class="tab__card tab__card--shrink">
-    <h2 class="tab__section-title">Résumé</h2>
-    <div class="tab__grid">
-      <StatCell :value="summary.sessions" label="Sessions" />
-      <StatCell :value="accuracy(summary.totalCorrect, summary.totalQuestions) + '%'" label="Réussite" />
-      <StatCell :value="summary.bestStreak" label="Meilleure série" />
-    </div>
-  </section>
+  <StatsHero
+    v-if="summary"
+    label="Réussite" :value="rate" unit="%"
+    :badge-value="summary.sessions" badge-label="sessions"
+    :metrics="[{ value: summary.bestStreak, label: 'Meilleure série' }]"
+    :color="COLOR"
+  />
 
-  <section v-if="sessions.length" class="tab__card tab__card--grow">
-    <h2 class="tab__section-title">Historique</h2>
-    <ul class="tab__history">
-      <li v-for="s in sessions" :key="s.id" class="tab__session-card" @click="emit('open-detail', s)">
-        <div class="tab__session-header">
-          <span class="tab__session-title">Session {{ s.total_questions }} questions</span>
-          <span class="tab__session-date">{{ formatDate(s.played_at) }}</span>
-        </div>
-        <div class="tab__session-body">
-          <span class="tab__session-line">Score : <strong>{{ s.correct_count }}/{{ s.total_questions }}</strong></span>
-          <span class="tab__session-line">Meilleure série : <strong>{{ s.best_streak }} bonne{{ s.best_streak > 1 ? 's' : '' }} réponse{{ s.best_streak > 1 ? 's' : '' }}</strong></span>
-        </div>
-      </li>
-    </ul>
-  </section>
-
-  <p v-if="!summary && !sessions.length" class="tab__empty">
-    Lance une partie Score Training pour voir tes stats ici.
-  </p>
+  <StatsHistory :count="sessions.length" unit="sessions"
+    empty-text="Lance une partie Score Training pour voir tes stats ici.">
+    <StatsHistoryCard
+      v-for="s in sessions" :key="s.id"
+      :title="`${s.total_questions} questions`" :date="formatDate(s.played_at)" :color="COLOR"
+      :metrics="[
+        { label: 'Score', value: `${s.correct_count}/${s.total_questions}` },
+        { label: 'Série', value: s.best_streak },
+      ]"
+      @click="emit('open-detail', s)"
+    />
+  </StatsHistory>
 </template>
-
-<style lang="scss" scoped>
-.tab {
-  &__card {
-    background: rgba($white, 0.05);
-    border-radius: $radius-lg;
-    padding: $padding-md;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-md;
-
-    &--shrink { flex-shrink: 0; }
-
-    &--grow {
-      flex: 1;
-      min-height: 0;
-      overflow: hidden;
-      padding-bottom: 0;
-    }
-  }
-
-  &__section-title {
-    @include title-sm;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    flex-shrink: 0;
-  }
-
-  &__grid {
-    display: grid;
-    gap: $gap-sm;
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  &__empty {
-    @include text-sm;
-    color: $muted;
-    text-align: center;
-    margin-top: $gap-xxl;
-  }
-
-  &__history {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-    padding-bottom: $padding-md;
-  }
-
-  &__session-card {
-    background: rgba($white, 0.05);
-    border-radius: $radius-sm;
-    padding: $padding-sm $padding-md;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-xs;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
-  }
-
-  &__session-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: $gap-sm;
-  }
-
-  &__session-title {
-    @include title-sm;
-    color: $text-color;
-  }
-
-  &__session-date {
-    @include text-xs;
-    color: $muted;
-    flex-shrink: 0;
-  }
-
-  &__session-body {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  &__session-line {
-    @include text-xs;
-    color: $muted;
-
-    strong {
-      color: $text-color;
-      font-weight: 600;
-    }
-  }
-}
-
-@media (min-width: $bp-laptop) {
-  .tab {
-    &__card        { padding: $padding-xl; gap: $gap-lg; }
-    &__section-title { @include title-md; }
-    &__empty       { @include text-md; }
-    &__session-card  { padding: $padding-md $padding-lg; gap: $gap-sm; }
-    &__session-title { @include title-md; }
-    &__session-date  { @include text-sm; }
-    &__session-line  { @include text-sm; }
-  }
-}
-</style>
