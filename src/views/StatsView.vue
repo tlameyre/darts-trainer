@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDbStore } from '../store/dbStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
+import PageHeader from '../components/PageHeader.vue'
 import AppTabs from '../components/AppTabs.vue'
 import StatsScoreTab from '../components/stats/StatsScoreTab.vue'
 import StatsWarmupTab from '../components/stats/StatsWarmupTab.vue'
@@ -79,9 +80,7 @@ async function deleteSession(id) {
 
 <template>
   <div class="stats">
-    <header class="stats__header">
-      <h1 class="stats__title">Statistiques</h1>
-    </header>
+    <PageHeader title="Statistiques" />
 
     <main class="stats__main">
       <AppTabs :tabs="STATS_MODES" v-model="selectedMode" variant="chip" scrollable />
@@ -132,17 +131,6 @@ async function deleteSession(id) {
   flex-direction: column;
   min-height: 100dvh;
 
-  &__header {
-    padding: $padding-xxl $padding-md $padding-md;
-    background: $black;
-    color: $bg;
-  }
-
-  &__title {
-    @include title-xxxl;
-    line-height: 0.9;
-  }
-
   &__main {
     display: flex;
     flex-direction: column;
@@ -161,8 +149,6 @@ async function deleteSession(id) {
 
 @media (min-width: $bp-laptop) {
   .stats {
-    &__header { padding: $padding-xxl $padding-xxl $padding-xl; }
-    &__title  { @include display-xs; }
     &__main   { gap: $gap-xl; padding: $padding-xl $padding-xxl 0; @include nav-safe-bottom($padding-xl); }
     &__empty  { @include text-md; }
   }

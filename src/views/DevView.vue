@@ -24,6 +24,7 @@ import { buildMatchStats } from '../composables/useX01MatchStats.js'
 import { analyzeLegs, ALL_SEGMENTS } from '../composables/useCheckoutAnalysis.js'
 import FriendsView from './FriendsView.vue'
 import HomeView from './HomeView.vue'
+import LobbyView from './LobbyView.vue'
 import StatsWarmupDetailView from './StatsWarmupDetailView.vue'
 import StatsSessionDetail from '../components/stats/StatsSessionDetail.vue'
 import TournamentView from './TournamentView.vue'
@@ -37,6 +38,17 @@ import { getCheckout } from '../composables/useCheckouts.js'
 
 const router    = useRouter()
 const gameStore = useGameStore()
+
+// --- Preview LobbyView (dernière session et dernières stats fictives) ---
+const showLobbyPreview = ref(false)
+const lobbyDaysAgo = (n) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString()
+const mockLobbyData = {
+  warmup: { played_at: lobbyDaysAgo(1), zone: 'D16+T20', accuracy: 64, total_darts: 96, duration_s: 480, settings: { duration: 5, zoneRecap: [{ zones: [{ sector: 16, type: 'D' }, { sector: 20, type: 'T' }] }] } },
+  score: { played_at: lobbyDaysAgo(3), correct_count: 8, total_questions: 10, best_streak: 6, settings: {} },
+  checkout: { played_at: lobbyDaysAgo(4), correct_count: 7, questions: 10, points: 22, settings: {} },
+  x01: [{ played_at: lobbyDaysAgo(5), avg_volley: 48.6, highest_finish: 64, legs_played: 2 }],
+  tournament: { name: 'Ligue du jeudi' },
+}
 
 // --- Preview HomeView (semaine, série, tournois, badges fictifs) ---
 const showHomePreview = ref(false)
@@ -491,6 +503,14 @@ const mockSent = [
       </div>
     </section>
 
+    <!-- LobbyView — aperçu plein écran avec données fictives -->
+    <section class="dev__section">
+      <h2 class="dev__section-title">Jouer (preview)</h2>
+      <div class="dev__buttons">
+        <button class="dev__btn" @click="showLobbyPreview = true">Ouvrir la page Jouer</button>
+      </div>
+    </section>
+
     <!-- FriendsView — aperçu plein écran avec données fictives -->
     <section class="dev__section">
       <h2 class="dev__section-title">Vue Amis (preview)</h2>
@@ -627,6 +647,12 @@ const mockSent = [
         :mock-tournaments="mockHomeTournaments"
       />
       <button class="dev__close-preview" @click="showHomePreview = false">✕ Fermer</button>
+    </div>
+
+    <!-- LobbyView plein écran -->
+    <div v-if="showLobbyPreview" class="dev__fullscreen-preview">
+      <LobbyView :mock-data="mockLobbyData" />
+      <button class="dev__close-preview" @click="showLobbyPreview = false">✕ Fermer</button>
     </div>
 
     <!-- FriendsView plein écran -->

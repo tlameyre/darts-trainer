@@ -1,11 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '../store/authStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import { useDbStore } from '../store/dbStore.js'
 import { useTournamentStore } from '../store/tournamentStore.js'
 import { GAME_MODES } from '../data/gameModes.js'
+import { useProfileDisplay } from '../composables/useProfileDisplay.js'
 import { weekActivity, dayStreak } from '../utils/activity.js'
 import HomeHeader from '../components/home/HomeHeader.vue'
 import WeekActivity from '../components/home/WeekActivity.vue'
@@ -22,7 +22,6 @@ const props = defineProps({
 })
 
 const router          = useRouter()
-const authStore       = useAuthStore()
 const badgeStore      = useBadgeStore()
 const dbStore         = useDbStore()
 const tournamentStore = useTournamentStore()
@@ -43,20 +42,7 @@ onMounted(() => {
   dbStore.fetchActivity(since).then((sessions) => { activity.value = sessions })
 })
 
-const displayName = computed(() => {
-  const p = authStore.profile
-  if (!p) return 'Joueur'
-  return p.first_name || p.username || 'Joueur'
-})
-
-const initials = computed(() => {
-  const p = authStore.profile
-  if (!p) return '?'
-  if (p.first_name || p.last_name) {
-    return [(p.first_name?.[0] ?? ''), (p.last_name?.[0] ?? '')].join('').toUpperCase()
-  }
-  return (p.username?.[0] ?? authStore.user?.email?.[0] ?? '?').toUpperCase()
-})
+const { displayName, initials } = useProfileDisplay()
 
 const WIKI_TILE = { id: 'checkout-wiki', label: 'Encyclopédie', icon: 'book', color: '#14110F', settingsRoute: 'checkout-wiki' }
 
