@@ -7,10 +7,8 @@ const props = defineProps({
   // `points` triés par played_at ascendant ; `sessions` liste les séances brutes derrière un point
   // (plusieurs si regroupées sur un même jour).
   series: { type: Array, default: () => [] },
-  // 'week' | 'month' | 'year' : l'axe X couvre toute la période ; 'all' : de la 1re à la dernière séance
+  // Période affichée : règle le type de graduations ; l'axe X va toujours de la 1re à la dernière séance
   mode:   { type: String, default: 'year' },
-  // { start, end } en ms — obligatoire sauf en mode 'all'
-  range:  { type: Object, default: null },
 })
 
 const emit = defineEmits(['open-session'])
@@ -47,18 +45,15 @@ const COINCIDENCE_TOLERANCE = 5 // points considérés "au même endroit" en des
 const allRawPoints = computed(() => props.series.flatMap(s => s.points))
 const times = computed(() => allRawPoints.value.map(p => new Date(p.played_at).getTime()))
 
+// La 1re séance est à l'origine : pas d'espace vide si la période n'est que partiellement remplie
 const domain = computed(() => {
-  if (props.mode !== 'all' && props.range) return props.range
   if (!times.value.length) return { start: 0, end: 1 }
   return { start: Math.min(...times.value), end: Math.max(...times.value) }
 })
 
-// En mode 'all' les extrémités sont décalées pour que les points ne touchent pas les bords
-const inset = computed(() => (props.mode === 'all' ? 14 : 0))
-
 function xFor(time) {
-  const left = plotLeft.value + inset.value
-  const right = plotRight.value - inset.value
+  const left = plotLeft.value
+  const right = plotRight.value
   const { start, end } = domain.value
   if (end === start) return left + (right - left) / 2
   return left + ((time - start) / (end - start)) * (right - left)
@@ -144,8 +139,14 @@ const ticks = computed(() => {
       }
     }
   }
-  return { major, minor }
+  const inDomain = t => t >= start && t <= end
+  return { major: major.filter(t => inDomain(t.time)), minor: minor.filter(inDomain) }
 })
+
+// Évite un label coupé par le bord droit quand la dernière graduation est trop proche
+function labelFits(tick) {
+  return xFor(tick.time) + 3 + tick.label.length * dims.value.font * 0.6 <= dims.value.w
+}
 
 const renderedSeries = computed(() =>
   props.series.map(s => {
@@ -268,6 +269,7 @@ function handleDocumentClick(event) {
           <g v-for="t in ticks.major" :key="`j-${t.time}`">
             <line :x1="xFor(t.time)" :x2="xFor(t.time)" :y1="baseline" :y2="baseline + 6" class="chart__tick--major" />
             <text
+              v-if="labelFits(t)"
               :x="xFor(t.time) + 3" :y="baseline + 6 + dims.font + 1"
               class="chart__axis-label chart__axis-label--x" :font-size="dims.font"
             >{{ t.label }}</text>

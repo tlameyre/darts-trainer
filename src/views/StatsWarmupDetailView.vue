@@ -256,14 +256,40 @@ async function deleteSession(id) {
   showDetail.value = false
 }
 
+// Synthèse du bandeau : toutes les séances de la période, ou — si des zones sont
+// sélectionnées — uniquement les périodes de cible qui en incluent au moins une
+// (chaque période comptée une seule fois même si elle couvre plusieurs zones choisies).
 const periodSummary = computed(() => {
-  const s = periodFilteredSessions.value
-  if (!s.length) return { sessions: 0, avgAccuracy: '–', best: '–' }
-  return {
-    sessions: s.length,
-    avgAccuracy: Math.round(s.reduce((acc, r) => acc + Number(r.accuracy), 0) / s.length),
-    best: `${Math.max(...s.map(r => Number(r.accuracy)))} %`,
+  const sessions = periodFilteredSessions.value
+
+  if (!selectedZones.value.length) {
+    if (!sessions.length) return { sessions: 0, avgAccuracy: '–', best: '–' }
+    return {
+      sessions: sessions.length,
+      avgAccuracy: Math.round(sessions.reduce((acc, r) => acc + Number(r.accuracy), 0) / sessions.length),
+      best: `${Math.max(...sessions.map(r => Number(r.accuracy)))} %`,
+    }
   }
+
+  const perSession = sessions
+    .map(s => (s.settings?.zoneRecap ?? []).filter(zs => zs.zones.some(z => selectedZones.value.includes(zoneKey(z)))))
+    .filter(periods => periods.length)
+    .map(periods => ({
+      total: periods.reduce((sum, zs) => sum + zs.total, 0),
+      hits: periods.reduce((sum, zs) => sum + zs.hits, 0),
+    }))
+
+  const total = perSession.reduce((sum, s) => sum + s.total, 0)
+  const hits = perSession.reduce((sum, s) => sum + s.hits, 0)
+  if (!total) return { sessions: perSession.length, avgAccuracy: '–', best: '–' }
+  const best = Math.max(...perSession.filter(s => s.total > 0).map(s => Math.round((s.hits / s.total) * 100)))
+  return { sessions: perSession.length, avgAccuracy: Math.round((hits / total) * 100), best: `${best} %` }
+})
+
+const summaryCaption = computed(() => {
+  const labels = selectedZoneOptions.value.map(z => z.label)
+  if (!labels.length) return 'Précision moyenne · toutes zones'
+  return `Précision moyenne · ${labels.length > 3 ? `${labels.length} zones` : labels.join(', ')}`
 })
 
 // Un résumé par zone sélectionnée, pour coller à ce qui est affiché sur le graphique
@@ -282,7 +308,7 @@ const zoneSummaries = computed(() => selectedZoneOptions.value.map(z => ({
     <StatsPeriodHero
       :tabs="PERIOD_TABS" :mode="periodMode" :label="periodLabel"
       :can-prev="canPrev" :can-next="canNext"
-      :accuracy="periodSummary.avgAccuracy" :sessions="periodSummary.sessions" :best="periodSummary.best"
+      :caption="summaryCaption" :accuracy="periodSummary.avgAccuracy" :sessions="periodSummary.sessions" :best="periodSummary.best"
       @update:mode="setPeriodMode" @prev="periodOffset--" @next="periodOffset++"
     />
 
@@ -312,7 +338,7 @@ const zoneSummaries = computed(() => selectedZoneOptions.value.map(z => ({
         <SectionTitle title="Précision par zone" :count="periodCaption" ruled />
         <WarmupAccuracyChart
           v-if="hasChartData"
-          :series="chartSeries" :mode="periodMode" :range="periodRange"
+          :series="chartSeries" :mode="periodMode"
           @open-session="openSession"
         />
         <p v-else class="warmup-detail__empty">Aucune session d'échauffement pour cette période.</p>
@@ -340,7 +366,7 @@ const zoneSummaries = computed(() => selectedZoneOptions.value.map(z => ({
               <span class="warmup-detail__stat-value">{{ zs.accuracy }}<small class="warmup-detail__stat-unit"> %</small></span>
             </span>
             <span class="warmup-detail__stat">
-              <span class="warmup-detail__stat-label">Meilleure</span>
+              <span class="warmup-detail__stat-label">Meilleure session</span>
               <span class="warmup-detail__stat-value">{{ zs.best }}<small class="warmup-detail__stat-unit"> %</small></span>
             </span>
           </div>

@@ -8,6 +8,7 @@ defineProps({
   label:     { type: String,  default: null }, // current period ("2026"); no stepper when null
   canPrev:   { type: Boolean, default: true },
   canNext:   { type: Boolean, default: false },
+  caption:   { type: String,  default: 'Précision moyenne · toutes zones' },
   accuracy:  { type: [String, Number], required: true },
   sessions:  { type: [String, Number], required: true },
   best:      { type: String,  required: true },
@@ -34,7 +35,7 @@ defineEmits(['update:mode', 'prev', 'next'])
 
     <div class="period-hero__summary">
       <div class="period-hero__main">
-        <span class="period-hero__caption">Précision moyenne · toutes zones</span>
+        <span class="period-hero__caption">{{ caption }}</span>
         <span class="period-hero__value">{{ accuracy }}<span class="period-hero__unit">%</span></span>
       </div>
       <div class="period-hero__metrics">
@@ -149,7 +150,7 @@ defineEmits(['update:mode', 'prev', 'next'])
     align-items: flex-end;
     justify-content: space-between;
     gap: $gap-xxl;
-    padding: 0 $padding-xxl $padding-xl;
+    padding: $padding-xl $padding-xxl;
 
     &__nav {
       display: flex;
