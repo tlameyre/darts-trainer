@@ -9,6 +9,7 @@ const props = defineProps({
   doubleValidation: Boolean,
   best: { type: Number, default: 0 },
   durationMs: { type: Number, default: 0 },
+  hideActions: Boolean,
 })
 
 defineEmits(['replay', 'home'])
@@ -46,6 +47,7 @@ const countLabel = computed(() => {
     :badge-value="`${score.correct}/${score.total}`"
     badge-label="bonnes réponses"
     :stats="stats"
+    :hide-actions="hideActions"
     list-title="Récap par question"
     :list-count="countLabel"
     @primary="$emit('replay')"

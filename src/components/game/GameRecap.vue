@@ -8,9 +8,11 @@ defineProps({
   badgeLabel: { type: String, required: true },
   stats: { type: Array, required: true }, // { label, value }
   statsColumns: { type: Number, default: 2 },
-  listTitle: { type: String, required: true },
+  listTitle: { type: String, default: '' }, // the list section is skipped without default slot content
   listCount: { type: String, default: '' },
   primaryLabel: { type: String, default: 'Rejouer' },
+  // Read-only view of a saved session: no replay / home buttons
+  hideActions: { type: Boolean, default: false },
 })
 
 defineEmits(['primary', 'home'])
@@ -35,16 +37,16 @@ defineEmits(['primary', 'home'])
       </div>
     </section>
 
-    <section class="game-recap__details">
-      <div class="game-recap__list-head">
+    <section v-if="$slots.default || !hideActions" class="game-recap__details">
+      <div v-if="$slots.default" class="game-recap__list-head">
         <h2 class="game-recap__list-title">{{ listTitle }}</h2>
         <span class="game-recap__list-count">{{ listCount }}</span>
       </div>
-      <ul class="game-recap__list">
+      <ul v-if="$slots.default" class="game-recap__list">
         <slot />
       </ul>
 
-      <div class="game-recap__actions">
+      <div v-if="!hideActions" class="game-recap__actions">
         <button class="game-recap__action game-recap__action--primary" @click="$emit('primary')">{{ primaryLabel }}</button>
         <button class="game-recap__action game-recap__action--outline" @click="$emit('home')">Accueil</button>
       </div>

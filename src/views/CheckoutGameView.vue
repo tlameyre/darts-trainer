@@ -41,7 +41,8 @@ watch(gameOver, async (over) => {
       optimalCount: s.optimal,
       bestStreak: s.bestStreak,
       points: s.points,
-      settings: { brackets: settings.brackets, order: settings.order },
+      // Per-question results let the stats reopen the same recap as at the end of the quiz
+      settings: { brackets: settings.brackets, order: settings.order, results: results.value },
     })
   }
 })

@@ -10,7 +10,6 @@ import { BADGES } from '../data/badges.js'
 
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import BadgeDetailModal from '../components/badges/BadgeDetailModal.vue'
-import GameOver from '../components/GameOver.vue'
 import GameMenuModal from '../components/game/GameMenuModal.vue'
 import ChangeEmailModal from '../components/profile/ChangeEmailModal.vue'
 import ChangePasswordModal from '../components/profile/ChangePasswordModal.vue'
@@ -380,7 +379,6 @@ const unlockBadges        = ref([])
 const showBadgeDetail     = ref(false)
 const badgeDetail         = ref(null)
 const badgeProgress       = ref(null)
-const showGameOver        = ref(false)
 const showGameMenu        = ref(false)
 const showEmailModal      = ref(false)
 const showPasswordModal   = ref(false)
@@ -462,7 +460,6 @@ const mockSent = [
         <button class="dev__btn" @click="showUnlockMany">Badges débloqués (3)</button>
         <button class="dev__btn" @click="openBadgeUnlocked">Détail badge (débloqué)</button>
         <button class="dev__btn" @click="openBadgeLocked">Détail badge (verrouillé + progression)</button>
-        <button class="dev__btn" @click="showGameOver = true">Game Over</button>
         <button class="dev__btn" @click="showGameMenu = true">Menu de partie</button>
         <button class="dev__btn" @click="showEmailModal = true">Changer email</button>
         <button class="dev__btn" @click="showPasswordModal = true">Changer mot de passe</button>
@@ -607,10 +604,6 @@ const mockSent = [
     </section>
 
     <!-- Game Over en aperçu (a besoin d'un conteneur) -->
-    <div v-if="showGameOver" class="dev__gameover-preview">
-      <GameOver :correct-count="14" :max-questions="20" :best="9"
-        @replay="showGameOver = false" @home="showGameOver = false" />
-    </div>
 
     <!-- Composants montés -->
     <BadgeUnlockOverlay :badges="unlockBadges" @done="unlockBadges = []" />
@@ -815,15 +808,6 @@ const mockSent = [
     &:active { background: rgba(255, 255, 255, 0.12); }
   }
 
-  &__gameover-preview {
-    position: fixed;
-    inset: 0;
-    background: $bg;
-    padding: $padding-md;
-    display: flex;
-    flex-direction: column;
-    z-index: 90;
-  }
 
   &__fullscreen-preview {
     position: fixed;

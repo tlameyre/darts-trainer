@@ -49,7 +49,12 @@ watch(gameOver, async (val) => {
       correctCount:   correctCount.value,
       totalQuestions: questionIndex.value,
       bestStreak:     best.value,
-      settings,
+      // The per-question recap is rebuilt from history when the session is reopened in the stats
+      settings: {
+        ...settings,
+        durationMs: durationMs.value,
+        history: history.value.filter(e => e.answer !== undefined),
+      },
     })
     const stats = await dbStore.fetchProfileStats()
     newBadges.value = await badgeStore.checkGameBadges({

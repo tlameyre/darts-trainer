@@ -12,6 +12,8 @@ const props = defineProps({
   subtitle:         { type: String, default: '' },
   replayLabel:      { type: String, default: 'Rejouer' },
   checkoutAnalysis: { type: Object, default: null }, // analyzeLegs() output
+  // Read-only view of a saved match: no quit / replay buttons (leg detail keeps its way back)
+  hideActions:      { type: Boolean, default: false },
 })
 
 defineEmits(['replay', 'home'])
@@ -79,7 +81,7 @@ const legWinnerStats = computed(() => leg.value?.players[leg.value.winnerIndex] 
   <div ref="rootEl" class="match-end">
     <!-- ── Green hero: winner of the match, or of the leg in detail ──────────── -->
     <section class="match-end__hero">
-      <header class="match-end__bar">
+      <header v-if="!hideActions || leg" class="match-end__bar">
         <button
           v-if="leg"
           class="match-end__icon-btn"
@@ -190,7 +192,7 @@ const legWinnerStats = computed(() => leg.value?.players[leg.value.winnerIndex] 
 
     <p v-else class="match-end__empty">Aucune volée enregistrée cette partie.</p>
 
-    <div class="match-end__actions">
+    <div v-if="!hideActions || leg" class="match-end__actions">
       <button v-if="leg" class="match-end__btn" @click="selectedLeg = null">Retour au match</button>
       <template v-else>
         <button class="match-end__btn" @click="$emit('home')">Retour</button>

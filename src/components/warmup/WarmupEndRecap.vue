@@ -9,6 +9,7 @@ const props = defineProps({
   zoneRecapStats: { type: Array, required: true },
   sessionStats: { type: Object, required: true },
   durationMs: { type: Number, default: 0 },
+  hideActions: { type: Boolean, default: false },
 })
 
 defineEmits(['restart', 'home'])
@@ -78,6 +79,7 @@ const zonesLabel = computed(() => `zone${zoneCount.value > 1 ? 's' : ''}`)
     list-title="Récap par zones"
     :list-count="`${zoneCount} ${zonesLabel}`"
     primary-label="Recommencer"
+    :hide-actions="hideActions"
     @primary="$emit('restart')"
     @home="$emit('home')"
   >

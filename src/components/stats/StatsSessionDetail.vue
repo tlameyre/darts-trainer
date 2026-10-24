@@ -1,9 +1,11 @@
 <script setup>
 import { computed } from 'vue'
+import AppHeader from '../AppHeader.vue'
 import AppIcon from '../AppIcon.vue'
-import X01Result from '../x01/X01Result.vue'
-import GameOver from '../GameOver.vue'
-import WarmupRecap from '../warmup/WarmupRecap.vue'
+import GameRecap from '../game/GameRecap.vue'
+import ScoreRecap from '../score/ScoreRecap.vue'
+import WarmupEndRecap from '../warmup/WarmupEndRecap.vue'
+import X01MatchEnd from '../x01/X01MatchEnd.vue'
 import CheckoutRecap from '../checkout/CheckoutRecap.vue'
 
 const props = defineProps({
@@ -14,14 +16,14 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'delete', 'open-tournament'])
 
-// Normalise un item zoneRecap vers le format { zones: [...] } attendu par WarmupRecap
+// Normalise un item zoneRecap vers le format { zones: [...] } attendu par WarmupEndRecap
 function normalizeZoneItem(item) {
   if (item.zones) return item
   // Ancien format : { zone: { sector, type }, ... }
   return { ...item, zones: item.zone ? [item.zone] : [] }
 }
 
-// Mappe les données DB → format WarmupRecap
+// Mappe les données DB → format WarmupEndRecap
 const warmupZoneStats = computed(() => {
   const s = props.session
   if (!s) return []
@@ -78,24 +80,31 @@ const x01MatchStats = computed(() => {
   }
 })
 
-// Same title as the end-of-game screen: who won, or a neutral title if nobody reached legsToWin
-const x01Result = computed(() => {
+// Index in matchStats.players of whoever reached legsToWin; null if the game was stopped before.
+// Older sessions only carry the human player, so a DartBot win is not representable there.
+const x01WinnerIndex = computed(() => {
   const st = props.session?.settings ?? {}
   const target = st.legsToWin ?? Infinity
-  if (st.aiProfile) {
-    return st.aiLegsWon >= target
-      ? { title: 'L\'IA a gagné la partie !', emoji: '🤖', titleColor: 'orange' }
-      // humanLegsWon was under-counted in older sessions, so only DartBot's legs are reliable
-      : { title: 'Bien joué !', emoji: '🏆' }
-  }
-  if (st.opponents?.length) {
-    const winner = st.humanLegsWon >= target
-      ? (st.humanName ?? 'Toi')
-      : st.opponents.find(o => o.legsWon >= target)?.name
-    return { title: winner ? `${winner} a gagné la partie !` : 'Partie terminée', emoji: '🏆' }
-  }
-  return { title: 'Bien joué !', emoji: '🏆' }
+  const idx = (x01MatchStats.value?.match ?? []).findIndex(p => p.legsWon >= target)
+  return idx >= 0 ? idx : null
 })
+
+const x01Subtitle = computed(() => {
+  const s = props.session
+  return `${s.start_score} pts · ${s.legs_played} manche${s.legs_played > 1 ? 's' : ''}`
+})
+
+const scoreStats = computed(() => [
+  { label: 'Questions', value: props.session?.total_questions ?? 0 },
+  { label: 'Meilleure série', value: props.session?.best_streak ?? 0 },
+])
+
+const scorePercent = computed(() => {
+  const s = props.session
+  return s?.total_questions ? Math.round((s.correct_count / s.total_questions) * 100) : 0
+})
+
+const HEADER_TONES = { score: 'orange', warmup: 'blue', x01: 'green', checkout: 'cyan' }
 
 const checkoutStats = computed(() => {
   const s = props.session
@@ -110,26 +119,20 @@ const checkoutStats = computed(() => {
 })
 
 function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('fr-FR', {
-    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
-  })
+  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 </script>
 
 <template>
   <Transition name="slide-up">
     <div v-if="show && session" class="session-detail">
-
-      <!-- Barre du haut -->
-      <div class="session-detail__topbar">
-        <button class="session-detail__close" @click="$emit('close')">
-          <AppIcon name="arrow-left" :width="20" :height="20" />
-        </button>
-        <span class="session-detail__date">{{ formatDate(session.played_at) }}</span>
-        <button class="session-detail__delete" @click="$emit('delete', session.id)">
-          <AppIcon name="trash" :width="18" :height="18" />
-        </button>
-      </div>
+      <AppHeader :title="formatDate(session.played_at)" :tone="HEADER_TONES[mode]" @back="$emit('close')">
+        <template #right>
+          <button class="session-detail__delete" aria-label="Supprimer la session" @click="$emit('delete', session.id)">
+            <AppIcon name="trash" :width="22" :height="22" />
+          </button>
+        </template>
+      </AppHeader>
 
       <!-- tournaments is null once the tournament is gone or no longer readable -->
       <button
@@ -146,42 +149,50 @@ function formatDate(iso) {
         Tournoi
       </span>
 
-      <!-- Résultat 501 -->
-      <template v-if="mode === 'x01'">
-        <X01Result
-          :match-stats="x01MatchStats"
-          :title="x01Result.title"
-          :emoji="x01Result.emoji"
-          :title-color="x01Result.titleColor ?? null"
-          :subtitle="`${session.start_score} pts · ${session.legs_played} manche${session.legs_played > 1 ? 's' : ''}`"
-          hide-actions
-        />
-      </template>
+      <X01MatchEnd
+        v-if="mode === 'x01'"
+        class="session-detail__recap"
+        :match-stats="x01MatchStats"
+        :winner-index="x01WinnerIndex"
+        :subtitle="x01Subtitle"
+        hide-actions
+      />
 
-      <!-- Résultat Score Training -->
-      <template v-else-if="mode === 'score'">
-        <GameOver
-          :correct-count="session.correct_count"
-          :max-questions="session.total_questions"
-          :best="session.best_streak"
-          hide-actions
-        />
-      </template>
+      <ScoreRecap
+        v-else-if="mode === 'score' && session.settings?.history?.length"
+        class="session-detail__recap"
+        :history="session.settings.history"
+        :double-validation="!!session.settings.doubleValidation"
+        :best="session.best_streak ?? 0"
+        :duration-ms="session.settings.durationMs ?? 0"
+        hide-actions
+      />
 
-      <!-- Résultat Échauffement -->
-      <template v-else-if="mode === 'warmup'">
-        <WarmupRecap
-          :zone-recap-stats="warmupZoneStats"
-          :session-stats="warmupSessionStats"
-          hide-actions
-        />
-      </template>
+      <!-- Sessions saved before the question history was stored: totals only -->
+      <GameRecap
+        v-else-if="mode === 'score'"
+        class="session-detail__recap"
+        :percent="scorePercent"
+        :badge-value="`${session.correct_count}/${session.total_questions}`"
+        badge-label="bonnes réponses"
+        :stats="scoreStats"
+        hide-actions
+      />
 
-      <!-- Résultat Checkouts -->
-      <template v-else-if="mode === 'checkout'">
-        <CheckoutRecap variant="quiz" :session-stats="checkoutStats" hide-actions />
-      </template>
+      <WarmupEndRecap
+        v-else-if="mode === 'warmup'"
+        class="session-detail__recap"
+        :zone-recap-stats="warmupZoneStats"
+        :session-stats="warmupSessionStats"
+        :duration-ms="(session.duration_s ?? 0) * 1000"
+        hide-actions
+      />
 
+      <CheckoutRecap
+        v-else-if="mode === 'checkout'"
+        class="session-detail__recap"
+        variant="quiz" :session-stats="checkoutStats" :results="session.settings?.results ?? []" hide-actions
+      />
     </div>
   </Transition>
 </template>
@@ -194,35 +205,21 @@ function formatDate(iso) {
   z-index: 100;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  padding: $padding-md $padding-md 0;
 
-  &__topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: $gap-sm;
-    margin-bottom: $gap-md;
-    flex-shrink: 0;
-  }
-
-  &__close,
   &__delete {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: $radius-sm;
-    background: rgba($white, 0.07);
-    color: $text-color;
+    justify-content: flex-end;
+    color: $white;
     transition: opacity 0.15s;
-    flex-shrink: 0;
 
     &:active { opacity: 0.6; }
   }
 
-  &__delete { color: $error; background: rgba($error, 0.1); }
+  &__recap {
+    flex: 1;
+    min-height: 0;
+  }
 
   &__badge {
     display: flex;
@@ -230,12 +227,12 @@ function formatDate(iso) {
     justify-content: center;
     gap: $gap-xxs;
     align-self: center;
-    background: rgba($orange, 0.15);
-    color: $orange;
-    border-radius: $radius-pill;
+    margin: $gap-sm 0;
     padding: $padding-xxs $padding-sm;
+    border-radius: $radius-pill;
+    background: rgba($orange, 0.15);
+    color: $orange-dark;
     @include text-xxs;
-    margin-bottom: $gap-md;
     flex-shrink: 0;
 
     &--link {
@@ -245,27 +242,10 @@ function formatDate(iso) {
       &:active { opacity: 0.6; }
     }
   }
-
-  &__date {
-    @include title-sm;
-    color: $muted;
-    text-transform: capitalize;
-    text-align: center;
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-
 }
 
 @media (min-width: $bp-laptop) {
   .session-detail {
-    padding: $padding-xl;
-
-    &__date { @include title-sm; }
     &__badge { @include text-xs; }
   }
 }
