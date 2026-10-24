@@ -384,7 +384,7 @@ const rows = computed(() => props.results.map((r, i) => {
   &__row--optimal &__row-points { color: $accent; }
 
   &__row--valid &__row-status,
-  &__row--valid &__row-points { color: $orange; }
+  &__row--valid &__row-points { color: $orange-dark; }
 
   &__row--missed &__row-status { color: $error; }
   &__row--missed &__row-points { color: $muted; }

@@ -38,7 +38,7 @@ const summary = computed(() => {
     :color="COLOR"
   />
 
-  <StatsHistory :count="sessions.length" unit="quiz"
+  <StatsHistory :count="sessions.length" unit="derniers quiz"
     empty-text="Lance un quiz Checkouts pour voir tes stats ici.">
     <StatsHistoryCard
       v-for="s in sessions" :key="s.id"

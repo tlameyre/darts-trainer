@@ -47,7 +47,7 @@ function zoneNames(s) {
     </button>
   </StatsHero>
 
-  <StatsHistory :count="sessions.length" unit="sessions"
+  <StatsHistory :count="sessions.length" unit="dernières sessions"
     empty-text="Lance une session d'échauffement pour voir tes stats ici.">
     <StatsHistoryCard
       v-for="s in sessions" :key="s.id"

@@ -81,7 +81,7 @@ function players(s) {
     :color="COLOR"
   />
 
-  <StatsHistory :count="sessions.length" unit="parties"
+  <StatsHistory :count="sessions.length" unit="dernières parties"
     empty-text="Lance une partie x01 pour voir tes stats ici.">
     <StatsHistoryCard
       v-for="s in sessions" :key="s.id"

@@ -608,7 +608,7 @@ async function playOnline() {
   }
 
   &__winner-trophy { font-size: 40px; line-height: 1; }
-  &__winner-name   { @include title-lg; font-weight: 700; color: $orange; }
+  &__winner-name   { @include title-lg; font-weight: 700; color: $orange-dark; }
   &__winner-sub    { @include text-sm; color: $muted; }
 
   &__description {
@@ -649,7 +649,7 @@ async function playOnline() {
 
   &__banner {
     @include text-sm;
-    color: $orange;
+    color: $orange-dark;
     background: rgba($orange, 0.1);
     border-radius: $radius-sm;
     padding: $padding-sm $padding-md;
@@ -683,7 +683,7 @@ async function playOnline() {
 
   &__invite-copied {
     @include text-xs;
-    color: $orange;
+    color: $orange-dark;
     text-align: center;
   }
 
@@ -725,7 +725,7 @@ async function playOnline() {
 
   &__section-action {
     @include text-sm;
-    color: $orange;
+    color: $orange-dark;
   }
 
   &__list {

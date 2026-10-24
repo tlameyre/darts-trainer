@@ -152,7 +152,7 @@ const bucketRows = computed(() => buildRows(BUCKET_ROWS))
 
   &__player {
     @include title-sm;
-    color: $white;
+    color: $text-color;
     text-align: center;
     padding: $padding-xs;
     min-width: 72px;
@@ -161,7 +161,7 @@ const bucketRows = computed(() => buildRows(BUCKET_ROWS))
     text-overflow: ellipsis;
     white-space: nowrap;
 
-    &--me { color: $orange; }
+    &--me { color: $orange-dark; }
     &--ai { color: $blue; }
   }
 
@@ -173,7 +173,7 @@ const bucketRows = computed(() => buildRows(BUCKET_ROWS))
     padding: $padding-xs;
     white-space: nowrap;
 
-    &--best { color: $orange; }
+    &--best { color: $orange-dark; }
   }
 
   &__section {

@@ -120,7 +120,8 @@ const statRows = computed(() => props.rows.map((row) => {
   }
 
   &__label {
-    @include text-sm;
+    @include title-md;
+    text-transform: uppercase;
     color: $muted;
   }
 

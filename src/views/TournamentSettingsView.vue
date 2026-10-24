@@ -185,7 +185,7 @@ async function createTournament() {
 
   &__section-label {
     @include title-lg;
-    color: $white;
+    color: $text-color;
   }
 
   &__name-input {
@@ -257,7 +257,7 @@ async function createTournament() {
 
   &__stepper-value {
     @include display-sm;
-    color: $white;
+    color: $text-color;
     min-width: 48px;
     text-align: center;
   }

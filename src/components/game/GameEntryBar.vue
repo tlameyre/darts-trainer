@@ -64,15 +64,12 @@ function selectMode(id) {
         :key="i"
         class="entry-bar__slot"
         :class="{
-          'entry-bar__slot--filled': darts[i - 1],
-          'entry-bar__slot--next':   !darts[i - 1] && i === darts.length + 1,
+          'entry-bar__slot--filled': darts[i - 1] && darts[i - 1].type !== 'miss',
+          'entry-bar__slot--miss':   darts[i - 1]?.type === 'miss',
         }"
       >
-        <template v-if="darts[i - 1]">
-          <span class="entry-bar__slot-label">{{ darts[i - 1][valueKey] }}</span>
-          <span class="entry-bar__slot-pts">{{ darts[i - 1].pts ?? 0 }}</span>
-        </template>
-        <span v-else-if="i === darts.length + 1" class="entry-bar__slot-pts">Fléchette {{ i }}</span>
+        <AppIcon v-if="darts[i - 1]?.type === 'miss'" name="close" :width="16" :height="16" />
+        <template v-else-if="darts[i - 1]">{{ darts[i - 1][valueKey] }}</template>
       </span>
     </div>
 
@@ -175,35 +172,30 @@ function selectMode(id) {
     min-width: 0;
   }
 
+  // Same cells as the warmup input: ink outline when empty, filled once thrown
   &__slot {
+    @include title-xl;
     flex: 1;
     min-width: 0;
     height: 52px;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     border-radius: $radius-sm;
-    border: $border-md dashed $border-color;
-    color: var(--entry-color);
-
-    &--next { border-color: var(--entry-color); }
+    border: $border-md solid $text-color;
+    line-height: 1;
 
     &--filled {
-      border: none;
       background: var(--entry-color);
+      border-color: var(--entry-color);
       color: $white;
     }
-  }
 
-  &__slot-label {
-    @include title-xxl;
-    line-height: 1;
-  }
-
-  &__slot-pts {
-    @include text-xxs;
-    opacity: 0.75;
+    &--miss {
+      background: $surface;
+      border-color: $surface;
+      color: $error;
+    }
   }
 
   &__backdrop {
@@ -259,9 +251,7 @@ function selectMode(id) {
     &__value       { @include display-sm; }
     &__placeholder { @include text-lg; }
     &__bust        { height: 64px; @include title-xxxl; }
-    &__slot        { height: 64px; }
-    &__slot-label  { @include title-xxxl; }
-    &__slot-pts    { @include text-sm; }
+    &__slot        { @include title-xxl; height: 64px; }
     &__option      { @include text-md; }
   }
 }

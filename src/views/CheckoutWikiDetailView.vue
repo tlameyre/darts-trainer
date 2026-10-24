@@ -113,9 +113,9 @@ function goBack() {
     @include safe-bottom($padding-xl);
   }
 
+  // Mobile: the board is a full-width square that always stays visible
   &__card {
-    flex: 1;
-    min-height: 0;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     gap: $gap-sm;
@@ -159,22 +159,26 @@ function goBack() {
   }
 
   &__board {
-    flex: 1;
-    min-height: 0;
+    width: 100%;
+    aspect-ratio: 1;
     display: flex;
     justify-content: center;
     container-type: size;
   }
 
+  // Routes fill what is left under the board, score navigation stays at the bottom
   &__side {
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: $gap-sm;
   }
 
-  // Long route lists scroll so the board keeps its room
+  // Long route lists scroll inside, the board keeps its room
   &__routes {
-    max-height: 40dvh;
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: $gap-xs;
@@ -223,6 +227,8 @@ function goBack() {
     }
 
     &__card {
+      flex-shrink: 1;
+      min-height: 0;
       gap: 0;
       border-radius: $radius-sm;
       background: $surface;
@@ -238,24 +244,16 @@ function goBack() {
     &__kicker { @include text-sm; }
     &__score  { @include display-md; }
     &__tag    { padding: $padding-xxs $padding-xs; @include title-lg; }
-    &__board  { padding: $padding-sm; }
+    &__board  { flex: 1; min-height: 0; width: auto; aspect-ratio: auto; padding: $padding-sm; }
 
     &__side {
       min-height: 0;
       gap: $gap-xl;
     }
 
-    &__routes {
-      max-height: none;
-      min-height: 0;
-    }
-
     &__label { display: block; }
 
-    &__nav {
-      margin-top: auto;
-      gap: $gap-sm;
-    }
+    &__nav { gap: $gap-sm; }
 
     &__nav-btn { height: 64px; @include title-xxl; }
   }

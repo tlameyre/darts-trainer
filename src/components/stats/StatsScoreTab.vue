@@ -33,7 +33,7 @@ function formatDate(iso) {
     :color="COLOR"
   />
 
-  <StatsHistory :count="sessions.length" unit="sessions"
+  <StatsHistory :count="sessions.length" unit="dernières sessions"
     empty-text="Lance une partie Score Training pour voir tes stats ici.">
     <StatsHistoryCard
       v-for="s in sessions" :key="s.id"

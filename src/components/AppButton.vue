@@ -77,8 +77,8 @@ defineProps({
 
   &--secondary {
     background: transparent;
-    color: $white;
-    border: $border-md solid $white;
+    color: $text-color;
+    border: $border-md solid $text-color;
 
     &:active {
       background: rgba($white, 0.05);
@@ -87,8 +87,8 @@ defineProps({
 
   &--ghost {
     background: transparent;
-    color: $white;
-    border: $border-md solid $white;
+    color: $text-color;
+    border: $border-md solid $text-color;
 
     &:active {
       background: rgba($white, 0.08);

@@ -163,7 +163,7 @@ function selectedZones() {
 
   &__row {
     display: grid;
-    grid-template-columns: 12px 56px 1fr auto 24px;
+    grid-template-columns: 12px auto 1fr auto 24px;
     align-items: center;
     gap: $gap-sm;
     min-height: 48px;

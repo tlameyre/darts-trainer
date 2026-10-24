@@ -127,10 +127,10 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
 
   &__title {
     @include title-xxl;
-    color: $white;
+    color: $text-color;
     text-align: center;
 
-    &--orange { color: $orange; }
+    &--orange { color: $orange-dark; }
   }
 
   &__subtitle {
@@ -200,7 +200,7 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
     &:active { opacity: 0.75; }
 
     &--primary   { background: $orange; color: $white; }
-    &--secondary { background: rgba($white, 0.08); color: $white; }
+    &--secondary { background: rgba($white, 0.08); color: $text-color; }
   }
 }
 

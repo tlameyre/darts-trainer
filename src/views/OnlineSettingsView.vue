@@ -153,7 +153,7 @@ onMounted(() => {
 
   &__section-label {
     @include title-lg;
-    color: $white;
+    color: $text-color;
   }
 
   &__hint {
@@ -260,7 +260,7 @@ onMounted(() => {
 
   &__stepper-value {
     @include display-sm;
-    color: $white;
+    color: $text-color;
     min-width: 48px;
     text-align: center;
   }
