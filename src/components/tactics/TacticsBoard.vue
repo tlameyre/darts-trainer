@@ -18,12 +18,7 @@ const columns = computed(() => {
 
 // Colonne "Zone" réduite au minimum, les colonnes joueurs se partagent le reste.
 const gridTemplateColumns = computed(() =>
-  columns.value.map(c => (c.type === 'zone' ? 'auto' : '1fr')).join(' '),
-)
-
-// Header à sa hauteur naturelle, les lignes de zones se partagent la hauteur restante.
-const gridTemplateRows = computed(() =>
-  `auto repeat(${props.players[0]?.zones.length ?? 0}, minmax(0, 1fr))`,
+  columns.value.map(c => (c.type === 'zone' ? '64px' : 'minmax(0, 1fr)')).join(' '),
 )
 
 const headerCells = computed(() => columns.value.map(col =>
@@ -36,14 +31,16 @@ const tableRows = computed(() => {
   const zones = props.players[0]?.zones ?? []
   return zones.map((zone, rowIndex) => ({
     key: zone.id,
+    isSpecial: !/^\d+$/.test(zone.id),
     cells: columns.value.map((col) => {
       if (col.type === 'zone') return { type: 'zone', label: zone.label }
       const player = props.players[col.index]
       return {
-        type:   'mark',
-        visits: player.zones[rowIndex].visits,
-        closed: player.zones[rowIndex].closed,
-        active: zone.id === player.activeZoneId,
+        type:    'mark',
+        visits:  player.zones[rowIndex].visits,
+        closed:  player.zones[rowIndex].closed,
+        active:  zone.id === player.activeZoneId,
+        current: player.isCurrent,
       }
     }),
   }))
@@ -52,11 +49,14 @@ const tableRows = computed(() => {
 
 <template>
   <div class="tactics-board">
-    <div class="tactics-board__grid" :style="{ gridTemplateColumns, gridTemplateRows }">
+    <div class="tactics-board__grid" role="table" aria-label="Plateau Tactics" :style="{ gridTemplateColumns }">
       <div
         v-for="(h, i) in headerCells" :key="`h${i}`"
         class="tactics-board__cell tactics-board__cell--head"
-        :class="{ 'tactics-board__cell--head-active': h.type === 'player' && h.isCurrent }"
+        :class="{
+          'tactics-board__cell--label': h.type === 'zone',
+          'tactics-board__cell--head-current': h.type === 'player' && h.isCurrent,
+        }"
       >
         {{ h.label }}
       </div>
@@ -66,14 +66,15 @@ const tableRows = computed(() => {
           v-for="(cell, i) in row.cells" :key="i"
           class="tactics-board__cell"
           :class="cell.type === 'zone'
-            ? 'tactics-board__cell--zone'
+            ? ['tactics-board__cell--label', 'tactics-board__cell--zone', { 'tactics-board__cell--special': row.isSpecial }]
             : ['tactics-board__cell--mark', {
+                'tactics-board__cell--mark-current': cell.current,
                 'tactics-board__cell--mark-closed': cell.closed,
                 'tactics-board__cell--mark-active': cell.active && !cell.closed,
               }]"
         >
           <template v-if="cell.type === 'zone'">{{ cell.label }}</template>
-          <svg v-else class="tactics-board__mark" viewBox="0 0 24 24">
+          <svg v-else class="tactics-board__mark" viewBox="0 0 24 24" aria-hidden="true">
             <line v-if="cell.visits >= 1" x1="5" y1="5" x2="19" y2="19" />
             <line v-if="cell.visits >= 2" x1="19" y1="5" x2="5" y2="19" />
             <circle v-if="cell.visits >= 3" cx="12" cy="12" r="10" fill="none" />
@@ -86,79 +87,111 @@ const tableRows = computed(() => {
 
 <style lang="scss" scoped>
 .tactics-board {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
+  padding: 0 $padding-sm $padding-sm;
+  background: $mode-tactics;
 
   &__grid {
-    flex: 1;
-    min-height: 0;
     display: grid;
-    width: 100%;
-    border: $border-sm solid $white;
+    grid-template-rows: 36px;
+    grid-auto-rows: 30px;
+    gap: 1px;
+    padding: 1px;
+    border-radius: $radius-sm;
+    background: darken($mode-tactics, 10%);
+    overflow: hidden;
   }
 
   &__cell {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 0;
-    padding: $padding-xxs $padding-xs;
-    border: $border-sm solid $white;
+    min-width: 0;
+    color: $white;
     text-align: center;
+  }
+
+  &__cell--label {
+    background: darken($mode-tactics, 4%);
   }
 
   &__cell--head {
     @include title-sm;
-    font-weight: 700;
-    color: $white;
+    padding: 0 $padding-xxs;
+    overflow: hidden;
     white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
-  &__cell--head-active {
-    color: $orange;
+  &__cell--head.tactics-board__cell--label {
+    @include text-xxs;
+    font-weight: 600;
+    letter-spacing: $tracking-lg;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+
+  &__cell--head-current {
+    background: $white;
+    color: $mode-tactics;
   }
 
   &__cell--zone {
     @include title-sm;
-    font-weight: 700;
-    color: $white;
-    white-space: nowrap;
   }
 
-  &__cell--mark-closed {
+  &__cell--special {
+    @include title-xxs;
   }
 
-  &__cell--mark-active {
-    background: $orange;
+  &__cell--mark {
+    background: $mode-tactics;
   }
 
-  // Shrinks with the row when the board is short on height
+  &__cell--mark-current {
+    background: lighten($mode-tactics, 8%);
+  }
+
+  &__cell--mark-active::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 3px;
+    background: $white;
+  }
+
   &__mark {
+    position: relative;
     height: 100%;
     max-height: 18px;
     aspect-ratio: 1;
     stroke: $white;
     stroke-width: 2.5;
     fill: none;
+    stroke-linecap: round;
 
     .tactics-board__cell--mark-closed & {
-      stroke: $accent;
+      opacity: 0.6;
     }
 
     .tactics-board__cell--mark-active & {
-      stroke: $white;
+      stroke: $mode-tactics;
     }
   }
 }
 
 @media (min-width: $bp-laptop) {
   .tactics-board {
-    &__cell--head,
-    &__cell--zone { @include title-sm; }
+    padding: 0 $padding-md $padding-md;
 
+    &__grid {
+      grid-template-rows: 44px;
+      grid-auto-rows: 34px;
+    }
+
+    &__cell--head { @include title-md; }
+    &__cell--zone { @include title-md; }
+    &__cell--special { @include title-sm; }
     &__mark { max-height: 22px; }
   }
 }

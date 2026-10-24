@@ -41,17 +41,21 @@ const emit = defineEmits(['choose'])
 
   &__title {
     @include title-lg;
-    color: $white;
+    color: $text-color;
   }
 
   &__close {
-    color: $muted;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: $padding-xxs;
-    transition: color 0.15s;
-    &:active { color: $white; }
+    border-radius: $radius-sm;
+    background: $surface;
+    color: $text-color;
+
+    &:active { background: $border-color; }
   }
 
   &__options {
@@ -61,16 +65,17 @@ const emit = defineEmits(['choose'])
   }
 
   &__btn {
-    background: rgba($white, 0.08);
+    @include title-xl;
+    height: 64px;
+    border: $border-md solid $black;
     border-radius: $radius-sm;
-    padding: $padding-lg;
-    @include text-xl;
-    font-weight: 700;
-    color: $white;
-    transition: background 0.15s, transform 0.1s;
+    color: $black;
+    transition: background 0.15s, color 0.15s, transform 0.1s;
 
     &:active {
-      background: $orange;
+      border-color: $mode-tactics;
+      background: $mode-tactics;
+      color: $white;
       transform: scale(0.97);
     }
   }
@@ -79,7 +84,7 @@ const emit = defineEmits(['choose'])
 @media (min-width: $bp-laptop) {
   .zc-modal {
     &__title { @include title-xl; }
-    &__btn   { @include text-xxl; padding: $padding-xl; }
+    &__btn   { @include title-xxl; height: 80px; }
   }
 }
 </style>

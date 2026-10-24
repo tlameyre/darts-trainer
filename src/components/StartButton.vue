@@ -2,7 +2,7 @@
 import AppIcon from './AppIcon.vue'
 
 defineProps({
-  tone: { type: String, default: 'orange', validator: v => ['orange', 'blue', 'green', 'cyan'].includes(v) },
+  tone: { type: String, default: 'orange', validator: v => ['orange', 'blue', 'green', 'cyan', 'red'].includes(v) },
 })
 </script>
 
@@ -43,6 +43,11 @@ defineProps({
 
   &--cyan {
     background: $mode-checkout;
+    &:active { background: $black; }
+  }
+
+  &--red {
+    background: $mode-tactics;
     &:active { background: $black; }
   }
 }

@@ -5,8 +5,8 @@ import { useGameStore } from '../store/gameStore.js'
 import { useAuthStore } from '../store/authStore.js'
 import { useDbStore } from '../store/dbStore.js'
 import { useTactics } from '../composables/useTactics.js'
-import DartSlotsHeader from '../components/game/DartSlotsHeader.vue'
-import WarmupInput from '../components/warmup/WarmupInput.vue'
+import TacticsInput from '../components/tactics/TacticsInput.vue'
+import TacticsResult from '../components/tactics/TacticsResult.vue'
 import TacticsBoard from '../components/tactics/TacticsBoard.vue'
 import TacticsZoneChoiceModal from '../components/tactics/TacticsZoneChoiceModal.vue'
 import TacticsLegRecap from '../components/tactics/TacticsLegRecap.vue'
@@ -26,6 +26,7 @@ const settings = gameStore.gameSettings ?? { players: DEFAULT_PLAYERS, legsToWin
 const players  = settings.players ?? DEFAULT_PLAYERS
 
 const {
+  zones,
   activeZoneId,
   currentDarts,
   phase,
@@ -50,6 +51,7 @@ const {
 } = useTactics(settings)
 
 const SPECIAL_LABELS = { double: 'Double', triple: 'Triple', bull: 'Bull' }
+const isOver = computed(() => phase.value === 'game-over')
 
 const isLocked = computed(() => phase.value !== 'playing' || volleyCompleting.value || !!pendingZoneChoice.value)
 const showMenu = ref(false)
@@ -64,16 +66,18 @@ function finishGame() {
   phase.value    = 'game-over'
 }
 
-// ── Saisie (toujours le widget warmup — une seule zone active à la fois) ───
+// ── Saisie (une seule zone active à la fois) ───────────────────────────────
 // Phase nombres : S/D/T du nombre actif. Phase spéciales : uniquement le
 // bouton de la zone visée (Double/Triple) ou Outer/Bull pour la zone Bull.
-const inputConfig = computed(() => {
+const inputTarget = computed(() => {
   const id = activeZoneId.value
   if (id == null) return null
-  if (id === 'bull')                    return { zones: [{ sector: null }], onlyType: null, labelOverride: null }
-  if (id === 'double' || id === 'triple') return { zones: [{ sector: 20 }],  onlyType: id,   labelOverride: id.toUpperCase() }
-  return { zones: [{ sector: Number(id) }], onlyType: null, labelOverride: null }
+  if (id === 'bull')                      return { sector: null, onlyType: null }
+  if (id === 'double' || id === 'triple') return { sector: 20,   onlyType: id }
+  return { sector: Number(id), onlyType: null }
 })
+
+const aimLabel = computed(() => SPECIAL_LABELS[activeZoneId.value] ?? activeZoneId.value)
 
 // ── Choix de zone (phase nombres, double/triple ambigu) ─────────────────────
 const zoneChoiceProps = computed(() => {
@@ -114,16 +118,21 @@ const recapLeg = computed(() => {
 })
 
 // ── Fin de partie ────────────────────────────────────────────────────────────
-const multiWinnerIndex = computed(() => {
-  if (!isMulti || phase.value !== 'game-over') return null
-  for (let i = 0; i < playerCount; i++) {
-    if (allCompletedLegs[i].value.length >= settings.legsToWin) return i
-  }
-  return null
+const resultPlayers = computed(() => players.map((p, i) => ({
+  name:        p.name ?? 'Joueur',
+  legsWon:     allCompletedLegs[i].value.length,
+  closedZones: zonesForPlayer(i).filter(z => z.closed).length,
+})))
+
+// A game ended from the menu has no winner by legs: the leader takes the podium
+const resultWinnerIndex = computed(() => {
+  let best = 0
+  resultPlayers.value.forEach((p, i) => {
+    const b = resultPlayers.value[best]
+    if (p.legsWon > b.legsWon || (p.legsWon === b.legsWon && p.closedZones > b.closedZones)) best = i
+  })
+  return best
 })
-const multiWinnerName = computed(() =>
-  multiWinnerIndex.value != null ? players[multiWinnerIndex.value]?.name ?? 'Joueur' : null
-)
 
 // ── Sauvegarde en fin de partie ────────────────────────────────────────────
 let saved = false
@@ -153,103 +162,68 @@ watch(phase, async (val) => {
 
 <template>
   <div class="tactics">
-
-    <AppHeader title="Tactics" back-icon="exit" @back="router.push({ name: 'tactics-settings' })">
-      <template v-if="phase !== 'game-over'" #right>
-        <button class="tactics__menu-btn" @click="showMenu = true">
+    <AppHeader
+      :title="isOver ? 'Fin de partie' : 'Tactics'"
+      tone="red"
+      back-icon="exit"
+      @back="router.push({ name: 'tactics-settings' })"
+    >
+      <template v-if="!isOver" #right>
+        <button class="tactics__menu-btn" aria-label="Réglages de la partie" @click="showMenu = true">
           <AppIcon name="gear" :width="22" :height="22" />
         </button>
       </template>
     </AppHeader>
 
-    <!-- ── Jeu ──────────────────────────────────────────────────────────────── -->
-    <div v-if="phase === 'playing'" class="tactics__game">
+    <TacticsResult
+      v-if="isOver"
+      :players="resultPlayers"
+      :legs-to-win="settings.legsToWin"
+      :winner-index="isMulti ? resultWinnerIndex : 0"
+      :total-darts="stats?.totalDarts ?? null"
+      :zone-count="zones.length"
+      @replay="router.push({ name: 'tactics-settings' })"
+      @home="router.push({ name: 'home' })"
+    />
 
-      <div class="tactics__game-left">
-        <TacticsBoard :players="boardPlayers" />
-      </div>
+    <div v-else class="tactics__game">
+      <TacticsBoard class="tactics__board" :players="boardPlayers" />
 
-      <div class="tactics__game-main">
-        <DartSlotsHeader :tour-number="volleyNumber">
-          <template v-if="isMulti" #right>
-            <span class="tactics__turn-label">{{ activePlayerName }} !</span>
-          </template>
-        </DartSlotsHeader>
+      <main class="tactics__main">
+        <div class="tactics__turn">
+          <span class="tactics__tour">Tour {{ volleyNumber }}</span>
+          <span class="tactics__aim">
+            À toi,<span class="tactics__aim-player">{{ activePlayerName }}</span>
+            · vise <span class="tactics__aim-zone">{{ aimLabel }}</span>
+          </span>
+        </div>
 
-        <WarmupInput
-          v-if="inputConfig"
+        <TacticsInput
+          v-if="inputTarget"
           :darts="currentDarts"
-          :zones="inputConfig.zones"
-          :only-type="inputConfig.onlyType"
-          :label-override="inputConfig.labelOverride"
+          :target="inputTarget"
           :locked="isLocked"
           @dart="addDart"
           @miss="addMiss"
           @undo="undo"
         />
-      </div>
+      </main>
     </div>
 
-    <!-- ── Récap de manche ──────────────────────────────────────────────────── -->
     <TacticsLegRecap
       :show="showLegRecap"
-      :winner-name="recapWinnerName"
+      :winner-name="recapWinnerName ?? ''"
       :total-darts="recapLeg?.totalDarts ?? 0"
       :volleys="recapLeg?.volleys ?? []"
       @next="startNextLeg"
     />
 
-    <!-- ── Modales ──────────────────────────────────────────────────────────── -->
     <GameMenuModal :show="showMenu" @close="showMenu = false" @finish="finishGame" @quit="quitGame" />
     <TacticsZoneChoiceModal
       :show="!!pendingZoneChoice"
       v-bind="zoneChoiceProps"
       @choose="resolveZoneChoice"
     />
-
-    <!-- ── Résultats finaux ────────────────────────────────────────────────── -->
-    <Transition name="slide-up">
-      <div v-if="phase === 'game-over'" class="tactics__overlay">
-
-        <!-- Multi-joueurs -->
-        <div v-if="isMulti" class="tactics__multi-result">
-          <div class="tactics__multi-winner">
-            <div class="tactics__multi-trophy">🏆</div>
-            <div class="tactics__multi-winner-name">{{ multiWinnerName }}</div>
-            <div class="tactics__multi-winner-sub">a fermé le plateau le premier !</div>
-          </div>
-          <div class="tactics__multi-scores">
-            <div v-for="(p, i) in players" :key="i" class="tactics__multi-score-row"
-                 :class="{ 'tactics__multi-score-row--winner': i === multiWinnerIndex }">
-              <div class="tactics__multi-avatar">{{ p.name?.[0]?.toUpperCase() }}</div>
-              <span class="tactics__multi-player-name">{{ p.name }}</span>
-              <span class="tactics__multi-legs">{{ allCompletedLegs[i].value.length }} / {{ settings.legsToWin }}</span>
-            </div>
-          </div>
-          <div class="tactics__multi-actions">
-            <button class="tactics__multi-btn" @click="router.push({ name: 'tactics-settings' })">Rejouer</button>
-            <button class="tactics__multi-btn tactics__multi-btn--ghost" @click="router.push({ name: 'home' })">Accueil</button>
-          </div>
-        </div>
-
-        <!-- Solo -->
-        <div v-else class="tactics__solo-result">
-          <div class="tactics__solo-trophy">🎯</div>
-          <div class="tactics__solo-title">Plateau fermé !</div>
-          <div class="tactics__solo-stats">
-            <div class="tactics__solo-stat">
-              <span class="tactics__solo-stat-val">{{ stats?.totalDarts ?? '–' }}</span>
-              <span class="tactics__solo-stat-lbl">fléchettes</span>
-            </div>
-          </div>
-          <div class="tactics__multi-actions">
-            <button class="tactics__multi-btn" @click="router.push({ name: 'tactics-settings' })">Rejouer</button>
-            <button class="tactics__multi-btn tactics__multi-btn--ghost" @click="router.push({ name: 'home' })">Accueil</button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-
   </div>
 </template>
 
@@ -257,15 +231,14 @@ watch(phase, async (val) => {
 .tactics {
   display: flex;
   flex-direction: column;
-  gap: $gap-md;
   height: 100dvh;
   overflow: hidden;
-  padding: $padding-md;
 
   &__menu-btn {
-    color: $text-color;
+    color: $white;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     transition: opacity 0.15s;
 
     &:active { opacity: 0.6; }
@@ -276,203 +249,75 @@ watch(phase, async (val) => {
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: $gap-md;
-  }
-
-  &__game-left {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
-    min-height: 0;
     overflow-y: auto;
   }
 
-  // Bounded height so the board keeps the rest while input buttons stay tappable
-  &__game-main {
-    flex: 0 0 38%;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-md;
-  }
-
-  &__turn-label {
-    @include title-sm;
-    font-weight: 700;
-    color: $orange;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  &__overlay {
-    position: fixed;
-    inset: 0;
-    background: $bg;
-    z-index: 90;
-    display: flex;
-    padding: $padding-md;
-  }
-
-  &__multi-result,
-  &__solo-result {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xl;
-  }
-
-  &__multi-winner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: $gap-sm;
-  }
-
-  &__multi-trophy,
-  &__solo-trophy {
-    font-size: 64px;
-    line-height: 1;
-  }
-
-  &__multi-winner-name,
-  &__solo-title {
-    @include title-xxl;
-    font-weight: 700;
-    color: $orange;
-  }
-
-  &__multi-winner-sub {
-    @include text-md;
-    color: $muted;
-  }
-
-  &__multi-scores {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-xs;
-    width: 100%;
-    max-width: 320px;
-  }
-
-  &__multi-score-row {
-    display: flex;
-    align-items: center;
-    gap: $gap-sm;
-    padding: $padding-sm $padding-md;
-    border-radius: $radius-sm;
-    background: rgba($white, 0.05);
-
-    &--winner {
-      background: rgba($orange, 0.15);
-      border: $border-sm solid rgba($orange, 0.4);
-    }
-  }
-
-  &__multi-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: $radius-pill;
-    background: $orange;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    @include title-sm;
-    font-weight: 700;
-    color: $white;
-    flex-shrink: 0;
-  }
-
-  &__multi-player-name {
+  &__main {
     flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $gap-sm;
+    padding: $padding-sm $padding-sm $padding-md;
+    @include safe-bottom($padding-md);
+  }
+
+  &__turn {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: $gap-sm;
+  }
+
+  &__tour { @include title-lg; }
+
+  &__aim {
     @include text-sm;
-    font-weight: 600;
-    color: $text-color;
-  }
-
-  &__multi-legs {
-    @include title-md;
-    font-weight: 700;
-    color: $white;
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__solo-stats {
     display: flex;
-    gap: $gap-xl;
-    justify-content: center;
-  }
-
-  &__solo-stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    align-items: baseline;
     gap: $gap-xxs;
-  }
-
-  &__solo-stat-val {
-    @include display-md;
-    font-weight: 700;
-    color: $white;
-  }
-
-  &__solo-stat-lbl {
-    @include title-sm;
+    min-width: 0;
     color: $muted;
   }
 
-  &__multi-actions {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
-    width: 100%;
-    max-width: 320px;
+  &__aim-player {
+    @include title-lg;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: $mode-tactics;
   }
 
-  &__multi-btn {
-    @include title-md;
-    font-weight: 700;
-    color: $white;
-    background: $orange;
-    border-radius: $radius-sm;
-    padding: $padding-md;
-    text-align: center;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.8; }
-
-    &--ghost {
-      background: rgba($white, 0.08);
-      color: $muted;
-    }
-  }
-}
-
-@media (min-width: $bp-tablet) {
-  .tactics__game {
-    flex-direction: row;
-    align-items: stretch;
-    gap: $gap-lg;
-  }
-
-  .tactics__game-left,
-  .tactics__game-main {
-    flex: 1;
+  &__aim-zone {
+    @include title-lg;
+    color: $text-color;
   }
 }
 
 @media (min-width: $bp-laptop) {
   .tactics {
-    padding: $padding-xl;
+    &__game {
+      flex-direction: row;
+      align-items: stretch;
+      overflow: hidden;
+    }
+
+    &__board {
+      flex: 1;
+      padding-top: $padding-md;
+      overflow-y: auto;
+    }
+
+    &__main {
+      flex: 1;
+      padding: $padding-xl;
+      gap: $gap-md;
+    }
+
+    &__tour { @include title-xl; }
+    &__aim { @include text-md; }
+    &__aim-player,
+    &__aim-zone { @include title-xl; }
   }
-
-  .tactics__game       { gap: $gap-xl; }
-  .tactics__turn-label { @include title-md; }
 }
-
-.slide-up-enter-active { transition: transform 0.3s ease, opacity 0.3s; }
-.slide-up-leave-active { transition: transform 0.25s ease, opacity 0.2s; }
-.slide-up-enter-from,
-.slide-up-leave-to     { transform: translateY(40px); opacity: 0; }
 </style>
