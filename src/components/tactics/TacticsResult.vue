@@ -12,7 +12,7 @@ const props = defineProps({
   zoneCount:  { type: Number,  default: 12 },
 })
 
-defineEmits(['replay', 'home'])
+defineEmits(['replay', 'home', 'quit'])
 
 const isMulti = computed(() => props.players.length > 1)
 
@@ -33,6 +33,13 @@ const subtitle = computed(() => {
 <template>
   <div class="result">
     <section class="result__hero">
+      <header class="result__bar">
+        <button class="result__back" aria-label="Quitter" @click="$emit('quit')">
+          <AppIcon name="arrow-left" :width="24" :height="24" />
+        </button>
+        <h1 class="result__bar-title">Fin de partie</h1>
+      </header>
+
       <div class="result__champion">
         <span class="result__trophy"><AppIcon name="trophy" :width="30" :height="30" /></span>
         <div class="result__champion-text">
@@ -97,6 +104,9 @@ const subtitle = computed(() => {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+
+  // The header lives in the side column on desktop only (the app header serves mobile)
+  &__bar { display: none; }
 
   &__hero {
     display: flex;
@@ -291,42 +301,73 @@ const subtitle = computed(() => {
   }
 }
 
+// Desktop: red side column (header, winner, scores) and the ranking on the right
+// with the actions under it, full width
 @media (min-width: $bp-laptop) {
   .result {
+    display: grid;
+    grid-template-columns: 440px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    overflow: hidden;
+
     &__hero {
-      padding: $padding-xl $padding-xxl;
-      gap: $gap-lg;
+      grid-column: 1;
+      grid-row: 1 / 3;
+      padding: $padding-xxl * 1.25;
+      gap: $gap-xl;
+    }
+
+    &__bar {
+      display: flex;
+      align-items: center;
+      gap: $gap-sm;
+    }
+
+    &__back {
+      display: flex;
+      padding: $padding-xxs;
+      color: $white;
+    }
+
+    &__bar-title {
+      @include title-xl;
+      letter-spacing: $tracking-sm;
     }
 
     &__trophy { width: 72px; height: 72px; }
-    &__kicker { @include text-sm; }
-    &__name { @include display-md; }
+    &__champion { gap: $gap-md; }
+    &__kicker { @include text-xs; }
+    &__name { @include display-xs; }
     &__score-name { @include title-md; }
-    &__score-value { @include display-sm; }
+    &__score-value { @include display-xs; }
     &__subtitle { @include text-md; }
 
     &__main {
-      width: 100%;
-      max-width: 720px;
-      margin: 0 auto;
-      padding: $padding-xl;
+      grid-column: 2;
+      grid-row: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: $padding-xxl * 1.25;
     }
 
-    &__title { @include title-xl; }
-    &__hint { @include text-md; }
+    &__title { @include title-xxl; }
+    &__hint { @include text-sm; }
     &__rank { @include title-xl; }
-    &__avatar { @include title-lg; width: 48px; height: 48px; }
-    &__player { @include title-xl; }
+    &__avatar { @include title-md; width: 40px; height: 40px; }
+    &__player { @include title-xxl; }
+    &__row { padding: $padding-md; gap: $gap-md; }
     &__closed-value { @include title-xxxl; }
-    &__closed-label { @include text-xs; }
+    &__closed-label { @include text-xxs; }
 
     &__actions {
-      width: 100%;
-      max-width: 720px;
-      margin: 0 auto;
+      grid-column: 2;
+      grid-row: 2;
+      margin-top: 0;
+      gap: $gap-sm;
+      padding: 0 $padding-xxl * 1.25 $padding-xxl * 1.25;
     }
 
-    &__btn { @include title-xxl; height: 64px; }
+    &__btn { @include title-xl; height: 64px; }
   }
 }
 </style>

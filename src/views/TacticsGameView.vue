@@ -163,6 +163,7 @@ watch(phase, async (val) => {
 <template>
   <div class="tactics">
     <AppHeader
+      :class="{ 'tactics__header--over': isOver }"
       :title="isOver ? 'Fin de partie' : 'Tactics'"
       tone="red"
       back-icon="exit"
@@ -184,6 +185,7 @@ watch(phase, async (val) => {
       :zone-count="zones.length"
       @replay="router.push({ name: 'tactics-settings' })"
       @home="router.push({ name: 'home' })"
+      @quit="router.push({ name: 'tactics-settings' })"
     />
 
     <div v-else class="tactics__game">
@@ -296,6 +298,9 @@ watch(phase, async (val) => {
 
 @media (min-width: $bp-laptop) {
   .tactics {
+    // The end screen carries its own header in the side column
+    &__header--over { display: none; }
+
     &__game {
       flex-direction: row;
       align-items: stretch;

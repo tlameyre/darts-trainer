@@ -450,7 +450,7 @@ const rows = computed(() => props.results.map((r, i) => {
 
     &__hero {
       gap: $gap-xl + $gap-xxs;
-      padding: $padding-xxl;
+      padding: $padding-xxl * 1.25;
     }
 
     &__header {
@@ -459,7 +459,7 @@ const rows = computed(() => props.results.map((r, i) => {
       padding: 0;
     }
 
-    &__title      { @include title-xxl; }
+    &__title      { @include title-xl; letter-spacing: $tracking-sm; }
     &__rate-label { @include title-xxl; }
     &__rate-value { @include display-xl; }
     &__rate-unit  { @include display-sm; }

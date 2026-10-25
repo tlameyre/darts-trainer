@@ -490,41 +490,45 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
     grid-template-rows: minmax(0, 1fr) auto;
     overflow: hidden;
 
-    &__bar { margin-bottom: 0; }
+    // Side column: header (back + title), winner and standings; actions sit under the stats
+    &__bar {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      justify-items: start;
+      gap: $gap-sm;
+      margin-bottom: 0;
+    }
+
+    &__icon-btn { padding: $padding-xxs; }
+    &__heading { text-align: left; letter-spacing: $tracking-sm; }
 
     &__hero {
       grid-column: 1;
-      grid-row: 1;
+      grid-row: 1 / 3;
       gap: $gap-xl;
-      padding: $padding-xxl $padding-xxl 0;
+      padding: $padding-xxl * 1.25;
     }
 
     &__actions {
-      grid-column: 1;
+      grid-column: 2;
       grid-row: 2;
       position: static;
       gap: $gap-sm;
-      padding: $padding-xl $padding-xxl;
-      @include safe-bottom($padding-xxl);
-      background: var(--game-color, #{$accent});
+      padding: 0 $padding-xxl * 1.25 $padding-xxl * 1.25;
+      @include safe-bottom($padding-xxl * 1.25);
+      background: none;
     }
 
     &__btn {
-      height: 60px;
-      border-color: $white;
-      color: $white;
+      height: 64px;
       @include title-xl;
 
-      &--primary {
-        background: $white;
-        color: var(--game-color, #{$accent});
-      }
+      &--primary { order: -1; }
     }
 
     &__main,
     &__empty {
       grid-column: 2;
-      grid-row: 1 / 3;
+      grid-row: 1;
       overflow-y: auto;
     }
 
