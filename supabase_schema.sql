@@ -338,6 +338,9 @@ alter table public.x01_sessions
 create index if not exists idx_x01_sessions_tournament_match on public.x01_sessions(tournament_match_id);
 create index if not exists idx_tournament_participants_tournament on public.tournament_participants(tournament_id);
 create index if not exists idx_tournament_participants_user on public.tournament_participants(user_id);
+-- Un compte ne peut s'inscrire qu'une fois à un tournoi (join_tournament_by_code s'appuie dessus)
+create unique index if not exists uq_tournament_participants_user
+  on public.tournament_participants(tournament_id, user_id) where user_id is not null;
 create index if not exists idx_tournament_matches_tournament on public.tournament_matches(tournament_id);
 create index if not exists idx_tournament_hosts_tournament on public.tournament_hosts(tournament_id);
 create index if not exists idx_tournament_hosts_user on public.tournament_hosts(user_id);
