@@ -231,15 +231,18 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
     color: $white;
   }
 
+  // Same metrics as AppHeader (48px side columns, bare 24px icon) so a leg detail lines up with the match view
   &__bar {
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    grid-template-columns: 48px minmax(0, 1fr) 48px;
     align-items: center;
+    margin-bottom: $padding-md;
   }
 
   &__icon-btn {
     display: flex;
-    padding: $padding-xxs;
+    justify-self: start;
+    padding: 0;
     color: $white;
     transition: opacity 0.15s;
 
@@ -248,7 +251,6 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
 
   &__heading {
     @include title-lg;
-    letter-spacing: $tracking-sm;
     text-align: center;
   }
 
@@ -482,6 +484,8 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
     grid-template-columns: 440px minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto;
     overflow: hidden;
+
+    &__bar { margin-bottom: 0; }
 
     &__hero {
       grid-column: 1;
