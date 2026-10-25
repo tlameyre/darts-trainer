@@ -86,6 +86,8 @@ const tableRows = computed(() => {
 </template>
 
 <style lang="scss" scoped>
+@use "sass:color";
+
 .tactics-board {
   padding: 0 $padding-sm $padding-sm;
   background: $mode-tactics;
@@ -97,7 +99,7 @@ const tableRows = computed(() => {
     gap: 1px;
     padding: 1px;
     border-radius: $radius-sm;
-    background: darken($mode-tactics, 10%);
+    background: color.adjust($mode-tactics, $lightness: -10%);
     overflow: hidden;
   }
 
@@ -112,7 +114,7 @@ const tableRows = computed(() => {
   }
 
   &__cell--label {
-    background: darken($mode-tactics, 4%);
+    background: color.adjust($mode-tactics, $lightness: -4%);
   }
 
   &__cell--head {
@@ -149,7 +151,7 @@ const tableRows = computed(() => {
   }
 
   &__cell--mark-current {
-    background: lighten($mode-tactics, 8%);
+    background: color.adjust($mode-tactics, $lightness: 8%);
   }
 
   &__cell--mark-active::before {

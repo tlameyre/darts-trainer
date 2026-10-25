@@ -37,7 +37,7 @@ const remainingLabel = computed(() =>
     </span>
 
     <div class="recap-row__info">
-      <span class="recap-row__name"><span class="recap-row__muted">Q{{ index }}</span> {{ entry.label }}</span>
+      <span class="recap-row__name"><span class="recap-row__muted">Q{{ index }} - </span> {{ entry.label }}</span>
       <span class="recap-row__score">Reste <span class="recap-row__score-value">{{ entry.score }}</span></span>
     </div>
 
