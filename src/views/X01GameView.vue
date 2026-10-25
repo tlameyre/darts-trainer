@@ -492,38 +492,40 @@ const multiWinnerName = computed(() =>
       </template>
     </AppHeader>
     <!-- ── Jeu ──────────────────────────────────────────────────────────────── -->
-    <section class="x01__panel">
-      <div class="x01__players">
-        <X01PlayerSplitCard :players="playerCards" :active-index="activeCardIndex" />
+     <div class="x01__main">
+       <section class="x01__panel">
+         <div class="x01__players">
+           <X01PlayerSplitCard :players="playerCards" :active-index="activeCardIndex" />
 
-        <p v-if="targeting" class="x01__status">Où vises-tu ?</p>
-        <p v-else-if="pendingTarget" class="x01__status">Visé {{ pendingTarget.label }} · touché ?</p>
-        <p v-else-if="isOpponentTurn" class="x01__status">
-          {{ online.loading.value ? 'Connexion…' : `${activePlayerName} joue…` }}
-          <span v-if="!online.loading.value && !online.opponentOnline.value" class="x01__offline">hors ligne</span>
-        </p>
-      </div>
-    </section>
+           <p v-if="targeting" class="x01__status">Où vises-tu ?</p>
+           <p v-else-if="pendingTarget" class="x01__status">Visé {{ pendingTarget.label }} · touché ?</p>
+           <p v-else-if="isOpponentTurn" class="x01__status">
+             {{ online.loading.value ? 'Connexion…' : `${activePlayerName} joue…` }}
+             <span v-if="!online.loading.value && !online.opponentOnline.value" class="x01__offline">hors ligne</span>
+           </p>
+         </div>
+       </section>
 
-    <main class="x01__entry">
-      <button v-if="online?.canUndoRemote.value" class="x01__remote-undo" @click="online.publishUndo">
-        <AppIcon name="undo" :width="16" :height="16" />
-        Annuler ma dernière volée
-      </button>
-      <GameInput
-        :darts="currentVolleyDarts"
-        value-key="label"
-        :bust="isBust"
-        :locked="isLocked || (aiTurn && !isMulti)"
-        :force-dart="analysisZone"
-        :targeting="targeting"
-        @dart="handleDart"
-        @miss="handleMiss"
-        @bust="bustVolley"
-        @validate="confirmVolleyTotal"
-        @undo="handleUndo"
-      />
-    </main>
+       <section class="x01__entry">
+         <button v-if="online?.canUndoRemote.value" class="x01__remote-undo" @click="online.publishUndo">
+           <AppIcon name="undo" :width="16" :height="16" />
+           Annuler ma dernière volée
+         </button>
+         <GameInput
+           :darts="currentVolleyDarts"
+           value-key="label"
+           :bust="isBust"
+           :locked="isLocked || (aiTurn && !isMulti)"
+           :force-dart="analysisZone"
+           :targeting="targeting"
+           @dart="handleDart"
+           @miss="handleMiss"
+           @bust="bustVolley"
+           @validate="confirmVolleyTotal"
+           @undo="handleUndo"
+         />
+       </section>
+     </div>
 
     <!-- ── Modales ──────────────────────────────────────────────────────────── -->
     <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
@@ -573,6 +575,11 @@ const multiWinnerName = computed(() =>
   height: 100dvh;
   overflow: hidden;
   background: $bg;
+  &__main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
 
   &__panel {
     flex: 1;
@@ -649,8 +656,9 @@ const multiWinnerName = computed(() =>
 
 @media (min-width: $bp-laptop) {
   .x01 {
-    flex-direction: row;
-
+    &__main {
+      flex-direction: row;
+    }
     &__panel   { flex: 1; min-width: 0; padding: $padding-md; }
     &__players { padding: 0 $padding-md $padding-md; gap: $gap-md; }
     &__status  { @include title-md; }
