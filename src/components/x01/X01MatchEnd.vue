@@ -17,13 +17,15 @@ const props = defineProps({
   hideActions:      { type: Boolean, default: false },
 })
 
-defineEmits(['replay', 'home'])
+const emit = defineEmits(['replay', 'home', 'leg-detail'])
 
 // null = whole match, else the leg number shown in detail
 const selectedLeg = ref(null)
 const rootEl = ref(null)
 watch(selectedLeg, () => rootEl.value?.scrollTo({ top: 0 }))
 const leg = computed(() => props.matchStats?.legs.find(l => l.number === selectedLeg.value) ?? null)
+// Lets a host screen drop its own header while the leg detail has one
+watch(leg, (l) => emit('leg-detail', !!l))
 
 const players = computed(() => props.matchStats?.players ?? [])
 const nameOf  = (i) => players.value[i]?.name ?? ''

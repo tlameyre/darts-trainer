@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import AppHeader from '../AppHeader.vue'
 import AppIcon from '../AppIcon.vue'
 import GameRecap from '../game/GameRecap.vue'
@@ -105,6 +105,10 @@ const scorePercent = computed(() => {
   return s?.total_questions ? Math.round((s.correct_count / s.total_questions) * 100) : 0
 })
 
+// The match recap has its own header inside a leg detail
+const inLegDetail = ref(false)
+watch(() => [props.show, props.session?.id], () => { inLegDetail.value = false })
+
 const HEADER_TONES = { score: 'orange', warmup: 'blue', checkout: 'cyan' }
 
 // A saved online match carries its context in the session settings
@@ -134,7 +138,7 @@ function formatDate(iso) {
 <template>
   <Transition name="slide-up">
     <div v-if="show && session" class="session-detail" :style="gameColor ? { '--game-color': gameColor } : undefined">
-      <AppHeader :title="formatDate(session.played_at)" :tone="headerTone" @back="$emit('close')">
+      <AppHeader v-if="!inLegDetail" :title="formatDate(session.played_at)" :tone="headerTone" @back="$emit('close')">
         <template #right>
           <button class="session-detail__delete" aria-label="Supprimer la session" @click="$emit('delete', session.id)">
             <AppIcon name="trash" :width="22" :height="22" />
@@ -149,6 +153,7 @@ function formatDate(iso) {
         :winner-index="x01WinnerIndex"
         :subtitle="x01Subtitle"
         hide-actions
+        @leg-detail="inLegDetail = $event"
       >
         <template v-if="session.tournament_id" #winner-aside>
           <!-- tournaments is null once the tournament is gone or no longer readable -->
