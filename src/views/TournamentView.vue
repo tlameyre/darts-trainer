@@ -63,7 +63,9 @@ const tabs = computed(() => {
 })
 // ?tab=bracket / ?tab=matchdays au retour d'un match
 const activeTab = ref(route.query.tab ?? null)
-watch(tabs, (list) => {
+// Also watch the data: before it loads (or while pending) `tabs` can keep the same value
+// across the start of the tournament, which would leave no tab selected
+watch([tabs, data], ([list]) => {
   if (data.value && !list.some(t => t.id === activeTab.value)) activeTab.value = list[0].id
 }, { immediate: true })
 
