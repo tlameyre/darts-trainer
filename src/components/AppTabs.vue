@@ -122,6 +122,31 @@ function select(tab, e) {
     }
   }
 
+  // ── Leg — left-aligned tabs, underline in the tab color (match leg detail) ─
+  &--leg {
+    padding: 0 $padding-xxs;
+    border-bottom: $border-sm solid $border-color;
+
+    .app-tabs__tab {
+      @include title-sm;
+      height: 48px;
+      padding: 0 10px;
+      color: $muted;
+      text-transform: uppercase;
+      border-bottom: 3px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+
+      &--active {
+        color: $text-color;
+        border-bottom-color: var(--tab-color, $accent);
+      }
+
+      &:active { opacity: 0.7; }
+    }
+
+    &.app-tabs--scrollable .app-tabs__tab { flex: none; }
+  }
+
   // ── Underline — heavy ink underline on the active tab (FriendsView) ───────
   &--underline {
     padding: 0 $padding-xs;
@@ -169,6 +194,17 @@ function select(tab, e) {
       flex: none;
       height: 48px;
       padding: 0 $padding-lg;
+    }
+  }
+
+  .app-tabs--leg {
+    padding: 0 $padding-xl;
+
+    .app-tabs__tab {
+      @include title-lg;
+      height: 64px;
+      padding: 0 $padding-md;
+      border-bottom-width: 4px;
     }
   }
 

@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { checkoutPct } from '../../composables/useX01MatchStats.js'
 import AppIcon from '../AppIcon.vue'
+import AppTabs from '../AppTabs.vue'
 import X01StatBars from './X01StatBars.vue'
 import X01VisitsChart from './X01VisitsChart.vue'
 import X01CheckoutReview from './X01CheckoutReview.vue'
@@ -74,7 +75,14 @@ const legRows = computed(() => (props.matchStats?.legs ?? []).map((l) => {
   }
 }))
 
-const legWinnerStats = computed(() => leg.value?.players[leg.value.winnerIndex] ?? null)
+const legTabs = computed(() => legRows.value.map(l => ({ id: String(l.number), label: `Manche ${l.number}` })))
+
+const selectedLegId = computed({
+  get: () => String(selectedLeg.value),
+  set: (id) => { selectedLeg.value = Number(id) },
+})
+
+const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?? null)
 </script>
 
 <template>
@@ -124,16 +132,6 @@ const legWinnerStats = computed(() => leg.value?.players[leg.value.winnerIndex] 
             <span class="match-end__kicker">Moyenne</span>
           </div>
         </div>
-        <div class="match-end__pills" :style="{ '--count': legRows.length }">
-          <button
-            v-for="l in legRows"
-            :key="l.number"
-            class="match-end__pill"
-            :class="{ 'match-end__pill--active': l.number === selectedLeg }"
-            :aria-pressed="l.number === selectedLeg"
-            @click="selectedLeg = l.number"
-          >M{{ l.number }}</button>
-        </div>
       </template>
 
       <template v-else-if="matchStats">
@@ -149,6 +147,15 @@ const legWinnerStats = computed(() => leg.value?.players[leg.value.winnerIndex] 
 
     <!-- ── Stats ──────────────────────────────────────────────────────────────── -->
     <main v-if="matchStats" class="match-end__main" :class="{ 'match-end__main--leg': leg }">
+      <AppTabs
+        v-if="leg"
+        v-model="selectedLegId"
+        class="match-end__tabs"
+        variant="leg"
+        scrollable
+        :tabs="legTabs"
+      />
+
       <div v-if="!leg" class="match-end__legs">
         <div class="match-end__section-head">
           <h3 class="match-end__section-title">Manche par manche</h3>
@@ -332,23 +339,9 @@ const legWinnerStats = computed(() => leg.value?.players[leg.value.winnerIndex] 
     line-height: 1;
   }
 
-  &__pills {
-    display: grid;
-    grid-template-columns: repeat(var(--count), minmax(0, 1fr));
-    gap: $gap-xs;
-  }
-
-  &__pill {
-    height: 40px;
-    border-radius: $radius-sm;
-    border: $border-md solid $white;
-    color: $white;
-    @include title-sm;
-
-    &--active {
-      background: $white;
-      color: $accent;
-    }
+  &__tabs {
+    margin: (-$padding-md) (-$padding-md) 0;
+    border-radius: 0;
   }
 
   // ── Main ──────────────────────────────────────────────────────────────────
@@ -536,8 +529,15 @@ const legWinnerStats = computed(() => leg.value?.players[leg.value.winnerIndex] 
 
       &--leg {
         grid-template-columns: minmax(0, 1fr) 380px;
-        grid-template-areas: 'stats visits';
+        grid-template-areas:
+          'tabs  tabs'
+          'stats visits';
       }
+    }
+
+    &__tabs {
+      grid-area: tabs;
+      margin: (-$padding-xxl) (-$padding-xxl) (-$padding-md);
     }
 
     &__legs   { grid-area: legs; }
@@ -553,7 +553,6 @@ const legWinnerStats = computed(() => leg.value?.players[leg.value.winnerIndex] 
     &__standing-legs,
     &__figure-val   { @include display-xs; }
     &__subtitle     { @include text-md; }
-    &__pill         { height: 48px; @include title-md; }
     &__section-title { @include title-xxl; }
     &__section-hint { @include text-sm; }
     &__leg-name,
