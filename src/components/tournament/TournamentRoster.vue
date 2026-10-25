@@ -152,11 +152,39 @@ defineEmits(['add-player', 'remove-player', 'add-host', 'remove-host'])
 
 @media (min-width: $bp-laptop) {
   .roster {
-    &__row { min-height: 64px; }
-    &__name { @include title-xl; }
+    gap: $gap-xxl;
+
+    // One card per person on a two-column grid
+    &__list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: $gap-xs;
+      background: none;
+      overflow: visible;
+    }
+
+    &__row {
+      min-height: 72px;
+      padding: 0 $padding-md;
+      border-radius: $radius-sm;
+      background: $surface;
+      gap: $gap-md;
+
+      & + & { border-top: 0; }
+
+      &--empty {
+        border: $border-md dashed $border-color;
+        background: none;
+      }
+    }
+
+    &__avatar { width: 44px; height: 44px; @include title-lg; }
+    &__name { @include title-xxl; }
     &__wait,
-    &__hint,
-    &__remove { @include text-sm; }
+    &__remove,
+    &__hint { @include text-sm; }
+    &__tag { @include title-sm; }
+    &__section > .roster__hint { @include text-sm; }
   }
 }
 </style>

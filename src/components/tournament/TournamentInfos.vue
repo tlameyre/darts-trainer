@@ -22,7 +22,10 @@ const rules = computed(() => {
     { label: 'Format', value: props.formatLabel },
     { label: 'Format de match', value: `${t.start_score} · ${t.legs_to_win} manche${t.legs_to_win > 1 ? 's' : ''}` },
   ]
-  if (t.format === 'championship') rows.push({ label: 'Points', value: 'Victoire = 2 pts' })
+  if (t.format === 'championship') {
+    rows.splice(1, 0, { label: 'Playoffs', value: t.playoff_size ? (t.playoff_size === 2 ? 'Finale' : `Top ${t.playoff_size}`) : 'Aucun' })
+    rows.push({ label: 'Points', value: 'Victoire = 2 pts' }, { label: 'Départage', value: 'Diff. de manches' })
+  }
   return rows
 })
 </script>
@@ -49,6 +52,7 @@ const rules = computed(() => {
       />
     </section>
 
+    <div class="infos__grid">
     <section class="infos__section">
       <SectionTitle ruled title="Règles" />
       <div class="infos__card">
@@ -69,6 +73,7 @@ const rules = computed(() => {
         </div>
       </div>
     </section>
+    </div>
 
     <button v-if="isHost" class="infos__delete" @click="emit('delete')">
       <AppIcon name="trash" :width="16" :height="16" />
@@ -109,6 +114,8 @@ const rules = computed(() => {
     @include text-md;
     line-height: 1.45;
   }
+
+  &__grid { display: contents; }
 
   &__section {
     display: flex;
@@ -190,13 +197,24 @@ const rules = computed(() => {
 
 @media (min-width: $bp-laptop) {
   .infos {
+    gap: $gap-xl;
+
+    &__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+
     &__winner-sub,
     &__label,
     &__delete { @include text-md; }
-    &__value { @include title-lg; }
-    &__host { @include title-xl; }
+    &__value { @include title-xl; }
+    &__host { @include title-xxl; }
     &__description { @include text-lg; }
-    &__row { min-height: 60px; }
+    &__row { height: 60px; min-height: 0; padding: 0 $padding-md; }
+    &__row--host { height: 72px; }
+    &__avatar { width: 44px; height: 44px; @include title-lg; }
   }
 }
 </style>

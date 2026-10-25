@@ -209,13 +209,37 @@ const copied = ref(false)
 async function copyInviteLink() {
   if (!inviteLink.value) return
   await navigator.clipboard.writeText(inviteLink.value)
-  copied.value = true
+  copied.value = 'link'
   setTimeout(() => { copied.value = false }, 1500)
 }
 
 const startDefaults = computed(() => {
   const t = data.value?.tournament
   return t ? { doubleElimination: !!t.double_elimination, doubleRoundRobin: !!t.double_round_robin, playoffSize: t.playoff_size ?? null } : {}
+})
+
+async function copyCode() {
+  await navigator.clipboard.writeText(data.value.tournament.join_code)
+  copied.value = 'code'
+  setTimeout(() => { copied.value = false }, 1500)
+}
+
+async function shareInviteLink() {
+  if (navigator.share) {
+    try { await navigator.share({ title: data.value.tournament.name, url: inviteLink.value }); return } catch { /* cancelled: fall back to copy */ }
+  }
+  await copyInviteLink()
+}
+
+// The user's own live or next match, shown in the side column
+const myMatch = computed(() => {
+  const d = data.value
+  if (!d || isPending.value || d.tournament.status === 'completed') return null
+  const mine = d.matches
+    .map(m => ({ m, ...myMatchSlots(m) }))
+    .filter(x => x.me && x.opponent && ['in_progress', 'ready'].includes(x.m.status))
+  const pick = mine.find(x => x.m.status === 'in_progress') ?? mine[0]
+  return pick ? { id: pick.m.id, live: pick.m.status === 'in_progress', me: pick.me, opponent: pick.opponent } : null
 })
 
 async function onStartConfirm({ seedingMethod, doubleElimination, doubleRoundRobin, playoffSize }) {
@@ -359,22 +383,42 @@ async function playOnline() {
 
 <template>
   <div class="tournament" v-if="data">
-    <AppHeader :title="data.tournament.name" tone="tournament" @back="router.push({ name: 'tournaments' })" />
+    <AppHeader class="tournament__header" :title="data.tournament.name" tone="tournament" @back="router.push({ name: 'tournaments' })" />
 
     <TournamentHero
+      class="tournament__hero"
       :name="data.tournament.name"
       :status="STATUS_LABELS[data.tournament.status]"
       :tags="heroTags"
       :progress="heroProgress"
+      @back="router.push({ name: 'tournaments' })"
     >
       <div v-if="isPending && data.tournament.join_code" class="tournament__invite">
         <div class="tournament__invite-text">
           <span class="tournament__invite-label">Code d'invitation</span>
           <span class="tournament__invite-code">{{ data.tournament.join_code }}</span>
         </div>
-        <button class="tournament__invite-copy" @click="copyInviteLink">
-          <AppIcon name="copy" :width="16" :height="16" />
-          {{ copied ? 'Copié !' : 'Copier' }}
+        <div class="tournament__invite-actions">
+          <button class="tournament__invite-btn" @click="copyCode">
+            <AppIcon name="copy" :width="16" :height="16" />
+            {{ copied === 'code' ? 'Copié !' : 'Copier' }}
+          </button>
+          <button class="tournament__invite-btn tournament__invite-btn--primary" @click="shareInviteLink">
+            {{ copied === 'link' ? 'Lien copié !' : 'Partager le lien' }}
+          </button>
+        </div>
+      </div>
+
+      <div v-else-if="myMatch" class="tournament__mine">
+        <div class="tournament__mine-text">
+          <span class="tournament__invite-label">{{ myMatch.live ? 'Ton match en cours' : 'Ton prochain match' }}</span>
+          <span class="tournament__mine-versus">
+            vs <span class="tournament__mine-name">{{ myMatch.opponent.player_data?.name }}</span>
+          </span>
+        </div>
+        <button class="tournament__mine-btn" @click="onPlay(myMatch.id)">
+          <AppIcon name="play" :width="16" :height="16" />
+          {{ myMatch.live ? 'Rejoindre' : 'Jouer' }}
         </button>
       </div>
     </TournamentHero>
@@ -394,20 +438,26 @@ async function playOnline() {
           @add-host="openHostPicker"
           @remove-host="onRemoveHost"
         />
-        <button v-if="isHost" class="tournament__delete" @click="showDeleteConfirm = true">
+        <button v-if="isHost" class="tournament__delete tournament__delete--mobile" @click="showDeleteConfirm = true">
           <AppIcon name="trash" :width="16" :height="16" />
           Supprimer le tournoi
         </button>
       </main>
 
       <div v-if="isHost" class="tournament__start">
-        <span v-if="!canStart" class="tournament__start-hint">
-          <AppIcon name="lock" :width="16" :height="16" />
-          Encore {{ MIN_PARTICIPANTS_TO_START - data.participants.length }} joueur{{ MIN_PARTICIPANTS_TO_START - data.participants.length > 1 ? 's' : '' }} pour pouvoir démarrer
-        </span>
-        <AppButton tone="tournament" :disabled="!canStart" @click="showStartModal = true">
-          Démarrer le tournoi
-        </AppButton>
+        <button class="tournament__delete tournament__delete--desktop" @click="showDeleteConfirm = true">
+          <AppIcon name="trash" :width="16" :height="16" />
+          Supprimer le tournoi
+        </button>
+        <div class="tournament__start-main">
+          <span v-if="!canStart" class="tournament__start-hint">
+            <AppIcon name="lock" :width="16" :height="16" />
+            Encore {{ MIN_PARTICIPANTS_TO_START - data.participants.length }} joueur{{ MIN_PARTICIPANTS_TO_START - data.participants.length > 1 ? 's' : '' }} pour pouvoir démarrer
+          </span>
+          <AppButton tone="tournament" :disabled="!canStart" @click="showStartModal = true">
+            Démarrer le tournoi
+          </AppButton>
+        </div>
       </div>
     </template>
 
@@ -602,10 +652,9 @@ async function playOnline() {
     padding: $padding-xl;
   }
 
-  &__invite {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  &__invite,
+  &__mine {
+    display: grid;
     gap: $gap-sm;
     padding: $padding-sm;
     border-radius: $radius-sm;
@@ -613,7 +662,10 @@ async function playOnline() {
     color: $text-color;
   }
 
-  &__invite-text {
+  &__invite { grid-template-columns: 1fr; }
+
+  &__invite-text,
+  &__mine-text {
     display: flex;
     flex-direction: column;
     gap: $gap-xxs;
@@ -628,13 +680,52 @@ async function playOnline() {
   }
 
   &__invite-code {
-    @include title-xxl;
+    @include title-xxxl;
     line-height: 0.9;
     letter-spacing: 0.06em;
     white-space: nowrap;
   }
 
-  &__invite-copy {
+  &__invite-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $gap-xs;
+  }
+
+  &__invite-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $gap-xxs;
+    height: 44px;
+    border: $border-md solid $border-color;
+    border-radius: $radius-sm;
+    color: $text-color;
+    @include title-md;
+
+    &--primary {
+      border-color: $mode-tournament;
+      background: $mode-tournament;
+      color: $white;
+    }
+  }
+
+  &__mine {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  &__mine-versus {
+    @include title-sm;
+    color: $muted;
+  }
+
+  &__mine-name {
+    @include title-lg;
+    color: $text-color;
+  }
+
+  &__mine-btn {
     display: flex;
     align-items: center;
     gap: $gap-xxs;
@@ -643,7 +734,7 @@ async function playOnline() {
     border-radius: $radius-sm;
     background: $mode-tournament;
     color: $white;
-    @include title-sm;
+    @include title-md;
   }
 
   &__delete {
@@ -655,11 +746,16 @@ async function playOnline() {
     color: $error;
   }
 
+  &__delete--desktop { display: none; }
+
   &__start {
     position: fixed;
     left: $padding-md;
     right: $padding-md;
     bottom: calc(#{$bottom-nav-height} + env(safe-area-inset-bottom) + #{$padding-sm});
+  }
+
+  &__start-main {
     display: flex;
     flex-direction: column;
     gap: $gap-xs;
@@ -701,25 +797,80 @@ async function playOnline() {
   }
 }
 
+// Desktop: the hero turns into a side column (no app header, no bottom nav) and the
+// tabs and content fill the right column
 @media (min-width: $bp-laptop) {
   .tournament {
-    @include nav-safe-bottom($padding-xl);
+    display: grid;
+    grid-template-columns: 440px minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    height: 100dvh;
+    min-height: 0;
+    padding-bottom: 0;
 
-    &__main { padding: $padding-xl $padding-xxl; }
+    &__header { display: none; }
+
+    &__hero {
+      grid-column: 1;
+      grid-row: 1 / -1;
+      overflow-y: auto;
+    }
+
+    &__tabs {
+      grid-column: 2;
+      grid-row: 1;
+      padding: 0 22px;
+
+      :deep(.app-tabs__tab) {
+        flex: none;
+        height: 64px;
+        padding: 0 18px;
+        border-bottom-width: 4px;
+      }
+    }
+
+    &__main {
+      grid-column: 2;
+      grid-row: 2;
+      min-height: 0;
+      overflow-y: auto;
+      padding: $padding-xxl 40px 40px;
+    }
+
     &__loading,
     &__empty,
     &__locked-text,
     &__delete { @include text-md; }
+    &__invite { padding: $padding-md; gap: $gap-md; }
     &__invite-label { @include text-xs; }
     &__invite-code { @include display-xs; }
-    &__invite-copy { @include title-md; }
+    &__invite-btn { height: 48px; @include title-lg; }
+    &__mine-btn { @include title-lg; }
+    &__mine-name { @include title-xl; }
     &__locked-title { @include title-lg; }
     &__start-hint { @include text-sm; }
 
+    &__delete--mobile { display: none; }
+    &__delete--desktop { display: flex; }
+
     &__start {
-      left: auto;
-      right: $padding-xxl;
-      width: 420px;
+      position: static;
+      grid-column: 2;
+      grid-row: 3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: $gap-md;
+      padding: $padding-lg 40px;
+      border-top: $border-sm solid $border-color;
+    }
+
+    &__start-main {
+      flex-direction: row;
+      align-items: center;
+      gap: $gap-md;
+
+      :deep(.btn) { width: 280px; height: 60px; padding: 0; @include title-xxl; }
     }
   }
 }

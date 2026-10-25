@@ -54,6 +54,22 @@ const byes    = computed(() =>
 <template>
   <div class="matchdays">
     <div v-if="current" class="matchdays__day">
+      <div class="matchdays__head">
+        <span class="matchdays__title matchdays__title--lg">Journée {{ current.round }}<span class="matchdays__total"> / {{ matchdays.length }}</span></span>
+        <span class="matchdays__status">
+          {{ current.done ? 'Terminée' : `${playedCount} / ${current.matches.length} joués` }}
+        </span>
+      </div>
+      <nav class="matchdays__rounds" aria-label="Journées">
+        <button
+          v-for="(d, i) in matchdays" :key="d.round"
+          class="matchdays__round"
+          :class="{ 'matchdays__round--current': i === selectedIndex, 'matchdays__round--done': d.done }"
+          :aria-current="i === selectedIndex"
+          @click="selectedIndex = i"
+        >{{ d.round }}</button>
+      </nav>
+
       <div class="matchdays__nav">
         <button class="matchdays__arrow" :disabled="selectedIndex === 0" aria-label="Journée précédente" @click="step(-1)">
           <AppIcon name="arrow-left" :width="18" :height="18" />
@@ -80,15 +96,17 @@ const byes    = computed(() =>
           :class="{ 'matchdays__dot--done': d.done, 'matchdays__dot--current': i === selectedIndex }"
         />
       </div>
-      <TournamentMatchCard
-        v-for="m in current.matches" :key="m.id"
-        class="matchdays__card"
-        :match="m"
-        :participants-by-id="participantsById"
-        :playable="playableMatchIds.includes(m.id)"
-        @play="emit('play', m.id)"
-        @details="emit('details', m.id)"
-      />
+      <div class="matchdays__cards">
+        <TournamentMatchCard
+          v-for="m in current.matches" :key="m.id"
+          class="matchdays__card"
+          :match="m"
+          :participants-by-id="participantsById"
+          :playable="playableMatchIds.includes(m.id)"
+          @play="emit('play', m.id)"
+          @details="emit('details', m.id)"
+        />
+      </div>
       <p v-if="byes.length" class="matchdays__bye">
         Exempt : {{ byes.map(p => p.player_data?.name).join(', ') }}
       </p>
@@ -103,6 +121,15 @@ const byes    = computed(() =>
   gap: $gap-md;
 
   &__day {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-md;
+  }
+
+  &__head,
+  &__rounds { display: none; }
+
+  &__cards {
     display: flex;
     flex-direction: column;
     gap: $gap-md;
@@ -183,9 +210,59 @@ const byes    = computed(() =>
 
 @media (min-width: $bp-laptop) {
   .matchdays {
-    &__title  { @include title-xl; }
+    gap: $gap-lg;
+
+    &__day { gap: $gap-lg; }
+
+    // Desktop swaps the arrows and dots for a row of numbered rounds
+    &__nav,
+    &__dots { display: none; }
+
+    &__head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    &__title--lg { @include title-xxxl; line-height: 1; }
     &__status { @include text-sm; }
-    &__bye    { @include text-md; }
+
+    &__rounds {
+      display: flex;
+      gap: $gap-xxs;
+    }
+
+    &__round {
+      flex: 1;
+      height: 44px;
+      border: $border-md solid $border-color;
+      border-radius: $radius-sm;
+      color: $muted;
+      @include title-md;
+
+      &--done {
+        border-color: $surface;
+        background: $surface;
+        color: $text-color;
+      }
+
+      &--current {
+        border-color: $mode-tournament;
+        background: $mode-tournament;
+        color: $white;
+      }
+    }
+
+    &__cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px 20px;
+      padding-top: $padding-xs;
+    }
+
+    &__card { --match-row: 52px; }
+
+    &__bye { @include text-md; }
   }
 }
 </style>

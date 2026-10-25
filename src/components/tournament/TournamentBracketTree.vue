@@ -83,6 +83,12 @@ function roundLabel(rounds, idx) {
 
 <template>
   <div class="bracket">
+    <div class="bracket__legend">
+      <span class="bracket__legend-item"><span class="bracket__swatch bracket__swatch--live" />Live</span>
+      <span class="bracket__legend-item"><span class="bracket__swatch bracket__swatch--ready" />À jouer</span>
+      <span class="bracket__legend-item"><span class="bracket__swatch bracket__swatch--win" />Vainqueur</span>
+    </div>
+
     <section class="bracket__section">
       <div v-if="loserRounds.length" class="bracket__section-title">Tableau principal</div>
       <div ref="winnerRowEl" class="bracket__row">
@@ -131,6 +137,8 @@ function roundLabel(rounds, idx) {
   gap: $gap-xl;
   overflow-x: auto;
   padding-bottom: $padding-sm;
+
+  &__legend { display: none; }
 
   &__section {
     display: flex;
@@ -193,5 +201,41 @@ function roundLabel(rounds, idx) {
     justify-content: space-around;
     gap: $gap-sm;
   }
+}
+
+@media (min-width: $bp-laptop) {
+  .bracket {
+    &__legend {
+      display: flex;
+      justify-content: flex-end;
+      gap: $gap-md;
+      @include text-sm;
+      color: $muted;
+    }
+
+    &__legend-item {
+      display: flex;
+      align-items: center;
+      gap: $gap-xxs;
+    }
+
+    &__swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      border: $border-md solid;
+
+      &--live { border-color: $error; }
+      &--ready { border-color: $mode-tournament; }
+      &--win { border-color: $mode-tournament; background: $mode-tournament; }
+    }
+
+    &__col { min-width: 240px; }
+    &__col-title { @include text-sm; }
+    &__section-title { @include title-lg; }
+    &__row { gap: $gap-xxl; }
+  }
+
+  .bracket :deep(.match-card) { width: 240px; }
 }
 </style>

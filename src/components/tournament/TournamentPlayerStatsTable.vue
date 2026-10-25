@@ -41,10 +41,17 @@ function leader(key) {
   return best ? { name: best.participant.player_data?.name, value: best[key] } : null
 }
 
+// Fewest darts wins for the best leg
+function bestLeg() {
+  const best = rows.value.filter(r => r.bestLeg != null).sort((a, b) => a.bestLeg - b.bestLeg)[0]
+  return best ? { name: best.participant.player_data?.name, value: best.bestLeg } : null
+}
+
 const highlights = computed(() => [
   { label: 'Meilleure moy.',   leader: leader('average'),       format: formatAvg },
   { label: 'Plus haut finish', leader: leader('highestFinish'), format: v => v },
   { label: 'Doubles',          leader: leader('checkoutPct'),   format: v => `${Math.round(v)} %` },
+  { label: 'Meilleure manche', leader: bestLeg(),                format: v => `${v} fl.` },
 ].filter(h => h.leader))
 
 function cell(row, col) {
@@ -112,9 +119,16 @@ function cell(row, col) {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: $gap-xs;
+
+    @media (min-width: $bp-laptop) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: $gap-sm;
+    }
   }
 
   &__highlight {
+    &:nth-child(n + 4) { display: none; }
+
     display: flex;
     flex-direction: column;
     gap: $gap-xxs;
@@ -231,6 +245,7 @@ function cell(row, col) {
 
 @media (min-width: $bp-laptop) {
   .player-stats {
+    &__highlight:nth-child(n + 4) { display: flex; }
     &__highlight-label { @include text-xs; }
     &__highlight-value { @include display-xs; }
     &__highlight-name  { @include text-sm; }

@@ -152,7 +152,7 @@ const routes = [
   { path: "/tournaments", name: "tournaments", component: TournamentsView },
   { path: "/tournaments/create", name: "tournament-settings", component: TournamentSettingsView, meta: { hideNav: true } },
   { path: "/tournaments/join/:code", name: "tournament-join", component: TournamentJoinView, meta: { hideNav: true } },
-  { path: "/tournaments/:id", name: "tournament-detail", component: TournamentView },
+  { path: "/tournaments/:id", name: "tournament-detail", component: TournamentView, meta: { hideNavDesktop: true } },
 ];
 
 // Route de dev — playground, accessible sans auth

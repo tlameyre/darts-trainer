@@ -83,18 +83,20 @@ function onClick() {
   flex-direction: column;
   width: 168px;
   border-radius: $radius-sm;
-  background: $white;
+  background: $surface;
   border: $border-md solid $border-color;
   transition: background 0.15s;
 
   &--ready:not(&--locked) {
     border-color: $mode-tournament;
+    background: $white;
 
     &:active { background: $surface; }
   }
 
   &--in_progress {
     border-color: $error;
+    background: $white;
 
     &:active { background: $surface; }
   }
@@ -140,7 +142,7 @@ function onClick() {
     display: flex;
     align-items: center;
     gap: $gap-xs;
-    min-height: 36px;
+    min-height: var(--match-row, 36px);
     padding: 0 $padding-xs;
     @include title-sm;
     line-height: 1;
@@ -195,6 +197,17 @@ function onClick() {
   &__divider {
     height: 1px;
     background: $border-color;
+  }
+}
+
+@media (min-width: $bp-laptop) {
+  .match-card {
+    --match-row: 44px;
+
+    &__player { @include title-lg; }
+    &__legs { @include title-xl; }
+    &__avatar { width: 22px; }
+    &__badge { @include title-sm; }
   }
 }
 

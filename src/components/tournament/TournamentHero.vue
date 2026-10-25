@@ -7,10 +7,17 @@ defineProps({
   tags:     { type: Array,  default: () => [] },
   progress: { type: Object, default: null }, // { percent, label, hint? }
 })
+
+defineEmits(['back'])
 </script>
 
 <template>
   <section class="hero">
+    <button class="hero__back" @click="$emit('back')">
+      <AppIcon name="arrow-left" :width="24" :height="24" />
+      Tournois
+    </button>
+
     <div class="hero__head">
       <span class="hero__icon"><AppIcon name="trophy" :width="28" :height="28" /></span>
       <div class="hero__info">
@@ -31,7 +38,7 @@ defineProps({
       <div class="hero__bar"><div class="hero__fill" :style="{ width: `${progress.percent}%` }" /></div>
     </div>
 
-    <slot />
+    <div v-if="$slots.default" class="hero__extra"><slot /></div>
   </section>
 </template>
 
@@ -43,6 +50,9 @@ defineProps({
   padding: $padding-xxs $padding-md $padding-md;
   background: $mode-tournament;
   color: $white;
+
+  // Desktop only: the hero becomes a side column and replaces the app header
+  &__back { display: none; }
 
   &__head {
     display: flex;
@@ -127,13 +137,38 @@ defineProps({
 
 @media (min-width: $bp-laptop) {
   .hero {
-    padding: $padding-xs $padding-xxl $padding-lg;
+    gap: $gap-xl;
+    padding: $padding-xl 36px 36px;
 
-    &__icon { width: 64px; height: 64px; }
-    &__name { @include title-xxl; }
+    &__back {
+      display: flex;
+      align-items: center;
+      gap: $gap-xs;
+      align-self: flex-start;
+      color: $white;
+      @include text-sm;
+      font-weight: 600;
+      letter-spacing: $tracking-lg;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    &__head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: $gap-lg;
+    }
+
+    &__icon { width: 72px; height: 72px; }
+    &__info { gap: $gap-sm; }
+    &__name { @include display-xs; line-height: 0.88; }
     &__status { @include title-sm; }
-    &__tag { @include title-md; }
+    &__tags { gap: $gap-xs; }
+    &__tag { padding: 6px $padding-sm; @include title-lg; }
+    &__progress { gap: $gap-xs; }
     &__progress-row { @include text-sm; }
+    &__bar { height: 10px; }
+    &__extra { margin-top: auto; }
   }
 }
 </style>

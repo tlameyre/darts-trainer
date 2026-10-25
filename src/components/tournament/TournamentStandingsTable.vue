@@ -20,7 +20,7 @@ function formatDiff(diff) {
 <template>
   <div class="standings">
     <div class="standings__grid standings__head">
-      <span>#</span><span>Joueur</span><span>J</span><span>V</span><span>D</span><span>+/-</span><span class="standings__right">Pts</span>
+      <span>#</span><span>Joueur</span><span>J</span><span>V</span><span>D</span><span><span class="standings__sm">+/-</span><span class="standings__lg">Manches +/-</span></span><span class="standings__right"><span class="standings__sm">Pts</span><span class="standings__lg">Points</span></span>
     </div>
     <template v-for="row in standings" :key="row.participant.id">
       <div
@@ -89,6 +89,8 @@ function formatDiff(diff) {
 
   &__right { text-align: right; }
 
+  &__lg { display: none; }
+
   &__rank {
     @include title-md;
     color: $muted;
@@ -155,13 +157,15 @@ function formatDiff(diff) {
 
 @media (min-width: $bp-laptop) {
   .standings {
-    &__grid { grid-template-columns: 48px minmax(0, 1fr) 56px 56px 56px 72px 80px; }
-    &__head { @include text-xs; }
-    &__row { min-height: 56px; @include text-md; }
+    &__sm { display: none; }
+    &__lg { display: inline; }
+    &__grid { grid-template-columns: 48px minmax(0, 1fr) 56px 56px 56px 80px 240px; gap: $gap-sm; }
+    &__head { padding: 0 $padding-md $padding-xs; @include text-xs; }
+    &__row { height: 50px; min-height: 0; padding: 0 $padding-md; @include text-md; }
     &__name { @include title-lg; }
-    &__rank { @include title-lg; }
-    &__points { @include title-xl; }
-    &__avatar { width: 32px; height: 32px; }
+    &__rank { @include title-xxl; }
+    &__points { @include title-xxl; }
+    &__avatar { width: 30px; height: 30px; }
     &__cutoff { @include text-xs; }
     &__legend { @include text-sm; }
   }

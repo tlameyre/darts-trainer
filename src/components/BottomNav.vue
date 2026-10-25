@@ -102,4 +102,9 @@ const unseenTournamentCount = computed(() => tournamentStore.unseenTournamentCou
     letter-spacing: $tracking-sm;
   }
 }
+
+// Screens with their own side column on desktop (tournament detail) hide the nav
+@media (min-width: $bp-laptop) {
+  .bottom-nav--no-desktop { display: none; }
+}
 </style>

@@ -42,6 +42,6 @@ watch(() => authStore.isAuth, (val) => {
   <OnlineChallengeHost v-if="authStore.isAuth && !route.meta.public && route.name !== 'online-match' && !String(route.name).endsWith('-game')" />
   <template v-if="authStore.isAuth && !route.meta.hideNav && !route.meta.public">
     <OnlineMatchBanner v-if="route.name !== 'online-match'" />
-    <BottomNav />
+    <BottomNav :class="{ 'bottom-nav--no-desktop': route.meta.hideNavDesktop }" />
   </template>
 </template>
