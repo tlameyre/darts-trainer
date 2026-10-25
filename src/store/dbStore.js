@@ -399,7 +399,7 @@ export const useDbStore = defineStore('db', () => {
 
   // ── Tournois ────────────────────────────────────────────────────────────
 
-  async function createTournamentRecord({ name, description, format, startScore, legsToWin }) {
+  async function createTournamentRecord({ name, description, format, startScore, legsToWin, doubleElimination, doubleRoundRobin, playoffSize }) {
     const user = getUser()
     if (!user) return null
     const { data, error } = await supabase.from('tournaments').insert({
@@ -409,6 +409,9 @@ export const useDbStore = defineStore('db', () => {
       format,
       start_score: startScore,
       legs_to_win: legsToWin,
+      double_elimination: doubleElimination ?? false,
+      double_round_robin: doubleRoundRobin ?? false,
+      playoff_size:       playoffSize ?? null,
     }).select().single()
     if (error) {
       console.error('[dbStore] createTournamentRecord:', error.message)

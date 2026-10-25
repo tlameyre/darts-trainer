@@ -1,9 +1,11 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTournamentStore } from '../store/tournamentStore.js'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
+import AppIcon from '../components/AppIcon.vue'
+import { MIN_PARTICIPANTS_TO_START } from '../data/tournamentConstants.js'
 
 const props = defineProps({
   // Preview /dev uniquement
@@ -11,8 +13,8 @@ const props = defineProps({
 })
 
 const route           = useRoute()
-const router           = useRouter()
-const tournamentStore  = useTournamentStore()
+const router          = useRouter()
+const tournamentStore = useTournamentStore()
 
 const preview = ref(null)
 const loading = ref(true)
@@ -29,6 +31,8 @@ onMounted(async () => {
   loading.value = false
 })
 
+const canJoin = computed(() => preview.value?.status === 'pending')
+
 async function join() {
   if (joining.value) return
   joining.value = true
@@ -44,34 +48,35 @@ async function join() {
 
 <template>
   <div class="join">
-    <AppHeader title="Rejoindre" @back="router.push({ name: 'tournaments' })" />
+    <AppHeader title="Invitation" tone="tournament" @back="router.push({ name: 'tournaments' })" />
 
-    <main class="join__main">
-      <p v-if="loading" class="join__loading">Chargement…</p>
+    <p v-if="loading" class="join__message">Chargement…</p>
 
-      <template v-else-if="preview">
-        <div class="join__card">
-          <div class="join__icon">🏆</div>
-          <h2 class="join__name">{{ preview.name }}</h2>
-          <p v-if="preview.description" class="join__description">{{ preview.description }}</p>
-          <div class="join__meta">
-            <span>Organisé par {{ preview.host_name }}</span>
-            <span>{{ preview.participant_count }} participant(s)</span>
-          </div>
-          <p v-if="preview.status !== 'pending'" class="join__warning">
-            Ce tournoi a déjà démarré, impossible de le rejoindre.
-          </p>
+    <template v-else-if="preview">
+      <section class="join__hero">
+        <span class="join__icon"><AppIcon name="trophy" :width="40" :height="40" /></span>
+        <span v-if="preview.host_name" class="join__host">{{ preview.host_name }} t'invite</span>
+        <h2 class="join__name">{{ preview.name }}</h2>
+        <p v-if="preview.description" class="join__description">{{ preview.description }}</p>
+        <span class="join__count">
+          {{ preview.participant_count }} inscrit{{ preview.participant_count > 1 ? 's' : '' }} · min. {{ MIN_PARTICIPANTS_TO_START }} pour démarrer
+        </span>
+      </section>
+
+      <main class="join__main">
+        <p v-if="!canJoin" class="join__warning">Ce tournoi a déjà démarré, impossible de le rejoindre.</p>
+        <p v-if="error" class="join__warning">{{ error }}</p>
+
+        <div class="join__actions">
+          <AppButton variant="secondary" @click="router.push({ name: 'tournaments' })">Plus tard</AppButton>
+          <AppButton tone="tournament" :disabled="joining || !canJoin" @click="join">
+            {{ joining ? 'Inscription...' : 'Rejoindre' }}
+          </AppButton>
         </div>
+      </main>
+    </template>
 
-        <p v-if="error" class="join__error">{{ error }}</p>
-
-        <AppButton :disabled="joining || preview.status !== 'pending'" @click="join">
-          {{ joining ? 'Inscription...' : 'Rejoindre' }}
-        </AppButton>
-      </template>
-
-      <p v-else class="join__error">Code de tournoi invalide.</p>
-    </main>
+    <p v-else class="join__message join__message--error">Code de tournoi invalide.</p>
   </div>
 </template>
 
@@ -80,54 +85,68 @@ async function join() {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: $padding-md $padding-md 0;
-  gap: $gap-md;
+  margin: 0 auto;
   @include nav-safe-bottom;
+
+  &__hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $gap-sm;
+    padding: $padding-lg $padding-md;
+    background: $mode-tournament;
+    color: $white;
+    text-align: center;
+  }
+
+  &__icon {
+    width: 72px;
+    height: 72px;
+    border-radius: $radius-sm;
+    background: $white;
+    color: $mode-tournament;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__host {
+    @include text-xs;
+    font-weight: 600;
+    letter-spacing: $tracking-lg;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+
+  &__name { @include title-xxl; line-height: 0.9; }
+  &__description { @include text-sm; opacity: 0.9; }
+  &__count { @include text-sm; }
 
   &__main {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: $gap-lg;
-    padding: $padding-md 0;
-    justify-content: center;
+    justify-content: flex-end;
+    gap: $gap-md;
+    padding: $padding-md;
   }
 
-  &__loading {
+  &__actions {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: $gap-xs;
+  }
+
+  &__message {
     @include text-sm;
     color: $muted;
     text-align: center;
-  }
-
-  &__card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: $gap-sm;
     padding: $padding-xl;
-    background: rgba($white, 0.05);
-    border-radius: $radius-sm;
-    text-align: center;
-  }
 
-  &__icon { font-size: 40px; line-height: 1; }
-  &__name { @include title-xl; color: $text-color; }
-  &__description { @include text-sm; color: $muted; }
-
-  &__meta {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    @include text-sm;
-    color: $muted;
+    &--error { color: $error; }
   }
 
   &__warning {
-    @include text-sm;
-    color: $error;
-  }
-
-  &__error {
     @include text-sm;
     color: $error;
     text-align: center;
@@ -136,9 +155,16 @@ async function join() {
 
 @media (min-width: $bp-laptop) {
   .join {
-    padding: $padding-xl $padding-xl 0;
-    gap: $gap-lg;
-    @include nav-safe-bottom($padding-xl);
+    max-width: 720px;
+
+    &__hero { padding: $padding-xl $padding-xxl; }
+    &__host { @include text-sm; }
+    &__name { @include display-xs; }
+    &__description,
+    &__count,
+    &__message,
+    &__warning { @include text-md; }
+    &__main { padding: $padding-xl; }
   }
 }
 </style>

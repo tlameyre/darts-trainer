@@ -2,8 +2,9 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTournamentStore } from '../store/tournamentStore.js'
-import AppHeader from '../components/AppHeader.vue'
+import PageHeader from '../components/PageHeader.vue'
 import AppButton from '../components/AppButton.vue'
+import AppIcon from '../components/AppIcon.vue'
 import AppTabs from '../components/AppTabs.vue'
 import TournamentListCard from '../components/tournament/TournamentListCard.vue'
 import TournamentJoinByCodeModal from '../components/tournament/TournamentJoinByCodeModal.vue'
@@ -24,10 +25,6 @@ async function onJoinCode(code) {
   }
 }
 
-const TABS = [
-  { id: 'active',    label: 'En cours' },
-  { id: 'completed', label: 'Terminés' },
-]
 const activeTab = ref('active')
 
 onMounted(() => {
@@ -39,11 +36,14 @@ onUnmounted(() => {
   tournamentStore.unsubscribeFromTournamentList()
 })
 
-const filtered = computed(() =>
-  tournamentStore.tournaments.filter(t =>
-    activeTab.value === 'active' ? t.status !== 'completed' : t.status === 'completed'
-  )
-)
+const activeList    = computed(() => tournamentStore.tournaments.filter(t => t.status !== 'completed'))
+const completedList = computed(() => tournamentStore.tournaments.filter(t => t.status === 'completed'))
+const filtered      = computed(() => activeTab.value === 'active' ? activeList.value : completedList.value)
+
+const tabs = computed(() => [
+  { id: 'active',    label: `En cours · ${activeList.value.length}` },
+  { id: 'completed', label: `Terminés · ${completedList.value.length}` },
+])
 
 function openTournament(id) {
   router.push({ name: 'tournament-detail', params: { id } })
@@ -52,11 +52,11 @@ function openTournament(id) {
 
 <template>
   <div class="tournaments">
-    <AppHeader title="Tournois" @back="router.push({ name: 'play' })" />
+    <PageHeader title="Tournois" />
+
+    <AppTabs v-model="activeTab" class="tournaments__tabs" variant="underline" :tabs="tabs" />
 
     <main class="tournaments__main">
-      <AppTabs v-model="activeTab" :tabs="TABS" />
-
       <div v-if="filtered.length" class="tournaments__list">
         <TournamentListCard
           v-for="t in filtered"
@@ -72,8 +72,11 @@ function openTournament(id) {
     </main>
 
     <div class="tournaments__actions">
-      <AppButton variant="ghost" @click="showJoinModal = true">Rejoindre un tournoi</AppButton>
-      <AppButton @click="router.push({ name: 'tournament-settings' })">Créer un tournoi</AppButton>
+      <AppButton variant="secondary" @click="showJoinModal = true">Rejoindre</AppButton>
+      <AppButton tone="tournament" @click="router.push({ name: 'tournament-settings' })">
+        <AppIcon name="plus" :width="16" :height="16" />
+        Créer
+      </AppButton>
     </div>
 
     <TournamentJoinByCodeModal
@@ -90,22 +93,21 @@ function openTournament(id) {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: $padding-md $padding-md 0;
+  margin: 0 auto;
   gap: $gap-md;
-  @include nav-safe-bottom;
+  @include nav-safe-bottom($padding-xxl * 2);
+
+  &__tabs { --tab-color: #{$mode-tournament}; }
 
   &__main {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-lg;
-    padding: $padding-md 0;
+    padding: 0 $padding-md;
   }
 
   &__list {
     display: flex;
     flex-direction: column;
-    gap: $gap-xs;
+    gap: $gap-sm;
   }
 
   &__empty {
@@ -116,20 +118,28 @@ function openTournament(id) {
   }
 
   &__actions {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
+    position: fixed;
+    left: $padding-md;
+    right: $padding-md;
+    bottom: calc(#{$bottom-nav-height} + env(safe-area-inset-bottom) + #{$padding-sm});
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $gap-xs;
   }
 }
 
 @media (min-width: $bp-laptop) {
   .tournaments {
-    padding: $padding-xl $padding-xl 0;
-    gap: $gap-lg;
-    @include nav-safe-bottom($padding-xl);
+    @include nav-safe-bottom($padding-xxl * 2);
 
-    &__main { gap: $gap-xl; padding: $padding-lg 0; }
+    &__main { padding: 0 $padding-xxl; }
     &__empty { @include text-md; }
+
+    &__actions {
+      left: auto;
+      right: $padding-xxl;
+      width: 420px;
+    }
   }
 }
 </style>

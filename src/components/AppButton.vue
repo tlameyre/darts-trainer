@@ -19,11 +19,16 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  tone: {
+    type: String,
+    default: 'orange',
+    validator: v => ['orange', 'tournament'].includes(v),
+  },
 })
 </script>
 
 <template>
-  <button :class="['btn', `btn--${size}`, `btn--${rounded}`, `btn--${variant}`, { 'btn--active': active }]">
+  <button :class="['btn', `btn--${size}`, `btn--${rounded}`, `btn--${variant}`, `btn--${tone}`, { 'btn--active': active }]">
     <slot />
   </button>
 </template>
@@ -95,11 +100,22 @@ defineProps({
     }
   }
 
+  &--tournament.btn--primary {
+    background: $mode-tournament;
+
+    &:active { background: $black; }
+  }
+
   // État actif (ex: option sélectionnée dans un groupe)
   &--active {
     background: $orange;
     border-color: $orange;
     color: $white;
+  }
+
+  &--tournament.btn--active {
+    background: $mode-tournament;
+    border-color: $mode-tournament;
   }
 
   &:disabled {

@@ -3,13 +3,14 @@ defineProps({
   modelValue: Boolean,
   title: String,
   description: String,
+  tone: { type: String, default: 'orange', validator: v => ['orange', 'tournament'].includes(v) },
 })
 
 defineEmits(['update:modelValue'])
 </script>
 
 <template>
-  <button class="toggle" @click="$emit('update:modelValue', !modelValue)">
+  <button class="toggle" :class="`toggle--${tone}`" @click="$emit('update:modelValue', !modelValue)">
     <span class="toggle__title">{{ title }}</span>
     <div class="toggle__text">
       <span class="toggle__desc">{{ description }}</span>
@@ -62,6 +63,11 @@ defineEmits(['update:modelValue'])
       background: $orange;
       border-color: $orange;
     }
+  }
+
+  &--tournament &__switch--on {
+    background: $mode-tournament;
+    border-color: $mode-tournament;
   }
 
   &__knob {

@@ -3,45 +3,52 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
+import AppIcon from '../components/AppIcon.vue'
+import OptionSelector from '../components/OptionSelector.vue'
+import ToggleSwitch from '../components/ToggleSwitch.vue'
 import { useTournamentStore } from '../store/tournamentStore.js'
 
 const router          = useRouter()
 const tournamentStore = useTournamentStore()
 
-const SCORE_OPTIONS  = [301, 501]
-const FORMAT_OPTIONS = [
-  { id: 'bracket',      label: 'Bracket',     hint: 'Élimination directe jusqu\'au vainqueur.' },
-  { id: 'championship', label: 'Championnat', hint: 'Chacun affronte tous les autres au fil des journées, avec playoffs en option.' },
+const SCORE_OPTIONS = [
+  { value: 301, label: '301' },
+  { value: 501, label: '501' },
+  { value: 'custom', label: 'Custom' },
 ]
-const MIN_LEGS      = 1
-const MAX_LEGS      = 9
+const ELIMINATION_OPTIONS = [
+  { value: false, label: 'Simple' },
+  { value: true,  label: 'Double' },
+]
+const PLAYOFF_OPTIONS = [
+  { value: null, label: 'Aucun' },
+  { value: 2,    label: 'Top 2' },
+  { value: 4,    label: 'Top 4' },
+]
+const MIN_LEGS = 1
+const MAX_LEGS = 9
 
 const step = ref(1)
 
 const name        = ref(`Tournoi du ${new Date().toLocaleDateString('fr-FR')}`)
 const description = ref('')
 const settings = reactive({
-  format:    'bracket',
-  scoreKey:  501,
-  legsToWin: 2,
+  format:            'bracket',
+  scoreKey:          501,
+  legsToWin:         2,
+  doubleElimination: false,
+  doubleRoundRobin:  false,
+  playoffSize:       null,
 })
 const customScore = ref(401)
-const creating     = ref(false)
+const creating    = ref(false)
 
-const formatHint     = computed(() => FORMAT_OPTIONS.find(f => f.id === settings.format).hint)
+const isChampionship = computed(() => settings.format === 'championship')
 const isCustomScore  = computed(() => settings.scoreKey === 'custom')
 const effectiveScore = computed(() =>
   isCustomScore.value ? Math.max(1, Number(customScore.value) || 501) : settings.scoreKey
 )
 const canSubmitStep1 = computed(() => name.value.trim().length > 0)
-
-function decrementLegs() {
-  settings.legsToWin = Math.max(MIN_LEGS, settings.legsToWin - 1)
-}
-
-function incrementLegs() {
-  settings.legsToWin = Math.min(MAX_LEGS, settings.legsToWin + 1)
-}
 
 function goToStep2() {
   if (!canSubmitStep1.value) return
@@ -62,6 +69,9 @@ async function createTournament() {
     format:      settings.format,
     startScore:  effectiveScore.value,
     legsToWin:   settings.legsToWin,
+    ...(isChampionship.value
+      ? { doubleRoundRobin: settings.doubleRoundRobin, playoffSize: settings.playoffSize }
+      : { doubleElimination: settings.doubleElimination }),
   })
   creating.value = false
   if (id) router.push({ name: 'tournament-detail', params: { id } })
@@ -70,93 +80,100 @@ async function createTournament() {
 
 <template>
   <div class="settings">
-    <AppHeader title="Nouveau tournoi" @back="backFromHeader" />
+    <AppHeader title="Nouveau tournoi" tone="tournament" @back="backFromHeader" />
 
-    <main class="settings__main">
-
-      <template v-if="step === 1">
-        <div class="settings__card">
-          <div class="settings__section-label">Nom du tournoi</div>
-          <input v-model="name" class="settings__name-input" maxlength="60" />
+    <div class="settings__body">
+      <div class="settings__steps">
+        <div v-for="(label, i) in ['1. Nom', '2. Format']" :key="label" class="settings__step" :class="{ 'settings__step--done': step > i, 'settings__step--current': step === i + 1 }">
+          <span class="settings__step-bar" />
+          <span class="settings__step-label">{{ label }}</span>
         </div>
+      </div>
 
-        <div class="settings__card">
-          <div class="settings__section-label">Description</div>
-          <textarea v-model="description" class="settings__description-input" rows="4" maxlength="240"
-            placeholder="Optionnel" />
-        </div>
-      </template>
+      <main class="settings__main">
+        <template v-if="step === 1">
+          <label class="settings__field">
+            <span class="settings__label">Nom du tournoi</span>
+            <input v-model="name" class="settings__input" maxlength="60" />
+          </label>
 
-      <template v-else>
-        <div class="settings__card">
-          <div class="settings__section-label">Format</div>
-          <div class="settings__row">
-            <AppButton
-              v-for="f in FORMAT_OPTIONS" :key="f.id"
-              size="small" variant="ghost" :active="settings.format === f.id"
-              @click="settings.format = f.id"
-            >{{ f.label }}</AppButton>
+          <label class="settings__field">
+            <span class="settings__label">Description <span class="settings__optional">Optionnel</span></span>
+            <textarea v-model="description" class="settings__input settings__input--area" rows="4" maxlength="240"
+              placeholder="Règles maison, lieu, lot à gagner…" />
+          </label>
+
+          <div class="settings__note">
+            <AppIcon name="user-plus" :width="20" :height="20" />
+            <span>Tu inviteras les joueurs après la création, avec un code ou un lien à partager.</span>
           </div>
-          <p class="settings__hint">{{ formatHint }}</p>
-        </div>
+        </template>
 
-        <div class="settings__card">
-          <div class="settings__section-label">Score de départ</div>
-          <div class="settings__row">
-            <AppButton
-              v-for="s in SCORE_OPTIONS" :key="s"
-              size="small" variant="ghost" :active="settings.scoreKey === s"
-              @click="settings.scoreKey = s"
-            >{{ s }}</AppButton>
-            <AppButton size="small" variant="ghost" :active="isCustomScore" @click="settings.scoreKey = 'custom'">
-              Custom
-            </AppButton>
-          </div>
-          <Transition name="slide-fade">
-            <div v-if="isCustomScore" class="settings__custom-field">
-              <input
-                v-model.number="customScore"
-                type="number" min="1" max="9999"
-                class="settings__custom-input"
-                placeholder="ex: 701"
-              />
-              <span class="settings__custom-label">pts</span>
+        <template v-else>
+          <section class="settings__field">
+            <span class="settings__label">Format</span>
+            <div class="settings__formats">
+              <button class="settings__format" :class="{ 'settings__format--on': !isChampionship }" :aria-pressed="!isChampionship" @click="settings.format = 'bracket'">
+                <span v-if="!isChampionship" class="settings__format-check"><AppIcon name="check" :width="14" :height="14" /></span>
+                <svg class="settings__format-art" viewBox="0 0 96 56" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M4 6h22v12H4M4 38h22v12H4M26 12h10v32H26M36 28h22M58 20h20v16H58M84 28h8" /></g></svg>
+                <span class="settings__format-name">Bracket</span>
+                <span class="settings__format-hint">Élimination jusqu'au vainqueur</span>
+              </button>
+              <button class="settings__format" :class="{ 'settings__format--on': isChampionship }" :aria-pressed="isChampionship" @click="settings.format = 'championship'">
+                <span v-if="isChampionship" class="settings__format-check"><AppIcon name="check" :width="14" :height="14" /></span>
+                <svg class="settings__format-art" viewBox="0 0 96 56" aria-hidden="true"><g fill="currentColor"><rect x="4" y="4" width="88" height="8" rx="2" opacity="0.9" /><rect x="4" y="17" width="88" height="8" rx="2" opacity="0.65" /><rect x="4" y="30" width="88" height="8" rx="2" opacity="0.45" /><rect x="4" y="43" width="88" height="8" rx="2" opacity="0.3" /></g></svg>
+                <span class="settings__format-name">Championnat</span>
+                <span class="settings__format-hint">Tous contre tous, par journées</span>
+              </button>
             </div>
-          </Transition>
-        </div>
+          </section>
 
-        <div class="settings__card">
-          <div class="settings__section-label">Manches à gagner (par match)</div>
-          <div class="settings__stepper">
-            <button
-              class="settings__stepper-btn"
-              :disabled="settings.legsToWin <= MIN_LEGS"
-              @click="decrementLegs"
-            >−</button>
-            <span class="settings__stepper-value">{{ settings.legsToWin }}</span>
-            <button
-              class="settings__stepper-btn"
-              :disabled="settings.legsToWin >= MAX_LEGS"
-              @click="incrementLegs"
-            >+</button>
+          <template v-if="isChampionship">
+            <section class="settings__field">
+              <span class="settings__label">Options du championnat</span>
+              <div class="settings__card">
+                <ToggleSwitch v-model="settings.doubleRoundRobin" tone="tournament" title="Aller-retour" description="Chaque duel se joue deux fois" />
+              </div>
+              <div class="settings__card">
+                <OptionSelector v-model="settings.playoffSize" label="Playoffs" :options="PLAYOFF_OPTIONS" tone="tournament" />
+              </div>
+            </section>
+          </template>
+          <template v-else>
+            <OptionSelector v-model="settings.doubleElimination" label="Élimination" :options="ELIMINATION_OPTIONS" tone="tournament" />
+            <p class="settings__hint">Double : un 2e tableau pour les perdants, jusqu'à la grande finale. Nécessite 4, 8, 16… joueurs au démarrage.</p>
+          </template>
+
+          <div class="settings__field">
+            <OptionSelector v-model="settings.scoreKey" label="Score de départ" :options="SCORE_OPTIONS" tone="tournament" />
+            <Transition name="slide-fade">
+              <div v-if="isCustomScore" class="settings__custom">
+                <input v-model.number="customScore" type="number" min="1" max="9999" class="settings__input settings__input--custom" placeholder="ex: 701" />
+                <span class="settings__hint">pts</span>
+              </div>
+            </Transition>
           </div>
-          <p class="settings__hint">
-            Le roster (joueurs) se gère après la création, une fois le tournoi ouvert aux inscriptions.
-          </p>
-        </div>
-      </template>
 
-    </main>
+          <section class="settings__field">
+            <span class="settings__label">Manches à gagner <span class="settings__optional">par match</span></span>
+            <div class="settings__stepper">
+              <button class="settings__stepper-btn" aria-label="Moins" :disabled="settings.legsToWin <= MIN_LEGS" @click="settings.legsToWin--">
+                <AppIcon name="minus" :width="24" :height="24" />
+              </button>
+              <span class="settings__stepper-value">{{ settings.legsToWin }}</span>
+              <button class="settings__stepper-btn settings__stepper-btn--plus" aria-label="Plus" :disabled="settings.legsToWin >= MAX_LEGS" @click="settings.legsToWin++">
+                <AppIcon name="plus" :width="24" :height="24" />
+              </button>
+            </div>
+          </section>
+        </template>
+      </main>
 
-    <div class="settings__pager">
-      <span class="settings__dot" :class="{ 'settings__dot--active': step === 1 }" />
-      <span class="settings__dot" :class="{ 'settings__dot--active': step === 2 }" />
+      <AppButton v-if="step === 1" tone="tournament" :disabled="!canSubmitStep1" @click="goToStep2">Suivant</AppButton>
+      <AppButton v-else tone="tournament" :disabled="creating" @click="createTournament">
+        {{ creating ? 'Création...' : 'Créer le tournoi' }}
+      </AppButton>
     </div>
-
-    <AppButton v-if="step === 1" :disabled="!canSubmitStep1" @click="goToStep2">Suivant</AppButton>
-    <AppButton v-else :disabled="creating" @click="createTournament">
-      {{ creating ? 'Création...' : 'Créer le tournoi' }}
-    </AppButton>
   </div>
 </template>
 
@@ -165,177 +182,227 @@ async function createTournament() {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  gap: $gap-xl;
-  @include nav-safe-bottom;
+  @include safe-bottom($padding-lg);
 
-  &__main {
+  &__body {
     flex: 1;
     display: flex;
     flex-direction: column;
     width: 100%;
     margin: 0 auto;
+    padding: $padding-md $padding-md 0;
     gap: $gap-md;
   }
 
-  &__card {
+  &__steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $gap-xs;
+  }
+
+  &__step {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xxs;
+    color: $muted;
+
+    &--done { color: $text-color; }
+    &--current { color: $mode-tournament; }
+  }
+
+  &__step-bar {
+    height: 6px;
+    border-radius: 2px;
+    background: $border-color;
+
+    .settings__step--done &,
+    .settings__step--current & { background: $mode-tournament; }
+  }
+
+  &__step-label {
+    @include text-xs;
+    font-weight: 600;
+    letter-spacing: $tracking-sm;
+    text-transform: uppercase;
+  }
+
+  &__main {
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: $gap-md;
   }
 
-  &__section-label {
-    @include title-lg;
-    color: $text-color;
-  }
-
-  &__name-input {
-    background: rgba($white, 0.05);
-    border: $border-md solid rgba($white, 0.15);
-    border-radius: $radius-sm;
-    color: $text-color;
-    @include text-md;
-    padding: $padding-sm $padding-md;
-
-    &:focus {
-      outline: none;
-      border-color: $orange;
-    }
-  }
-
-  &__description-input {
-    background: rgba($white, 0.05);
-    border: $border-md solid rgba($white, 0.15);
-    border-radius: $radius-sm;
-    color: $text-color;
-    @include text-md;
-    padding: $padding-sm $padding-md;
-    resize: none;
-    font-family: inherit;
-
-    &:focus {
-      outline: none;
-      border-color: $orange;
-    }
-  }
-
-  &__row {
+  &__field {
     display: flex;
+    flex-direction: column;
     gap: $gap-xs;
-
-    :deep(.btn) { flex: 1; }
   }
 
-  &__stepper {
+  &__label {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-lg;
-  }
-
-  &__stepper-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: $radius-pill;
-    border: $border-md solid rgba($white, 0.15);
-    background: rgba($white, 0.05);
-    color: $text-color;
-    @include title-lg;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.15s, color 0.15s, opacity 0.15s;
-
-    &:active:not(:disabled) {
-      border-color: $orange;
-      color: $orange;
-    }
-
-    &:disabled {
-      opacity: 0.3;
-    }
-  }
-
-  &__stepper-value {
-    @include display-sm;
-    color: $text-color;
-    min-width: 48px;
-    text-align: center;
-  }
-
-  &__custom-field {
-    display: flex;
-    align-items: center;
-    gap: $gap-sm;
-  }
-
-  &__custom-input {
-    flex: 1;
-    background: rgba($white, 0.05);
-    border: $border-md solid rgba($white, 0.15);
-    border-radius: $radius-sm;
-    color: $text-color;
-    @include title-md;
-    padding: $padding-xs $padding-sm;
-    text-align: center;
-
-    &:focus {
-      outline: none;
-      border-color: $orange;
-    }
-  }
-
-  &__custom-label {
-    @include title-md;
-    color: $muted;
-    white-space: nowrap;
-  }
-
-  &__hint {
+    justify-content: space-between;
+    align-items: baseline;
     @include title-sm;
     color: $muted;
   }
 
-  &__pager {
+  &__optional {
+    @include text-xs;
+    text-transform: none;
+    color: $muted;
+  }
+
+  &__input {
+    height: 52px;
+    padding: 0 $padding-sm;
+    border: $border-md solid $black;
+    border-radius: $radius-sm;
+    background: $white;
+    color: $text-color;
+    @include text-md;
+
+    &:focus { outline: none; border-color: $mode-tournament; }
+
+    &--area {
+      height: auto;
+      padding: $padding-sm;
+      border-color: $border-color;
+      resize: none;
+    }
+
+    &--custom { flex: 1; border-color: $border-color; }
+  }
+
+  &__custom {
     display: flex;
-    justify-content: center;
+    align-items: center;
     gap: $gap-xs;
   }
 
-  &__dot {
-    width: 6px;
-    height: 6px;
-    border-radius: $radius-pill;
-    background: rgba($white, 0.2);
+  &__note {
+    display: flex;
+    gap: $gap-sm;
+    padding: $padding-sm;
+    border-radius: $radius-sm;
+    background: $surface;
+    color: $mode-tournament;
+    @include text-sm;
 
-    &--active {
-      background: $orange;
+    span { color: $muted; }
+  }
+
+  &__card {
+    padding: $padding-xs $padding-sm;
+    border-radius: $radius-sm;
+    background: $surface;
+  }
+
+  &__hint {
+    @include text-xs;
+    color: $muted;
+  }
+
+  &__formats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $gap-xs;
+  }
+
+  &__format {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $gap-xs;
+    padding: $padding-sm;
+    border: $border-md solid $border-color;
+    border-radius: $radius-sm;
+    background: $surface;
+    color: $text-color;
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s;
+
+    &--on {
+      background: $mode-tournament;
+      border-color: $mode-tournament;
+      color: $white;
     }
   }
-}
 
-@media (min-width: $bp-tablet) {
-  .settings {
-    padding: $padding-xl $padding-xl 0;
-    @include nav-safe-bottom($padding-xl);
+  &__format-check {
+    position: absolute;
+    top: $padding-xs;
+    right: $padding-xs;
+    width: 22px;
+    height: 22px;
+    border-radius: $radius-pill;
+    background: $white;
+    color: $mode-tournament;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-    &__section-label     { @include title-xl; }
-    &__name-input         { @include text-lg; }
-    &__description-input  { @include text-lg; }
-    &__stepper-btn         { @include title-xl; }
-    &__stepper-value       { @include display-md; }
-    &__custom-input       { @include title-lg; padding: $padding-sm $padding-md; }
-    &__custom-label       { @include title-lg; }
-    &__hint               { @include title-md; }
+  &__format-art { width: 96px; height: 56px; }
+  &__format-name { @include title-lg; line-height: 1; }
+  &__format-hint { @include text-xs; opacity: 0.85; }
+
+  &__stepper {
+    display: grid;
+    grid-template-columns: 56px 1fr 56px;
+    gap: $gap-xs;
+    align-items: center;
+  }
+
+  &__stepper-btn {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: $border-md solid $border-color;
+    border-radius: $radius-sm;
+    color: $text-color;
+
+    &--plus {
+      border-color: $mode-tournament;
+      background: $mode-tournament;
+      color: $white;
+    }
+
+    &:disabled { opacity: 0.4; }
+  }
+
+  &__stepper-value {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-sm;
+    background: $surface;
+    @include display-xs;
   }
 }
 
-.slide-fade-enter-active,
-.slide-fade-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+@media (min-width: $bp-laptop) {
+  .settings {
+    &__body {
+      max-width: 640px;
+      padding: $padding-xl $padding-xl 0;
+      gap: $gap-lg;
+    }
+
+    &__step-label { @include text-sm; }
+    &__label { @include title-md; }
+    &__optional,
+    &__hint { @include text-sm; }
+    &__input { @include text-lg; }
+    &__note { @include text-md; }
+    &__format-name { @include title-xl; }
+    &__format-hint { @include text-sm; }
+  }
 }
-.slide-fade-enter-from,
-.slide-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
-}
+
+.slide-fade-enter-active, .slide-fade-leave-active { transition: opacity 0.15s; }
+.slide-fade-enter-from, .slide-fade-leave-to { opacity: 0; }
 </style>

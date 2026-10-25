@@ -137,10 +137,10 @@ export const useTournamentStore = defineStore('tournament', () => {
 
   // Crée le tournoi en statut "pending" : le créateur devient hôte + participant,
   // aucun bracket n'est généré (roster ouvert jusqu'au démarrage).
-  async function createTournamentShell({ name, description, format, startScore, legsToWin }) {
+  async function createTournamentShell({ name, description, format, startScore, legsToWin, doubleElimination, doubleRoundRobin, playoffSize }) {
     const dbStore   = useDbStore()
     const authStore = useAuthStore()
-    const tournament = await dbStore.createTournamentRecord({ name, description, format, startScore, legsToWin })
+    const tournament = await dbStore.createTournamentRecord({ name, description, format, startScore, legsToWin, doubleElimination, doubleRoundRobin, playoffSize })
     if (!tournament) return null
 
     await dbStore.addTournamentHost(tournament.id, authStore.user.id, 'creator')

@@ -30,16 +30,21 @@ function submit() {
 <template>
   <AppModal :show="show" title="Rejoindre un tournoi" size="sm" @close="$emit('close')">
     <div class="join-modal">
-      <input
-        v-model="code"
-        class="join-modal__input"
-        placeholder="Code (ex: T-4F9AB)"
-        maxlength="10"
-        autocapitalize="characters"
-        @keyup.enter="submit"
-      />
+      <p class="join-modal__hint">Entre le code donné par l'organisateur, ou ouvre directement son lien d'invitation.</p>
+      <label class="join-modal__field">
+        <span class="join-modal__label">Code d'invitation</span>
+        <input
+          v-model="code"
+          class="join-modal__input"
+          :class="{ 'join-modal__input--error': error }"
+          placeholder="T-4F9AB"
+          maxlength="10"
+          autocapitalize="characters"
+          @keyup.enter="submit"
+        />
+      </label>
       <p v-if="error" class="join-modal__error">{{ error }}</p>
-      <AppButton :disabled="!code.trim() || loading" @click="submit">
+      <AppButton tone="tournament" :disabled="!code.trim() || loading" @click="submit">
         {{ loading ? 'Vérification...' : 'Rejoindre' }}
       </AppButton>
     </div>
@@ -52,21 +57,40 @@ function submit() {
   flex-direction: column;
   gap: $gap-md;
 
+  &__hint {
+    @include text-sm;
+    color: $muted;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
+  }
+
+  &__label {
+    @include text-sm;
+    font-weight: 600;
+    color: $muted;
+  }
+
   &__input {
-    background: rgba($white, 0.05);
-    border: $border-md solid rgba($white, 0.15);
+    height: 56px;
+    background: $white;
+    border: $border-md solid $border-color;
     border-radius: $radius-sm;
     color: $text-color;
-    @include title-md;
+    @include display-xs;
     text-align: center;
-    letter-spacing: 0.05em;
-    padding: $padding-sm $padding-md;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
 
     &:focus {
       outline: none;
-      border-color: $orange;
+      border-color: $mode-tournament;
     }
+
+    &--error { border-color: $error; }
   }
 
   &__error {
