@@ -52,7 +52,15 @@ function openTournament(id) {
 
 <template>
   <div class="tournaments">
-    <PageHeader title="Tournois" />
+    <PageHeader class="tournaments__header" title="Tournois">
+      <div class="tournaments__header-actions">
+        <button class="tournaments__header-btn" @click="showJoinModal = true">Rejoindre avec un code</button>
+        <button class="tournaments__header-btn tournaments__header-btn--primary" @click="router.push({ name: 'tournament-settings' })">
+          <AppIcon name="plus" :width="16" :height="16" />
+          Créer un tournoi
+        </button>
+      </div>
+    </PageHeader>
 
     <AppTabs v-model="activeTab" class="tournaments__tabs" variant="underline" :tabs="tabs" />
 
@@ -89,6 +97,9 @@ function openTournament(id) {
 </template>
 
 <style lang="scss" scoped>
+// Content column of the desktop layout (1120px, centered)
+$content-inset: max(#{$padding-xxl}, calc((100% - 1120px) / 2));
+
 .tournaments {
   display: flex;
   flex-direction: column;
@@ -99,14 +110,16 @@ function openTournament(id) {
 
   &__tabs { --tab-color: #{$mode-tournament}; }
 
+  &__header-actions { display: none; }
+
   &__main {
     flex: 1;
     padding: 0 $padding-md;
   }
 
   &__list {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: $gap-sm;
   }
 
@@ -130,16 +143,59 @@ function openTournament(id) {
 
 @media (min-width: $bp-laptop) {
   .tournaments {
-    @include nav-safe-bottom($padding-xxl * 2);
+    gap: $gap-lg;
+    @include nav-safe-bottom($padding-xxl);
 
-    &__main { padding: 0 $padding-xxl; }
+    .tournaments__header {
+      padding-left: $content-inset;
+      padding-right: $content-inset;
+      padding-bottom: $padding-xl;
+    }
+
+    &__header-actions {
+      display: flex;
+      gap: $gap-xs;
+    }
+
+    &__header-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: $gap-xs;
+      height: 56px;
+      padding: 0 $padding-lg;
+      border: $border-md solid $bg;
+      border-radius: $radius-sm;
+      color: $bg;
+      @include title-md;
+
+      &--primary {
+        border-color: $mode-tournament;
+        background: $mode-tournament;
+        color: $white;
+      }
+    }
+
+    &__tabs {
+      padding-left: $content-inset;
+      padding-right: $content-inset;
+
+      :deep(.app-tabs__tab) {
+        flex: none;
+        height: 56px;
+        padding: 0 $padding-lg;
+        border-bottom-width: 4px;
+      }
+    }
+
+    &__main { padding: 0 $content-inset; }
+
+    &__list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: $gap-lg; }
+
     &__empty { @include text-md; }
 
-    &__actions {
-      left: auto;
-      right: $padding-xxl;
-      width: 420px;
-    }
+    // Create / join live in the header on desktop
+    &__actions { display: none; }
   }
 }
 </style>

@@ -546,7 +546,7 @@ export const useDbStore = defineStore('db', () => {
     // l'utilisateur est hôte ou participant (auto-inscrit ou ajouté).
     const { data, error } = await supabase
       .from('tournaments')
-      .select('*, tournament_participants!tournament_participants_tournament_id_fkey(count)')
+      .select('*, tournament_participants!tournament_participants_tournament_id_fkey(count), tournament_matches(status, bracket_type, round)')
       .order('created_at', { ascending: false })
       .limit(limit)
     if (error) {
