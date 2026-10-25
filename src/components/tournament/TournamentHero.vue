@@ -13,10 +13,12 @@ defineEmits(['back'])
 
 <template>
   <section class="hero">
-    <button class="hero__back" @click="$emit('back')">
-      <AppIcon name="arrow-left" :width="24" :height="24" />
-      Tournois
-    </button>
+    <header class="hero__bar">
+      <button class="hero__back" aria-label="Retour" @click="$emit('back')">
+        <AppIcon name="arrow-left" :width="24" :height="24" />
+      </button>
+      <h1 class="hero__bar-title">Tournoi</h1>
+    </header>
 
     <div class="hero__head">
       <span class="hero__icon"><AppIcon name="trophy" :width="28" :height="28" /></span>
@@ -52,7 +54,7 @@ defineEmits(['back'])
   color: $white;
 
   // Desktop only: the hero becomes a side column and replaces the app header
-  &__back { display: none; }
+  &__bar { display: none; }
 
   &__head {
     display: flex;
@@ -138,19 +140,23 @@ defineEmits(['back'])
 @media (min-width: $bp-laptop) {
   .hero {
     gap: $gap-xl;
-    padding: $padding-xl 36px 36px;
+    padding: $padding-xxl $padding-xxl * 1.25 $padding-xxl * 1.25;
+
+    &__bar {
+      display: flex;
+      align-items: center;
+      gap: $gap-sm;
+    }
 
     &__back {
       display: flex;
-      align-items: center;
-      gap: $gap-xs;
-      align-self: flex-start;
+      padding: $padding-xxs;
       color: $white;
-      @include text-sm;
-      font-weight: 600;
-      letter-spacing: $tracking-lg;
-      text-transform: uppercase;
-      opacity: 0.9;
+    }
+
+    &__bar-title {
+      @include title-xl;
+      letter-spacing: $tracking-sm;
     }
 
     &__head {

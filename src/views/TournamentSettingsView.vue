@@ -50,6 +50,10 @@ const effectiveScore = computed(() =>
 )
 const canSubmitStep1 = computed(() => name.value.trim().length > 0)
 
+const previewTags = computed(() => isChampionship.value
+  ? ['Championnat', ...(settings.doubleRoundRobin ? ['Aller-retour'] : []), ...(settings.playoffSize ? [`Playoffs top ${settings.playoffSize}`] : []), String(effectiveScore.value), `${settings.legsToWin} manche${settings.legsToWin > 1 ? 's' : ''}`]
+  : ['Bracket', settings.doubleElimination ? 'Double élim.' : 'Simple élim.', String(effectiveScore.value), `${settings.legsToWin} manche${settings.legsToWin > 1 ? 's' : ''}`])
+
 function goToStep2() {
   if (!canSubmitStep1.value) return
   step.value = 2
@@ -80,7 +84,39 @@ async function createTournament() {
 
 <template>
   <div class="settings">
-    <AppHeader title="Nouveau tournoi" tone="tournament" @back="backFromHeader" />
+    <aside class="settings__aside">
+      <header class="settings__aside-bar">
+        <button class="settings__aside-back" aria-label="Retour" @click="router.push({ name: 'tournaments' })">
+          <AppIcon name="arrow-left" :width="24" :height="24" />
+        </button>
+        <h1 class="settings__aside-bar-title">Tournoi</h1>
+      </header>
+      <h2 class="settings__aside-title">Nouveau tournoi</h2>
+      <ol class="settings__aside-steps">
+        <li v-for="(label, i) in ['Nom du tournoi', 'Format & règles']" :key="label" class="settings__aside-step" :class="{ 'settings__aside-step--off': step < i + 1 }">
+          <span class="settings__aside-num">
+            <AppIcon v-if="step > i + 1" name="check" :width="14" :height="14" />
+            <template v-else>{{ i + 1 }}</template>
+          </span>
+          {{ label }}
+        </li>
+      </ol>
+      <div class="settings__preview">
+        <span class="settings__preview-label">Aperçu</span>
+        <div class="settings__preview-head">
+          <span class="settings__preview-icon"><AppIcon name="trophy" :width="24" :height="24" /></span>
+          <span class="settings__preview-name">{{ name || 'Nouveau tournoi' }}</span>
+        </div>
+        <div class="settings__preview-tags">
+          <template v-if="step === 2">
+            <span v-for="t in previewTags" :key="t" class="settings__preview-tag">{{ t }}</span>
+          </template>
+          <span v-else class="settings__preview-hint">Le format s'affichera ici.</span>
+        </div>
+      </div>
+    </aside>
+
+    <AppHeader class="settings__header" title="Nouveau tournoi" tone="tournament" @back="backFromHeader" />
 
     <div class="settings__body">
       <div class="settings__steps">
@@ -90,7 +126,7 @@ async function createTournament() {
         </div>
       </div>
 
-      <main class="settings__main">
+      <main class="settings__main" :class="{ 'settings__main--name': step === 1 }">
         <template v-if="step === 1">
           <label class="settings__field">
             <span class="settings__label">Nom du tournoi</span>
@@ -144,6 +180,7 @@ async function createTournament() {
             <p class="settings__hint">Double : un 2e tableau pour les perdants, jusqu'à la grande finale. Nécessite 4, 8, 16… joueurs au démarrage.</p>
           </template>
 
+          <div class="settings__pair">
           <div class="settings__field">
             <OptionSelector v-model="settings.scoreKey" label="Score de départ" :options="SCORE_OPTIONS" tone="tournament" />
             <Transition name="slide-fade">
@@ -166,13 +203,19 @@ async function createTournament() {
               </button>
             </div>
           </section>
+          </div>
         </template>
       </main>
 
-      <AppButton v-if="step === 1" tone="tournament" :disabled="!canSubmitStep1" @click="goToStep2">Suivant</AppButton>
-      <AppButton v-else tone="tournament" :disabled="creating" @click="createTournament">
-        {{ creating ? 'Création...' : 'Créer le tournoi' }}
-      </AppButton>
+      <div class="settings__footer">
+        <AppButton class="settings__footer-secondary" variant="secondary" @click="backFromHeader">
+          {{ step === 1 ? 'Annuler' : 'Retour' }}
+        </AppButton>
+        <AppButton v-if="step === 1" tone="tournament" :disabled="!canSubmitStep1" @click="goToStep2">Suivant</AppButton>
+        <AppButton v-else tone="tournament" :disabled="creating" @click="createTournament">
+          {{ creating ? 'Création...' : 'Créer le tournoi' }}
+        </AppButton>
+      </div>
     </div>
   </div>
 </template>
@@ -183,6 +226,16 @@ async function createTournament() {
   flex-direction: column;
   min-height: 100dvh;
   @include safe-bottom($padding-lg);
+
+  &__aside { display: none; }
+
+  &__footer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: $gap-xs;
+  }
+
+  &__footer-secondary { display: none; }
 
   &__body {
     flex: 1;
@@ -228,6 +281,12 @@ async function createTournament() {
 
   &__main {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: $gap-md;
+  }
+
+  &__pair {
     display: flex;
     flex-direction: column;
     gap: $gap-md;
@@ -386,19 +445,174 @@ async function createTournament() {
 
 @media (min-width: $bp-laptop) {
   .settings {
-    &__body {
-      max-width: 640px;
-      padding: $padding-xl $padding-xl 0;
-      gap: $gap-lg;
+    display: grid;
+    grid-template-columns: 480px minmax(0, 1fr);
+    height: 100dvh;
+    min-height: 0;
+    padding-bottom: 0;
+
+    &__header,
+    &__steps { display: none; }
+
+    // Violet side column: back + title, steps, live preview of the tournament
+    &__aside {
+      display: flex;
+      flex-direction: column;
+      gap: $gap-xxl;
+      padding: $padding-xxl $padding-xxl * 1.25 $padding-xxl * 1.25;
+      background: $mode-tournament;
+      color: $white;
     }
 
-    &__step-label { @include text-sm; }
+    &__aside-bar {
+      display: flex;
+      align-items: center;
+      gap: $gap-sm;
+    }
+
+    &__aside-back {
+      display: flex;
+      padding: $padding-xxs;
+      color: $white;
+    }
+
+    &__aside-bar-title {
+      @include title-xl;
+      letter-spacing: $tracking-sm;
+    }
+
+    &__aside-title {
+      @include display-xs;
+      text-transform: uppercase;
+      line-height: 0.85;
+    }
+
+    &__aside-steps {
+      display: flex;
+      flex-direction: column;
+      gap: $gap-sm;
+    }
+
+    &__aside-step {
+      display: flex;
+      align-items: center;
+      gap: $gap-sm;
+      @include title-xxl;
+
+      &--off { opacity: 0.55; }
+    }
+
+    &__aside-num {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: $radius-sm;
+      background: rgba($white, 0.2);
+      @include title-xl;
+
+      .settings__aside-step:not(.settings__aside-step--off):last-child &,
+      .settings__aside-step:first-child:not(.settings__aside-step--off) & {
+        background: $white;
+        color: $mode-tournament;
+      }
+    }
+
+    &__preview {
+      display: flex;
+      flex-direction: column;
+      gap: $gap-sm;
+      margin-top: auto;
+      padding: $padding-md;
+      border-radius: $radius-sm;
+      background: $white;
+      color: $text-color;
+    }
+
+    &__preview-label {
+      @include text-xs;
+      font-weight: 600;
+      letter-spacing: $tracking-sm;
+      text-transform: uppercase;
+      color: $muted;
+    }
+
+    &__preview-head {
+      display: flex;
+      align-items: center;
+      gap: $gap-sm;
+    }
+
+    &__preview-icon {
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: $radius-sm;
+      background: $mode-tournament;
+      color: $white;
+    }
+
+    &__preview-name {
+      @include title-xxl;
+      line-height: 0.95;
+    }
+
+    &__preview-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: $gap-xxs;
+    }
+
+    &__preview-tag {
+      padding: $padding-xxs $padding-xs;
+      border-radius: $radius-sm;
+      background: $surface;
+      @include title-sm;
+    }
+
+    &__preview-hint {
+      @include text-sm;
+      color: $muted;
+    }
+
+    &__body {
+      max-width: none;
+      min-height: 0;
+      overflow-y: auto;
+      padding: $padding-xxl * 1.75 $padding-xxl * 2.25 $padding-xxl * 1.5;
+      gap: $gap-xl;
+    }
+
+    &__main { gap: $gap-xl; }
+    &__main--name { max-width: 640px; }
+
+    &__pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: $gap-xl;
+    }
+
+    &__footer {
+      grid-template-columns: 1fr 1fr;
+      gap: $gap-sm;
+      margin-top: auto;
+    }
+
+    &__footer-secondary { display: flex; }
+
+    &__footer :deep(.btn) { height: 60px; padding: 0; @include title-xxl; }
+
     &__label { @include title-md; }
     &__optional,
     &__hint { @include text-sm; }
-    &__input { @include text-lg; }
+    &__input { height: 60px; padding: 0 $padding-md; @include text-lg; }
     &__note { @include text-md; }
-    &__format-name { @include title-xl; }
+    &__format { padding: $padding-lg; }
+    &__format-name { @include title-xxl; }
     &__format-hint { @include text-sm; }
   }
 }
