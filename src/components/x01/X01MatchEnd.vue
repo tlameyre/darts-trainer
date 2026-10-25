@@ -102,7 +102,7 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
           <AppIcon name="exit" :width="24" :height="24" />
         </button>
         <h1 class="match-end__heading">{{ leg ? `Manche ${leg.number} · détail` : 'Fin de partie' }}</h1>
-        <span />
+        <div class="match-end__bar-right"><slot name="bar-right" /></div>
       </header>
 
       <div class="match-end__winner">
@@ -237,6 +237,11 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
     grid-template-columns: 48px minmax(0, 1fr) 48px;
     align-items: center;
     margin-bottom: $padding-md;
+  }
+
+  &__bar-right {
+    display: flex;
+    justify-content: flex-end;
   }
 
   &__icon-btn {

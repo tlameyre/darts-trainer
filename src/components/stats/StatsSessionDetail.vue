@@ -155,6 +155,11 @@ function formatDate(iso) {
         hide-actions
         @leg-detail="inLegDetail = $event"
       >
+        <template #bar-right>
+          <button class="session-detail__delete" aria-label="Supprimer la session" @click="$emit('delete', session.id)">
+            <AppIcon name="trash" :width="22" :height="22" />
+          </button>
+        </template>
         <template v-if="session.tournament_id" #winner-aside>
           <!-- tournaments is null once the tournament is gone or no longer readable -->
           <button
