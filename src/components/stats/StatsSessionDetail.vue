@@ -142,21 +142,6 @@ function formatDate(iso) {
         </template>
       </AppHeader>
 
-      <!-- tournaments is null once the tournament is gone or no longer readable -->
-      <button
-        v-if="session.tournaments"
-        class="session-detail__badge session-detail__badge--link"
-        @click="$emit('open-tournament', session)"
-      >
-        <AppIcon name="trophy" :width="12" :height="12" />
-        {{ session.tournaments.name }}
-        <AppIcon name="arrow-right" :width="12" :height="12" />
-      </button>
-      <span v-else-if="session.tournament_id" class="session-detail__badge">
-        <AppIcon name="trophy" :width="12" :height="12" />
-        Tournoi
-      </span>
-
       <X01MatchEnd
         v-if="mode === 'x01'"
         class="session-detail__recap"
@@ -164,7 +149,25 @@ function formatDate(iso) {
         :winner-index="x01WinnerIndex"
         :subtitle="x01Subtitle"
         hide-actions
-      />
+      >
+        <template v-if="session.tournament_id" #winner-aside>
+          <!-- tournaments is null once the tournament is gone or no longer readable -->
+          <button
+            v-if="session.tournaments"
+            class="session-detail__tournament session-detail__tournament--link"
+            :title="session.tournaments.name"
+            @click="$emit('open-tournament', session)"
+          >
+            <AppIcon name="trophy" :width="14" :height="14" />
+            Tournoi
+            <AppIcon name="arrow-right" :width="14" :height="14" />
+          </button>
+          <span v-else class="session-detail__tournament">
+            <AppIcon name="trophy" :width="14" :height="14" />
+            Tournoi
+          </span>
+        </template>
+      </X01MatchEnd>
 
       <ScoreRecap
         v-else-if="mode === 'score' && session.settings?.history?.length"
@@ -229,32 +232,29 @@ function formatDate(iso) {
     min-height: 0;
   }
 
-  &__badge {
+  &__tournament {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: $gap-xxs;
-    align-self: center;
-    margin: $gap-sm 0;
-    padding: $padding-xxs $padding-sm;
-    border-radius: $radius-pill;
-    background: rgba($mode-tournament, 0.15);
-    color: $mode-tournament;
-    @include text-xxs;
+    margin-left: auto;
+    padding: $padding-xs $padding-sm;
+    border: $border-md solid rgba($white, 0.6);
+    border-radius: $radius-sm;
+    color: $white;
+    @include title-sm;
     flex-shrink: 0;
 
     &--link {
-      cursor: pointer;
-      transition: opacity 0.15s;
+      transition: background 0.15s;
 
-      &:active { opacity: 0.6; }
+      &:active { background: rgba($white, 0.2); }
     }
   }
 }
 
 @media (min-width: $bp-laptop) {
   .session-detail {
-    &__badge { @include text-xs; }
+    &__tournament { @include title-md; }
   }
 }
 

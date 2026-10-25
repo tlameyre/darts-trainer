@@ -115,6 +115,7 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
             <template v-else>{{ winnerIndex != null ? nameOf(winnerIndex) : '' }}</template>
           </span>
         </div>
+        <slot v-if="!leg" name="winner-aside" />
       </div>
 
       <template v-if="leg">
