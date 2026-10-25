@@ -75,7 +75,9 @@ const lastSession = computed(() => {
 
   const { mode, row } = candidates.reduce((a, b) => (new Date(b.row.played_at) > new Date(a.row.played_at) ? b : a))
   const caption = `Dernière session · ${relativeDay(row.played_at)}`
-  const base = { color: mode.color, caption, duration: null, action: 'Relancer les mêmes réglages' }
+  // Stats tab ids differ from the game mode ids for the training modes
+  const statsMode = { 'score-training': 'score' }[mode.id] ?? mode.id
+  const base = { color: mode.color, caption, duration: null, action: 'Relancer les mêmes réglages', stats: { mode: statsMode, session: row.id } }
 
   if (mode.id === 'score-training') {
     const durationMs = row.settings?.durationMs
@@ -184,7 +186,7 @@ const statOf = id => cardStats.value[id] || null
                   tags: lastSession.tags, metrics: lastSession.metrics, color: lastSession.color,
                   action: lastSession.action }"
         @relaunch="lastSession.relaunch"
-        @stats="router.push({ name: 'stats' })"
+        @stats="router.push({ name: 'stats', query: lastSession.stats })"
       />
 
       <div class="lobby__groups">

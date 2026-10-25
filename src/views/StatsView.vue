@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useDbStore } from '../store/dbStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import PageHeader from '../components/PageHeader.vue'
@@ -13,6 +13,7 @@ import { STATS_MODES } from '../data/statsModes.js'
 import StatsSessionDetail from '../components/stats/StatsSessionDetail.vue'
 
 const router     = useRouter()
+const route      = useRoute()
 const dbStore    = useDbStore()
 const badgeStore = useBadgeStore()
 
@@ -37,12 +38,23 @@ onMounted(async () => {
   x01Sessions.value      = x1
   checkoutSessions.value = co
   loading.value          = false
+  openFromQuery()
 })
 
 const selectedMode = ref('score')
 
 const selectedSession = ref(null)
 const showDetail      = ref(false)
+
+// ?mode=x01&session=<id> (from the last session card on the play screen) opens that session's detail
+function openFromQuery() {
+  const { mode, session } = route.query
+  const lists = { score: gameSessions, warmup: warmupSessions, x01: x01Sessions, checkout: checkoutSessions }
+  if (!mode || !session || !lists[mode]) return
+  selectedMode.value = mode
+  const found = lists[mode].value.find(s => s.id === session)
+  if (found) openDetail(found)
+}
 
 function openDetail(session) {
   selectedSession.value = session
