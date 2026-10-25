@@ -54,7 +54,7 @@ defineEmits(['choose'])
     text-align: center;
     transition: border-color 0.15s;
 
-    &:active:not(:disabled) { border-color: $mode-online; }
+    &:active:not(:disabled) { border-color: var(--match-color, #{$mode-online}); }
     &:disabled { opacity: 0.5; }
   }
 

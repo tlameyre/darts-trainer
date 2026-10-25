@@ -215,8 +215,8 @@ const showTournamentDoubleElimPreview = ref(false)
 const showTournamentPendingPreview    = ref(false)
 const showTournamentJoinPreview       = ref(false)
 // --- Mock data OnlineMatchLobbyView ---
-const mockOnlineMatch = (status) => ({
-  id: 'mock-online', status, host_id: 'me', guest_id: 'u1', tournament_match_id: null,
+const mockOnlineMatch = (status, tournamentMatchId = null) => ({
+  id: 'mock-online', status, host_id: 'me', guest_id: 'u1', tournament_match_id: tournamentMatchId,
   host:  { id: 'me', username: 'Théotime' },
   guest: { id: 'u1', username: 'luca92' },
   settings: { startScore: 501, legsToWin: 2, players: [{ id: 'u1', name: 'luca92' }, { id: 'me', name: 'Théotime' }] },
@@ -584,6 +584,8 @@ const mockProfileData = {
         <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted'), myId: 'me' }">Bull — choix du premier joueur (hôte)</button>
         <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted'), myId: 'u1' }">Bull — attente (invité)</button>
         <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('declined'), myId: 'me' }">Invitation refusée</button>
+        <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('invited', 'mock-match'), myId: 'me' }">Invitation envoyée — match de tournoi</button>
+        <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted', 'mock-match'), myId: 'me' }">Bull — match de tournoi (hôte)</button>
       </div>
     </section>
 

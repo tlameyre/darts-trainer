@@ -48,7 +48,7 @@ function stateOf(index) {
     display: block;
     height: 100%;
     width: 0;
-    background: $mode-online;
+    background: var(--match-color, #{$mode-online});
   }
 
   &__label {
@@ -65,7 +65,7 @@ function stateOf(index) {
 
   &__step--current {
     .stepper__fill  { width: 50%; }
-    .stepper__label { color: $mode-online; }
+    .stepper__label { color: var(--match-color, #{$mode-online}); }
   }
 
   &__step--error {
