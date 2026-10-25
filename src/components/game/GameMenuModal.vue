@@ -54,8 +54,8 @@ defineEmits(['finish', 'quit', 'close'])
     &:active { opacity: 0.75; }
 
     &--finish {
-      background: $accent;
-      border-color: $accent;
+      background: var(--game-color, #{$accent});
+      border-color: var(--game-color, #{$accent});
       color: $white;
     }
 

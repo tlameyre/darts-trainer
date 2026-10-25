@@ -165,7 +165,7 @@ function statRows(p) {
     line-height: 1;
   }
 
-  &__card--active &__legs { background: $accent; }
+  &__card--active &__legs { background: var(--game-color, #{$accent}); }
 
   &__level {
     @include text-xs;

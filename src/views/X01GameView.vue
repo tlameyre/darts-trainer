@@ -1,5 +1,5 @@
 <script setup>
-import { computed, watch, ref } from 'vue'
+import { computed, watch, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useGameStore } from '../store/gameStore.js'
 import { useAuthStore } from '../store/authStore.js'
@@ -211,6 +211,12 @@ async function finishGame() {
   showMenu.value = false
   if (isOnline) await online.forfeit()
   phase.value    = 'game-over'
+}
+
+// Teleported modals sit outside the view's DOM, so the color goes on <html>
+if (isOnline) {
+  onMounted(() => document.documentElement.style.setProperty('--game-color', 'var(--color-online)'))
+  onUnmounted(() => document.documentElement.style.removeProperty('--game-color'))
 }
 
 // L'adversaire a abandonné (ou terminé le match) pendant qu'on regardait
@@ -478,7 +484,7 @@ const multiWinnerName = computed(() =>
 
     <!-- ── Jeu ──────────────────────────────────────────────────────────────── -->
     <section class="x01__panel">
-      <AppHeader :title="headerTitle" tone="green" back-icon="exit" @back="router.push({ name: settingsRoute })">
+      <AppHeader :title="headerTitle" :tone="isOnline ? 'online' : 'green'" back-icon="exit" @back="router.push({ name: settingsRoute })">
         <template v-if="phase !== 'game-over'" #right>
           <button class="x01__menu-btn" aria-label="Menu" @click="showMenu = true">
             <AppIcon name="gear" :width="22" :height="22" />
@@ -572,7 +578,7 @@ const multiWinnerName = computed(() =>
     min-height: 0;
     display: flex;
     flex-direction: column;
-    background: $accent;
+    background: var(--game-color, #{$accent});
   }
 
   &__players {

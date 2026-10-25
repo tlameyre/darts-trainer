@@ -61,8 +61,8 @@ const keys = [
     }
 
     &--validate {
-      background: $accent;
-      border-color: $accent;
+      background: var(--game-color, #{$accent});
+      border-color: var(--game-color, #{$accent});
       color: $white;
     }
   }

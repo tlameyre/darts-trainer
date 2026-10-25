@@ -81,8 +81,8 @@ defineEmits(['confirm'])
     transition: background 0.15s, transform 0.1s;
 
     &:active:not(:disabled) {
-      background: $accent;
-      border-color: $accent;
+      background: var(--game-color, #{$accent});
+      border-color: var(--game-color, #{$accent});
       color: $white;
       transform: scale(0.96);
     }

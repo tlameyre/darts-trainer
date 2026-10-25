@@ -108,7 +108,7 @@ function confirm() {
     align-items: center;
     justify-content: center;
     border-radius: $radius-sm;
-    background: $accent;
+    background: var(--game-color, #{$accent});
     color: $white;
   }
 
@@ -164,8 +164,8 @@ function confirm() {
     &:active:not(:disabled) { transform: scale(0.96); }
 
     &--active {
-      background: $accent;
-      border-color: $accent;
+      background: var(--game-color, #{$accent});
+      border-color: var(--game-color, #{$accent});
       color: $white;
     }
 
@@ -175,7 +175,7 @@ function confirm() {
   &__confirm {
     height: 56px;
     border-radius: $radius-sm;
-    background: $accent;
+    background: var(--game-color, #{$accent});
     color: $white;
     @include title-lg;
     letter-spacing: $tracking-sm;

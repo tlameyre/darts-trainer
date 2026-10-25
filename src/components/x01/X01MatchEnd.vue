@@ -224,7 +224,7 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
     flex-direction: column;
     gap: $gap-md;
     padding: $padding-md;
-    background: $accent;
+    background: var(--game-color, #{$accent});
     color: $white;
   }
 
@@ -264,7 +264,7 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
     justify-content: center;
     border-radius: $radius-sm;
     background: $white;
-    color: $accent;
+    color: var(--game-color, #{$accent});
   }
 
   &__winner-text {
@@ -465,8 +465,8 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
     &:active { opacity: 0.75; }
 
     &--primary {
-      background: $accent;
-      border-color: $accent;
+      background: var(--game-color, #{$accent});
+      border-color: var(--game-color, #{$accent});
       color: $white;
     }
   }
@@ -494,7 +494,7 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
       gap: $gap-sm;
       padding: $padding-xl $padding-xxl;
       @include safe-bottom($padding-xxl);
-      background: $accent;
+      background: var(--game-color, #{$accent});
     }
 
     &__btn {
@@ -505,7 +505,7 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
 
       &--primary {
         background: $white;
-        color: $accent;
+        color: var(--game-color, #{$accent});
       }
     }
 

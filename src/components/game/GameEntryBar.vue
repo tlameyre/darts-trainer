@@ -101,7 +101,7 @@ function selectMode(id) {
 <style lang="scss" scoped>
 .entry-bar {
   // Slot / caret color, overridable by the mode using the bar
-  --entry-color: #{$accent};
+  --entry-color: var(--game-color, #{$accent});
 
   position: relative;
   flex-shrink: 0;

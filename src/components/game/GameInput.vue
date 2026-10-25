@@ -118,7 +118,7 @@ function undo() {
   gap: $gap-sm;
 
   &--targeting &__target {
-    outline: $border-md dashed $accent;
+    outline: $border-md dashed var(--game-color, #{$accent});
     outline-offset: $padding-xxs;
     border-radius: $radius-sm;
   }
