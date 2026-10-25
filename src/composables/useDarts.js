@@ -52,25 +52,57 @@ export function useDarts({ difficulty, maxQuestions, timeLimit, doubleValidation
   )
 
   // --- Dart generation ---
+
   function rand20() { return Math.floor(Math.random() * 20) + 1 }
+  const DIFFICULTY_CONFIG = {
+    easy: [
+      { type: "miss", label: "Miss", pts: 0, chance: 0.05 },
+      { type: "single", chance: 0.95 },
+    ],
+    medium: [
+      { type: "miss", label: "Miss", pts: 0, chance: 0.04 },
+      { type: "single", chance: 0.51 },
+      { type: "double", chance: 0.45 },
+    ],
+    hard: [
+      { type: "miss", label: "Miss", pts: 0, chance: 0.03 },
+      { type: "single", chance: 0.35 },
+      { type: "double", chance: 0.24 },
+      { type: "triple", chance: 0.26 },
+      { type: "bull", label: "DBull", pts: 25, chance: 0.07 },
+      { type: "bull", label: "Bull", pts: 50, chance: 0.05 },
+    ],
+  };
 
   function generateDart() {
-    const r = Math.random()
-    if (difficulty === 'easy') {
-      if (r < 0.05) return { type: 'miss', label: 'Miss', pts: 0 }
-      const n = rand20(); return { type: 'single', label: String(n), pts: n }
+    const outcomes = DIFFICULTY_CONFIG[difficulty];
+
+    if (!outcomes) {
+      throw new Error(`Difficulté inconnue : ${difficulty}`);
     }
-    if (difficulty === 'medium') {
-      if (r < 0.04) return { type: 'miss', label: 'Miss', pts: 0 }
-      if (r < 0.55) { const n = rand20(); return { type: 'single', label: String(n), pts: n } }
-      const n = rand20(); return { type: 'double', label: `D${n}`, pts: n * 2 }
+
+    const r = Math.random();
+    let threshold = 0;
+
+    const outcome = outcomes.find(({ chance }) => {
+      threshold += chance;
+      return r < threshold;
+    });
+
+    const { type, label, pts } = outcome;
+
+    if (label !== undefined) {
+      return { type, label, pts };
     }
-    if (r < 0.03) return { type: 'miss', label: 'Miss', pts: 0 }
-    if (r < 0.38) { const n = rand20(); return { type: 'single', label: String(n), pts: n     } }
-    if (r < 0.62) { const n = rand20(); return { type: 'double', label: `D${n}`,   pts: n * 2 } }
-    if (r < 0.88) { const n = rand20(); return { type: 'triple', label: `T${n}`,   pts: n * 3 } }
-    if (r < 0.95) return { type: 'bull', label: 'Bull',   pts: 25 }
-    return               { type: 'bull', label: 'D.Bull', pts: 50 }
+
+    const n = rand20();
+    const multiplier = { single: 1, double: 2, triple: 3 }[type];
+
+    return {
+      type,
+      label: `${type === "single" ? "" : type === "double" ? "D" : "T"}${n}`,
+      pts: n * multiplier,
+    };
   }
 
   function generateVolee(scoreLimit) {
