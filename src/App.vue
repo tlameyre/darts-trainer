@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import AppIconDefs from './components/AppIconDefs.vue'
 import BottomNav from './components/BottomNav.vue'
 import OnlineMatchBanner from './components/OnlineMatchBanner.vue'
+import OnlineChallengeHost from './components/online/OnlineChallengeHost.vue'
 import { useAuthStore } from './store/authStore.js'
 import { useFriendStore } from './store/friendStore.js'
 import { useTournamentStore } from './store/tournamentStore.js'
@@ -38,6 +39,7 @@ watch(() => authStore.isAuth, (val) => {
 <template>
   <AppIconDefs />
   <RouterView />
+  <OnlineChallengeHost v-if="authStore.isAuth && !route.meta.public && route.name !== 'online-match' && !String(route.name).endsWith('-game')" />
   <template v-if="authStore.isAuth && !route.meta.hideNav && !route.meta.public">
     <OnlineMatchBanner v-if="route.name !== 'online-match'" />
     <BottomNav />

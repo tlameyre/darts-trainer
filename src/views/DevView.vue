@@ -27,6 +27,7 @@ import ProfileView from './ProfileView.vue'
 import HomeView from './HomeView.vue'
 import LobbyView from './LobbyView.vue'
 import StatsWarmupDetailView from './StatsWarmupDetailView.vue'
+import OnlineChallengeAlert from '../components/online/OnlineChallengeAlert.vue'
 import StatsSessionDetail from '../components/stats/StatsSessionDetail.vue'
 import TournamentView from './TournamentView.vue'
 import TournamentJoinView from './TournamentJoinView.vue'
@@ -221,6 +222,7 @@ const mockOnlineMatch = (status, tournamentMatchId = null) => ({
   guest: { id: 'u1', username: 'luca92' },
   settings: { startScore: 501, legsToWin: 2, players: [{ id: 'u1', name: 'luca92' }, { id: 'me', name: 'Théotime' }] },
 })
+const challengePreview = ref(null) // 'online' | 'tournament'
 const onlineLobbyPreview = ref(null) // { match, myId }
 const showOnlineSettingsPreview = ref(false)
 
@@ -584,6 +586,8 @@ const mockProfileData = {
         <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted'), myId: 'me' }">Bull — choix du premier joueur (hôte)</button>
         <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted'), myId: 'u1' }">Bull — attente (invité)</button>
         <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('declined'), myId: 'me' }">Invitation refusée</button>
+        <button class="dev__btn" @click="challengePreview = 'online'">Alerte défi — 501 en ligne</button>
+        <button class="dev__btn" @click="challengePreview = 'tournament'">Alerte défi — match de tournoi</button>
         <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('invited', 'mock-match'), myId: 'me' }">Invitation envoyée — match de tournoi</button>
         <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted', 'mock-match'), myId: 'me' }">Bull — match de tournoi (hôte)</button>
       </div>
@@ -793,6 +797,14 @@ const mockProfileData = {
       <StatsWarmupDetailView :mock-sessions="mockWarmupSessions" />
       <button class="dev__close-preview" @click="showWarmupDetailPreview = false">✕ Fermer</button>
     </div>
+
+    <OnlineChallengeAlert
+      v-if="challengePreview"
+      opponent-name="Test3" my-name="Théotime" :start-score="101" :legs-to-win="2"
+      :tone="challengePreview"
+      :tournament="challengePreview === 'tournament' ? { name: 'Tournoi du 25/10/2026', round: 'Finale' } : null"
+      @accept="challengePreview = null" @later="challengePreview = null" @decline="challengePreview = null"
+    />
 
     <!-- TournamentView plein écran (byes) -->
     <div v-if="showTournamentByesPreview" class="dev__fullscreen-preview">

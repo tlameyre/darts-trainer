@@ -678,6 +678,24 @@ export const useDbStore = defineStore('db', () => {
     return data ?? null
   }
 
+  // Tournament name + round of a match, for the challenge alert
+  async function fetchTournamentMatchLabel(tournamentMatchId) {
+    const { data: m, error } = await supabase
+      .from('tournament_matches')
+      .select('tournament_id, round, bracket_type, tournaments(name)')
+      .eq('id', tournamentMatchId)
+      .maybeSingle()
+    if (error || !m) return null
+    let lastRound = m.round
+    if (m.bracket_type === 'winner') {
+      const { data: rounds } = await supabase
+        .from('tournament_matches').select('round')
+        .eq('tournament_id', m.tournament_id).eq('bracket_type', 'winner')
+      lastRound = Math.max(m.round, ...(rounds ?? []).map(r => r.round))
+    }
+    return { name: m.tournaments?.name ?? 'Tournoi', bracketType: m.bracket_type, round: m.round, lastRound }
+  }
+
   async function fetchOnlineMatchEvents(matchId) {
     const { data, error } = await supabase
       .from('online_match_events')
@@ -761,6 +779,6 @@ export const useDbStore = defineStore('db', () => {
     updateTournament,
     addTournamentParticipant, assignParticipantSeeds, leaveTournament, deleteTournamentParticipant, deleteTournament,
     addTournamentHost, removeTournamentHost, fetchTournamentHosts,
-    findTournamentByCode, joinTournamentByCode, fetchMyParticipantTournamentIds,
+    fetchTournamentMatchLabel, findTournamentByCode, joinTournamentByCode, fetchMyParticipantTournamentIds,
   }
 })
