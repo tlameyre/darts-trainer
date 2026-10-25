@@ -12,7 +12,7 @@ defineProps({
     class="app-icon"
     :width="width"
     :height="height"
-    :style="{ color }"
+    :style="{ color: color }"
     fill="none"
     aria-hidden="true"
   >

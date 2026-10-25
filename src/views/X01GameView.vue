@@ -484,17 +484,15 @@ const multiWinnerName = computed(() =>
 
 <template>
   <div class="x01">
-
+    <AppHeader :title="headerTitle" :tone="tone" back-icon="exit" @back="router.push({ name: settingsRoute })">
+      <template v-if="phase !== 'game-over'" #right>
+        <button class="x01__menu-btn" aria-label="Menu" @click="showMenu = true">
+          <AppIcon name="gear" :width="24" :height="24" />
+        </button>
+      </template>
+    </AppHeader>
     <!-- ── Jeu ──────────────────────────────────────────────────────────────── -->
     <section class="x01__panel">
-      <AppHeader :title="headerTitle" :tone="tone" back-icon="exit" @back="router.push({ name: settingsRoute })">
-        <template v-if="phase !== 'game-over'" #right>
-          <button class="x01__menu-btn" aria-label="Menu" @click="showMenu = true">
-            <AppIcon name="gear" :width="22" :height="22" />
-          </button>
-        </template>
-      </AppHeader>
-
       <div class="x01__players">
         <X01PlayerSplitCard :players="playerCards" :active-index="activeCardIndex" />
 

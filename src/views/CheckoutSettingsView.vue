@@ -68,7 +68,7 @@ function startGame() {
       <template #right>
         <button type="button" class="settings__wiki-btn" aria-label="Consulter les checkouts"
           @click="router.push({ name: 'checkout-wiki' })">
-          <AppIcon name="book" :width="22" :height="22" />
+          <AppIcon name="book" :width="24" :height="24" />
         </button>
       </template>
     </AppHeader>

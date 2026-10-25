@@ -28,9 +28,9 @@ defineEmits(['back'])
 .app-header {
   width: 100%;
   display: grid;
-  grid-template-columns: 48px 1fr 48px;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  padding: $padding-md;
+  padding: $padding-md $padding-xxl;
   background: $orange;
 
   &--blue {
@@ -91,7 +91,7 @@ defineEmits(['back'])
 
 @media (min-width: $bp-laptop) {
   .app-header__title {
-    @include title-xl;
+    @include title-xxl;
   }
 }
 </style>

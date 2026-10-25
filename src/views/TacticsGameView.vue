@@ -171,7 +171,7 @@ watch(phase, async (val) => {
     >
       <template v-if="!isOver" #right>
         <button class="tactics__menu-btn" aria-label="Réglages de la partie" @click="showMenu = true">
-          <AppIcon name="gear" :width="22" :height="22" />
+          <AppIcon name="gear" :width="24" :height="24" />
         </button>
       </template>
     </AppHeader>

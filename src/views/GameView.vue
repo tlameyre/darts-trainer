@@ -105,7 +105,7 @@ onUnmounted(() => {
     >
       <template v-if="!gameOver" #right>
         <button class="game__menu-btn" aria-label="Menu de la partie" @click="showMenu = true">
-          <AppIcon name="gear" :width="22" :height="22" />
+          <AppIcon name="gear" :width="24" :height="24" />
         </button>
       </template>
     </AppHeader>

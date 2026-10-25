@@ -145,7 +145,7 @@ onUnmounted(() => {
     >
       <template v-if="!gameOver" #right>
         <button class="warmup__gear-btn" aria-label="Choisir la prochaine zone" @click="openZoneSheet">
-          <AppIcon name="gear" :width="22" :height="22" />
+          <AppIcon name="gear" :width="24" :height="24" />
         </button>
       </template>
     </AppHeader>

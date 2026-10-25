@@ -141,7 +141,7 @@ function formatDate(iso) {
       <AppHeader v-if="!inLegDetail" :title="formatDate(session.played_at)" :tone="headerTone" @back="$emit('close')">
         <template #right>
           <button class="session-detail__delete" aria-label="Supprimer la session" @click="$emit('delete', session.id)">
-            <AppIcon name="trash" :width="22" :height="22" />
+            <AppIcon name="trash" :width="24" :height="24" />
           </button>
         </template>
       </AppHeader>

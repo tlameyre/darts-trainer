@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, watch, ref } from 'vue'
 import AppIcon from '../AppIcon.vue'
 
 const props = defineProps({
@@ -19,12 +19,38 @@ const props = defineProps({
 const progress = computed(() =>
   props.maxQuestions ? `${Math.min(props.questionIndex / props.maxQuestions, 1) * 100}%` : null
 )
+
+const isBouncing = ref(false)
+
+const maxScale = computed(() => {
+  const baseScale = 1
+  const growth = props.streak * 0.1
+  return Math.min(baseScale + growth, 2.2)
+})
+
+watch(() => props.streak, (newVal, oldVal) => {
+  if (newVal > oldVal && newVal > 0) {
+    isBouncing.value = true
+
+    setTimeout(() => {
+      isBouncing.value = false
+    }, 300)
+  }
+})
 </script>
 
 <template>
   <section class="round-panel">
     <div class="round-panel__status">
-      <span class="round-panel__streak">Série <span class="round-panel__streak-value">×{{ streak }}</span></span>
+      <div class="round-panel__streak-badge">
+        <span class="round-panel__streak-label"
+              :class="{ 'is-bouncing': isBouncing }"
+              :style="{ '--max-scale': maxScale }"
+        >
+          Série
+          <span class="round-panel__streak-value">×{{ streak }}</span>
+        </span>
+      </div>
       <div v-if="progress" class="round-panel__progress">
         <div class="round-panel__progress-fill" :style="{ width: progress }" />
       </div>
@@ -77,7 +103,7 @@ const progress = computed(() =>
     gap: $gap-xs;
   }
 
-  &__streak {
+  &__streak-badge {
     @include title-sm;
     display: flex;
     align-items: center;
@@ -87,9 +113,27 @@ const progress = computed(() =>
     background: $black;
   }
 
+  &__streak-label.is-bouncing {
+    animation: bounceEffect 0.3s ease-in-out;
+  }
+
+  @keyframes bounceEffect {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(var(--max-scale)); /* Taille maximale du rebond */
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
   &__streak-value {
     color: $orange-light;
   }
+
+
 
   &__progress {
     flex: 1;
