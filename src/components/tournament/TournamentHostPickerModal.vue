@@ -61,18 +61,18 @@ function pick(friend) {
     gap: $gap-sm;
     padding: $padding-sm $padding-md;
     border-radius: $radius-sm;
-    background: rgba($white, 0.05);
+    background: $surface;
     text-align: left;
     transition: background 0.15s;
 
-    &:active { background: rgba($white, 0.09); }
+    &:active { background: $border-color; }
   }
 
   &__avatar {
     width: 36px;
     height: 36px;
     border-radius: $radius-pill;
-    background: $orange;
+    background: $mode-tournament;
     display: flex;
     align-items: center;
     justify-content: center;

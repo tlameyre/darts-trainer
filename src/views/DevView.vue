@@ -4,7 +4,7 @@
  * Permet d'afficher chaque composant conditionnel (overlays, modals, écrans)
  * avec des données factices, sans remplir les conditions réelles.
  */
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { BADGES } from '../data/badges.js'
 
@@ -374,6 +374,24 @@ const mockTournamentSession = {
   match_stats: mockMatchStats,
   settings: { legsToWin: 2, humanName: 'Theotime', humanLegsWon: 2, opponents: [{ name: 'Pakitou', legsWon: 1 }] },
 }
+// Same match under the three origins: normal, online, tournament
+const sessionKind = ref('tournament')
+const previewSession = computed(() => {
+  if (sessionKind.value === 'tournament') return mockTournamentSession
+  return {
+    ...mockTournamentSession,
+    tournament_id: null,
+    tournaments: null,
+    settings: {
+      ...mockTournamentSession.settings,
+      ...(sessionKind.value === 'online' ? { online: { matchId: 'mock-online' } } : {}),
+    },
+  }
+})
+function openSessionPreview(kind) {
+  sessionKind.value = kind
+  showTournamentSessionPreview.value = true
+}
 function openMockSessionTournament() {
   showTournamentSessionPreview.value   = false
   showChampionshipOngoingPreview.value = true
@@ -635,7 +653,9 @@ const mockProfileData = {
     <section class="dev__section">
       <h2 class="dev__section-title">Stats — Détail match X01 de tournoi (preview)</h2>
       <div class="dev__buttons">
-        <button class="dev__btn" @click="showTournamentSessionPreview = true">Ouvrir le détail (badge → championnat fictif)</button>
+        <button class="dev__btn" @click="openSessionPreview('tournament')">Détail match 501 — tournoi (badge → championnat fictif)</button>
+        <button class="dev__btn" @click="openSessionPreview('online')">Détail match 501 — en ligne</button>
+        <button class="dev__btn" @click="openSessionPreview('normal')">Détail match 501 — normal</button>
       </div>
     </section>
 
@@ -761,7 +781,7 @@ const mockProfileData = {
     <!-- Overlay fixed avec son propre bouton retour -->
     <StatsSessionDetail
       :show="showTournamentSessionPreview"
-      :session="mockTournamentSession"
+      :session="previewSession"
       mode="x01"
       @close="showTournamentSessionPreview = false"
       @open-tournament="openMockSessionTournament"

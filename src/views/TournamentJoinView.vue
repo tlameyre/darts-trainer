@@ -86,7 +86,7 @@ async function join() {
   flex-direction: column;
   min-height: 100dvh;
   margin: 0 auto;
-  @include nav-safe-bottom;
+  @include safe-bottom;
 
   &__hero {
     display: flex;

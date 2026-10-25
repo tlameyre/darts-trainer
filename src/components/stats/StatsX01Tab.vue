@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { STATS_MODE_COLORS } from '../../data/statsModes.js'
+import { matchTone, matchColorVar } from '../../utils/matchTone.js'
 import AppIcon from '../AppIcon.vue'
 import StatsHero from './StatsHero.vue'
 import StatsHistory from './StatsHistory.vue'
@@ -13,6 +14,9 @@ const props = defineProps({
 const emit = defineEmits(['open-detail'])
 
 const COLOR = STATS_MODE_COLORS.x01
+
+// Online and tournament matches carry their own color (green for a normal match)
+const sessionColor = s => matchColorVar(matchTone({ online: !!s.settings?.online, tournament: !!s.tournament_id }))
 
 const summary = computed(() => {
   const s = props.sessions
@@ -86,7 +90,8 @@ function players(s) {
     <StatsHistoryCard
       v-for="s in sessions" :key="s.id"
       :title="`${s.start_score} · ${s.legs_played} manche${s.legs_played > 1 ? 's' : ''}`"
-      :date="formatDate(s.played_at)" :color="COLOR"
+      :date="formatDate(s.played_at)" :color="sessionColor(s) ?? COLOR"
+      :style="sessionColor(s) ? { '--game-color': sessionColor(s) } : undefined"
       @click="emit('open-detail', s)"
     >
       <span v-if="s.tournament_id" class="tab__badge">
@@ -143,7 +148,7 @@ function players(s) {
     &--winner { color: $text-color; }
   }
 
-  &__player-trophy { color: $accent; }
+  &__player-trophy { color: var(--game-color, #{$accent}); }
 
   &__player-legs {
     justify-self: center;
@@ -157,7 +162,7 @@ function players(s) {
   }
 
   &__player--winner &__player-legs {
-    background: $accent;
+    background: var(--game-color, #{$accent});
     color: $white;
   }
 

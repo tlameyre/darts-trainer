@@ -132,7 +132,7 @@ const statRows = computed(() => props.rows.map((row) => {
     white-space: nowrap;
 
     &--lead { color: $text-color; }
-    &--p0.stat-bars__value--lead { color: $accent; }
+    &--p0.stat-bars__value--lead { color: var(--game-color, #{$accent}); }
   }
 
   &__track {

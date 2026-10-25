@@ -150,8 +150,8 @@ const routes = [
     meta: { hideNav: true },
   },
   { path: "/tournaments", name: "tournaments", component: TournamentsView },
-  { path: "/tournaments/create", name: "tournament-settings", component: TournamentSettingsView },
-  { path: "/tournaments/join/:code", name: "tournament-join", component: TournamentJoinView },
+  { path: "/tournaments/create", name: "tournament-settings", component: TournamentSettingsView, meta: { hideNav: true } },
+  { path: "/tournaments/join/:code", name: "tournament-join", component: TournamentJoinView, meta: { hideNav: true } },
   { path: "/tournaments/:id", name: "tournament-detail", component: TournamentView },
 ];
 

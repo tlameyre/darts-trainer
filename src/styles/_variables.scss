@@ -57,7 +57,8 @@ $mode-tactics: #DC2626;
 $mode-tournament: #7C3AED;
 
 // Players in multi-player stats (bars, charts), keyed by turn order
-$player-colors: (0: $accent, 1: $black, 2: $mode-online, 3: $blue);
+// Player 0 follows the match color (online / tournament) when one is set
+$player-colors: (0: var(--game-color, #{$accent}), 1: $black, 2: $mode-online, 3: $blue);
 
 // Font sizes — Barlow (body)
 $text-xxs: 10px;
