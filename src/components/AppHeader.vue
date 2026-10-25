@@ -30,7 +30,7 @@ defineEmits(['back'])
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  padding: $padding-md $padding-xxl;
+  padding: $padding-md;
   background: $orange;
 
   &--blue {
@@ -90,6 +90,9 @@ defineEmits(['back'])
 }
 
 @media (min-width: $bp-laptop) {
+  .app-header {
+    padding: $padding-md $padding-xxl;
+  }
   .app-header__title {
     @include title-xxl;
   }

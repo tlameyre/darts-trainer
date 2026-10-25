@@ -94,13 +94,12 @@ const tableRows = computed(() => {
 
   &__grid {
     display: grid;
-    grid-template-rows: 36px;
-    grid-auto-rows: 30px;
     gap: 1px;
     padding: 1px;
     border-radius: $radius-sm;
     background: color.adjust($mode-tactics, $lightness: -10%);
     overflow: hidden;
+    height: 100%;
   }
 
   &__cell {
@@ -154,12 +153,14 @@ const tableRows = computed(() => {
     background: color.adjust($mode-tactics, $lightness: 8%);
   }
 
+  &__cell--mark-active {
+    background: $white;
+  }
   &__cell--mark-active::before {
     content: '';
     position: absolute;
     inset: 3px;
     border-radius: 3px;
-    background: $white;
   }
 
   &__mark {
@@ -173,7 +174,7 @@ const tableRows = computed(() => {
     stroke-linecap: round;
 
     .tactics-board__cell--mark-closed & {
-      opacity: 0.6;
+      stroke: $white;
     }
 
     .tactics-board__cell--mark-active & {
@@ -184,12 +185,7 @@ const tableRows = computed(() => {
 
 @media (min-width: $bp-laptop) {
   .tactics-board {
-    padding: 0 $padding-md $padding-md;
-
-    &__grid {
-      grid-template-rows: 44px;
-      grid-auto-rows: 34px;
-    }
+    padding: $padding-xl;
 
     &__cell--head { @include title-md; }
     &__cell--zone { @include title-md; }

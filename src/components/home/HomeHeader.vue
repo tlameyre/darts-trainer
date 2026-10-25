@@ -20,7 +20,7 @@ defineEmits(['profile'])
       </div>
     </div>
     <span v-if="streak" class="home-header__streak">
-      Série <span class="home-header__streak-value">{{ streak }} j</span>
+      Série - <span class="home-header__streak-value">{{ streak }}j</span>
     </span>
   </header>
 </template>

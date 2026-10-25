@@ -173,6 +173,11 @@ onUnmounted(() => {
       />
       <WarmupThrowPad
         class="warmup__pad"
+        :tour="tourNumber"
+        :streak="currentStreak"
+        :time-display="timeDisplay"
+        :is-unlimited="isUnlimited"
+        :is-urgent="isUrgent"
         :darts="displayedDarts"
         :zones="currentZones"
         :locked="justCompleted || showZoneSheet"
@@ -231,23 +236,23 @@ onUnmounted(() => {
 
   &__pad {
     flex: 1;
-    padding: $padding-sm $padding-md;
-    @include safe-bottom($padding-lg);
+    padding: $padding-md;
   }
 }
 
 @media (min-width: $bp-laptop) {
   .warmup {
     &__main {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      flex-direction: row;
     }
 
     &__hero {
       padding: $padding-xl $padding-xxl $padding-xxl;
+      flex: 1;
     }
 
     &__pad {
+      flex: 1;
       padding: $padding-xl $padding-xxl;
       @include safe-bottom($padding-xxl);
     }

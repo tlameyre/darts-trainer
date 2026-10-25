@@ -195,8 +195,7 @@ watch(phase, async (val) => {
         <div class="tactics__turn">
           <span class="tactics__tour">Tour {{ volleyNumber }}</span>
           <span class="tactics__aim">
-            À toi,<span class="tactics__aim-player">{{ activePlayerName }}</span>
-            · vise <span class="tactics__aim-zone">{{ aimLabel }}</span>
+            Au tour de <span class="tactics__aim-player">{{ activePlayerName }}</span>
           </span>
         </div>
 
@@ -235,6 +234,10 @@ watch(phase, async (val) => {
   flex-direction: column;
   height: 100dvh;
   overflow: hidden;
+
+  &__board {
+    flex: 1;
+  }
 
   &__menu-btn {
     color: $white;
@@ -308,8 +311,6 @@ watch(phase, async (val) => {
     }
 
     &__board {
-      flex: 1;
-      padding-top: $padding-md;
       overflow-y: auto;
     }
 

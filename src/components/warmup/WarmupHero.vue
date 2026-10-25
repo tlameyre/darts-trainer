@@ -21,14 +21,12 @@ function roundTone(hits) {
 <template>
   <section class="warmup-hero">
     <div class="warmup-hero__status">
-      <div class="warmup-hero__round">
         <span class="warmup-hero__tour">Tour {{ tour }}</span>
+        <span v-if="!isUnlimited" class="warmup-hero__timer" :class="{ 'warmup-hero__timer--urgent': isUrgent }">
+          <AppIcon name="clock" :width="16" :height="16" />
+          {{ timeDisplay }}
+        </span>
         <span class="warmup-hero__streak">Série <span class="warmup-hero__streak-value">×{{ streak }}</span></span>
-      </div>
-      <span v-if="!isUnlimited" class="warmup-hero__timer" :class="{ 'warmup-hero__timer--urgent': isUrgent }">
-        <AppIcon name="clock" :width="16" :height="16" />
-        {{ timeDisplay }}
-      </span>
     </div>
 
     <div class="warmup-hero__middle">
@@ -80,6 +78,7 @@ function roundTone(hits) {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    position: relative;
   }
 
   &__round {
@@ -115,6 +114,9 @@ function roundTone(hits) {
     background: rgba($black, 0.22);
     line-height: 1;
     font-variant-numeric: tabular-nums;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
 
     &--urgent {
       background: $error;
@@ -123,9 +125,10 @@ function roundTone(hits) {
 
   &__middle {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
     gap: $gap-sm;
+    flex: 1;
   }
 
   &__target {
@@ -212,10 +215,9 @@ function roundTone(hits) {
 
 @media (min-width: $bp-laptop) {
   .warmup-hero {
-    &__round  { gap: $gap-sm; }
-    &__tour   { @include title-xxl; }
-    &__streak { @include title-lg; padding: $padding-xs $padding-sm; }
-    &__timer  { @include title-xxxl; padding: $padding-xs $padding-md; }
+    &__status { justify-content: end;}
+    &__tour, &__streak { display: none;}
+    &__timer  { position: inherit; transform: inherit; left: inherit; @include title-xxxl; padding: $padding-xs $padding-md; }
     &__caption { @include text-sm; }
     &__rounds  { gap: $gap-xs; padding-bottom: $padding-md; }
 

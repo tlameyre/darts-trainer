@@ -99,9 +99,9 @@ function startGame() {
             </template>
           </OptionTile>
         </div>
+        <StartButton class="settings__start" @click="startGame" />
       </section>
 
-      <StartButton class="settings__start" @click="startGame" />
     </main>
   </div>
 </template>
@@ -131,6 +131,7 @@ function startGame() {
     display: flex;
     flex-direction: column;
     gap: $gap-xs;
+    flex: 1;
   }
 
   &__label {
@@ -236,7 +237,6 @@ function startGame() {
     &__main {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr auto;
       gap: 0;
       padding: 0;
     }
@@ -285,11 +285,6 @@ function startGame() {
 
     &__dart-value {
       @include title-sm;
-    }
-
-    &__start {
-      grid-column: 1;
-      margin: $padding-xxl;
     }
   }
 }

@@ -79,8 +79,8 @@ function undo() {
     />
 
     <template v-if="mode === 'volley'">
-      <button class="game-input__bust" :disabled="locked || bust" @click="emit('bust')">Bust</button>
       <NumPad :locked="locked || bust" @digit="appendDigit" @undo="undo" @validate="submitVolley" />
+      <button class="game-input__bust" :disabled="locked || bust" @click="emit('bust')">Bust</button>
     </template>
 
     <SectorPad
@@ -99,7 +99,7 @@ function undo() {
       </div>
       <div class="game-input__board-actions">
         <button class="game-input__key game-input__key--undo" aria-label="Annuler" @click="emit('undo')">
-          <AppIcon name="undo" :width="24" :height="24" />
+          <AppIcon name="undo" :width="40" :height="40" />
         </button>
         <button class="game-input__key game-input__key--miss" :disabled="locked || bust || targeting" @click="emit('miss')">
           Raté
@@ -125,13 +125,13 @@ function undo() {
 
   &__bust {
     flex-shrink: 0;
-    height: 52px;
     border-radius: $radius-sm;
-    background: $black;
+    background: $dart-red;
     color: $white;
     @include title-lg;
     letter-spacing: $tracking-sm;
     transition: opacity 0.15s;
+    padding-block: $padding-md;
 
     &:active:not(:disabled) { opacity: 0.8; }
     &:disabled { opacity: 0.4; }
@@ -154,7 +154,6 @@ function undo() {
   }
 
   &__key {
-    height: 46px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -179,8 +178,8 @@ function undo() {
   .game-input {
     gap: $gap-md;
 
-    &__bust { height: 60px; @include title-xxl; }
-    &__key  { height: 64px; @include title-xxxl; }
+    &__bust { @include title-xxxl; }
+    &__key  { @include title-xxxl; }
   }
 }
 </style>

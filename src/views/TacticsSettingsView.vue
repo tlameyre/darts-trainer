@@ -75,14 +75,10 @@ function startGame() {
 
 <template>
   <div class="settings">
-    <AppHeader title="Tactics" tone="red" @back="router.push({ name: 'play' })" >
-      <template v-if="phase !== 'game-over'" #right>
-          <AppIcon name="gear" :width="24" :height="24" color="transparent" />
-      </template>
-    </AppHeader>
+    <AppHeader title="Tactics" tone="red" @back="router.push({ name: 'play' })" />
 
     <main class="settings__main">
-      <TacticsPrinciple class="settings__principle" />
+      <!-- <TacticsPrinciple class="settings__principle" /> -->
 
       <section class="settings__players">
         <div class="settings__head">

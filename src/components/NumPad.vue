@@ -73,8 +73,8 @@ const keys = [
     @include display-xs;
 
     :deep(svg) {
-      width: 44px;
-      height: 44px;
+      width: 52px;
+      height: 52px;
     }
   }
 }

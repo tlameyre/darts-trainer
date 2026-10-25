@@ -41,27 +41,6 @@ watch(() => props.streak, (newVal, oldVal) => {
 
 <template>
   <section class="round-panel">
-    <div class="round-panel__status">
-      <div class="round-panel__streak-badge">
-        <span class="round-panel__streak-label"
-              :class="{ 'is-bouncing': isBouncing }"
-              :style="{ '--max-scale': maxScale }"
-        >
-          Série
-          <span class="round-panel__streak-value">×{{ streak }}</span>
-        </span>
-      </div>
-      <div v-if="progress" class="round-panel__progress">
-        <div class="round-panel__progress-fill" :style="{ width: progress }" />
-      </div>
-      <span v-else class="round-panel__spacer" />
-      <span class="round-panel__count">{{ questionIndex }}<template v-if="maxQuestions">/{{ maxQuestions }}</template></span>
-      <span v-if="showPhase" class="round-panel__badge">Étape {{ phase }}/2</span>
-      <span v-if="showTimer" class="round-panel__badge" :class="{ 'round-panel__badge--urgent': timeLeft <= 5 }">
-        <AppIcon name="clock" :width="16" :height="16" />{{ timeLeft }}s
-      </span>
-    </div>
-
     <div class="round-panel__body">
       <div class="round-panel__block">
         <span class="round-panel__label">Reste</span>

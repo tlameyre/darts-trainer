@@ -3,8 +3,10 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
 
 const props = defineProps({
+  tour: { type: Number, required: true },
   darts: { type: Array, required: true }, // darts of the current volley (max 3)
   zones: { type: Array, required: true },
+  streak: { type: Number, default: 0 },
   locked: Boolean,
 })
 
@@ -51,25 +53,21 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 <template>
   <section class="throw-pad" :class="{ 'throw-pad--multi': rows.length > 1 }">
-    <div class="throw-pad__head">
-      <span class="throw-pad__title">Volée en cours</span>
-      <span class="throw-pad__count">Fléchette {{ Math.min(darts.length + 1, 3) }} sur 3</span>
+    <div class="throw-pad__header">
+      <span class="throw-pad__tour">Tour {{ tour }}</span>
+      <span class="throw-pad__streak">Série <span class="throw-pad__streak-value">×{{ streak }}</span></span>
     </div>
-
-    <div class="throw-pad__slots">
+    <div class="throw-pad__main">
       <span
         v-for="(dart, i) in slots"
         :key="i"
         class="throw-pad__slot"
         :class="dart && (dart.type === 'miss' ? 'throw-pad__slot--miss' : 'throw-pad__slot--hit')"
       >
-        <AppIcon v-if="dart?.type === 'miss'" name="close" :width="22" :height="22" />
+        <AppIcon v-if="dart?.type === 'miss'" name="close" :width="48" :height="48" />
         <template v-else-if="dart">{{ dart.label }}</template>
       </span>
-    </div>
-
-    <div class="throw-pad__rows">
-      <div v-for="row in rows" :key="row.key" class="throw-pad__row">
+      <template v-for="row in rows" :key="row.key" class="throw-pad__row">
         <button
           v-for="(btn, i) in row.buttons"
           :key="btn.label"
@@ -81,16 +79,14 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
           <span class="throw-pad__hit-label">{{ btn.label }}</span>
           <span class="throw-pad__hit-sub">{{ btn.sub }}</span>
         </button>
-      </div>
-    </div>
-
-    <div class="throw-pad__actions">
+      </template>
       <button class="throw-pad__undo" @click="emit('undo')">
         <AppIcon name="undo" :width="20" :height="20" />
         Annuler
       </button>
       <button class="throw-pad__miss" :disabled="locked" @click="emit('miss')">Manqué</button>
     </div>
+
   </section>
 </template>
 
@@ -101,35 +97,71 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   gap: $gap-xs;
   min-height: 0;
 
+  &__header {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  &__round {
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
+  }
+
+  &__tour {
+    @include title-lg;
+  }
+
+  &__streak {
+    color: $white;
+    @include title-sm;
+    display: flex;
+    gap: $gap-xs;
+    padding: $padding-xxs $padding-xs;
+    border-radius: $radius-sm;
+    background: $black;
+  }
+
+  &__streak-value {
+    color: $blue-light;
+  }
+
+  &__timer {
+    @include title-sm;
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
+    padding: $padding-xs;
+    border-radius: $radius-sm;
+    background: rgba($black, 0.22);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+
+    &--urgent {
+      background: $error;
+    }
+  }
+
   // Desktop-only header; key hints only show on devices with a keyboard and mouse
   &__head,
   &__key {
     display: none;
   }
 
-  &__head {
-    justify-content: space-between;
-    align-items: baseline;
-    padding-bottom: $padding-xs;
-    border-bottom: $border-lg solid $black;
-  }
-
-  &__title { @include title-xl; }
-
-  &__count {
-    @include text-sm;
-    color: $muted;
-  }
-
-  &__slots {
-    display: flex;
+  &__main {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    grid-template-rows: auto 1fr auto;
     gap: $gap-xs;
+    flex: 1;
   }
 
   &__slot {
-    @include title-xl;
+    min-height: 52px;
+    @include title-xxxl;
     flex: 1;
-    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -147,14 +179,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       background: $error;
       color: $white;
     }
-  }
-
-  &__rows {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-xs;
   }
 
   &__row {
@@ -222,15 +246,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
     display: none;
   }
 
-  &__actions {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: $gap-xs;
-  }
-
   &__undo,
   &__miss {
-    height: 76px;
+    padding: $padding-lg;
     border-radius: $radius-sm;
   }
 
@@ -245,6 +263,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   }
 
   &__miss {
+    grid-column: 2 / -1;
     @include title-xl;
     background: $black;
     color: $bg;
@@ -258,28 +277,32 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 }
 
 @media (min-width: $bp-laptop) {
+
   .throw-pad {
     gap: $gap-md;
-
+    &__header { display: flex; }
+    &__round  { gap: $gap-sm; }
+    &__tour   { @include title-xxl; }
+    &__timer  { @include title-lg; padding: $padding-xs $padding-sm; }
+    &__streak { @include title-lg; padding: $padding-xs $padding-sm; }
     &__head { display: flex; }
 
     &__slot {
-      @include title-xxl;
-      height: 64px;
+      @include display-md;
+      min-height: 110px;
+      svg {
+        height: 100px;
+        width: 100px;
+      }
     }
 
-    &__hit-label { @include display-sm; }
+    &__hit-label { @include display-md; }
     &__hit-sub   { @include text-md; }
 
     &--multi &__hit-label { @include display-xs; }
 
-    &__undo,
-    &__miss {
-      height: 88px;
-    }
-
-    &__undo { @include title-xl; }
-    &__miss { @include title-xxxl; }
+    &__undo { @include title-xxl; }
+    &__miss { @include title-xxl; }
   }
 }
 </style>
