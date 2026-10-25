@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { avatarColor } from '../../utils/avatarColor.js'
 
 const props = defineProps({
   match:            { type: Object, required: true },
@@ -20,6 +21,10 @@ const slots = computed(() => [
 function slotLabel(participantId) {
   if (participantId) return props.participantsById[participantId]?.player_data?.name ?? '—'
   return props.match.status === 'bye' ? 'Exempt' : 'À déterminer'
+}
+
+function slotName(participantId) {
+  return participantId ? props.participantsById[participantId]?.player_data?.name ?? '' : ''
 }
 
 function slotModifiers(participantId) {
@@ -58,6 +63,11 @@ function onClick() {
     <template v-for="(slot, i) in slots" :key="i">
       <div v-if="i" class="match-card__divider" />
       <div class="match-card__player" :class="slotModifiers(slot.participantId)">
+        <span
+          v-if="slot.participantId"
+          class="match-card__avatar"
+          :style="{ background: avatarColor(slotName(slot.participantId)) }"
+        >{{ slotName(slot.participantId)[0] }}</span>
         <span class="match-card__name">{{ slotLabel(slot.participantId) }}</span>
         <span v-if="isForfeitLoser(slot.participantId)" class="match-card__forfeit">Abandon</span>
         <span v-else-if="slot.legs != null && !match.forfeited" class="match-card__legs">{{ slot.legs }}</span>
@@ -73,38 +83,29 @@ function onClick() {
   flex-direction: column;
   width: 168px;
   border-radius: $radius-sm;
-  background: rgba($white, 0.05);
-  border: $border-sm solid transparent;
-  transition: border-color 0.15s, background 0.15s;
+  background: $white;
+  border: $border-md solid $border-color;
+  transition: background 0.15s;
 
-  &--ready {
-    border-color: rgba($orange, 0.5);
+  &--ready:not(&--locked) {
+    border-color: $mode-tournament;
 
-    &:active { background: rgba($orange, 0.1); }
-  }
-
-  // Ready but not launchable by the current user: no call to action
-  &--ready#{&}--locked {
-    border-color: rgba($white, 0.1);
+    &:active { background: $surface; }
   }
 
   &--in_progress {
-    border-color: rgba($error, 0.6);
-    background: rgba($error, 0.06);
+    border-color: $error;
 
-    &:active { background: rgba($error, 0.12); }
+    &:active { background: $surface; }
   }
 
-  &--bye,
-  &--pending {
-    opacity: 0.55;
+  &--pending,
+  &--bye {
+    background: transparent;
+    border-style: dashed;
   }
 
-  &--completed {
-    border-color: rgba($white, 0.1);
-  }
-
-  &--viewable:active { background: rgba($white, 0.08); }
+  &--viewable:active { background: $surface; }
 
   &:disabled {
     cursor: default;
@@ -112,19 +113,17 @@ function onClick() {
 
   &__badge {
     position: absolute;
-    top: 0;
+    top: -11px;
     right: $padding-xs;
-    transform: translateY(-50%);
     display: flex;
     align-items: center;
-    gap: $gap-xxs;
-    @include text-xxs;
+    gap: 5px;
+    @include title-xxs;
+    letter-spacing: 0.04em;
     color: $white;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    background: $orange;
-    border-radius: $radius-pill;
-    padding: 0 $padding-xs;
+    background: $mode-tournament;
+    border-radius: $radius-sm;
+    padding: 2px $padding-xs;
 
     &--live { background: $error; }
   }
@@ -141,24 +140,34 @@ function onClick() {
     display: flex;
     align-items: center;
     gap: $gap-xs;
-    @include text-sm;
+    min-height: 36px;
+    padding: 0 $padding-xs;
+    @include title-sm;
+    line-height: 1;
     color: $text-color;
-    font-weight: 600;
-    padding: $padding-xs $padding-sm;
     text-align: left;
 
     &--tbd {
+      @include text-xs;
       color: $muted;
-      font-weight: 400;
       font-style: italic;
     }
 
-    &--winner { color: $orange; }
+    &--winner { color: $mode-tournament; }
 
-    &--loser {
-      color: $muted;
-      font-weight: 400;
-    }
+    &--loser { color: $muted; }
+  }
+
+  &__avatar {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    border-radius: $radius-pill;
+    color: $white;
+    @include title-xxs;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   &__name {
@@ -171,6 +180,7 @@ function onClick() {
 
   &__legs {
     flex-shrink: 0;
+    @include title-md;
     font-variant-numeric: tabular-nums;
   }
 
@@ -178,14 +188,13 @@ function onClick() {
     flex-shrink: 0;
     @include text-xxs;
     color: $muted;
-    font-style: normal;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
   &__divider {
     height: 1px;
-    background: rgba($white, 0.08);
+    background: $border-color;
   }
 }
 

@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { computeStandings } from '../../composables/useChampionship.js'
+import { avatarColor } from '../../utils/avatarColor.js'
 
 const props = defineProps({
   matches:      { type: Array, required: true },
@@ -18,41 +19,35 @@ function formatDiff(diff) {
 
 <template>
   <div class="standings">
-    <table class="standings__table">
-      <thead>
-        <tr>
-          <th class="standings__rank">#</th>
-          <th class="standings__name">Joueur</th>
-          <th>J</th>
-          <th>V</th>
-          <th>D</th>
-          <th>+/-</th>
-          <th class="standings__points">Pts</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="row in standings" :key="row.participant.id"
-          class="standings__row"
-          :class="{
-            'standings__row--qualified': playoffSize && row.rank <= playoffSize,
-            'standings__row--cutoff':    playoffSize && row.rank === playoffSize,
-            'standings__row--me':        myUserId && row.participant.user_id === myUserId,
-          }"
-        >
-          <td class="standings__rank">{{ row.rank }}</td>
-          <td class="standings__name">{{ row.participant.player_data?.name }}</td>
-          <td>{{ row.played }}</td>
-          <td>{{ row.wins }}</td>
-          <td>{{ row.losses }}</td>
-          <td>{{ formatDiff(row.legDiff) }}</td>
-          <td class="standings__points">{{ row.points }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="standings__grid standings__head">
+      <span>#</span><span>Joueur</span><span>J</span><span>V</span><span>D</span><span>+/-</span><span class="standings__right">Pts</span>
+    </div>
+    <template v-for="row in standings" :key="row.participant.id">
+      <div
+        class="standings__grid standings__row"
+        :class="{
+          'standings__row--qualified': playoffSize && row.rank <= playoffSize,
+          'standings__row--out':       playoffSize && row.rank > playoffSize,
+          'standings__row--me':        myUserId && row.participant.user_id === myUserId,
+        }"
+      >
+        <span class="standings__rank">{{ row.rank }}</span>
+        <span class="standings__player">
+          <span class="standings__avatar" :style="{ background: avatarColor(row.participant.player_data?.name) }">{{ row.participant.player_data?.name?.[0] }}</span>
+          <span class="standings__name">{{ row.participant.player_data?.name }}</span>
+        </span>
+        <span>{{ row.played }}</span>
+        <span>{{ row.wins }}</span>
+        <span>{{ row.losses }}</span>
+        <span :class="row.legDiff > 0 ? 'standings__diff--pos' : row.legDiff < 0 ? 'standings__diff--neg' : ''">{{ formatDiff(row.legDiff) }}</span>
+        <span class="standings__right standings__points">{{ row.points }}</span>
+      </div>
+      <div v-if="playoffSize && row.rank === playoffSize" class="standings__cutoff">
+        <span /><span>Qualifiés playoffs</span><span />
+      </div>
+    </template>
     <p class="standings__legend">
       Victoire = 2 pts. Départage : différence de manches, manches gagnées, confrontations directes.
-      <template v-if="playoffSize"> Les {{ playoffSize }} premiers se qualifient pour les playoffs.</template>
     </p>
   </div>
 </template>
@@ -61,59 +56,98 @@ function formatDiff(diff) {
 .standings {
   display: flex;
   flex-direction: column;
-  gap: $gap-sm;
+  gap: $gap-xxs;
 
-  &__table {
-    width: 100%;
-    border-collapse: collapse;
-    @include text-sm;
-    color: $text-color;
+  &__grid {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) 28px 28px 28px 38px 44px;
+    gap: 6px;
+    align-items: center;
+    text-align: center;
     font-variant-numeric: tabular-nums;
-
-    th {
-      @include text-xs;
-      color: $muted;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: $padding-xs;
-      text-align: center;
-    }
-
-    td {
-      padding: $padding-sm $padding-xs;
-      text-align: center;
-      border-top: $border-sm solid rgba($white, 0.08);
-    }
   }
 
-  &__rank {
-    width: 28px;
+  &__head {
+    padding: 0 $padding-xs $padding-xxs;
+    @include text-xxs;
+    font-weight: 600;
+    letter-spacing: $tracking-sm;
+    text-transform: uppercase;
     color: $muted;
   }
 
+  &__row {
+    min-height: 48px;
+    padding: 0 $padding-xs;
+    border-radius: $radius-sm;
+    @include text-sm;
+    color: $text-color;
+
+    &--qualified { background: $surface; }
+    &--me { background: $white; box-shadow: inset 0 0 0 $border-md $mode-tournament; }
+  }
+
+  &__right { text-align: right; }
+
+  &__rank {
+    @include title-md;
+    color: $muted;
+
+    .standings__row--qualified & { color: $mode-tournament; }
+  }
+
+  &__player {
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
+    min-width: 0;
+    text-align: left;
+  }
+
+  &__avatar {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: $radius-pill;
+    color: $white;
+    @include title-xxs;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   &__name {
-    text-align: left !important;
-    max-width: 0;
-    width: 100%;
+    @include title-sm;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  &__points {
-    @include title-sm;
-    color: $white;
-  }
+  &__diff--pos { color: $accent; }
+  &__diff--neg { color: $error; }
 
-  &__row {
-    &--qualified .standings__rank { color: $orange; }
+  &__points { @include title-lg; }
 
-    &--cutoff td { border-bottom: $border-md dashed rgba($orange, 0.5); }
+  &__cutoff {
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
+    margin-bottom: $gap-sm;
+    @include text-xxs;
+    font-weight: 600;
+    letter-spacing: $tracking-sm;
+    text-transform: uppercase;
+    color: $mode-tournament;
 
-    &--me { background: rgba($white, 0.04); }
+    span:first-child,
+    span:last-child {
+      flex: 1;
+      border-top: $border-md dashed $mode-tournament;
+    }
   }
 
   &__legend {
+    margin-top: $gap-sm;
     @include text-xs;
     color: $muted;
   }
@@ -121,10 +155,15 @@ function formatDiff(diff) {
 
 @media (min-width: $bp-laptop) {
   .standings {
-    &__table    { @include text-md; }
-    &__table th { @include text-sm; }
-    &__points   { @include title-md; }
-    &__legend   { @include text-sm; }
+    &__grid { grid-template-columns: 48px minmax(0, 1fr) 56px 56px 56px 72px 80px; }
+    &__head { @include text-xs; }
+    &__row { min-height: 56px; @include text-md; }
+    &__name { @include title-lg; }
+    &__rank { @include title-lg; }
+    &__points { @include title-xl; }
+    &__avatar { width: 32px; height: 32px; }
+    &__cutoff { @include text-xs; }
+    &__legend { @include text-sm; }
   }
 }
 </style>

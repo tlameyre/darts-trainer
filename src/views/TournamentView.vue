@@ -7,12 +7,15 @@ import { useAuthStore } from '../store/authStore.js'
 import { useGameStore } from '../store/gameStore.js'
 import { useOnlineMatchStore } from '../store/onlineMatchStore.js'
 import { MIN_PARTICIPANTS_TO_START } from '../data/tournamentConstants.js'
-import { isLeagueComplete } from '../composables/useChampionship.js'
+import { isLeagueComplete, leagueMatches } from '../composables/useChampionship.js'
 import AppHeader from '../components/AppHeader.vue'
 import AppTabs from '../components/AppTabs.vue'
 import AppButton from '../components/AppButton.vue'
 import AppIcon from '../components/AppIcon.vue'
 import AppModal from '../components/AppModal.vue'
+import TournamentHero from '../components/tournament/TournamentHero.vue'
+import TournamentRoster from '../components/tournament/TournamentRoster.vue'
+import TournamentInfos from '../components/tournament/TournamentInfos.vue'
 import TournamentBracketTree from '../components/tournament/TournamentBracketTree.vue'
 import TournamentStandingsTable from '../components/tournament/TournamentStandingsTable.vue'
 import TournamentMatchdayList from '../components/tournament/TournamentMatchdayList.vue'
@@ -42,25 +45,26 @@ const isHost = computed(() => isMock.value ? true : tournamentStore.isHost)
 
 const isChampionship = computed(() => data.value?.tournament.format === 'championship')
 
+const isPending = computed(() => data.value?.tournament.status === 'pending')
+
 const tabs = computed(() => {
-  const base = [
+  const tail = [
+    { id: 'stats',        label: 'Stats' },
+    { id: 'participants', label: 'Joueurs' },
     { id: 'infos',        label: 'Infos' },
-    { id: 'participants', label: 'Participants' },
   ]
-  const stats = { id: 'stats', label: 'Stats' }
-  if (!isChampionship.value) return [...base, { id: 'bracket', label: 'Bracket' }, stats]
+  if (!isChampionship.value) return [{ id: 'bracket', label: 'Bracket' }, ...tail]
   return [
-    ...base,
     { id: 'standings', label: 'Classement' },
-    stats,
     { id: 'matchdays', label: 'Journées' },
     ...(data.value.tournament.playoff_size ? [{ id: 'bracket', label: 'Playoffs' }] : []),
+    ...tail,
   ]
 })
 // ?tab=bracket / ?tab=matchdays au retour d'un match
-const activeTab = ref(route.query.tab ?? 'infos')
+const activeTab = ref(route.query.tab ?? null)
 watch(tabs, (list) => {
-  if (data.value && !list.some(t => t.id === activeTab.value)) activeTab.value = 'infos'
+  if (data.value && !list.some(t => t.id === activeTab.value)) activeTab.value = list[0].id
 }, { immediate: true })
 
 const formatLabel = computed(() => {
@@ -71,6 +75,44 @@ const formatLabel = computed(() => {
   if (t.double_round_robin) parts.push('aller-retour')
   if (t.playoff_size) parts.push(t.playoff_size === 2 ? 'finale' : `playoffs top ${t.playoff_size}`)
   return parts.join(' · ')
+})
+
+const STATUS_LABELS = { pending: 'Inscriptions ouvertes', in_progress: 'En cours', completed: 'Terminé' }
+
+const heroTags = computed(() => {
+  const t = data.value?.tournament
+  if (!t) return []
+  if (!isChampionship.value) {
+    return [t.double_elimination ? 'Double élimination' : 'Bracket', String(t.start_score), `${t.legs_to_win} manche${t.legs_to_win > 1 ? 's' : ''}`]
+  }
+  return [
+    'Championnat',
+    ...(t.double_round_robin ? ['Aller-retour'] : []),
+    ...(t.playoff_size ? [t.playoff_size === 2 ? 'Finale' : `Playoffs top ${t.playoff_size}`] : []),
+    String(t.start_score),
+  ]
+})
+
+const heroProgress = computed(() => {
+  const d = data.value
+  if (!d) return null
+  const pct = (done, total) => (total ? Math.round((done / total) * 100) : 0)
+  if (isPending.value) {
+    const n = d.participants.length
+    return { percent: Math.min(100, pct(n, MIN_PARTICIPANTS_TO_START)), label: `Joueurs inscrits · ${n} / ${MIN_PARTICIPANTS_TO_START} minimum` }
+  }
+  if (isChampionship.value) {
+    const league = leagueMatches(d.matches)
+    const rounds = Math.max(0, ...league.map(m => m.round))
+    const openRound = Math.min(...league.filter(m => m.status !== 'completed').map(m => m.round))
+    return {
+      percent: pct(league.filter(m => m.status === 'completed').length, league.length),
+      label:   `Journée ${Number.isFinite(openRound) ? openRound : rounds} / ${rounds}`,
+    }
+  }
+  const real = d.matches.filter(m => m.status !== 'bye')
+  const done = real.filter(m => m.status === 'completed').length
+  return { percent: pct(done, real.length), label: `${done} / ${real.length} matchs` }
 })
 
 const hasPlayoffMatches = computed(() => data.value?.matches.some(m => m.bracket_type === 'winner') ?? false)
@@ -168,6 +210,11 @@ async function copyInviteLink() {
   copied.value = true
   setTimeout(() => { copied.value = false }, 1500)
 }
+
+const startDefaults = computed(() => {
+  const t = data.value?.tournament
+  return t ? { doubleElimination: !!t.double_elimination, doubleRoundRobin: !!t.double_round_robin, playoffSize: t.playoff_size ?? null } : {}
+})
 
 async function onStartConfirm({ seedingMethod, doubleElimination, doubleRoundRobin, playoffSize }) {
   showStartModal.value = false
@@ -309,196 +356,159 @@ async function playOnline() {
 </script>
 
 <template>
-  <div class="tournament" :class="{ 'tournament--fill': activeTab === 'participants' }" v-if="data">
-    <AppHeader :title="data.tournament.name" @back="router.push({ name: 'tournaments' })" />
+  <div class="tournament" v-if="data">
+    <AppHeader :title="data.tournament.name" tone="tournament" @back="router.push({ name: 'tournaments' })" />
 
-    <AppTabs v-model="activeTab" :tabs="tabs" scrollable />
-
-    <main class="tournament__main">
-
-      <!-- ── Infos ────────────────────────────────────────────────────────── -->
-      <div v-if="activeTab === 'infos'" class="tournament__tab">
-        <div v-if="winnerName" class="tournament__winner">
-          <div class="tournament__winner-trophy">🏆</div>
-          <div class="tournament__winner-name">{{ winnerName }}</div>
-          <div class="tournament__winner-sub">remporte le tournoi !</div>
+    <TournamentHero
+      :name="data.tournament.name"
+      :status="STATUS_LABELS[data.tournament.status]"
+      :tags="heroTags"
+      :progress="heroProgress"
+    >
+      <div v-if="isPending && data.tournament.join_code" class="tournament__invite">
+        <div class="tournament__invite-text">
+          <span class="tournament__invite-label">Code d'invitation</span>
+          <span class="tournament__invite-code">{{ data.tournament.join_code }}</span>
         </div>
+        <button class="tournament__invite-copy" @click="copyInviteLink">
+          <AppIcon name="copy" :width="16" :height="16" />
+          {{ copied ? 'Copié !' : 'Copier' }}
+        </button>
+      </div>
+    </TournamentHero>
 
-        <p v-if="data.tournament.description" class="tournament__description">{{ data.tournament.description }}</p>
-
-        <div class="tournament__info-row">
-          <span class="tournament__info-label">Nom</span>
-          <input
-            v-if="isHost"
-            v-model="nameDraft"
-            class="tournament__info-input"
-            maxlength="60"
-            @blur="saveNameIfChanged"
-            @keydown.enter="$event.target.blur()"
-          />
-          <span v-else class="tournament__info-value">{{ data.tournament.name }}</span>
-        </div>
-        <div class="tournament__info-row">
-          <span class="tournament__info-label">Format</span>
-          <span class="tournament__info-value">{{ formatLabel }}</span>
-        </div>
-        <div class="tournament__info-row">
-          <span class="tournament__info-label">Format de match</span>
-          <span class="tournament__info-value">{{ data.tournament.start_score }} · {{ data.tournament.legs_to_win }} manche(s)</span>
-        </div>
-        <div class="tournament__info-row">
-          <span class="tournament__info-label">Hôtes</span>
-          <span class="tournament__info-value">{{ resolvedHosts.map(h => h.name).join(', ') }}</span>
-        </div>
-
-        <template v-if="data.tournament.status === 'pending'">
-          <p v-if="!canStart" class="tournament__banner">
-            Minimum {{ MIN_PARTICIPANTS_TO_START }} participants pour démarrer ({{ data.participants.length }}/{{ MIN_PARTICIPANTS_TO_START }}).
-          </p>
-
-          <div class="tournament__invite">
-            <span class="tournament__invite-label">Code d'invitation</span>
-            <button class="tournament__invite-code" @click="copyInviteLink">
-              {{ data.tournament.join_code }}
-              <AppIcon name="copy" :width="14" :height="14" />
-            </button>
-            <span v-if="copied" class="tournament__invite-copied">Lien copié !</span>
-          </div>
-
-          <AppButton v-if="isHost" :disabled="!canStart" @click="showStartModal = true">
-            Démarrer le tournoi
-          </AppButton>
-        </template>
-
-        <AppButton v-if="canStartPlayoffs" :disabled="startingPlayoffs" @click="onStartPlayoffs">
-          Lancer les playoffs
-        </AppButton>
-
-        <button v-if="isHost" class="tournament__delete-action" @click="showDeleteConfirm = true">
+    <template v-if="isPending">
+      <main class="tournament__main" :class="{ 'tournament__main--start': isHost }">
+        <TournamentRoster
+          :participants="data.participants"
+          :hosts="resolvedHosts"
+          :host-user-ids="hostUserIds"
+          :my-user-id="authStore.user?.id ?? null"
+          :can-manage="isHost"
+          :is-host="isHost"
+          :min-players="MIN_PARTICIPANTS_TO_START"
+          @add-player="openAddPlayerPicker"
+          @remove-player="askRemoveParticipant"
+          @add-host="openHostPicker"
+          @remove-host="onRemoveHost"
+        />
+        <button v-if="isHost" class="tournament__delete" @click="showDeleteConfirm = true">
           <AppIcon name="trash" :width="16" :height="16" />
           Supprimer le tournoi
         </button>
+      </main>
+
+      <div v-if="isHost" class="tournament__start">
+        <span v-if="!canStart" class="tournament__start-hint">
+          <AppIcon name="lock" :width="16" :height="16" />
+          Encore {{ MIN_PARTICIPANTS_TO_START - data.participants.length }} joueur{{ MIN_PARTICIPANTS_TO_START - data.participants.length > 1 ? 's' : '' }} pour pouvoir démarrer
+        </span>
+        <AppButton tone="tournament" :disabled="!canStart" @click="showStartModal = true">
+          Démarrer le tournoi
+        </AppButton>
       </div>
+    </template>
 
-      <!-- ── Participants ─────────────────────────────────────────────────── -->
-      <div v-if="activeTab === 'participants'" class="tournament__tab tournament__tab--fill">
-        <div class="tournament__section">
-          <div class="tournament__section-header">
-            <span class="tournament__section-title">Hôtes ({{ resolvedHosts.length }})</span>
-            <button v-if="isHost" class="tournament__section-action" @click="openHostPicker">+ Ajouter un hôte</button>
-          </div>
-          <div class="tournament__list">
-            <div v-for="h in resolvedHosts" :key="h.user_id" class="tournament__row">
-              <div class="tournament__avatar">{{ h.name?.[0]?.toUpperCase() }}</div>
-              <span class="tournament__row-name">{{ h.name }}</span>
-              <span v-if="h.role === 'creator'" class="tournament__row-tag">Créateur</span>
-              <button
-                v-if="isHost && h.role !== 'creator' && h.user_id !== authStore.user?.id"
-                class="tournament__row-manage"
-                @click="onRemoveHost(h.user_id)"
-              >Retirer</button>
-            </div>
-          </div>
-        </div>
+    <template v-else>
+      <AppTabs v-model="activeTab" class="tournament__tabs" variant="underline" :tabs="tabs" scrollable />
 
-        <div class="tournament__section tournament__section--fill">
-          <div class="tournament__section-header">
-            <span class="tournament__section-title">Participants ({{ data.participants.length }})</span>
-            <button v-if="isHost && data.tournament.status === 'pending'" class="tournament__section-action" @click="openAddPlayerPicker">+ Ajouter</button>
-          </div>
-          <div class="tournament__list tournament__list--scroll">
-            <div v-for="p in data.participants" :key="p.id" class="tournament__row">
-              <div class="tournament__avatar">{{ p.player_data?.name?.[0]?.toUpperCase() }}</div>
-              <span class="tournament__row-name">{{ p.player_data?.name }}</span>
-              <button
-                v-if="isHost && data.tournament.status === 'pending' && !hostUserIds.includes(p.user_id)"
-                class="tournament__row-manage"
-                @click="askRemoveParticipant(p)"
-              >Retirer</button>
-            </div>
-          </div>
-        </div>
+      <main class="tournament__main">
 
-        <template v-if="isHost && data.tournament.status === 'pending'">
-          <p v-if="!canStart" class="tournament__banner">
-            Minimum {{ MIN_PARTICIPANTS_TO_START }} participants pour démarrer ({{ data.participants.length }}/{{ MIN_PARTICIPANTS_TO_START }}).
-          </p>
-          <AppButton :disabled="!canStart" @click="showStartModal = true">
-            Démarrer le tournoi
-          </AppButton>
-        </template>
-      </div>
-
-      <!-- ── Classement (championnat) ───────────────────────────────────────── -->
-      <div v-if="activeTab === 'standings'" class="tournament__tab">
-        <p v-if="data.tournament.status === 'pending'" class="tournament__empty">
-          Le tournoi n'a pas encore démarré.
-        </p>
-        <template v-else>
+        <!-- ── Classement (championnat) ───────────────────────────────────── -->
+        <div v-if="activeTab === 'standings'" class="tournament__tab">
           <TournamentStandingsTable
             :matches="data.matches"
             :participants="data.participants"
             :playoff-size="data.tournament.playoff_size"
             :my-user-id="authStore.user?.id ?? null"
           />
-          <AppButton v-if="canStartPlayoffs" :disabled="startingPlayoffs" @click="onStartPlayoffs">
+          <AppButton v-if="canStartPlayoffs" tone="tournament" :disabled="startingPlayoffs" @click="onStartPlayoffs">
             Lancer les playoffs
           </AppButton>
-        </template>
-      </div>
+        </div>
 
-      <!-- ── Stats des joueurs ───────────────────────────────────────────── -->
-      <div v-if="activeTab === 'stats'" class="tournament__tab">
-        <p v-if="!playerSessions.length" class="tournament__empty">
-          Aucun match joué pour l'instant.
-        </p>
-        <TournamentPlayerStatsTable
-          v-else
-          :sessions="playerSessions"
-          :participants="data.participants"
-          :my-user-id="authStore.user?.id ?? null"
-        />
-      </div>
+        <!-- ── Journées (championnat) ─────────────────────────────────────── -->
+        <div v-if="activeTab === 'matchdays'" class="tournament__tab">
+          <TournamentMatchdayList
+            :matches="data.matches"
+            :participants="data.participants"
+            :playable-match-ids="playableMatchIds"
+            @play="onPlay"
+            @details="openMatchStats"
+          />
+        </div>
 
-      <!-- ── Journées (championnat) ──────────────────────────────────────── -->
-      <div v-if="activeTab === 'matchdays'" class="tournament__tab">
-        <p v-if="data.tournament.status === 'pending'" class="tournament__empty">
-          Le tournoi n'a pas encore démarré.
-        </p>
-        <TournamentMatchdayList
-          v-else
-          :matches="data.matches"
-          :participants="data.participants"
-          :playable-match-ids="playableMatchIds"
-          @play="onPlay"
-          @details="openMatchStats"
-        />
-      </div>
+        <!-- ── Bracket / Playoffs ─────────────────────────────────────────── -->
+        <div v-if="activeTab === 'bracket'" class="tournament__tab">
+          <div v-if="isChampionship && !hasPlayoffMatches" class="tournament__locked">
+            <AppIcon name="lock" :width="18" :height="18" />
+            <div>
+              <span class="tournament__locked-title">Playoffs à venir</span>
+              <span class="tournament__locked-text">Ils démarrent une fois toutes les journées jouées.</span>
+            </div>
+          </div>
+          <TournamentBracketTree
+            v-else
+            :matches="data.matches"
+            :participants="data.participants"
+            :playable-match-ids="playableMatchIds"
+            @play="onPlay"
+            @details="openMatchStats"
+          />
+          <AppButton v-if="canStartPlayoffs" tone="tournament" :disabled="startingPlayoffs" @click="onStartPlayoffs">
+            Lancer les playoffs
+          </AppButton>
+        </div>
 
-      <!-- ── Bracket / Playoffs ─────────────────────────────────────────────── -->
-      <div v-if="activeTab === 'bracket'" class="tournament__tab">
-        <p v-if="data.tournament.status === 'pending'" class="tournament__empty">
-          Le tournoi n'a pas encore démarré.
-        </p>
-        <p v-else-if="isChampionship && !hasPlayoffMatches" class="tournament__empty">
-          Les playoffs démarrent une fois toutes les journées jouées.
-        </p>
-        <TournamentBracketTree
-          v-else
-          :matches="data.matches"
-          :participants="data.participants"
-          :playable-match-ids="playableMatchIds"
-          @play="onPlay"
-          @details="openMatchStats"
-        />
-      </div>
+        <!-- ── Stats des joueurs ──────────────────────────────────────────── -->
+        <div v-if="activeTab === 'stats'" class="tournament__tab">
+          <p v-if="!playerSessions.length" class="tournament__empty">
+            Aucun match joué pour l'instant.
+          </p>
+          <TournamentPlayerStatsTable
+            v-else
+            :sessions="playerSessions"
+            :participants="data.participants"
+            :my-user-id="authStore.user?.id ?? null"
+          />
+        </div>
 
-    </main>
+        <!-- ── Joueurs ────────────────────────────────────────────────────── -->
+        <div v-if="activeTab === 'participants'" class="tournament__tab">
+          <TournamentRoster
+            :participants="data.participants"
+            :hosts="resolvedHosts"
+            :host-user-ids="hostUserIds"
+            :my-user-id="authStore.user?.id ?? null"
+            :is-host="isHost"
+            @add-host="openHostPicker"
+            @remove-host="onRemoveHost"
+          />
+        </div>
+
+        <!-- ── Infos ──────────────────────────────────────────────────────── -->
+        <div v-if="activeTab === 'infos'" class="tournament__tab">
+          <TournamentInfos
+            v-model:name="nameDraft"
+            :tournament="data.tournament"
+            :format-label="formatLabel"
+            :hosts="resolvedHosts"
+            :is-host="isHost"
+            :my-user-id="authStore.user?.id ?? null"
+            :winner-name="winnerName"
+            @save-name="saveNameIfChanged"
+            @delete="showDeleteConfirm = true"
+          />
+        </div>
+
+      </main>
+    </template>
 
     <TournamentStartModal
       :show="showStartModal"
       :participant-count="data.participants.length"
       :format="data.tournament.format"
+      :defaults="startDefaults"
       @close="showStartModal = false"
       @confirm="onStartConfirm"
     />
@@ -528,7 +538,7 @@ async function playOnline() {
     />
     <AppModal :show="!!playChoice" title="Jouer le match" @close="playChoice = null">
       <div class="tournament__play-choice">
-        <AppButton v-if="playChoice?.opponent?.user_id" @click="playOnline">
+        <AppButton v-if="playChoice?.opponent?.user_id" tone="tournament" @click="playOnline">
           En ligne contre {{ playChoice.opponent.player_data?.name }}
         </AppButton>
         <AppButton variant="secondary" @click="playLocal(playChoice.matchId)">
@@ -561,255 +571,154 @@ async function playOnline() {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: $padding-md $padding-md 0;
-  gap: $gap-md;
   @include nav-safe-bottom;
 
-  &__play-choice {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
-  }
-
-  // Onglet Participants : la vue tient dans l'écran, la liste prend la place
-  // restante et défile en interne
-  &--fill {
-    height: 100dvh;
-  }
+  &__tabs { --tab-color: #{$mode-tournament}; }
 
   &__main {
     flex: 1;
-    min-height: 0;
     display: flex;
     flex-direction: column;
-    padding: $padding-md 0;
+    gap: $gap-lg;
+    padding: $padding-md;
+
+    // Room for the fixed start button
+    &--start { padding-bottom: calc(#{$padding-xxl} * 3); }
   }
 
   &__tab {
     display: flex;
     flex-direction: column;
-    gap: $gap-lg;
-
-    &--fill {
-      flex: 1;
-      min-height: 0;
-    }
+    gap: $gap-md;
   }
 
-  &__winner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: $gap-xs;
-    padding: $padding-lg;
-    background: rgba($orange, 0.1);
-    border: $border-sm solid rgba($orange, 0.3);
-    border-radius: $radius-sm;
-  }
-
-  &__winner-trophy { font-size: 40px; line-height: 1; }
-  &__winner-name   { @include title-lg; font-weight: 700; color: $orange-dark; }
-  &__winner-sub    { @include text-sm; color: $muted; }
-
-  &__description {
-    @include text-sm;
-    color: $muted;
-  }
-
-  &__info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: $padding-sm 0;
-    border-bottom: $border-sm solid rgba($white, 0.08);
-  }
-
-  &__info-label { @include text-sm; color: $muted; }
-  &__info-value { @include text-sm; color: $text-color; font-weight: 600; }
-
-  &__info-input {
-    @include text-sm;
-    flex: 1;
-    min-width: 0;
-    margin-left: $gap-md;
-    color: $text-color;
-    font-weight: 600;
-    font-family: inherit;
-    text-align: right;
-    background: transparent;
-    border: none;
-    border-bottom: $border-sm solid transparent;
-    padding: 2px 0;
-
-    &:focus {
-      outline: none;
-      border-bottom-color: $orange;
-    }
-  }
-
-  &__banner {
-    @include text-sm;
-    color: $orange-dark;
-    background: rgba($orange, 0.1);
-    border-radius: $radius-sm;
-    padding: $padding-sm $padding-md;
-  }
-
-  &__invite {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-xs;
-  }
-
-  &__invite-label {
-    @include text-sm;
-    color: $muted;
-  }
-
-  &__invite-code {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xs;
-    @include title-md;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    color: $text-color;
-    background: rgba($white, 0.05);
-    border: $border-sm dashed rgba($white, 0.2);
-    border-radius: $radius-sm;
-    padding: $padding-md;
-  }
-
-  &__invite-copied {
-    @include text-xs;
-    color: $orange-dark;
-    text-align: center;
-  }
-
-  &__delete-action {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xs;
-    @include text-sm;
-    color: $error;
-    padding: $padding-sm 0;
-
-    &:active { opacity: 0.7; }
-  }
-
-  &__section {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
-
-    &--fill {
-      flex: 1;
-      min-height: 0;
-    }
-  }
-
-  &__section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  &__section-title {
-    @include title-sm;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  &__section-action {
-    @include text-sm;
-    color: $orange-dark;
-  }
-
-  &__list {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-xs;
-
-    &--scroll {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-    }
-  }
-
-  &__row {
-    display: flex;
-    align-items: center;
-    gap: $gap-sm;
-    padding: $padding-sm $padding-md;
-    border-radius: $radius-sm;
-    background: rgba($white, 0.05);
-  }
-
-  &__avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: $radius-pill;
-    background: $orange;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    @include title-sm;
-    font-weight: 700;
-    color: $white;
-    flex-shrink: 0;
-  }
-
-  &__row-name {
-    flex: 1;
-    @include text-sm;
-    font-weight: 600;
-    color: $text-color;
-  }
-
-  &__row-tag {
-    @include text-xs;
-    color: $muted;
-    background: rgba($white, 0.08);
-    border-radius: $radius-pill;
-    padding: 2px 8px;
-  }
-
-  &__row-manage {
-    @include text-xs;
-    color: $error;
-  }
-
+  &__loading,
   &__empty {
     @include text-sm;
     color: $muted;
     text-align: center;
-    padding: $padding-xl 0;
+    padding: $padding-xl;
   }
 
-  &__loading {
+  &__invite {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $gap-sm;
+    padding: $padding-sm;
+    border-radius: $radius-sm;
+    background: $white;
+    color: $text-color;
+  }
+
+  &__invite-text {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xxs;
+  }
+
+  &__invite-label {
+    @include text-xxs;
+    font-weight: 600;
+    letter-spacing: $tracking-sm;
+    text-transform: uppercase;
+    color: $muted;
+  }
+
+  &__invite-code {
+    @include title-xxl;
+    line-height: 0.9;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  &__invite-copy {
+    display: flex;
+    align-items: center;
+    gap: $gap-xxs;
+    height: 44px;
+    padding: 0 $padding-sm;
+    border-radius: $radius-sm;
+    background: $mode-tournament;
+    color: $white;
+    @include title-sm;
+  }
+
+  &__delete {
+    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
+    @include text-sm;
+    color: $error;
+  }
+
+  &__start {
+    position: fixed;
+    left: $padding-md;
+    right: $padding-md;
+    bottom: calc(#{$bottom-nav-height} + env(safe-area-inset-bottom) + #{$padding-sm});
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
+  }
+
+  &__start-hint {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100dvh;
-    @include text-md;
+    gap: $gap-xxs;
+    @include text-xs;
     color: $muted;
+  }
+
+  &__locked {
+    display: flex;
+    gap: $gap-sm;
+    align-items: flex-start;
+    padding: $padding-sm;
+    border-radius: $radius-sm;
+    background: $surface;
+    color: $muted;
+
+    div { display: flex; flex-direction: column; gap: $gap-xxs; }
+  }
+
+  &__locked-title {
+    @include title-md;
+    line-height: 1;
+    color: $text-color;
+  }
+
+  &__locked-text { @include text-sm; }
+
+  &__play-choice {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
   }
 }
 
 @media (min-width: $bp-laptop) {
   .tournament {
-    padding: $padding-xl $padding-xl 0;
-    gap: $gap-lg;
     @include nav-safe-bottom($padding-xl);
 
-    &__main { padding: $padding-lg 0; }
-    &__winner-name { @include title-xl; }
-    &__winner-sub  { @include text-md; }
-    &__description { @include text-md; }
+    &__main { padding: $padding-xl $padding-xxl; }
+    &__loading,
+    &__empty,
+    &__locked-text,
+    &__delete { @include text-md; }
+    &__invite-label { @include text-xs; }
+    &__invite-code { @include display-xs; }
+    &__invite-copy { @include title-md; }
+    &__locked-title { @include title-lg; }
+    &__start-hint { @include text-sm; }
+
+    &__start {
+      left: auto;
+      right: $padding-xxl;
+      width: 420px;
+    }
   }
 }
 </style>

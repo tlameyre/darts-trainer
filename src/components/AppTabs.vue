@@ -152,6 +152,12 @@ function select(tab, e) {
     padding: 0 $padding-xs;
     border-bottom: $border-sm solid $border-color;
 
+    &.app-tabs--scrollable {
+      border-radius: 0;
+
+      .app-tabs__tab { padding: 0 $padding-sm; }
+    }
+
     .app-tabs__tab {
       @include title-md;
       flex: 1;

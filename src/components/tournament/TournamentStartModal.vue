@@ -10,6 +10,7 @@ const props = defineProps({
   show:             { type: Boolean, required: true },
   participantCount: { type: Number, required: true },
   format:           { type: String, default: 'bracket' },
+  defaults:         { type: Object, default: () => ({}) }, // choices made at creation
 })
 
 const emit = defineEmits(['close', 'confirm'])
@@ -26,6 +27,15 @@ const playoffOptions = computed(() => [
   ...playoffSizeOptions(props.participantCount).map(size => ({ size, label: size === 2 ? 'Finale' : `Top ${size}` })),
 ])
 
+// Re-apply the creation choices each time the modal opens, clamped to the final roster
+watch(() => props.show, (show) => {
+  if (!show) return
+  manualSeeding.value     = false
+  doubleElimination.value = !!props.defaults.doubleElimination && isPow2.value
+  doubleRoundRobin.value  = !!props.defaults.doubleRoundRobin
+  const wanted = props.defaults.playoffSize ?? null
+  playoffSize.value = playoffOptions.value.some(o => o.size === wanted) ? wanted : null
+})
 watch(isPow2, (ok) => { if (!ok) doubleElimination.value = false })
 watch(() => props.participantCount, (count) => {
   if (playoffSize.value > count) playoffSize.value = null
@@ -47,6 +57,7 @@ function confirm() {
       <template v-if="isChampionship">
         <ToggleSwitch
           v-model="doubleRoundRobin"
+          tone="tournament"
           title="Aller-retour"
           description="Chaque paire de joueurs s'affronte deux fois."
         />
@@ -56,7 +67,7 @@ function confirm() {
           <div class="start-modal__options">
             <AppButton
               v-for="o in playoffOptions" :key="o.label"
-              size="small" variant="ghost" :active="playoffSize === o.size"
+              size="small" variant="ghost" tone="tournament" :active="playoffSize === o.size"
               @click="playoffSize = o.size"
             >{{ o.label }}</AppButton>
           </div>
@@ -65,11 +76,13 @@ function confirm() {
       <template v-else>
         <ToggleSwitch
           v-model="manualSeeding"
+          tone="tournament"
           title="Seeding manuel"
           description="Sinon, tirage au sort à l'instant du démarrage."
         />
         <ToggleSwitch
           :model-value="doubleElimination"
+          tone="tournament"
           title="Bracket perdants"
           :description="isPow2
             ? 'Double élimination : les perdants ont une seconde chance.'
@@ -78,7 +91,7 @@ function confirm() {
           @update:model-value="val => { if (isPow2) doubleElimination = val }"
         />
       </template>
-      <AppButton @click="confirm">Démarrer</AppButton>
+      <AppButton tone="tournament" @click="confirm">Démarrer</AppButton>
     </div>
   </AppModal>
 </template>
@@ -102,7 +115,7 @@ function confirm() {
 
   &__label {
     @include title-lg;
-    color: $white;
+    color: $text-color;
   }
 
   &__desc {

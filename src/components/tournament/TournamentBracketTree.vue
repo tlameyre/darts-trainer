@@ -139,10 +139,9 @@ function roundLabel(rounds, idx) {
   }
 
   &__section-title {
-    @include title-sm;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    @include title-md;
+    padding-bottom: $padding-xxs;
+    border-bottom: $border-lg solid $black;
   }
 
   &__row {
@@ -164,10 +163,10 @@ function roundLabel(rounds, idx) {
 
   &__line {
     fill: none;
-    stroke: rgba($white, 0.15);
+    stroke: $border-color;
     stroke-width: 1.5;
 
-    &--done { stroke: rgba($orange, 0.6); }
+    &--done { stroke: $mode-tournament; }
   }
 
   &__col {
@@ -180,6 +179,9 @@ function roundLabel(rounds, idx) {
 
   &__col-title {
     @include text-xs;
+    font-weight: 600;
+    letter-spacing: $tracking-sm;
+    text-transform: uppercase;
     color: $muted;
     text-align: center;
   }

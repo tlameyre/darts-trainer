@@ -73,6 +73,13 @@ const byes    = computed(() =>
           <AppIcon name="arrow-right" :width="18" :height="18" />
         </button>
       </div>
+      <div class="matchdays__dots">
+        <span
+          v-for="(d, i) in matchdays" :key="d.round"
+          class="matchdays__dot"
+          :class="{ 'matchdays__dot--done': d.done, 'matchdays__dot--current': i === selectedIndex }"
+        />
+      </div>
       <TournamentMatchCard
         v-for="m in current.matches" :key="m.id"
         class="matchdays__card"
@@ -102,34 +109,28 @@ const byes    = computed(() =>
   }
 
   &__nav {
-    display: flex;
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
     align-items: center;
-    gap: $gap-sm;
   }
 
   &__arrow {
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: $radius-pill;
-    border: $border-md solid rgba($white, 0.15);
-    background: rgba($white, 0.05);
+    border-radius: $radius-sm;
+    background: $surface;
     color: $text-color;
-    transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+    transition: opacity 0.15s;
 
-    &:active:not(:disabled) {
-      border-color: $orange;
-      color: $orange;
-    }
+    &:active:not(:disabled) { background: $border-color; }
 
     &:disabled { opacity: 0.3; }
   }
 
   &__heading {
-    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -137,8 +138,8 @@ const byes    = computed(() =>
   }
 
   &__title {
-    @include title-md;
-    color: $white;
+    @include title-lg;
+    line-height: 1;
   }
 
   &__total { color: $muted; }
@@ -146,8 +147,27 @@ const byes    = computed(() =>
   &__status {
     @include text-xs;
     color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+  }
+
+  &__dots {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: $radius-pill;
+    background: $border-color;
+
+    &--done { background: $black; }
+
+    &--current {
+      width: 18px;
+      background: $mode-tournament;
+    }
   }
 
   &__card {
@@ -163,7 +183,7 @@ const byes    = computed(() =>
 
 @media (min-width: $bp-laptop) {
   .matchdays {
-    &__title  { @include title-lg; }
+    &__title  { @include title-xl; }
     &__status { @include text-sm; }
     &__bye    { @include text-md; }
   }
