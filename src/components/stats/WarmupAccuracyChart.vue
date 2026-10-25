@@ -24,6 +24,8 @@ onMounted(() => {
   isWide.value = mql.matches
   mql.addEventListener('change', onMql)
   document.addEventListener('click', handleDocumentClick, true)
+  console.log(props.series[0].points);
+
 })
 onUnmounted(() => {
   mql?.removeEventListener('change', onMql)

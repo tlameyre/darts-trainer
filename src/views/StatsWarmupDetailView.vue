@@ -10,6 +10,7 @@ import StatsPeriodHero from '../components/stats/StatsPeriodHero.vue'
 import StatsZoneSheet from '../components/stats/StatsZoneSheet.vue'
 import WarmupAccuracyChart from '../components/stats/WarmupAccuracyChart.vue'
 import StatsSessionDetail from '../components/stats/StatsSessionDetail.vue'
+import ChartTest from '../components/ChartTest.vue'
 
 const props = defineProps({
   mockSessions: { type: Array, default: null },
@@ -336,11 +337,12 @@ const zoneSummaries = computed(() => selectedZoneOptions.value.map(z => ({
 
       <section class="warmup-detail__chart">
         <SectionTitle title="Précision par zone" :count="periodCaption" ruled />
-        <WarmupAccuracyChart
-          v-if="hasChartData"
-          :series="chartSeries" :mode="periodMode"
-          @open-session="openSession"
-        />
+        <ChartTest v-if="hasChartData" :series="chartSeries" :periodMode="periodMode" />
+          <!-- <WarmupAccuracyChart
+            v-if="hasChartData"
+            :series="chartSeries" :mode="periodMode"
+            @open-session="openSession"
+          /> -->
         <p v-else class="warmup-detail__empty">Aucune session d'échauffement pour cette période.</p>
       </section>
 
