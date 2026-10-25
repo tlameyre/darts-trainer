@@ -20,6 +20,7 @@ import GameMenuModal from '../components/game/GameMenuModal.vue'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import AppIcon from '../components/AppIcon.vue'
 import AppHeader from '../components/AppHeader.vue'
+import { matchTone, matchColorVar } from '../utils/matchTone.js'
 
 const router          = useRouter()
 const route           = useRoute()
@@ -214,8 +215,10 @@ async function finishGame() {
 }
 
 // Teleported modals sit outside the view's DOM, so the color goes on <html>
-if (isOnline) {
-  onMounted(() => document.documentElement.style.setProperty('--game-color', 'var(--color-online)'))
+const tone      = matchTone({ online: isOnline, tournament: isTournamentMatch })
+const gameColor = matchColorVar(tone)
+if (gameColor) {
+  onMounted(() => document.documentElement.style.setProperty('--game-color', gameColor))
   onUnmounted(() => document.documentElement.style.removeProperty('--game-color'))
 }
 
@@ -484,7 +487,7 @@ const multiWinnerName = computed(() =>
 
     <!-- ── Jeu ──────────────────────────────────────────────────────────────── -->
     <section class="x01__panel">
-      <AppHeader :title="headerTitle" :tone="isOnline ? 'online' : 'green'" back-icon="exit" @back="router.push({ name: settingsRoute })">
+      <AppHeader :title="headerTitle" :tone="tone" back-icon="exit" @back="router.push({ name: settingsRoute })">
         <template v-if="phase !== 'game-over'" #right>
           <button class="x01__menu-btn" aria-label="Menu" @click="showMenu = true">
             <AppIcon name="gear" :width="22" :height="22" />

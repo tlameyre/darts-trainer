@@ -7,6 +7,7 @@ import ScoreRecap from '../score/ScoreRecap.vue'
 import WarmupEndRecap from '../warmup/WarmupEndRecap.vue'
 import X01MatchEnd from '../x01/X01MatchEnd.vue'
 import CheckoutRecap from '../checkout/CheckoutRecap.vue'
+import { matchTone, matchColorVar } from '../../utils/matchTone.js'
 
 const props = defineProps({
   show:    { type: Boolean, required: true },
@@ -104,7 +105,14 @@ const scorePercent = computed(() => {
   return s?.total_questions ? Math.round((s.correct_count / s.total_questions) * 100) : 0
 })
 
-const HEADER_TONES = { score: 'orange', warmup: 'blue', x01: 'green', checkout: 'cyan' }
+const HEADER_TONES = { score: 'orange', warmup: 'blue', checkout: 'cyan' }
+
+// A saved online match carries its context in the session settings
+const headerTone = computed(() => props.mode === 'x01'
+  ? matchTone({ online: !!props.session?.settings?.online, tournament: !!props.session?.tournament_id })
+  : HEADER_TONES[props.mode])
+
+const gameColor = computed(() => props.mode === 'x01' ? matchColorVar(headerTone.value) : null)
 
 const checkoutStats = computed(() => {
   const s = props.session
@@ -125,8 +133,8 @@ function formatDate(iso) {
 
 <template>
   <Transition name="slide-up">
-    <div v-if="show && session" class="session-detail">
-      <AppHeader :title="formatDate(session.played_at)" :tone="HEADER_TONES[mode]" @back="$emit('close')">
+    <div v-if="show && session" class="session-detail" :style="gameColor ? { '--game-color': gameColor } : undefined">
+      <AppHeader :title="formatDate(session.played_at)" :tone="headerTone" @back="$emit('close')">
         <template #right>
           <button class="session-detail__delete" aria-label="Supprimer la session" @click="$emit('delete', session.id)">
             <AppIcon name="trash" :width="22" :height="22" />
@@ -230,8 +238,8 @@ function formatDate(iso) {
     margin: $gap-sm 0;
     padding: $padding-xxs $padding-sm;
     border-radius: $radius-pill;
-    background: rgba($orange, 0.15);
-    color: $orange-dark;
+    background: rgba($mode-tournament, 0.15);
+    color: $mode-tournament;
     @include text-xxs;
     flex-shrink: 0;
 

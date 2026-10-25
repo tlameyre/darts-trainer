@@ -138,7 +138,7 @@ function select(tab, e) {
 
       &--active {
         color: $text-color;
-        border-bottom-color: var(--tab-color, $accent);
+        border-bottom-color: var(--tab-color, var(--game-color, #{$accent}));
       }
 
       &:active { opacity: 0.7; }
@@ -167,7 +167,7 @@ function select(tab, e) {
 
       &--active {
         color: $text-color;
-        border-bottom-color: $black;
+        border-bottom-color: var(--tab-color, $black);
       }
 
       &:active { opacity: 0.7; }

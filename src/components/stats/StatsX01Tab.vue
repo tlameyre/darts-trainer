@@ -93,6 +93,7 @@ function players(s) {
         <AppIcon name="trophy" :width="12" :height="12" />
         {{ s.tournaments?.name ?? 'Tournoi' }}
       </span>
+      <span v-else-if="s.settings?.online" class="tab__badge tab__badge--online">En ligne</span>
       <div class="tab__players">
         <div v-for="p in players(s)" :key="p.name" class="tab__player" :class="{ 'tab__player--winner': p.won }">
           <span class="tab__player-name">{{ p.name }}</span>
@@ -115,9 +116,14 @@ function players(s) {
     gap: $gap-xxs;
     padding: $padding-xxs $padding-xs;
     border-radius: $radius-pill;
-    background: rgba($orange, 0.15);
-    color: $orange-dark;
+    background: rgba($mode-tournament, 0.15);
+    color: $mode-tournament;
     @include text-xxs;
+
+    &--online {
+      background: rgba($mode-online, 0.15);
+      color: $mode-online;
+    }
   }
 
   &__players {

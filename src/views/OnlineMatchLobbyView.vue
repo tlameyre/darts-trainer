@@ -6,6 +6,7 @@ import { useDbStore } from '../store/dbStore.js'
 import { useGameStore } from '../store/gameStore.js'
 import { useOnlineMatchStore, profileName } from '../store/onlineMatchStore.js'
 import AppHeader from '../components/AppHeader.vue'
+import { matchTone, matchColorVar } from '../utils/matchTone.js'
 import OnlineVersusHero from '../components/online/OnlineVersusHero.vue'
 import OnlineStepper from '../components/online/OnlineStepper.vue'
 import OnlineStatusCard from '../components/online/OnlineStatusCard.vue'
@@ -28,6 +29,8 @@ const loading = ref(true)
 const busy    = ref(false)
 
 const myId     = computed(() => props.mock?.myId ?? authStore.user?.id)
+const tone       = computed(() => matchTone({ online: true, tournament: !!match.value?.tournament_match_id }))
+const matchColor = computed(() => matchColorVar(tone.value))
 const isHost   = computed(() => match.value?.host_id === myId.value)
 const opponent   = computed(() => match.value && profileName(isHost.value ? match.value.guest : match.value.host))
 const opponentId = computed(() => match.value && (isHost.value ? match.value.guest_id : match.value.host_id))
@@ -134,9 +137,9 @@ const stage = computed(() => {
 </script>
 
 <template>
-  <div class="lobby">
+  <div class="lobby" :style="matchColor ? { '--match-color': matchColor } : undefined">
     <div class="lobby__aside">
-      <AppHeader title="Match en ligne" tone="online" @back="router.push({ name: 'online-settings' })" />
+      <AppHeader title="Match en ligne" :tone="tone" @back="router.push({ name: 'online-settings' })" />
       <OnlineVersusHero
         v-if="match"
         :kicker="stage.kicker"
@@ -207,7 +210,7 @@ const stage = computed(() => {
   &__aside {
     display: flex;
     flex-direction: column;
-    background: $mode-online;
+    background: var(--match-color, #{$mode-online});
   }
 
   &__main {
@@ -275,8 +278,8 @@ const stage = computed(() => {
     color: $text-color;
 
     &--primary {
-      border-color: $mode-online;
-      background: $mode-online;
+      border-color: var(--match-color, #{$mode-online});
+      background: var(--match-color, #{$mode-online});
       color: $white;
     }
 

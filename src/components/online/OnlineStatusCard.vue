@@ -32,7 +32,7 @@ defineProps({
     height: 12px;
     margin-top: 5px;
     border-radius: $radius-pill;
-    background: $mode-online;
+    background: var(--match-color, #{$mode-online});
   }
 
   &__body {
@@ -59,7 +59,7 @@ defineProps({
     position: absolute;
     inset: -6px;
     border-radius: $radius-pill;
-    background: $mode-online;
+    background: var(--match-color, #{$mode-online});
     opacity: 0.2;
     animation: status-pulse 1.6s ease-in-out infinite;
   }

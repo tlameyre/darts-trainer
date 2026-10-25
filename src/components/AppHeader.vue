@@ -4,7 +4,7 @@ import AppIcon from './AppIcon.vue'
 defineProps({
   title: { type: String, default: 'DARTS TRAINER' },
   backIcon: { type: String, default: 'arrow-left' },
-  tone: { type: String, default: 'orange', validator: v => ['orange', 'blue', 'green', 'cyan', 'red', 'ink', 'online'].includes(v) },
+  tone: { type: String, default: 'orange', validator: v => ['orange', 'blue', 'green', 'cyan', 'red', 'ink', 'online', 'tournament'].includes(v) },
 })
 
 defineEmits(['back'])
@@ -55,6 +55,10 @@ defineEmits(['back'])
 
   &--online {
     background: $mode-online;
+  }
+
+  &--tournament {
+    background: $mode-tournament;
   }
 
   &__back {
