@@ -1,9 +1,11 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import AppHeader from '../components/AppHeader.vue'
 import OptionSelector from '../components/OptionSelector.vue'
 import StartButton from '../components/StartButton.vue'
+import SettingsLayout from '../components/settings/SettingsLayout.vue'
+import SettingsSection from '../components/settings/SettingsSection.vue'
+import CustomValueInput from '../components/settings/CustomValueInput.vue'
 import ZoneTypePicker from '../components/zone/ZoneTypePicker.vue'
 import ZoneBoard from '../components/zone/ZoneBoard.vue'
 import { useGameStore } from '../store/gameStore.js'
@@ -37,109 +39,34 @@ function startGame() {
 </script>
 
 <template>
-  <div class="settings">
-    <AppHeader title="Échauffement" tone="blue" @back="router.push({ name: 'home' })" />
+  <SettingsLayout title="Échauffement" tone="blue" back-to="home" scroll>
+    <SettingsSection>
+      <OptionSelector label="Durée de la session" tone="blue" :options="durationOptions" v-model="settings.duration" />
+      <CustomValueInput v-model="customMinutes" :show="isCustomDuration" :max="120" unit="min" />
+    </SettingsSection>
 
-    <main class="settings__main">
-      <section class="settings__duration">
-        <OptionSelector label="Durée de la session" tone="blue" :options="durationOptions" v-model="settings.duration" />
-        <label v-if="isCustomDuration" class="settings__custom">
-          <span class="settings__custom-label">Durée personnalisée</span>
-          <input v-model="customMinutes" type="number" min="1" max="120" class="settings__custom-input" />
-          <span class="settings__custom-label">min</span>
-        </label>
-      </section>
+    <SettingsSection label="Type de zones">
+      <ZoneTypePicker v-model="settings.zones" multiple />
+    </SettingsSection>
 
-      <section class="settings__section">
-        <h2 class="settings__label">Type de zones</h2>
-        <ZoneTypePicker v-model="settings.zones" multiple />
-      </section>
-
-      <section class="settings__section settings__section--board">
-        <div class="settings__board-head">
-          <h2 class="settings__label">Zones à travailler</h2>
-          <span class="settings__hint">Touche la cible</span>
-        </div>
+    <template #side>
+      <SettingsSection class="settings__board-section" label="Zones à travailler" hint="Touche la cible">
         <div class="settings__board">
           <ZoneBoard v-model="settings.zones" multiple />
         </div>
-      </section>
+      </SettingsSection>
+    </template>
 
-      <StartButton class="settings__start" tone="blue" @click="startGame" />
-    </main>
-  </div>
+    <template #start>
+      <StartButton tone="blue" @click="startGame" />
+    </template>
+  </SettingsLayout>
 </template>
 
 <style lang="scss" scoped>
+// The board takes the height left between the pickers and the start button
 .settings {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  @include safe-bottom($padding-md);
-
-  &__main {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-lg;
-    padding: $padding-lg $padding-md 0;
-  }
-
-  &__duration,
-  &__section {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-xs;
-  }
-
-  &__label {
-    @include title-sm;
-    color: $muted;
-  }
-
-  &__custom {
-    display: flex;
-    align-items: center;
-    gap: $gap-xs;
-  }
-
-  &__custom-label {
-    @include title-sm;
-    color: $muted;
-  }
-
-  &__custom-input {
-    @include title-md;
-    width: 80px;
-    height: 44px;
-    padding: 0 $padding-xs;
-    border: $border-md solid $border-color;
-    border-radius: $radius-sm;
-    background: transparent;
-    color: $text-color;
-    text-align: center;
-
-    &:focus {
-      outline: none;
-      border-color: $blue;
-    }
-  }
-
-  &__board-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-  }
-
-  &__hint {
-    @include title-sm;
-    color: $blue;
-  }
-
-  // The board takes the height left between the pickers and the start button
-  &__section--board {
+  &__board-section {
     flex: 1;
     min-height: 240px;
   }
@@ -147,36 +74,6 @@ function startGame() {
   &__board {
     flex: 1;
     min-height: 0;
-  }
-
-  &__start {
-    margin-top: auto;
-  }
-}
-
-@media (min-width: $bp-laptop) {
-  .settings {
-    @include safe-bottom(0px);
-
-    &__main {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-template-rows: auto auto 1fr auto;
-      column-gap: $gap-xxl;
-      row-gap: $gap-xxl;
-      padding: $padding-xxl;
-    }
-
-    &__section--board {
-      grid-column: 2;
-      grid-row: 1 / -1;
-      gap: $gap-sm;
-    }
-
-    &__start {
-      grid-column: 1;
-      grid-row: 4;
-    }
   }
 }
 </style>

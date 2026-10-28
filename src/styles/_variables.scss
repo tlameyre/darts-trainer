@@ -56,6 +56,17 @@ $mode-online: #B45309;
 $mode-tactics: #DC2626;
 $mode-tournament: #7C3AED;
 
+// Accent per tone — exposed as --tone by the settings layout
+$tones: (
+  "orange": $orange,
+  "blue": $blue,
+  "green": $accent,
+  "cyan": $mode-checkout,
+  "red": $mode-tactics,
+  "online": $mode-online,
+  "tournament": $mode-tournament,
+);
+
 // Players in multi-player stats (bars, charts), keyed by turn order
 // Player 0 follows the match color (online / tournament) when one is set
 $player-colors: (0: var(--game-color, #{$accent}), 1: $black, 2: $mode-online, 3: $blue);
