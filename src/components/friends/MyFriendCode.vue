@@ -67,7 +67,6 @@ async function copyCode() {
     padding: 0 $padding-xxl $padding-xl;
 
     &__label { @include text-sm; }
-    &__copy { @include title-md; height: 48px; padding: 0 $padding-md; }
   }
 }
 </style>

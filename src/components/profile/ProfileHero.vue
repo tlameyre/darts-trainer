@@ -16,7 +16,7 @@ defineEmits(['edit'])
 <template>
   <header class="profile-hero">
     <div class="profile-hero__top">
-      <AppButton size="small" variant="secondary" tone="inverse" :block="false" icon="pen" @click="$emit('edit')">Modifier</AppButton>
+      <AppButton class="profile-hero__edit" size="small" variant="secondary" tone="inverse" :block="false" icon="pen" @click="$emit('edit')">Modifier</AppButton>
     </div>
 
     <div class="profile-hero__identity">
@@ -141,7 +141,7 @@ defineEmits(['edit'])
     padding: calc(#{$padding-xxl} + env(safe-area-inset-top)) $padding-xxl $padding-xl;
 
     &__top { display: contents; }
-    &__edit { grid-area: edit; height: 48px; padding: 0 $padding-md; @include title-md; }
+    &__edit { grid-area: edit; }
     &__identity { grid-area: identity; gap: $gap-lg; }
     &__stats { grid-area: stats; margin: 0; padding-top: 0; border-top: 0; }
 
