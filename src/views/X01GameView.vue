@@ -18,7 +18,7 @@ import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
 import X01PlayerSplitCard from '../components/x01/X01PlayerSplitCard.vue'
 import GameMenuModal from '../components/game/GameMenuModal.vue'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
-import AppIcon from '../components/AppIcon.vue'
+import AppButton from '../components/AppButton.vue'
 import GameLayout from '../components/game/GameLayout.vue'
 import GameHeaderButton from '../components/game/GameHeaderButton.vue'
 import GameStatusBar from '../components/game/GameStatusBar.vue'
@@ -518,10 +518,9 @@ const multiWinnerName = computed(() =>
       </GameStatusBar>
     </template>
 
-    <button v-if="online?.canUndoRemote.value" class="x01__remote-undo" @click="online.publishUndo">
-      <AppIcon name="undo" :width="16" :height="16" />
+    <AppButton v-if="online?.canUndoRemote.value" size="small" variant="secondary" icon="undo" @click="online.publishUndo">
       Annuler ma dernière volée
-    </button>
+    </AppButton>
     <GameInput
       :darts="currentVolleyDarts"
       value-key="label"
@@ -614,21 +613,6 @@ const multiWinnerName = computed(() =>
     color: var(--game-color, var(--tone));
   }
 
-  &__remote-undo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xs;
-    @include text-sm;
-    color: $text-color;
-    padding: $padding-xs $padding-md;
-    border: $border-md solid $border-color;
-    border-radius: $radius-sm;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
-  }
-
   &__result {
     position: fixed;
     inset: 0;
@@ -642,7 +626,6 @@ const multiWinnerName = computed(() =>
     &__status  { @include title-md; }
     &__offline { @include text-sm; }
 
-    &__remote-undo { @include text-md; }
   }
 }
 

@@ -2,7 +2,7 @@
 import { computed, shallowRef, watch, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
-import AppIcon from '../components/AppIcon.vue'
+import AppButton from '../components/AppButton.vue'
 import CheckoutBoardRoute from '../components/checkout/CheckoutBoardRoute.vue'
 import CheckoutRouteCard from '../components/checkout/CheckoutRouteCard.vue'
 import { CHECKOUT_SCORES, bracketOf, getCheckout } from '../composables/useCheckouts.js'
@@ -82,14 +82,12 @@ function goBack() {
         </div>
 
         <nav class="co-detail__nav">
-          <button type="button" class="co-detail__nav-btn" :disabled="prevScore == null" @click="goto(prevScore)">
-            <AppIcon name="arrow-left" :width="20" :height="20" />
+          <AppButton class="co-detail__nav-btn" size="md" variant="secondary" icon="arrow-left" :disabled="prevScore == null" @click="goto(prevScore)">
             {{ prevScore ?? '—' }}
-          </button>
-          <button type="button" class="co-detail__nav-btn" :disabled="nextScore == null" @click="goto(nextScore)">
+          </AppButton>
+          <AppButton class="co-detail__nav-btn" size="md" variant="secondary" icon-end="arrow-right" :disabled="nextScore == null" @click="goto(nextScore)">
             {{ nextScore ?? '—' }}
-            <AppIcon name="arrow-right" :width="20" :height="20" />
-          </button>
+          </AppButton>
         </nav>
       </div>
     </main>
@@ -198,20 +196,7 @@ function goBack() {
   }
 
   &__nav-btn {
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xs;
-    border: $border-md solid $text-color;
-    border-radius: $radius-sm;
-    color: $text-color;
-    @include title-lg;
     font-variant-numeric: tabular-nums;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.7; }
-    &:disabled { opacity: 0.3; pointer-events: none; }
   }
 }
 
@@ -254,8 +239,6 @@ function goBack() {
     &__label { display: block; }
 
     &__nav { gap: $gap-sm; }
-
-    &__nav-btn { height: 64px; @include title-xxl; }
   }
 }
 </style>

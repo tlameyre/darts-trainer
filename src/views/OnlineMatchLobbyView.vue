@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/authStore.js'
 import { useDbStore } from '../store/dbStore.js'
 import { useGameStore } from '../store/gameStore.js'
 import { useOnlineMatchStore, profileName } from '../store/onlineMatchStore.js'
+import AppButton from '../components/AppButton.vue'
 import AppHeader from '../components/AppHeader.vue'
 import { matchTone, matchColorVar } from '../utils/matchTone.js'
 import OnlineVersusHero from '../components/online/OnlineVersusHero.vue'
@@ -175,23 +176,23 @@ const stage = computed(() => {
 
         <div class="lobby__actions">
           <template v-if="match.status === 'invited' && !isHost">
-            <button class="lobby__btn" :disabled="busy" @click="run(onlineMatchStore.decline)">Refuser</button>
-            <button class="lobby__btn lobby__btn--primary" :disabled="busy" @click="run(onlineMatchStore.accept)">Accepter</button>
+            <AppButton size="md" variant="secondary" :disabled="busy" @click="run(onlineMatchStore.decline)">Refuser</AppButton>
+            <AppButton size="md" :tone="tone" :disabled="busy" @click="run(onlineMatchStore.accept)">Accepter</AppButton>
           </template>
-          <button
+          <AppButton
             v-else-if="match.status === 'invited'"
-            class="lobby__btn" :disabled="busy" @click="run(onlineMatchStore.cancel)"
-          >Annuler l'invitation</button>
-          <button
+            size="md" variant="secondary" :disabled="busy" @click="run(onlineMatchStore.cancel)"
+          >Annuler l'invitation</AppButton>
+          <AppButton
             v-else-if="match.status === 'accepted'"
-            class="lobby__btn" :disabled="busy" @click="run(onlineMatchStore.cancel, 'accepted')"
-          >Annuler le match</button>
-          <button v-else-if="match.status === 'active'" class="lobby__btn lobby__btn--primary" @click="startGame">
+            size="md" variant="secondary" :disabled="busy" @click="run(onlineMatchStore.cancel, 'accepted')"
+          >Annuler le match</AppButton>
+          <AppButton v-else-if="match.status === 'active'" size="md" :tone="tone" @click="startGame">
             Reprendre le match
-          </button>
+          </AppButton>
           <template v-else>
-            <button class="lobby__btn" @click="router.push({ name: 'play' })">Retour</button>
-            <button class="lobby__btn lobby__btn--primary" @click="router.push({ name: 'online-settings' })">Nouveau défi</button>
+            <AppButton size="md" variant="secondary" @click="router.push({ name: 'play' })">Retour</AppButton>
+            <AppButton size="md" :tone="tone" @click="router.push({ name: 'online-settings' })">Nouveau défi</AppButton>
           </template>
         </div>
       </template>
@@ -266,26 +267,6 @@ const stage = computed(() => {
     gap: $gap-xs;
     margin-top: auto;
   }
-
-  &__btn {
-    @include title-lg;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 56px;
-    border: $border-md solid $black;
-    border-radius: $radius-sm;
-    color: $text-color;
-
-    &--primary {
-      border-color: var(--match-color, #{$mode-online});
-      background: var(--match-color, #{$mode-online});
-      color: $white;
-    }
-
-    &:active:not(:disabled) { opacity: 0.8; }
-    &:disabled { opacity: 0.4; }
-  }
 }
 
 @media (min-width: $bp-laptop) {
@@ -317,8 +298,6 @@ const stage = computed(() => {
       grid-template-columns: repeat(auto-fit, 280px);
       justify-content: end;
     }
-
-    &__btn { @include title-xl; height: 64px; }
   }
 }
 </style>

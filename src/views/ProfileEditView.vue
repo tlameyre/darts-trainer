@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/authStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import AppHeader from '../components/AppHeader.vue'
+import AppButton from '../components/AppButton.vue'
 import AppIcon from '../components/AppIcon.vue'
 import SectionTitle from '../components/SectionTitle.vue'
 import ChangeEmailModal from '../components/profile/ChangeEmailModal.vue'
@@ -146,9 +147,9 @@ async function onPasswordSave(newPassword) {
 
     </main>
 
-    <button class="profile-edit__save-btn" :disabled="saveLoading" @click="onSave">
+    <AppButton class="profile-edit__save-btn" size="cta" tone="black" :block="false" :disabled="saveLoading" @click="onSave">
       {{ saveLoading ? '…' : 'Enregistrer' }}
-    </button>
+    </AppButton>
 
     <ChangeEmailModal
       :show="showEmailModal"
@@ -175,21 +176,11 @@ async function onPasswordSave(newPassword) {
 
   // Floating above the BottomNav
   &__save-btn {
-    @include title-xl;
     position: fixed;
     left: $padding-md;
     right: $padding-md;
     bottom: calc(#{$bottom-nav-height} + env(safe-area-inset-bottom) + #{$padding-md});
     z-index: 10;
-    height: 56px;
-    border-radius: $radius-sm;
-    background: $black;
-    color: $bg;
-    text-transform: uppercase;
-    transition: opacity 0.15s;
-
-    &:disabled { opacity: 0.5; }
-    &:active { opacity: 0.85; }
   }
 
   &__main {
@@ -347,7 +338,6 @@ async function onPasswordSave(newPassword) {
     &__save-btn {
       left: max(#{$padding-xxl}, calc((100% - 1040px) / 2));
       right: max(#{$padding-xxl}, calc((100% - 1040px) / 2));
-      height: 60px;
     }
 
     &__main {

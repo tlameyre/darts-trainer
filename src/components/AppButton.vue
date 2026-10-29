@@ -148,6 +148,7 @@ const iconSize = computed(() => (props.size === 'small' ? 16 : 20))
     --btn-color: #{$bg};
     --btn-dark: #{$surface};
     --btn-text: #{$black};
+    --btn-outline: #{$bg};
   }
 
   &--muted {

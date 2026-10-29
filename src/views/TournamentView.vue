@@ -399,13 +399,12 @@ async function playOnline() {
           <span class="tournament__invite-code">{{ data.tournament.join_code }}</span>
         </div>
         <div class="tournament__invite-actions">
-          <button class="tournament__invite-btn" @click="copyCode">
-            <AppIcon name="copy" :width="16" :height="16" />
+          <AppButton size="small" variant="secondary" icon="copy" @click="copyCode">
             {{ copied === 'code' ? 'Copié !' : 'Copier' }}
-          </button>
-          <button class="tournament__invite-btn tournament__invite-btn--primary" @click="shareInviteLink">
+          </AppButton>
+          <AppButton size="small" tone="tournament" @click="shareInviteLink">
             {{ copied === 'link' ? 'Lien copié !' : 'Partager le lien' }}
-          </button>
+          </AppButton>
         </div>
       </div>
 
@@ -416,10 +415,9 @@ async function playOnline() {
             vs <span class="tournament__mine-name">{{ myMatch.opponent.player_data?.name }}</span>
           </span>
         </div>
-        <button class="tournament__mine-btn" @click="onPlay(myMatch.id)">
-          <AppIcon name="play" :width="16" :height="16" />
+        <AppButton size="small" tone="tournament" :block="false" icon="play" @click="onPlay(myMatch.id)">
           {{ myMatch.live ? 'Rejoindre' : 'Jouer' }}
-        </button>
+        </AppButton>
       </div>
     </TournamentHero>
 
@@ -438,17 +436,15 @@ async function playOnline() {
           @add-host="openHostPicker"
           @remove-host="onRemoveHost"
         />
-        <button v-if="isHost" class="tournament__delete tournament__delete--mobile" @click="showDeleteConfirm = true">
-          <AppIcon name="trash" :width="16" :height="16" />
-          Supprimer le tournoi
-        </button>
+        <div v-if="isHost" class="tournament__delete tournament__delete--mobile">
+          <AppButton variant="link" tone="danger" :block="false" icon="trash" @click="showDeleteConfirm = true">Supprimer le tournoi</AppButton>
+        </div>
       </main>
 
       <div v-if="isHost" class="tournament__start">
-        <button class="tournament__delete tournament__delete--desktop" @click="showDeleteConfirm = true">
-          <AppIcon name="trash" :width="16" :height="16" />
-          Supprimer le tournoi
-        </button>
+        <div class="tournament__delete tournament__delete--desktop">
+          <AppButton variant="link" tone="danger" :block="false" icon="trash" @click="showDeleteConfirm = true">Supprimer le tournoi</AppButton>
+        </div>
         <div class="tournament__start-main">
           <span v-if="!canStart" class="tournament__start-hint">
             <AppIcon name="lock" :width="16" :height="16" />
@@ -692,24 +688,6 @@ async function playOnline() {
     gap: $gap-xs;
   }
 
-  &__invite-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xxs;
-    height: 44px;
-    border: $border-md solid $border-color;
-    border-radius: $radius-sm;
-    color: $text-color;
-    @include title-md;
-
-    &--primary {
-      border-color: $mode-tournament;
-      background: $mode-tournament;
-      color: $white;
-    }
-  }
-
   &__mine {
     grid-template-columns: 1fr auto;
     align-items: center;
@@ -725,25 +703,9 @@ async function playOnline() {
     color: $text-color;
   }
 
-  &__mine-btn {
-    display: flex;
-    align-items: center;
-    gap: $gap-xxs;
-    height: 44px;
-    padding: 0 $padding-sm;
-    border-radius: $radius-sm;
-    background: $mode-tournament;
-    color: $white;
-    @include title-md;
-  }
-
   &__delete {
     align-self: center;
     display: flex;
-    align-items: center;
-    gap: $gap-xs;
-    @include text-sm;
-    color: $error;
   }
 
   &__delete--desktop { display: none; }
@@ -840,12 +802,9 @@ async function playOnline() {
     &__loading,
     &__empty,
     &__locked-text,
-    &__delete { @include text-md; }
     &__invite { padding: $padding-md; gap: $gap-md; }
     &__invite-label { @include text-xs; }
     &__invite-code { @include display-xs; }
-    &__invite-btn { height: 48px; @include title-lg; }
-    &__mine-btn { @include title-lg; }
     &__mine-name { @include title-xl; }
     &__locked-title { @include title-lg; }
     &__start-hint { @include text-sm; }
