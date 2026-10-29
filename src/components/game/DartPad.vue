@@ -60,9 +60,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
     </div>
 
     <div class="dart-pad__actions">
-      <button class="dart-pad__undo" @click="emit('undo')">
-        <AppIcon name="undo" :width="20" :height="20" />
-        Annuler
+      <button class="dart-pad__undo" aria-label="Annuler la dernière fléchette" @click="emit('undo')">
+        <AppIcon name="undo" :width="36" :height="36" />
       </button>
       <button class="dart-pad__miss" :disabled="locked" @click="emit('miss')">Manqué</button>
     </div>
@@ -201,11 +200,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   }
 
   &__undo {
-    @include title-md;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: $gap-xs;
     border: $border-md solid $border-color;
     background: $surface;
     color: $black;
@@ -244,7 +241,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
     &--multi &__hit-label { @include display-xs; }
     &__hit-sub { @include text-md; }
 
-    &__undo { @include title-xxl; }
+    &__undo :deep(svg) { width: 56px; height: 56px; }
     &__miss { @include title-xxxl; }
   }
 }

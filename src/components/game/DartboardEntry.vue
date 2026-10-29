@@ -37,7 +37,7 @@ const emit = defineEmits(['dart', 'miss', 'undo'])
       </div>
       <div v-if="actions" class="dartboard-entry__actions">
         <button class="dartboard-entry__key dartboard-entry__key--undo" aria-label="Annuler" @click="emit('undo')">
-          <AppIcon name="undo" :width="40" :height="40" />
+          <AppIcon name="undo" :width="24" :height="24" />
         </button>
         <button class="dartboard-entry__key dartboard-entry__key--miss" :disabled="locked || missLocked" @click="emit('miss')">
           Raté
