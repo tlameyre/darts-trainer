@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import AppButton from '../AppButton.vue'
-import AppIcon from '../AppIcon.vue'
+import IconButton from '../IconButton.vue'
 import ZoneTypePicker from '../zone/ZoneTypePicker.vue'
 import ZoneBoard from '../zone/ZoneBoard.vue'
 
@@ -41,9 +41,7 @@ function validate() {
               <span v-if="midVolley" class="zone-sheet__caption">Après la volée en cours</span>
               <h2 id="zone-sheet-title" class="zone-sheet__title">Prochaine zone</h2>
             </div>
-            <button class="zone-sheet__close" aria-label="Fermer" @click="emit('close')">
-              <AppIcon name="close" :width="16" :height="16" />
-            </button>
+            <IconButton variant="outline" icon="close" label="Fermer" @click="emit('close')" />
           </header>
 
           <div class="zone-sheet__body">
@@ -136,17 +134,6 @@ function validate() {
   &__title {
     @include title-xxl;
     line-height: 1;
-  }
-
-  &__close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border: $border-md solid $black;
-    border-radius: $radius-sm;
-    color: $black;
   }
 
   &__body {

@@ -1,5 +1,5 @@
 <script setup>
-import AppIcon from './AppIcon.vue'
+import IconButton from './IconButton.vue'
 
 defineProps({
   show: { type: Boolean, required: true },
@@ -23,9 +23,7 @@ defineEmits(['close'])
           <span class="app-modal__handle" />
           <div v-if="title" class="app-modal__header">
             <h2 class="app-modal__title">{{ title }}</h2>
-            <button class="app-modal__close" aria-label="Fermer" @click="$emit('close')">
-              <AppIcon name="close" :width="16" :height="16" />
-            </button>
+            <IconButton icon="close" label="Fermer" @click="$emit('close')" />
           </div>
           <slot />
         </div>
@@ -104,20 +102,6 @@ defineEmits(['close'])
     @include title-xxl;
     line-height: 1;
   }
-
-  &__close {
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: $radius-sm;
-    background: $surface;
-    color: $text-color;
-
-    &:active { background: $border-color; }
-  }
 }
 
 // Desktop: a centered dialog instead of a bottom sheet
@@ -134,11 +118,6 @@ defineEmits(['close'])
 
     .app-modal__handle { display: none; }
     .app-modal__title { @include title-xxxl; line-height: 1; }
-
-    .app-modal__close {
-      width: 44px;
-      height: 44px;
-    }
   }
 }
 

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useTournamentStore } from '../store/tournamentStore.js'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
+import IconButton from '../components/IconButton.vue'
 import AppIcon from '../components/AppIcon.vue'
 import SectionTitle from '../components/SectionTitle.vue'
 import { MIN_PARTICIPANTS_TO_START } from '../data/tournamentConstants.js'
@@ -62,9 +63,7 @@ async function join() {
     <template v-else-if="preview">
       <section class="join__hero">
         <header class="join__bar">
-          <button class="join__back" aria-label="Retour" @click="router.push({ name: 'tournaments' })">
-            <AppIcon name="arrow-left" :width="24" :height="24" />
-          </button>
+          <IconButton variant="bare" light icon="arrow-left" label="Retour" @click="router.push({ name: 'tournaments' })" />
           <h1 class="join__bar-title">Invitation</h1>
         </header>
 
@@ -211,11 +210,6 @@ async function join() {
       margin-bottom: auto;
     }
 
-    &__back {
-      display: flex;
-      padding: $padding-xxs;
-      color: $white;
-    }
 
     &__bar-title {
       @include title-xl;

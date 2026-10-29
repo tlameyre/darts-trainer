@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import OptionSelector from '../components/OptionSelector.vue'
 import OptionTile from '../components/OptionTile.vue'
 import AppButton from '../components/AppButton.vue'
+import IconButton from '../components/IconButton.vue'
 import SettingsLayout from '../components/settings/SettingsLayout.vue'
 import SettingsSection from '../components/settings/SettingsSection.vue'
 import CustomValueInput from '../components/settings/CustomValueInput.vue'
@@ -86,10 +87,7 @@ function startGame() {
 <template>
   <SettingsLayout title="Checkouts" tone="cyan" back-to="home" :principle="PRINCIPLE" :recap="recap">
     <template #panel-actions>
-      <button type="button" class="settings__wiki-btn" aria-label="Consulter les checkouts"
-        @click="router.push({ name: 'checkout-wiki' })">
-        <AppIcon name="book" :width="24" :height="24" />
-      </button>
+      <IconButton variant="bare" light icon="book" label="Consulter les checkouts" @click="router.push({ name: 'checkout-wiki' })" />
     </template>
 
     <SettingsSection class="settings__mode" label="Mode">
@@ -175,15 +173,6 @@ function startGame() {
 
 <style lang="scss" scoped>
 .settings {
-  &__wiki-btn {
-    display: flex;
-    color: $white;
-    padding: $padding-xxs;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
-  }
-
   &__hint {
     @include text-xs;
     color: $muted;

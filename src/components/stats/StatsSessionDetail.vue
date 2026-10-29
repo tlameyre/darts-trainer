@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import AppHeader from '../AppHeader.vue'
 import AppIcon from '../AppIcon.vue'
+import IconButton from '../IconButton.vue'
 import GameRecap from '../game/GameRecap.vue'
 import ScoreRecap from '../score/ScoreRecap.vue'
 import WarmupEndRecap from '../warmup/WarmupEndRecap.vue'
@@ -140,9 +141,7 @@ function formatDate(iso) {
     <div v-if="show && session" class="session-detail" :style="gameColor ? { '--game-color': gameColor } : undefined">
       <AppHeader v-if="!inLegDetail" :title="formatDate(session.played_at)" :tone="headerTone" @back="$emit('close')">
         <template #right>
-          <button class="session-detail__delete" aria-label="Supprimer la session" @click="$emit('delete', session.id)">
-            <AppIcon name="trash" :width="24" :height="24" />
-          </button>
+          <IconButton variant="bare" light icon="trash" label="Supprimer la session" @click="$emit('delete', session.id)" />
         </template>
       </AppHeader>
 
@@ -156,9 +155,7 @@ function formatDate(iso) {
         @leg-detail="inLegDetail = $event"
       >
         <template #bar-right>
-          <button class="session-detail__delete" aria-label="Supprimer la session" @click="$emit('delete', session.id)">
-            <AppIcon name="trash" :width="22" :height="22" />
-          </button>
+          <IconButton variant="bare" light icon="trash" label="Supprimer la session" @click="$emit('delete', session.id)" />
         </template>
         <template v-if="session.tournament_id" #winner-aside>
           <!-- tournaments is null once the tournament is gone or no longer readable -->
@@ -226,16 +223,6 @@ function formatDate(iso) {
   z-index: 100;
   display: flex;
   flex-direction: column;
-
-  &__delete {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    color: $white;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
-  }
 
   &__recap {
     flex: 1;

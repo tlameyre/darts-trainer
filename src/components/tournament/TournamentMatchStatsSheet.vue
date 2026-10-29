@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import AppIcon from '../AppIcon.vue'
+import IconButton from '../IconButton.vue'
 import X01Result from '../x01/X01Result.vue'
 
 const props = defineProps({
@@ -46,9 +46,7 @@ const subtitle = computed(() => {
   <Transition name="slide-up">
     <div v-if="match" class="match-sheet">
       <div class="match-sheet__topbar">
-        <button class="match-sheet__close" aria-label="Fermer" @click="$emit('close')">
-          <AppIcon name="arrow-left" :width="20" :height="20" />
-        </button>
+        <IconButton size="sm" icon="arrow-left" :icon-size="20" label="Fermer" @click="$emit('close')" />
         <span class="match-sheet__heading">{{ heading }}</span>
         <span class="match-sheet__spacer" />
       </div>
@@ -78,23 +76,10 @@ const subtitle = computed(() => {
     flex-shrink: 0;
   }
 
-  &__close,
   &__spacer {
     width: 36px;
     height: 36px;
     flex-shrink: 0;
-  }
-
-  &__close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: $radius-sm;
-    background: rgba($white, 0.07);
-    color: $text-color;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
   }
 
   &__heading {

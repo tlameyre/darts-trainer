@@ -3,6 +3,7 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
+import IconButton from '../components/IconButton.vue'
 import AppIcon from '../components/AppIcon.vue'
 import OptionSelector from '../components/OptionSelector.vue'
 import ToggleSwitch from '../components/ToggleSwitch.vue'
@@ -86,9 +87,7 @@ async function createTournament() {
   <div class="settings">
     <aside class="settings__aside">
       <header class="settings__aside-bar">
-        <button class="settings__aside-back" aria-label="Retour" @click="router.push({ name: 'tournaments' })">
-          <AppIcon name="arrow-left" :width="24" :height="24" />
-        </button>
+        <IconButton variant="bare" light icon="arrow-left" label="Retour" @click="router.push({ name: 'tournaments' })" />
         <h1 class="settings__aside-bar-title">Tournoi</h1>
       </header>
       <h2 class="settings__aside-title">Nouveau tournoi</h2>
@@ -470,11 +469,6 @@ async function createTournament() {
       gap: $gap-sm;
     }
 
-    &__aside-back {
-      display: flex;
-      padding: $padding-xxs;
-      color: $white;
-    }
 
     &__aside-bar-title {
       @include title-xl;

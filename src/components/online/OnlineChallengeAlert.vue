@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import AppButton from '../AppButton.vue'
+import IconButton from '../IconButton.vue'
 import AppIcon from '../AppIcon.vue'
 import { avatarColor } from '../../utils/avatarColor.js'
 
@@ -31,9 +32,7 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
               <AppIcon :name="tournament ? 'trophy' : 'globe'" :width="16" :height="16" />
               {{ tournament ? 'Défi de tournoi' : 'Défi en ligne' }}
             </span>
-            <button class="alert__close" aria-label="Fermer" @click="$emit('later')">
-              <AppIcon name="close" :width="16" :height="16" />
-            </button>
+            <IconButton variant="translucent" size="sm" icon="close" label="Fermer" @click="$emit('later')" />
           </div>
 
           <h2 id="challenge-title" class="alert__title">{{ opponentName }} te défie</h2>
@@ -130,17 +129,6 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
     font-weight: 600;
     letter-spacing: $tracking-lg;
     text-transform: uppercase;
-  }
-
-  &__close {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: $radius-sm;
-    background: rgba($white, 0.18);
-    color: $white;
   }
 
   &__title {

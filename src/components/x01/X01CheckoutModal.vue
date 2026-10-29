@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { canFinish } from '../../composables/useCheckoutAnalysis.js'
 import AppButton from '../AppButton.vue'
+import IconButton from '../IconButton.vue'
 import AppModal from '../AppModal.vue'
 import AppIcon from '../AppIcon.vue'
 
@@ -50,9 +51,7 @@ function confirm() {
         <span v-if="winnerName" class="co-modal__label">{{ winnerName }} remporte la manche</span>
         <p class="co-modal__title">Checkout {{ checkoutScore }} !</p>
       </div>
-      <button class="co-modal__close" aria-label="Fermer" @click="confirm">
-        <AppIcon name="close" :width="22" :height="22" />
-      </button>
+      <IconButton variant="bare" icon="close" :icon-size="22" label="Fermer" @click="confirm" />
     </div>
 
     <div class="co-modal__group">
@@ -125,14 +124,6 @@ function confirm() {
     line-height: 1.05;
   }
 
-  &__close {
-    color: $text-color;
-    display: flex;
-    padding: $padding-xxs;
-    flex-shrink: 0;
-    transition: opacity 0.15s;
-    &:active { opacity: 0.6; }
-  }
 
   &__group {
     display: flex;

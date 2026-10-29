@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../AppHeader.vue'
+import IconButton from '../IconButton.vue'
 import AppIcon from '../AppIcon.vue'
 import AppModal from '../AppModal.vue'
 import AppButton from '../AppButton.vue'
@@ -40,9 +41,7 @@ function goBack(backTo) {
 
     <aside class="settings__panel">
       <div class="settings__panel-head">
-        <button class="settings__back" aria-label="Retour" @click="goBack(backTo)">
-          <AppIcon name="arrow-left" :width="24" :height="24" />
-        </button>
+        <IconButton variant="bare" light icon="arrow-left" label="Retour" @click="goBack(backTo)" />
         <h1 class="settings__panel-title">{{ title }}</h1>
         <div class="settings__panel-actions">
           <slot name="panel-actions" />
@@ -173,11 +172,6 @@ function goBack(backTo) {
       gap: $gap-sm;
     }
 
-    &__back {
-      display: flex;
-      padding: $padding-xxs;
-      color: $white;
-    }
 
     &__panel-title {
       @include title-xxl;

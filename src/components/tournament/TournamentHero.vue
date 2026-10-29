@@ -1,4 +1,5 @@
 <script setup>
+import IconButton from '../IconButton.vue'
 import AppIcon from '../AppIcon.vue'
 
 defineProps({
@@ -14,9 +15,7 @@ defineEmits(['back'])
 <template>
   <section class="hero">
     <header class="hero__bar">
-      <button class="hero__back" aria-label="Retour" @click="$emit('back')">
-        <AppIcon name="arrow-left" :width="24" :height="24" />
-      </button>
+      <IconButton variant="bare" light icon="arrow-left" label="Retour" @click="$emit('back')" />
       <h1 class="hero__bar-title">Tournoi</h1>
     </header>
 
@@ -148,11 +147,6 @@ defineEmits(['back'])
       gap: $gap-sm;
     }
 
-    &__back {
-      display: flex;
-      padding: $padding-xxs;
-      color: $white;
-    }
 
     &__bar-title {
       @include title-xl;

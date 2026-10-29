@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import AppButton from '../AppButton.vue'
+import IconButton from '../IconButton.vue'
 import AppIcon from '../AppIcon.vue'
 import DartPill from './DartPill.vue'
 import { getCheckout } from '../../composables/useCheckouts.js'
@@ -50,9 +51,7 @@ const rows = computed(() => props.results.map((r, i) => {
   <div class="co-recap" :class="{ 'co-recap--embedded': hideActions }">
     <aside class="co-recap__hero">
       <header v-if="!hideActions" class="co-recap__header">
-        <button class="co-recap__exit" aria-label="Quitter" @click="emit('exit')">
-          <AppIcon name="exit" :width="24" :height="24" />
-        </button>
+        <IconButton variant="bare" light icon="exit" label="Quitter" @click="emit('exit')" />
         <h1 class="co-recap__title">{{ isQuiz ? 'Fin du quiz' : 'Révision terminée' }}</h1>
       </header>
 
@@ -175,15 +174,6 @@ const rows = computed(() => props.results.map((r, i) => {
     grid-template-columns: 48px minmax(0, 1fr) 48px;
     align-items: center;
     padding-top: $padding-xs;
-  }
-
-  &__exit {
-    display: flex;
-    padding: $padding-xxs;
-    color: $white;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
   }
 
   &__title {

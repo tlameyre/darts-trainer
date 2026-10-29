@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import AppButton from '../AppButton.vue'
+import IconButton from '../IconButton.vue'
 import AppIcon from '../AppIcon.vue'
 import { avatarColor } from '../../utils/avatarColor.js'
 
@@ -35,9 +36,7 @@ const subtitle = computed(() => {
   <div class="result">
     <section class="result__hero">
       <header class="result__bar">
-        <button class="result__back" aria-label="Quitter" @click="$emit('quit')">
-          <AppIcon name="arrow-left" :width="24" :height="24" />
-        </button>
+        <IconButton variant="bare" light icon="arrow-left" label="Quitter" @click="$emit('quit')" />
         <h1 class="result__bar-title">Fin de partie</h1>
       </header>
 
@@ -311,11 +310,6 @@ const subtitle = computed(() => {
       gap: $gap-sm;
     }
 
-    &__back {
-      display: flex;
-      padding: $padding-xxs;
-      color: $white;
-    }
 
     &__bar-title {
       @include title-xl;

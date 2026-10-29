@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { checkoutPct } from '../../composables/useX01MatchStats.js'
 import AppButton from '../AppButton.vue'
+import IconButton from '../IconButton.vue'
 import AppIcon from '../AppIcon.vue'
 import AppTabs from '../AppTabs.vue'
 import X01StatBars from './X01StatBars.vue'
@@ -93,15 +94,13 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
     <!-- ── Green hero: winner of the match, or of the leg in detail ──────────── -->
     <section class="match-end__hero">
       <header v-if="!hideActions || leg" class="match-end__bar">
-        <button
+        <IconButton
           v-if="leg"
           class="match-end__icon-btn"
-          aria-label="Retour au match"
+          variant="bare" light icon="arrow-left" label="Retour au match"
           @click="selectedLeg = null"
-        ><AppIcon name="arrow-left" :width="24" :height="24" /></button>
-        <button v-else class="match-end__icon-btn" aria-label="Quitter" @click="$emit('home')">
-          <AppIcon name="exit" :width="24" :height="24" />
-        </button>
+        />
+        <IconButton v-else class="match-end__icon-btn" variant="bare" light icon="exit" label="Quitter" @click="$emit('home')" />
         <h1 class="match-end__heading">{{ leg ? `Manche ${leg.number} · détail` : 'Fin de partie' }}</h1>
         <div class="match-end__bar-right"><slot name="bar-right" /></div>
       </header>
@@ -246,13 +245,7 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
   }
 
   &__icon-btn {
-    display: flex;
     justify-self: start;
-    padding: 0;
-    color: $white;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
   }
 
   &__heading {
@@ -483,7 +476,6 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
       margin-bottom: 0;
     }
 
-    &__icon-btn { padding: $padding-xxs; }
     &__heading { text-align: left; letter-spacing: $tracking-sm; }
 
     &__hero {

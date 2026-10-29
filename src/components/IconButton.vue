@@ -16,6 +16,7 @@ const props = defineProps({
     validator: v => ['bare', 'surface', 'outline', 'translucent', 'filled'].includes(v),
   },
   color: { type: String, default: null },
+  light: { type: Boolean, default: false },
   iconSize: { type: Number, default: null },
 })
 
@@ -24,7 +25,7 @@ const resolvedIconSize = computed(() => props.iconSize ?? (props.variant === 'ba
 
 <template>
   <button
-    :class="['icon-btn', `icon-btn--${variant}`, variant !== 'bare' && `icon-btn--${size}`]"
+    :class="['icon-btn', `icon-btn--${variant}`, variant !== 'bare' && `icon-btn--${size}`, { 'icon-btn--light': light }]"
     :style="color ? { '--icon-btn-color': color } : null"
     :aria-label="label"
   >
@@ -47,7 +48,7 @@ const resolvedIconSize = computed(() => props.iconSize ?? (props.variant === 'ba
 
   &--bare {
     padding: $padding-xxs;
-    color: inherit;
+    color: $text-color;
 
     &:active { opacity: 0.6; }
   }
@@ -83,6 +84,8 @@ const resolvedIconSize = computed(() => props.iconSize ?? (props.variant === 'ba
 
     &:active { opacity: 0.8; }
   }
+
+  &--light { color: $white; }
 
   &:disabled {
     opacity: 0.4;
