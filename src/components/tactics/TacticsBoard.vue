@@ -99,7 +99,8 @@ const tableRows = computed(() => {
     border-radius: $radius-sm;
     background: color.adjust($mode-tactics, $lightness: -10%);
     overflow: hidden;
-    height: 100%;
+    grid-template-rows: 36px;
+    grid-auto-rows: 30px;
   }
 
   &__cell {
@@ -186,6 +187,12 @@ const tableRows = computed(() => {
 @media (min-width: $bp-laptop) {
   .tactics-board {
     padding: 0;
+
+    &__grid {
+      height: 100%;
+      grid-template-rows: auto;
+      grid-auto-rows: auto;
+    }
 
     &__cell--head { @include title-md; }
     &__cell--zone { @include title-md; }

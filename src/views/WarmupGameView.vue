@@ -142,6 +142,7 @@ onUnmounted(() => {
     title="Échauffement"
     tone="blue"
     :over="gameOver"
+    style="--entry-height: 50dvh"
     @exit="router.push({ name: 'warmup-settings' })"
   >
     <template #header-right>

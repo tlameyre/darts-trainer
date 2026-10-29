@@ -58,7 +58,7 @@ defineEmits(['exit'])
 </template>
 
 <style lang="scss" scoped>
-// A view can size its entry area on mobile with --entry-height / --entry-max-height
+// A view can size its areas on mobile with --entry-height / --entry-max-height / --entry-flex / --panel-flex
 .game-layout {
   display: flex;
   flex-direction: column;
@@ -106,7 +106,7 @@ defineEmits(['exit'])
   }
 
   &__entry {
-    flex-shrink: 0;
+    flex: var(--entry-flex, 0 0 auto);
     height: var(--entry-height, auto);
     max-height: var(--entry-max-height, none);
     display: flex;
