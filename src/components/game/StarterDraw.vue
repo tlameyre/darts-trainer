@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useGameStore } from '../../store/gameStore.js'
 import AppHeader from '../AppHeader.vue'
 import AppIcon from '../AppIcon.vue'
-import StartButton from '../StartButton.vue'
+import AppButton from '../AppButton.vue'
 import X01PlayerOrderList from '../x01/X01PlayerOrderList.vue'
 
 const props = defineProps({
@@ -83,7 +83,7 @@ function confirmOrder() {
           <X01PlayerOrderList v-model="order" />
         </section>
 
-        <StartButton class="starter__start" :tone="tone" @click="confirmOrder" />
+        <AppButton size="cta" icon-end="arrow-right" class="starter__start" :tone="tone" @click="confirmOrder">Commencer</AppButton>
       </div>
     </main>
   </div>
@@ -251,7 +251,6 @@ function confirmOrder() {
     &__list-title { @include title-md; }
     &__list-hint  { @include text-sm; }
     &__reshuffle  { height: 56px; @include title-md; }
-    &__start      { height: 64px; @include title-xxl; }
   }
 }
 </style>

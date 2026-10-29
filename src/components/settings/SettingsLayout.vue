@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import AppHeader from '../AppHeader.vue'
 import AppIcon from '../AppIcon.vue'
 import AppModal from '../AppModal.vue'
-import StartButton from '../StartButton.vue'
+import AppButton from '../AppButton.vue'
 import SettingsPrinciple from './SettingsPrinciple.vue'
 import SettingsRecap from './SettingsRecap.vue'
 
@@ -79,7 +79,7 @@ function goBack(backTo) {
         <SettingsPrinciple :text="principle.text" :chips="principle.chips" :tone="tone">
           <slot name="principle-extra" />
         </SettingsPrinciple>
-        <StartButton :tone="tone" :arrow="false" @click="showPrinciple = false">Compris</StartButton>
+        <AppButton size="cta" :tone="tone" @click="showPrinciple = false">Compris</AppButton>
       </div>
     </AppModal>
   </div>

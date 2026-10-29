@@ -3,7 +3,7 @@ import { reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import OptionSelector from '../components/OptionSelector.vue'
 import OptionTile from '../components/OptionTile.vue'
-import StartButton from '../components/StartButton.vue'
+import AppButton from '../components/AppButton.vue'
 import SettingsLayout from '../components/settings/SettingsLayout.vue'
 import SettingsSection from '../components/settings/SettingsSection.vue'
 import CustomValueInput from '../components/settings/CustomValueInput.vue'
@@ -166,7 +166,7 @@ function startGame() {
 
     <template #start>
       <div class="settings__start">
-        <StartButton tone="cyan" @click="startGame" />
+        <AppButton size="cta" icon-end="arrow-right" tone="cyan" @click="startGame">Commencer</AppButton>
         <p class="settings__source">Données : {{ CHECKOUT_DATA_SOURCE }}</p>
       </div>
     </template>

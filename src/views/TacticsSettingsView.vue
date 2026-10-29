@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import StartButton from '../components/StartButton.vue'
+import AppButton from '../components/AppButton.vue'
 import SettingsLayout from '../components/settings/SettingsLayout.vue'
 import PlayerSetupSection from '../components/settings/PlayerSetupSection.vue'
 import LegsStepper from '../components/settings/LegsStepper.vue'
@@ -45,7 +45,7 @@ function startGame() {
     </template>
 
     <template #start>
-      <StartButton tone="red" @click="startGame" />
+      <AppButton size="cta" icon-end="arrow-right" tone="red" @click="startGame">Commencer</AppButton>
     </template>
   </SettingsLayout>
 </template>

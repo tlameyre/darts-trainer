@@ -3,7 +3,7 @@ import { reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import OptionSelector from '../components/OptionSelector.vue'
 import OptionTile from '../components/OptionTile.vue'
-import StartButton from '../components/StartButton.vue'
+import AppButton from '../components/AppButton.vue'
 import SettingsLayout from '../components/settings/SettingsLayout.vue'
 import SettingsSection from '../components/settings/SettingsSection.vue'
 import { useGameStore } from '../store/gameStore.js'
@@ -111,7 +111,7 @@ function startGame() {
     </template>
 
     <template #start>
-      <StartButton @click="startGame" />
+      <AppButton size="cta" icon-end="arrow-right" @click="startGame">Commencer</AppButton>
     </template>
   </SettingsLayout>
 </template>

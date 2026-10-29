@@ -5,7 +5,7 @@ import { useFriendStore } from '../store/friendStore.js'
 import { useOnlineMatchStore, profileName } from '../store/onlineMatchStore.js'
 import AppIcon from '../components/AppIcon.vue'
 import OptionSelector from '../components/OptionSelector.vue'
-import StartButton from '../components/StartButton.vue'
+import AppButton from '../components/AppButton.vue'
 import SettingsLayout from '../components/settings/SettingsLayout.vue'
 import SettingsSection from '../components/settings/SettingsSection.vue'
 import LegsStepper from '../components/settings/LegsStepper.vue'
@@ -108,9 +108,9 @@ onMounted(() => {
     </template>
 
     <template #start>
-      <StartButton tone="online" :disabled="!opponent || inviting" @click="challenge">
+      <AppButton size="cta" icon-end="arrow-right" tone="online" :disabled="!opponent || inviting" @click="challenge">
         {{ opponent ? `Défier ${profileName(opponent)}` : 'Choisis un adversaire' }}
-      </StartButton>
+      </AppButton>
     </template>
   </SettingsLayout>
 </template>

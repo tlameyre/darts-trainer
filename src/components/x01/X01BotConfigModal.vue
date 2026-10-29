@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import AppModal from '../AppModal.vue'
 import OptionTile from '../OptionTile.vue'
-import StartButton from '../StartButton.vue'
+import AppButton from '../AppButton.vue'
 import StepScale from '../StepScale.vue'
 import { AI_LEVELS } from '../../composables/useX01AI.js'
 
@@ -125,7 +125,7 @@ const closestLevel = computed(() => AI_LEVELS[customAvg.value - 1])
         />
       </section>
 
-      <StartButton tone="green" @click="emit('confirm', profile); emit('close')">Valider</StartButton>
+      <AppButton size="cta" icon-end="arrow-right" tone="green" @click="emit('confirm', profile); emit('close')">Valider</AppButton>
     </div>
   </AppModal>
 </template>

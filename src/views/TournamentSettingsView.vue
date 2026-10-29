@@ -208,11 +208,11 @@ async function createTournament() {
       </main>
 
       <div class="settings__footer">
-        <AppButton class="settings__footer-secondary" variant="secondary" @click="backFromHeader">
+        <AppButton size="cta" variant="secondary" @click="backFromHeader">
           {{ step === 1 ? 'Annuler' : 'Retour' }}
         </AppButton>
-        <AppButton v-if="step === 1" tone="tournament" :disabled="!canSubmitStep1" @click="goToStep2">Suivant</AppButton>
-        <AppButton v-else tone="tournament" :disabled="creating" @click="createTournament">
+        <AppButton v-if="step === 1" size="cta" tone="tournament" :disabled="!canSubmitStep1" @click="goToStep2">Suivant</AppButton>
+        <AppButton v-else size="cta" tone="tournament" :disabled="creating" @click="createTournament">
           {{ creating ? 'Création...' : 'Créer le tournoi' }}
         </AppButton>
       </div>
@@ -601,10 +601,6 @@ async function createTournament() {
       gap: $gap-sm;
       margin-top: auto;
     }
-
-    &__footer-secondary { display: flex; }
-
-    &__footer :deep(.btn) { height: 60px; padding: 0; @include title-xxl; }
 
     &__label { @include title-md; }
     &__optional,

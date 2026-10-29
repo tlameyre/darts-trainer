@@ -454,7 +454,7 @@ async function playOnline() {
             <AppIcon name="lock" :width="16" :height="16" />
             Encore {{ MIN_PARTICIPANTS_TO_START - data.participants.length }} joueur{{ MIN_PARTICIPANTS_TO_START - data.participants.length > 1 ? 's' : '' }} pour pouvoir démarrer
           </span>
-          <AppButton tone="tournament" :disabled="!canStart" @click="showStartModal = true">
+          <AppButton size="cta" tone="tournament" :disabled="!canStart" @click="showStartModal = true">
             Démarrer le tournoi
           </AppButton>
         </div>
@@ -870,7 +870,7 @@ async function playOnline() {
       align-items: center;
       gap: $gap-md;
 
-      :deep(.btn) { width: 280px; height: 60px; padding: 0; @include title-xxl; }
+      :deep(.btn) { width: 280px; }
     }
   }
 }

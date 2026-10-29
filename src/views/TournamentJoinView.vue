@@ -95,8 +95,8 @@ async function join() {
         <p v-if="error" class="join__warning">{{ error }}</p>
 
         <div class="join__actions">
-          <AppButton variant="secondary" @click="router.push({ name: 'tournaments' })">Plus tard</AppButton>
-          <AppButton tone="tournament" :disabled="joining || !canJoin" @click="join">
+          <AppButton size="cta" variant="secondary" @click="router.push({ name: 'tournaments' })">Plus tard</AppButton>
+          <AppButton size="cta" tone="tournament" :disabled="joining || !canJoin" @click="join">
             {{ joining ? 'Inscription...' : 'Rejoindre le tournoi' }}
           </AppButton>
         </div>
@@ -280,8 +280,6 @@ async function join() {
       grid-template-columns: 1fr 1fr;
       gap: $gap-sm;
       margin-top: auto;
-
-      :deep(.btn) { height: 60px; padding: 0; @include title-xl; }
     }
 
     &__message { grid-column: 1 / -1; @include text-md; }
