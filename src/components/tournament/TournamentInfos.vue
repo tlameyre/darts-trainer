@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import AppButton from '../AppButton.vue'
 import AppIcon from '../AppIcon.vue'
 import SectionTitle from '../SectionTitle.vue'
 import { avatarColor } from '../../utils/avatarColor.js'
@@ -75,10 +76,7 @@ const rules = computed(() => {
     </section>
     </div>
 
-    <button v-if="isHost" class="infos__delete" @click="emit('delete')">
-      <AppIcon name="trash" :width="16" :height="16" />
-      Supprimer le tournoi
-    </button>
+    <AppButton v-if="isHost" class="infos__delete" variant="link" tone="danger" :block="false" icon="trash" @click="emit('delete')">Supprimer le tournoi</AppButton>
   </div>
 </template>
 
@@ -187,11 +185,6 @@ const rules = computed(() => {
 
   &__delete {
     align-self: center;
-    display: flex;
-    align-items: center;
-    gap: $gap-xs;
-    @include text-sm;
-    color: $error;
   }
 }
 
@@ -208,7 +201,6 @@ const rules = computed(() => {
 
     &__winner-sub,
     &__label,
-    &__delete { @include text-md; }
     &__value { @include title-xl; }
     &__host { @include title-xxl; }
     &__description { @include text-lg; }

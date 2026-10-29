@@ -68,10 +68,7 @@ function confirmOrder() {
           pour choisir toi-même qui ouvre la partie.
         </p>
 
-        <button class="starter__reshuffle" @click="reshuffle">
-          <AppIcon name="dice" :width="20" :height="20" />
-          Nouveau tirage
-        </button>
+        <AppButton class="starter__reshuffle" size="small" variant="secondary" icon="dice" @click="reshuffle">Nouveau tirage</AppButton>
       </div>
 
       <div class="starter__order">
@@ -195,18 +192,6 @@ function confirmOrder() {
 
   &__reshuffle {
     order: 3;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xs;
-    border-radius: $radius-sm;
-    border: $border-md solid $text-color;
-    color: $text-color;
-    @include title-sm;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
   }
 
   &__start {
@@ -250,7 +235,6 @@ function confirmOrder() {
     &__list     { gap: $gap-sm; }
     &__list-title { @include title-md; }
     &__list-hint  { @include text-sm; }
-    &__reshuffle  { height: 56px; @include title-md; }
   }
 }
 </style>

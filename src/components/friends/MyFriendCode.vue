@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import AppIcon from '../AppIcon.vue'
+import AppButton from '../AppButton.vue'
 
 const props = defineProps({
   code: { type: String, required: true },
@@ -25,10 +25,9 @@ async function copyCode() {
       <span class="my-code__label">Mon code ami</span>
       <span class="my-code__value">{{ code }}</span>
     </div>
-    <button class="my-code__copy" @click="copyCode">
-      <AppIcon :name="copied ? 'check' : 'copy'" :width="18" :height="18" />
+    <AppButton size="small" tone="inverse" :block="false" :icon="copied ? 'check' : 'copy'" @click="copyCode">
       {{ copied ? 'Copié' : 'Copier' }}
-    </button>
+    </AppButton>
   </section>
 </template>
 
@@ -60,22 +59,6 @@ async function copyCode() {
     @include title-xxxl;
     line-height: 0.9;
     letter-spacing: 0.06em;
-  }
-
-  &__copy {
-    @include title-sm;
-    display: flex;
-    align-items: center;
-    gap: $gap-xs;
-    height: 44px;
-    padding: 0 $padding-sm;
-    border-radius: $radius-sm;
-    background: $bg;
-    color: $black;
-    text-transform: uppercase;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.8; }
   }
 }
 
