@@ -1,5 +1,5 @@
 <script setup>
-import { reactive } from 'vue'
+import { reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import StartButton from '../components/StartButton.vue'
 import SettingsLayout from '../components/settings/SettingsLayout.vue'
@@ -15,6 +15,16 @@ const settings = reactive({ legsToWin: 1 })
 
 const { players } = usePlayerSetup()
 
+const PRINCIPLE = {
+  text: 'Ferme les zones 20 à 12 puis Double, Triple et Bull, le plus vite possible. Façon cricket.',
+  chips: ['20', '19', '18', '17', '16', '15', '14', '13', '12', 'D', 'T', 'Bull'],
+}
+
+const recap = computed(() => [
+  `${players.value.length} joueur${players.value.length > 1 ? 's' : ''}`,
+  `${settings.legsToWin} manche${settings.legsToWin > 1 ? 's' : ''}`,
+])
+
 function startGame() {
   gameStore.gameSettings = {
     mode:      'tactics',
@@ -27,7 +37,7 @@ function startGame() {
 </script>
 
 <template>
-  <SettingsLayout title="Tactics" tone="red">
+  <SettingsLayout title="Tactics" tone="red" :principle="PRINCIPLE" :recap="recap">
     <PlayerSetupSection v-model="players" solo-hint="Laisse juste « Toi » pour jouer seul." />
 
     <template #side>

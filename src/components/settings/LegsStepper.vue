@@ -61,7 +61,7 @@ const hint = computed(() => `${props.phrase} ${props.modelValue} manche${props.m
   }
 
   &__value {
-    @include display-xs;
+    @include title-xxxl;
     height: 56px;
     display: flex;
     align-items: center;
@@ -77,7 +77,7 @@ const hint = computed(() => `${props.phrase} ${props.modelValue} manche${props.m
     grid-template-columns: 64px 1fr 64px;
 
     &__btn { height: 64px; }
-    &__value { @include display-sm; height: 64px; }
+    &__value { @include display-xs; height: 64px; }
   }
 }
 </style>

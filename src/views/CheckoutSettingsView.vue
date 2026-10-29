@@ -36,6 +36,25 @@ const countOptions = [
 
 const isCustomCount = computed(() => settings.count === 'custom')
 
+const PRINCIPLE = {
+  text: 'Trouve la route pour finir chaque score. En révision libre la route est affichée ; en quiz tu la devines et gagnes des points selon la difficulté.',
+  chips: ['2–170', 'Route', 'Quiz'],
+}
+
+const countLabel = computed(() => {
+  if (settings.count === 'all') return 'Tous les checkouts'
+  if (settings.count === Infinity) return 'Sans limite'
+  const n = settings.count === 'custom' ? customCount.value : settings.count
+  return `${n} checkouts`
+})
+
+const recap = computed(() => [
+  settings.variant === 'quiz' ? 'Quiz noté' : 'Révision libre',
+  ...(settings.variant === 'quiz' ? [countLabel.value] : []),
+  orderOptions.find(o => o.value === settings.order).label,
+  `${settings.brackets.length} tranche${settings.brackets.length > 1 ? 's' : ''}`,
+])
+
 function toggleBracket(label) {
   const i = settings.brackets.indexOf(label)
   if (i >= 0) {
@@ -65,15 +84,15 @@ function startGame() {
 </script>
 
 <template>
-  <SettingsLayout title="Checkouts" tone="cyan" back-to="home">
-    <template #header-right>
+  <SettingsLayout title="Checkouts" tone="cyan" back-to="home" :principle="PRINCIPLE" :recap="recap">
+    <template #panel-actions>
       <button type="button" class="settings__wiki-btn" aria-label="Consulter les checkouts"
         @click="router.push({ name: 'checkout-wiki' })">
         <AppIcon name="book" :width="24" :height="24" />
       </button>
     </template>
 
-    <SettingsSection label="Mode">
+    <SettingsSection class="settings__mode" label="Mode">
       <div class="settings__tiles">
         <OptionTile
           tone="cyan"
@@ -107,6 +126,7 @@ function startGame() {
     </SettingsSection>
 
     <SettingsSection
+      class="settings__brackets-section"
       label="Tranches de checkout"
       :hint="`${settings.brackets.length} sélectionnée${settings.brackets.length > 1 ? 's' : ''}`"
     >
@@ -126,20 +146,22 @@ function startGame() {
       </div>
     </SettingsSection>
 
-    <template #side>
-      <OptionSelector v-model="settings.order" label="Ordre" :options="orderOptions" tone="cyan" />
+    <OptionSelector v-model="settings.order" class="settings__order" label="Ordre" :options="orderOptions" tone="cyan" />
 
-      <SettingsSection>
-        <OptionSelector
-          v-model="settings.count"
-          label="Nombre de checkouts"
-          :options="countOptions"
-          tone="cyan"
-          :class="{ 'settings__count--off': settings.variant !== 'quiz' }"
-        />
-        <span v-if="settings.variant !== 'quiz'" class="settings__hint">Quiz uniquement</span>
-        <CustomValueInput v-model="customCount" :show="isCustomCount" :max="200" unit="checkouts" />
-      </SettingsSection>
+    <SettingsSection class="settings__count">
+      <OptionSelector
+        v-model="settings.count"
+        label="Nombre de checkouts"
+        :options="countOptions"
+        tone="cyan"
+        :class="{ 'settings__count--off': settings.variant !== 'quiz' }"
+      />
+      <span v-if="settings.variant !== 'quiz'" class="settings__hint">Quiz uniquement</span>
+      <CustomValueInput v-model="customCount" :show="isCustomCount" :max="200" unit="checkouts" />
+    </SettingsSection>
+
+    <template #principle-extra>
+      <p class="settings__source settings__source--panel">Données : {{ CHECKOUT_DATA_SOURCE }}</p>
     </template>
 
     <template #start>
@@ -259,6 +281,9 @@ function startGame() {
     @include text-xs;
     color: $muted;
     text-align: center;
+
+    // Desktop shows the source in the panel, mobile under the start button
+    &--panel { display: none; }
   }
 }
 
@@ -272,6 +297,14 @@ function startGame() {
     &__bracket-label { @include title-xl; }
     &__bracket-pts  { @include text-xs; }
     &__source       { @include text-sm; }
+
+    &__start .settings__source { display: none; }
+    &__source--panel { display: block; color: inherit; opacity: 0.8; text-align: left; }
+
+    &__mode { order: 0; }
+    &__count { order: 1; }
+    &__order { order: 2; }
+    &__brackets-section { order: 3; }
   }
 }
 </style>

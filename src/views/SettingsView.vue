@@ -1,5 +1,5 @@
 <script setup>
-import { reactive } from 'vue'
+import { reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import OptionSelector from '../components/OptionSelector.vue'
 import OptionTile from '../components/OptionTile.vue'
@@ -49,6 +49,18 @@ const sampleDarts = [
   { label: 'D5', value: 10 },
 ]
 
+const PRINCIPLE = {
+  text: "Trois fléchettes s'affichent : calcule de tête le score de la volée, puis ce qu'il te reste à finir.",
+  chips: ['Volée', 'Reste', 'Série'],
+}
+
+const recap = computed(() => [
+  difficultyOptions.find(o => o.value === settings.difficulty).label,
+  settings.maxQuestions ? `${settings.maxQuestions} questions` : 'Sans limite',
+  settings.timeLimit ? `${settings.timeLimit} s par question` : 'Temps libre',
+  ...(settings.doubleValidation ? ['Double calcul'] : []),
+])
+
 function startGame() {
   gameStore.gameSettings = { ...settings }
   router.push({ name: 'score-game' })
@@ -56,7 +68,7 @@ function startGame() {
 </script>
 
 <template>
-  <SettingsLayout title="Calcul" back-to="home">
+  <SettingsLayout title="Calcul" back-to="home" :principle="PRINCIPLE" :recap="recap">
     <OptionSelector label="Difficulté des volées" :options="difficultyOptions" v-model="settings.difficulty" />
     <OptionSelector label="Nombre de questions" :options="questionOptions" v-model="settings.maxQuestions" />
     <OptionSelector label="Temps par question" :options="timeOptions" v-model="settings.timeLimit" />

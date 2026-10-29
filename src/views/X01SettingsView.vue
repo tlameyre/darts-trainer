@@ -40,6 +40,21 @@ const canAddBot = computed(() => !aiProfile.value && players.value.length === 1)
 
 const legsPhrase = computed(() => players.value.length > 1 || aiProfile.value ? 'Premier à' : 'Partie en')
 
+const PRINCIPLE = {
+  text: "Pars du score de départ et descends jusqu'à zéro, en terminant sur un double. Premier à gagner les manches.",
+  chips: ['Double out', 'Manches', 'DartBot'],
+}
+
+const recap = computed(() => {
+  const count = players.value.length + (aiProfile.value ? 1 : 0)
+  return [
+    String(effectiveScore.value),
+    `${count} joueur${count > 1 ? 's' : ''}`,
+    `${settings.legsToWin} manche${settings.legsToWin > 1 ? 's' : ''}`,
+    ...(settings.checkoutAnalysis ? ['Analyse des checkouts'] : []),
+  ]
+})
+
 // Checkout analysis tile preview: the targets announced on a 81 finish
 const SAMPLE_AIMS = ['T15', 'D18', '—']
 
@@ -58,7 +73,7 @@ function startGame() {
 </script>
 
 <template>
-  <SettingsLayout title="501" tone="green">
+  <SettingsLayout title="501" tone="green" :principle="PRINCIPLE" :recap="recap">
     <PlayerSetupSection
       v-model="players"
       :bot="aiProfile"

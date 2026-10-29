@@ -29,6 +29,22 @@ const durationOptions = [
 
 const isCustomDuration = computed(() => settings.duration === 'custom')
 
+const PRINCIPLE = {
+  text: 'Enchaîne les volées sur les zones que tu choisis et suis ta précision, zone par zone.',
+  chips: ['Simple', 'Double', 'Triple'],
+}
+
+const durationLabel = computed(() => {
+  if (settings.duration === null) return 'Infini'
+  const minutes = isCustomDuration.value ? customMinutes.value : settings.duration
+  return `${minutes} min`
+})
+
+const recap = computed(() => [
+  durationLabel.value,
+  `${settings.zones.length} zone${settings.zones.length > 1 ? 's' : ''}`,
+])
+
 function startGame() {
   const duration = settings.duration === 'custom'
     ? (Number(customMinutes.value) > 0 ? Number(customMinutes.value) : 5)
@@ -39,7 +55,7 @@ function startGame() {
 </script>
 
 <template>
-  <SettingsLayout title="Échauffement" tone="blue" back-to="home" scroll>
+  <SettingsLayout title="Échauffement" tone="blue" back-to="home" scroll :principle="PRINCIPLE" :recap="recap">
     <SettingsSection>
       <OptionSelector label="Durée de la session" tone="blue" :options="durationOptions" v-model="settings.duration" />
       <CustomValueInput v-model="customMinutes" :show="isCustomDuration" :max="120" unit="min" />
@@ -71,9 +87,16 @@ function startGame() {
     min-height: 240px;
   }
 
+  // The board is taken out of the flow so its size never pushes the page taller than the screen
   &__board {
+    position: relative;
     flex: 1;
     min-height: 0;
+
+    :deep(.board) {
+      position: absolute;
+      inset: 0;
+    }
   }
 }
 </style>

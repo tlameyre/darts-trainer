@@ -2,6 +2,7 @@
 import AppIcon from './AppIcon.vue'
 
 defineProps({
+  arrow: { type: Boolean, default: true },
   tone: { type: String, default: 'orange', validator: v => ['orange', 'blue', 'green', 'cyan', 'red', 'online', 'tournament'].includes(v) },
 })
 </script>
@@ -9,7 +10,7 @@ defineProps({
 <template>
   <button class="start-btn" :class="`start-btn--${tone}`">
     <slot>Commencer</slot>
-    <AppIcon name="arrow-right" :width="20" :height="20" />
+    <AppIcon v-if="arrow" name="arrow-right" :width="20" :height="20" />
   </button>
 </template>
 

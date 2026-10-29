@@ -28,8 +28,19 @@ const legsToWin  = ref(2)
 const opponentId = ref(null)
 const inviting   = ref(false)
 
+const PRINCIPLE = {
+  text: 'Défie un ami : même partie de 501, chacun lance depuis son propre appareil.',
+  chips: ['501', 'En ligne', 'Défi'],
+}
+
 const friends  = computed(() => props.mockFriends ?? friendStore.friends)
 const opponent = computed(() => friends.value.find(f => f.id === opponentId.value) ?? null)
+
+const recap = computed(() => [
+  String(startScore.value),
+  `${legsToWin.value} manche${legsToWin.value > 1 ? 's' : ''}`,
+  ...(opponent.value ? [`vs ${profileName(opponent.value)}`] : []),
+])
 
 // Défi déjà envoyé / reçu / en cours avec cet ami → on renvoie vers sa salle d'attente
 function openMatchWith(friendId) {
@@ -69,7 +80,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <SettingsLayout title="501 en ligne" tone="online">
+  <SettingsLayout title="501 en ligne" tone="online" :principle="PRINCIPLE" :recap="recap">
     <SettingsSection label="Adversaire" hint="Un ami, sur son appareil" role="radiogroup" aria-label="Adversaire">
       <OnlineFriendRow
         v-for="f in friends" :key="f.id"
