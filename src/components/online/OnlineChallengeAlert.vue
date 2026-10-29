@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import AppButton from '../AppButton.vue'
 import AppIcon from '../AppIcon.vue'
 import { avatarColor } from '../../utils/avatarColor.js'
 
@@ -66,13 +67,10 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
           </div>
 
           <div class="alert__actions">
-            <button class="alert__btn" @click="$emit('later')">Plus tard</button>
-            <button class="alert__btn alert__btn--primary" :disabled="busy" @click="$emit('accept')">
-              <AppIcon name="check" :width="20" :height="20" />
-              Accepter
-            </button>
+            <AppButton size="md" variant="secondary" @click="$emit('later')">Plus tard</AppButton>
+            <AppButton size="md" color="var(--alert-color)" icon="check" :disabled="busy" @click="$emit('accept')">Accepter</AppButton>
           </div>
-          <button class="alert__decline" :disabled="busy" @click="$emit('decline')">Refuser le défi</button>
+          <AppButton variant="link" tone="muted" :block="false" :disabled="busy" @click="$emit('decline')">Refuser le défi</AppButton>
         </div>
       </section>
     </div>
@@ -273,38 +271,6 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
     grid-template-columns: 1fr 1.6fr;
     gap: $gap-xs;
   }
-
-  &__btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xs;
-    height: 56px;
-    border: $border-md solid $black;
-    border-radius: $radius-sm;
-    color: $text-color;
-    @include title-lg;
-
-    &--primary {
-      border-color: var(--alert-color);
-      background: var(--alert-color);
-      color: $white;
-      @include title-xl;
-    }
-
-    &:disabled { opacity: 0.4; }
-  }
-
-  &__decline {
-    align-self: center;
-    padding: $padding-xxs $padding-xs;
-    @include text-sm;
-    font-weight: 600;
-    color: $muted;
-    text-decoration: underline;
-
-    &:disabled { opacity: 0.4; }
-  }
 }
 
 @media (min-width: $bp-laptop) {
@@ -320,9 +286,6 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
     &__tournament-kicker { @include text-xs; }
     &__tournament-name { @include title-xl; }
     &__chip { @include title-md; }
-    &__btn { height: 70px; @include title-xl; }
-    &__btn--primary { @include title-xxl; }
-    &__decline { @include text-md; }
   }
 }
 </style>

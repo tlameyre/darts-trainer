@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { canFinish } from '../../composables/useCheckoutAnalysis.js'
+import AppButton from '../AppButton.vue'
 import AppModal from '../AppModal.vue'
 import AppIcon from '../AppIcon.vue'
 
@@ -88,7 +89,7 @@ function confirm() {
       </div>
     </div>
 
-    <button class="co-modal__confirm" @click="confirm">Valider la manche</button>
+    <AppButton size="md" tone="game" @click="confirm">Valider la manche</AppButton>
   </AppModal>
 </template>
 
@@ -171,18 +172,6 @@ function confirm() {
 
     &:disabled { opacity: 0.2; cursor: default; }
   }
-
-  &__confirm {
-    height: 56px;
-    border-radius: $radius-sm;
-    background: var(--game-color, #{$accent});
-    color: $white;
-    @include title-lg;
-    letter-spacing: $tracking-sm;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.8; }
-  }
 }
 
 @media (min-width: $bp-laptop) {
@@ -190,7 +179,6 @@ function confirm() {
     &__title   { @include title-xxxl; }
     &__label   { @include text-sm; }
     &__btn     { height: 80px; @include display-xs; }
-    &__confirm { height: 64px; @include title-xl; }
   }
 }
 </style>

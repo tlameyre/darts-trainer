@@ -1,5 +1,6 @@
 <script setup>
 import { ref, shallowRef, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import AppButton from '../AppButton.vue'
 import AppIcon from '../AppIcon.vue'
 import CheckoutRouteCard from './CheckoutRouteCard.vue'
 import CheckoutBoardRoute from './CheckoutBoardRoute.vue'
@@ -226,16 +227,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       <div class="deck__actions">
         <template v-if="revealed">
           <div class="deck__grades">
-            <button class="deck__btn deck__btn--again" @click="grade(false)">
-              <AppIcon name="undo" :width="20" :height="20" /> À revoir
-            </button>
-            <button class="deck__btn deck__btn--good" @click="grade(true)">
-              <AppIcon name="check" :width="20" :height="20" /> Acquis
-            </button>
+            <AppButton size="md" variant="secondary" icon="undo" @click="grade(false)">À revoir</AppButton>
+            <AppButton size="md" tone="cyan" icon="check" @click="grade(true)">Acquis</AppButton>
           </div>
           <span v-if="!isLaptop" class="deck__swipe-hint">ou glisse la carte : ← à revoir · acquis →</span>
         </template>
-        <button v-else class="deck__btn deck__btn--reveal" @click="emit('toggle')">Révéler</button>
+        <AppButton v-else size="cta" tone="black" @click="emit('toggle')">Révéler</AppButton>
       </div>
     </div>
   </div>
@@ -429,36 +426,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     gap: $gap-xs;
   }
 
-  &__btn {
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xs;
-    border-radius: $radius-sm;
-    @include title-lg;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.8; }
-
-    &--reveal {
-      background: $black;
-      color: $white;
-      @include title-xl;
-      letter-spacing: $tracking-sm;
-    }
-
-    &--again {
-      border: $border-md solid $text-color;
-      color: $text-color;
-    }
-
-    &--good {
-      background: $mode-checkout;
-      color: $white;
-    }
-  }
-
   &__swipe-hint {
     @include text-xs;
     color: $muted;
@@ -550,7 +517,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     }
 
     &__actions { margin-top: auto; }
-    &__btn     { height: 64px; @include title-xxl; }
   }
 }
 </style>

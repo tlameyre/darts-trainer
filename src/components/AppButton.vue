@@ -16,7 +16,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'primary',
-    validator: v => ['primary', 'secondary', 'ghost', 'surface', 'dashed', 'link'].includes(v),
+    validator: v => ['primary', 'secondary', 'ghost', 'surface', 'link'].includes(v),
   },
   tone: {
     type: String,
@@ -188,12 +188,6 @@ const iconSize = computed(() => (props.size === 'small' ? 16 : 20))
     &:active {
       background: $border-color;
     }
-  }
-
-  &--dashed {
-    background: transparent;
-    color: var(--btn-outline);
-    border: $border-md dashed $border-color;
   }
 
   &--link {

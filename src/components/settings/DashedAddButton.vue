@@ -21,6 +21,7 @@ import AppIcon from '../AppIcon.vue'
   color: $text-color;
 
   &:active { border-color: var(--tone); }
+  &:disabled { opacity: 0.4; }
 }
 
 @media (min-width: $bp-laptop) {

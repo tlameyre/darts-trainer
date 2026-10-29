@@ -1,6 +1,6 @@
 <script setup>
 import { ref, shallowRef, computed, watch } from 'vue'
-import AppIcon from '../AppIcon.vue'
+import AppButton from '../AppButton.vue'
 import GameEntryBar from '../game/GameEntryBar.vue'
 import DartboardEntry from '../game/DartboardEntry.vue'
 import CheckoutRouteCard from './CheckoutRouteCard.vue'
@@ -91,14 +91,12 @@ watch(
       La réponse est validée dès que la sortie est complète.
     </p>
 
-    <button v-if="answered" class="quiz__btn quiz__btn--next" @click="emit('next')">
+    <AppButton v-if="answered" size="cta" tone="black" icon-end="arrow-right" @click="emit('next')">
       {{ isLast ? 'Voir le récap' : 'Question suivante' }}
-      <AppIcon name="arrow-right" :width="22" :height="22" />
-    </button>
-    <button v-else class="quiz__btn quiz__btn--submit" :disabled="!attemptDarts.length" @click="emit('submit')">
-      <AppIcon name="check" :width="22" :height="22" />
+    </AppButton>
+    <AppButton v-else size="cta" tone="cyan" icon="check" :disabled="!attemptDarts.length" @click="emit('submit')">
       Valider
-    </button>
+    </AppButton>
   </div>
 </template>
 
@@ -146,25 +144,6 @@ watch(
   }
 
   &__help { display: none; }
-
-  &__btn {
-    height: 56px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xs;
-    border-radius: $radius-sm;
-    color: $white;
-    @include title-xl;
-    transition: opacity 0.15s;
-
-    &:active:not(:disabled) { opacity: 0.8; }
-    &:disabled { opacity: 0.4; }
-
-    &--submit { background: $mode-checkout; }
-    &--next   { background: $black; }
-  }
 }
 
 @media (min-width: $bp-laptop) {
@@ -172,7 +151,6 @@ watch(
     gap: $gap-md;
 
     &__label { display: block; @include title-md; }
-    &__btn   { height: 64px; @include title-xxl; }
 
     &__help {
       display: block;

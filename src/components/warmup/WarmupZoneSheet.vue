@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
+import AppButton from '../AppButton.vue'
 import AppIcon from '../AppIcon.vue'
 import ZoneTypePicker from '../zone/ZoneTypePicker.vue'
 import ZoneBoard from '../zone/ZoneBoard.vue'
@@ -63,19 +64,13 @@ function validate() {
           </div>
 
           <div class="zone-sheet__actions">
-            <button class="zone-sheet__btn zone-sheet__btn--cancel" @click="emit('close')">Annuler</button>
-            <button class="zone-sheet__btn zone-sheet__btn--validate" @click="validate">Valider</button>
+            <AppButton size="md" variant="surface" @click="emit('close')">Annuler</AppButton>
+            <AppButton size="md" tone="blue" @click="validate">Valider</AppButton>
           </div>
 
           <div class="zone-sheet__session">
-            <button class="zone-sheet__link" @click="emit('finish')">
-              <AppIcon name="check" :width="16" :height="16" />
-              Terminer la session
-            </button>
-            <button class="zone-sheet__link zone-sheet__link--danger" @click="emit('quit')">
-              <AppIcon name="exit" :width="16" :height="16" />
-              Quitter sans sauvegarder
-            </button>
+            <AppButton variant="link" tone="muted" :block="false" icon="check" @click="emit('finish')">Terminer la session</AppButton>
+            <AppButton variant="link" tone="danger" :block="false" icon="exit" @click="emit('quit')">Quitter sans sauvegarder</AppButton>
           </div>
         </div>
       </div>
@@ -190,45 +185,15 @@ function validate() {
   }
 
   &__actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
     gap: $gap-xs;
-  }
-
-  &__btn {
-    @include title-lg;
-    height: 52px;
-    border-radius: $radius-sm;
-
-    &--cancel {
-      flex: 1;
-      background: $surface;
-      color: $black;
-    }
-
-    &--validate {
-      flex: 2;
-      background: $blue;
-      color: $white;
-    }
   }
 
   &__session {
     display: flex;
     justify-content: center;
     gap: $gap-lg;
-  }
-
-  &__link {
-    @include title-sm;
-    display: flex;
-    align-items: center;
-    gap: $gap-xxs;
-    white-space: nowrap;
-    color: $muted;
-
-    &--danger {
-      color: $error;
-    }
   }
 }
 

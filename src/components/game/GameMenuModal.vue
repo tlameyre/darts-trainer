@@ -1,6 +1,6 @@
 <script setup>
+import AppButton from '../AppButton.vue'
 import AppModal from '../AppModal.vue'
-import AppIcon from '../AppIcon.vue'
 
 defineProps({
   show:        { type: Boolean, required: true },
@@ -14,20 +14,9 @@ defineEmits(['finish', 'quit', 'close'])
 <template>
   <AppModal :show title="Partie en cours" centered @close="$emit('close')">
     <div class="gm-modal">
-      <button class="gm-modal__item gm-modal__item--finish" @click="$emit('finish')">
-        <AppIcon name="check" :width="22" :height="22" />
-        {{ finishLabel }}
-      </button>
-
-      <button class="gm-modal__item gm-modal__item--quit" @click="$emit('quit')">
-        <AppIcon name="exit" :width="22" :height="22" />
-        {{ quitLabel }}
-      </button>
-
-      <button class="gm-modal__item" @click="$emit('close')">
-        <AppIcon name="arrow-left" :width="22" :height="22" />
-        Reprendre la partie
-      </button>
+      <AppButton size="md" tone="game" align="start" icon="check" @click="$emit('finish')">{{ finishLabel }}</AppButton>
+      <AppButton size="md" variant="secondary" tone="danger" align="start" icon="exit" @click="$emit('quit')">{{ quitLabel }}</AppButton>
+      <AppButton size="md" variant="secondary" align="start" icon="arrow-left" @click="$emit('close')">Reprendre la partie</AppButton>
     </div>
   </AppModal>
 </template>
@@ -37,39 +26,5 @@ defineEmits(['finish', 'quit', 'close'])
   display: flex;
   flex-direction: column;
   gap: $gap-xs;
-
-  &__item {
-    height: 56px;
-    display: flex;
-    align-items: center;
-    gap: $gap-sm;
-    padding: 0 $padding-md;
-    border-radius: $radius-sm;
-    border: $border-md solid $text-color;
-    color: $text-color;
-    @include title-lg;
-    text-align: left;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.75; }
-
-    &--finish {
-      background: var(--game-color, #{$accent});
-      border-color: var(--game-color, #{$accent});
-      color: $white;
-    }
-
-    &--quit {
-      border-color: $error;
-      color: $error;
-    }
-  }
-}
-
-@media (min-width: $bp-laptop) {
-  .gm-modal__item {
-    height: 64px;
-    @include title-xl;
-  }
 }
 </style>

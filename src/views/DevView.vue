@@ -448,7 +448,7 @@ function openBadgeLocked() {
 }
 
 const buttonTones = ['orange', 'blue', 'green', 'cyan', 'red', 'online', 'tournament', 'black', 'danger', 'inverse', 'muted']
-const buttonVariants = ['primary', 'secondary', 'ghost', 'surface', 'dashed', 'link']
+const buttonVariants = ['primary', 'secondary', 'ghost', 'surface', 'link']
 const iconButtonVariants = ['bare', 'surface', 'outline', 'translucent', 'filled']
 
 function go(name, params) {

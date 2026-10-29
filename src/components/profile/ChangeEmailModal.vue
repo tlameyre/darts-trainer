@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import AppButton from '../AppButton.vue'
 import AppIcon from '../AppIcon.vue'
 import AppModal from '../AppModal.vue'
 
@@ -52,7 +53,7 @@ function onClose() {
       Un email de confirmation sera envoyé à la nouvelle adresse. Le changement s'applique une fois le lien cliqué.
     </p>
 
-    <button class="ce-modal__submit" @click="onSave">Envoyer la confirmation</button>
+    <AppButton size="cta" tone="black" @click="onSave">Envoyer la confirmation</AppButton>
   </AppModal>
 </template>
 
@@ -120,21 +121,6 @@ function onClose() {
     color: $muted;
 
     svg { margin-top: 1px; }
-  }
-
-  &__submit {
-    @include title-xl;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 56px;
-    border-radius: $radius-sm;
-    background: $black;
-    color: $bg;
-    text-transform: uppercase;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.85; }
   }
 }
 

@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import AppModal from '../AppModal.vue'
+import AppButton from '../AppButton.vue'
 import AppIcon from '../AppIcon.vue'
+import DashedAddButton from '../settings/DashedAddButton.vue'
 import { useFriendStore } from '../../store/friendStore.js'
 
 const props = defineProps({
@@ -275,19 +277,17 @@ function removeSelected(item) {
               maxlength="20"
               @keyup.enter="addGuest"
             />
-            <button class="picker__guest-ok" @click="addGuest">OK</button>
+            <AppButton size="small" color="var(--picker-accent)" :block="false" @click="addGuest">OK</AppButton>
           </div>
-          <button v-else class="picker__dashed" :disabled="limitReached" @click="showGuestInput = true">
-            <AppIcon name="plus" :width="16" :height="16" />Ajouter un invité
-          </button>
+          <DashedAddButton v-else :disabled="limitReached" @click="showGuestInput = true">Ajouter un invité</DashedAddButton>
         </Transition>
         <p v-if="guestError" class="picker__status picker__status--error">{{ guestError }}</p>
       </div>
       <p v-if="limitReached" class="picker__status">Limite de joueurs atteinte.</p>
 
-      <button class="picker__confirm" :disabled="!hasSelection" @click="confirm">
+      <AppButton size="cta" color="var(--picker-accent)" :disabled="!hasSelection" @click="confirm">
         Ajouter{{ hasSelection ? ` (${selectionCount})` : '' }}
-      </button>
+      </AppButton>
 
     </div>
   </AppModal>
@@ -453,44 +453,11 @@ function removeSelected(item) {
     .picker__input { flex: 1; }
   }
 
-  &__guest-ok {
-    @include title-md;
-    padding: 0 $padding-md;
-    border-radius: $radius-sm;
-    background: var(--picker-accent);
-    color: $white;
-  }
-
-  &__dashed {
-    @include title-sm;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xs;
-    border: $border-md dashed $border-color;
-    border-radius: $radius-sm;
-    color: $text-color;
-
-    &:disabled { opacity: 0.4; }
-  }
-
   &__status {
     @include text-sm;
     color: $muted;
 
     &--error { color: $error; }
-  }
-
-  &__confirm {
-    @include title-xl;
-    height: 56px;
-    flex-shrink: 0;
-    border-radius: $radius-sm;
-    background: var(--picker-accent);
-    color: $white;
-
-    &:disabled { opacity: 0.4; }
   }
 }
 
@@ -500,7 +467,6 @@ function removeSelected(item) {
     &__label { @include title-md; }
     &__name { @include title-xl; line-height: 1; }
     &__status { @include text-md; }
-    &__confirm { @include title-xxl; height: 64px; }
   }
 }
 

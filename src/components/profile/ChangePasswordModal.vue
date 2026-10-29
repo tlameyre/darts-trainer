@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import AppButton from '../AppButton.vue'
 import AppModal from '../AppModal.vue'
 
 defineProps({
@@ -61,7 +62,7 @@ function onClose() {
 
     <p v-if="error" class="cp-modal__error">{{ error }}</p>
 
-    <button class="cp-modal__submit" @click="onSave">Mettre à jour</button>
+    <AppButton size="cta" tone="black" @click="onSave">Mettre à jour</AppButton>
   </AppModal>
 </template>
 
@@ -97,21 +98,6 @@ function onClose() {
   &__error {
     @include text-sm;
     color: $error;
-  }
-
-  &__submit {
-    @include title-xl;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 56px;
-    border-radius: $radius-sm;
-    background: $black;
-    color: $bg;
-    text-transform: uppercase;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.85; }
   }
 }
 
