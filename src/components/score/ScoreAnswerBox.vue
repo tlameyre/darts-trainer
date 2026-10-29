@@ -23,12 +23,12 @@ defineProps({
 
 <style lang="scss" scoped>
 .answer-box {
-  @include display-xs;
+  @include title-xxxl;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: $gap-sm;
-  height: 76px;
+  height: 64px;
   flex-shrink: 0;
   border-radius: $radius-sm;
   background: $bg;

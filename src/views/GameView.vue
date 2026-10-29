@@ -10,6 +10,7 @@ import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import GameLayout from '../components/game/GameLayout.vue'
 import GameHeaderButton from '../components/game/GameHeaderButton.vue'
 import GameStatusBar from '../components/game/GameStatusBar.vue'
+import AppIcon from '../components/AppIcon.vue'
 import GameStreakBadge from '../components/game/GameStreakBadge.vue'
 import GameMenuModal from '../components/game/GameMenuModal.vue'
 import ScoreRoundPanel from '../components/score/ScoreRoundPanel.vue'
@@ -47,6 +48,9 @@ const tone = computed(() => {
 const questionProgress = computed(() => settings.maxQuestions
   ? { ratio: questionIndex.value / settings.maxQuestions, text: `${questionIndex.value}/${settings.maxQuestions}` }
   : null)
+
+const timeRatio = computed(() => settings.timeLimit ? Math.max(timeLeft.value, 0) / settings.timeLimit : 0)
+const timeDisplay = computed(() => `${Math.floor(timeLeft.value / 60)}:${String(timeLeft.value % 60).padStart(2, '0')}`)
 
 watch(gameOver, async (val) => {
   if (val) {
@@ -114,6 +118,20 @@ onUnmounted(() => {
     </template>
 
     <template #panel>
+      <div class="game__status">
+        <span class="game__pill">Q{{ questionIndex }}<span v-if="settings.maxQuestions" class="game__pill-max">/{{ settings.maxQuestions }}</span></span>
+        <div v-if="settings.timeLimit" class="game__timer-bar" role="timer" :aria-label="`Temps restant : ${timeLeft} secondes`">
+          <div class="game__timer-fill" :style="{ width: `${timeRatio * 100}%` }" />
+        </div>
+        <span v-else class="game__spacer" />
+        <GameStreakBadge v-if="streak > 0" :value="streak" />
+      </div>
+
+      <div v-if="settings.timeLimit" class="game__timer">
+        <AppIcon name="clock" :width="28" :height="28" />
+        {{ timeDisplay }}
+      </div>
+
       <ScoreRoundPanel
         :phase="phase"
         :current-score="currentScore"
@@ -138,7 +156,7 @@ onUnmounted(() => {
     </template>
 
     <NumericKeypad
-      style="--key-min: 88px"
+      style="--key-min: 84px"
       left-key="delete"
       confirm-tone="ink"
       confirm-label="OK"
@@ -164,3 +182,63 @@ onUnmounted(() => {
     </template>
   </GameLayout>
 </template>
+
+<style lang="scss" scoped>
+// Mobile: status sits on the colored panel; desktop: the status bar and the timer chip replace it
+.game {
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
+    padding: $padding-xs $padding-md 0;
+  }
+
+  &__pill {
+    @include title-md;
+    padding: $padding-xxs $padding-xs;
+    border-radius: $radius-sm;
+    background: rgba($black, 0.22);
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  &__pill-max { opacity: 0.7; }
+
+  &__timer-bar,
+  &__spacer { flex: 1; }
+
+  &__timer-bar {
+    height: 12px;
+    border-radius: $radius-sm;
+    background: rgba($white, 0.3);
+    overflow: hidden;
+  }
+
+  &__timer-fill {
+    height: 100%;
+    background: $white;
+    transition: width 1s linear;
+  }
+
+  &__timer { display: none; }
+}
+
+@media (min-width: $bp-laptop) {
+  .game {
+    &__status { display: none; }
+
+    &__timer {
+      @include title-xxxl;
+      align-self: flex-end;
+      display: flex;
+      align-items: center;
+      gap: $gap-xs;
+      padding: $padding-xs $padding-md;
+      border-radius: $radius-sm;
+      background: rgba($black, 0.22);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}
+</style>

@@ -180,7 +180,10 @@ watch(phase, async (val) => {
     <template #status>
       <GameStatusBar :label="`Tour ${volleyNumber}`">
         <span class="tactics__aim">
-          Au tour de <span class="tactics__aim-player">{{ activePlayerName }}</span>
+          <span class="tactics__aim-lead">À toi,</span>
+          <span class="tactics__aim-lead tactics__aim-lead--desktop">Au tour de</span>
+          <span class="tactics__aim-player">{{ activePlayerName }}</span>
+          <span class="tactics__aim-lead">· vise <span class="tactics__aim-zone">{{ aimLabel }}</span></span>
         </span>
       </GameStatusBar>
     </template>
@@ -238,6 +241,13 @@ watch(phase, async (val) => {
     color: $muted;
   }
 
+  &__aim-lead--desktop { display: none; }
+
+  &__aim-zone {
+    @include title-lg;
+    color: $text-color;
+  }
+
   &__aim-player {
     @include title-lg;
     overflow: hidden;
@@ -250,6 +260,8 @@ watch(phase, async (val) => {
 @media (min-width: $bp-laptop) {
   .tactics {
     &__aim { @include text-md; }
+    &__aim-lead { display: none; }
+    &__aim-lead--desktop { display: inline; }
     &__aim-player { @include title-xl; }
   }
 }

@@ -3,13 +3,15 @@ defineProps({
   label: { type: String, required: true },
   // { ratio: 0–1, text: '4/20' } — omitted when the game has no fixed length
   progress: { type: Object, default: null },
+  // Mobile: only the bar and this text, e.g. "Question 5 / 20 · 12 pts"
+  mobileSummary: { type: String, default: '' },
   // Hidden on mobile, where the panel already carries this information
   desktopOnly: Boolean,
 })
 </script>
 
 <template>
-  <div class="status-bar" :class="{ 'status-bar--desktop-only': desktopOnly }">
+  <div class="status-bar" :class="{ 'status-bar--desktop-only': desktopOnly, 'status-bar--summary': mobileSummary }">
     <h2 class="status-bar__label">{{ label }}</h2>
 
     <div v-if="progress" class="status-bar__progress">
@@ -17,6 +19,7 @@ defineProps({
         <span class="status-bar__fill" :style="{ width: `${Math.min(progress.ratio, 1) * 100}%` }" />
       </span>
       <span class="status-bar__count">{{ progress.text }}</span>
+      <span v-if="mobileSummary" class="status-bar__summary">{{ mobileSummary }}</span>
     </div>
     <span v-else class="status-bar__spacer" />
 
@@ -33,6 +36,18 @@ defineProps({
   padding: $padding-sm $padding-md 0;
 
   &--desktop-only { display: none; }
+
+  // Mobile summary mode: the label and the counter give way to one line of text
+  &--summary &__label,
+  &--summary &__count { display: none; }
+
+  &--summary &__track { height: 8px; }
+
+  &__summary {
+    @include text-sm;
+    color: $muted;
+    white-space: nowrap;
+  }
 
   &__label {
     @include title-xl;
@@ -79,6 +94,11 @@ defineProps({
     padding: 0;
 
     &--desktop-only { display: flex; }
+
+    &--summary &__label,
+    &--summary &__count { display: block; }
+    &--summary &__track { height: 10px; }
+    &__summary { display: none; }
 
     &__label { @include title-xxl; }
     &__count { @include title-xl; }

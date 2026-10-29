@@ -13,6 +13,8 @@ defineProps({
   bareOver: Boolean,
   // One full-width area instead of the colored panel + entry split
   plain: Boolean,
+  // Mobile only: status, then the panel as a card on the cream background, then the entry
+  stack: Boolean,
 })
 
 defineEmits(['exit'])
@@ -21,7 +23,7 @@ defineEmits(['exit'])
 <template>
   <div
     class="game-layout"
-    :class="[`game-layout--${tone}`, feedback && `game-layout--${feedback}`, over && bareOver && 'game-layout--bare', plain && 'game-layout--plain']"
+    :class="[`game-layout--${tone}`, feedback && `game-layout--${feedback}`, over && bareOver && 'game-layout--bare', plain && 'game-layout--plain', stack && 'game-layout--stack']"
   >
     <AppHeader class="game-layout__header" :title="over ? 'Fin de partie' : title" :tone="tone" :back-icon="exitIcon" @back="$emit('exit')">
       <template v-if="!over && $slots['header-right']" #right>
@@ -118,6 +120,24 @@ defineEmits(['exit'])
 .game-layout--plain .game-layout__entry {
   flex: 1;
   min-height: 0;
+}
+
+@media (max-width: #{$bp-laptop - 1px}) {
+  .game-layout--stack {
+    .game-layout__status { order: -1; }
+
+    .game-layout__panel {
+      flex: 0 0 auto;
+      overflow: visible;
+      background: transparent;
+    }
+
+    .game-layout__entry {
+      flex: 1;
+      min-height: 0;
+      padding-top: $padding-sm;
+    }
+  }
 }
 
 @media (min-width: $bp-laptop) {

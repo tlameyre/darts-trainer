@@ -82,7 +82,7 @@ onUnmounted(() => cleanup())
     title="Quiz noté"
     tone="cyan"
     :feedback="quizResult?.tone ?? null"
-    style="--panel-flex: 0 0 auto"
+    stack
     @exit="backToSettings"
   >
     <template #header-right>
@@ -94,7 +94,11 @@ onUnmounted(() => cleanup())
     </template>
 
     <template #status>
-      <GameStatusBar :label="`Question ${progress.index + 1}`" :progress="questionProgress" />
+      <GameStatusBar
+        :label="`Question ${progress.index + 1}`"
+        :progress="questionProgress"
+        :mobile-summary="`Question ${progress.index + 1}${Number.isFinite(progress.total) ? ` / ${progress.total}` : ''} · ${sessionStats.points} pts`"
+      />
     </template>
 
     <CheckoutQuizInput

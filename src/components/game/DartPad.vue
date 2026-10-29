@@ -85,7 +85,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   &__slot {
     @include title-xxxl;
     flex: 1;
-    min-height: 52px;
+    min-height: 64px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -195,6 +195,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
   &__undo,
   &__miss {
+    min-height: 76px;
     padding: $padding-lg;
     border-radius: $radius-sm;
   }
@@ -205,12 +206,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
     align-items: center;
     justify-content: center;
     gap: $gap-xs;
+    border: $border-md solid $border-color;
     background: $surface;
     color: $black;
   }
 
   &__miss {
-    @include title-xl;
+    @include title-xxl;
     background: $black;
     color: $bg;
 
@@ -243,7 +245,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
     &__hit-sub { @include text-md; }
 
     &__undo { @include title-xxl; }
-    &__miss { @include title-xxl; }
+    &__miss { @include title-xxxl; }
   }
 }
 </style>

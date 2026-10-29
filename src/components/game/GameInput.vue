@@ -108,17 +108,15 @@ function undo() {
   flex-direction: column;
   gap: $gap-sm;
 
-  // Above the keys on desktop, below them on mobile
   &__bust {
-    order: 2;
     flex-shrink: 0;
     border-radius: $radius-sm;
     background: $dart-red;
     color: $white;
-    @include title-lg;
+    @include title-xxl;
     letter-spacing: $tracking-sm;
     transition: opacity 0.15s;
-    padding-block: $padding-md;
+    min-height: 68px;
 
     &:active:not(:disabled) { opacity: 0.8; }
     &:disabled { opacity: 0.4; }
@@ -130,7 +128,7 @@ function undo() {
   .game-input {
     gap: $gap-md;
 
-    &__bust { order: 0; @include title-xxxl; padding-block: $padding-xl; }
+    &__bust { @include title-xxxl; min-height: 88px; }
   }
 }
 </style>

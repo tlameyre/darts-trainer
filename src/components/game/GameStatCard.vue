@@ -6,8 +6,6 @@ defineProps({
   rows: { type: Array, default: () => [] },
   // Inactive cards sit translucent on the colored panel, the active one is a cream card
   active: { type: Boolean, default: true },
-  // Rows only show on desktop
-  compact: Boolean,
   // Single hero card: a bigger number on desktop
   large: Boolean,
 })
@@ -24,7 +22,7 @@ defineProps({
 
     <span class="stat-card__value">{{ value }}</span>
 
-    <div v-if="rows.length" class="stat-card__rows" :class="{ 'stat-card__rows--desktop-only': compact }">
+    <div v-if="rows.length" class="stat-card__rows">
       <span v-for="row in rows" :key="row.label" class="stat-card__row">
         <span class="stat-card__row-label">{{ row.label }}</span>
         <span class="stat-card__row-value">{{ row.value }}</span>
@@ -75,8 +73,6 @@ defineProps({
     display: flex;
     flex-direction: column;
     gap: $gap-xxs;
-
-    &--desktop-only { display: none; }
   }
 
   &__row {
@@ -101,7 +97,6 @@ defineProps({
     &__title { @include title-xxl; }
     &__value { @include display-xl; }
     &--large &__value { @include display-xxl; }
-    &__rows--desktop-only { display: flex; }
     &__row { @include text-md; }
   }
 }
