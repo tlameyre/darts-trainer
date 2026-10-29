@@ -28,7 +28,8 @@ const selectedKey = computed(() => (props.selected ? formatRoute(props.selected)
 const playedKey = computed(() => (props.played?.length ? formatRoute(props.played) : null))
 
 const isPlayed = (row) => playedKey.value != null && formatRoute(row.route) === playedKey.value
-const isActive = (row) => isPlayed(row) || (props.selectable && formatRoute(row.route) === selectedKey.value)
+// Selectable cards highlight the route on the board; the played one is only tagged once another is picked
+const isActive = (row) => (props.selectable ? formatRoute(row.route) === selectedKey.value : isPlayed(row))
 </script>
 
 <template>
@@ -98,7 +99,7 @@ const isActive = (row) => isPlayed(row) || (props.selectable && formatRoute(row.
     color: $muted;
   }
 
-  &__row--active:not(&__row--played) &__tag,
+  &__row--active &__tag,
   &__played-tag { color: var(--route-color); }
 
   &--ink { --route-color: #{$black}; }
