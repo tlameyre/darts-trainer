@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import GameStatCard from '../game/GameStatCard.vue'
 
 const props = defineProps({
   // Array of player card data:
@@ -45,13 +46,14 @@ function statRows(p) {
 
 <template>
   <div class="split-card" :class="{ 'split-card--solo': players.length === 1 }">
-    <div
+    <GameStatCard
       v-for="player in fullCards"
       :key="player._index"
-      class="split-card__card"
-      :class="{ 'split-card__card--active': player._index === activeIndex }"
+      :value="player.remaining"
+      :rows="statRows(player)"
+      :active="player._index === activeIndex"
     >
-      <div class="split-card__header">
+      <template #header>
         <span class="split-card__name">
           <span v-if="player.isLegStarter" class="split-card__starter" title="Commence la manche" />
           {{ displayName(player) }}
@@ -65,17 +67,8 @@ function statRows(p) {
           {{ player.level != null ? 'Lv. ' + player.level : 'Custom' }}
         </span>
         <span class="split-card__legs" title="Manches gagnées">{{ player.legsWon }}</span>
-      </div>
-
-      <span class="split-card__score">{{ player.remaining }}</span>
-
-      <div class="split-card__stats">
-        <span v-for="row in statRows(player)" :key="row.label" class="split-card__stat">
-          <span class="split-card__stat-label">{{ row.label }}</span>
-          <span class="split-card__stat-val">{{ row.value }}</span>
-        </span>
-      </div>
-    </div>
+      </template>
+    </GameStatCard>
 
     <div v-if="isSpotlight" class="split-card__list">
       <div v-for="player in otherPlayers" :key="player._index" class="split-card__row">
@@ -102,31 +95,6 @@ function statRows(p) {
 
   &--solo { grid-template-columns: minmax(0, 1fr); }
 
-  // Inactive players sit on the green panel, the active one gets the cream card
-  &__card {
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-xs;
-    padding: $padding-sm;
-    border-radius: $radius-sm;
-    background: rgba($white, 0.14);
-    color: $white;
-    transition: background 0.25s, color 0.25s;
-
-    &--active {
-      background: $bg;
-      color: $text-color;
-    }
-  }
-
-  &__header {
-    display: flex;
-    align-items: center;
-    gap: $gap-xs;
-    min-width: 0;
-  }
-
   &__name {
     @include title-md;
     flex: 1;
@@ -139,7 +107,7 @@ function statRows(p) {
     text-overflow: ellipsis;
   }
 
-  &__card:not(&__card--active) &__name,
+  .stat-card--ghost &__name,
   &__row &__name { opacity: 0.85; }
 
   &__starter {
@@ -165,44 +133,13 @@ function statRows(p) {
     line-height: 1;
   }
 
-  &__card--active &__legs { background: var(--game-color, #{$accent}); }
+  .stat-card:not(.stat-card--ghost) &__legs { background: var(--game-color, #{$accent}); }
 
   &__level {
     @include text-xs;
     font-weight: 600;
     flex-shrink: 0;
     opacity: 0.8;
-  }
-
-  &__score {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    @include display-sm;
-    line-height: 0.85;
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__card:not(&__card--active) &__score { opacity: 0.75; }
-
-  &__stats {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-xxs;
-  }
-
-  &__stat {
-    display: flex;
-    justify-content: space-between;
-    @include text-xs;
-  }
-
-  &__stat-label { color: $muted; }
-  &__card:not(&__card--active) &__stat-label { color: rgba($white, 0.75); }
-
-  &__stat-val {
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
   }
 
   // ── Spotlight list (3-4 players) ────────────────────────────────────────
@@ -270,12 +207,9 @@ function statRows(p) {
   .split-card {
     gap: $gap-md;
 
-    &__card     { padding: $padding-xl; }
     &__name     { @include title-xxl; }
     &__legs     { @include title-lg; min-width: 30px; height: 30px; }
     &__level    { @include text-sm; }
-    &__score    { @include display-xl; }
-    &__stat     { @include text-md; }
     &__row      { padding: $padding-md $padding-xl; }
     &__row-score { @include display-xs; }
   }

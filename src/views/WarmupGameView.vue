@@ -6,8 +6,10 @@ import { useWarmup, formatZonesLabel } from '../composables/useWarmup.js'
 import { useDbStore } from '../store/dbStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
-import AppIcon from '../components/AppIcon.vue'
-import AppHeader from '../components/AppHeader.vue'
+import GameLayout from '../components/game/GameLayout.vue'
+import GameHeaderButton from '../components/game/GameHeaderButton.vue'
+import GameStatusBar from '../components/game/GameStatusBar.vue'
+import GameStreakBadge from '../components/game/GameStreakBadge.vue'
 import WarmupHero from '../components/warmup/WarmupHero.vue'
 import WarmupThrowPad from '../components/warmup/WarmupThrowPad.vue'
 import WarmupZoneSheet from '../components/warmup/WarmupZoneSheet.vue'
@@ -136,32 +138,18 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="warmup">
-    <AppHeader
-      :title="gameOver ? 'Fin de partie' : 'Échauffement'"
-      tone="blue"
-      back-icon="exit"
-      @back="router.push({ name: 'warmup-settings' })"
-    >
-      <template v-if="!gameOver" #right>
-        <button class="warmup__gear-btn" aria-label="Choisir la prochaine zone" @click="openZoneSheet">
-          <AppIcon name="gear" :width="24" :height="24" />
-        </button>
-      </template>
-    </AppHeader>
+  <GameLayout
+    title="Échauffement"
+    tone="blue"
+    :over="gameOver"
+    @exit="router.push({ name: 'warmup-settings' })"
+  >
+    <template #header-right>
+      <GameHeaderButton icon="gear" label="Choisir la prochaine zone" @click="openZoneSheet" />
+    </template>
 
-    <WarmupEndRecap
-      v-if="gameOver"
-      :zone-recap-stats="zoneRecapStats"
-      :session-stats="sessionStats"
-      :duration-ms="totalDurationMs"
-      @restart="router.push({ name: 'warmup-settings' })"
-      @home="router.push({ name: 'home' })"
-    />
-
-    <main v-else class="warmup__main">
+    <template #panel>
       <WarmupHero
-        class="warmup__hero"
         :tour="tourNumber"
         :streak="currentStreak"
         :time-display="timeDisplay"
@@ -171,91 +159,45 @@ onUnmounted(() => {
         :stats="currentZoneStats"
         :rounds="recentRounds"
       />
-      <WarmupThrowPad
-        class="warmup__pad"
-        :tour="tourNumber"
-        :streak="currentStreak"
-        :time-display="timeDisplay"
-        :is-unlimited="isUnlimited"
-        :is-urgent="isUrgent"
-        :darts="displayedDarts"
-        :zones="currentZones"
-        :locked="justCompleted || showZoneSheet"
-        @dart="recordDart"
-        @miss="recordMiss"
-        @undo="undoLast"
-      />
-    </main>
+    </template>
 
-    <WarmupZoneSheet
-      :show="showZoneSheet"
-      :zones="pendingZones ?? currentZones"
-      :mid-volley="midVolley"
-      @close="closeZoneSheet"
-      @zone-change="onZoneChange"
-      @finish="handleFinish"
-      @quit="handleQuit"
+    <template #status>
+      <GameStatusBar desktop-only :label="`Tour ${tourNumber}`">
+        <GameStreakBadge :value="currentStreak" />
+      </GameStatusBar>
+    </template>
+
+    <WarmupThrowPad
+      :darts="displayedDarts"
+      :zones="currentZones"
+      :locked="justCompleted || showZoneSheet"
+      @dart="recordDart"
+      @miss="recordMiss"
+      @undo="undoLast"
     />
 
-    <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
-  </div>
+    <template #over>
+      <WarmupEndRecap
+        :zone-recap-stats="zoneRecapStats"
+        :session-stats="sessionStats"
+        :duration-ms="totalDurationMs"
+        @restart="router.push({ name: 'warmup-settings' })"
+        @home="router.push({ name: 'home' })"
+      />
+    </template>
+
+    <template #modals>
+      <WarmupZoneSheet
+        :show="showZoneSheet"
+        :zones="pendingZones ?? currentZones"
+        :mid-volley="midVolley"
+        @close="closeZoneSheet"
+        @zone-change="onZoneChange"
+        @finish="handleFinish"
+        @quit="handleQuit"
+      />
+
+      <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
+    </template>
+  </GameLayout>
 </template>
-
-<style lang="scss" scoped>
-.warmup {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  overflow: hidden;
-
-  &__gear-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: $padding-xxs;
-    color: $white;
-    transition: opacity 0.15s;
-
-    &:active {
-      opacity: 0.6;
-    }
-  }
-
-  &__main {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  &__hero {
-    flex: 1;
-    padding: $padding-xs $padding-md $padding-md;
-    background: $blue;
-  }
-
-  &__pad {
-    flex: 1;
-    padding: $padding-md;
-  }
-}
-
-@media (min-width: $bp-laptop) {
-  .warmup {
-    &__main {
-      flex-direction: row;
-    }
-
-    &__hero {
-      padding: $padding-xl $padding-xxl $padding-xxl;
-      flex: 1;
-    }
-
-    &__pad {
-      flex: 1;
-      padding: $padding-xl $padding-xxl;
-      @include safe-bottom($padding-xxl);
-    }
-  }
-}
-</style>

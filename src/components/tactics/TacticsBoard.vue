@@ -89,8 +89,8 @@ const tableRows = computed(() => {
 @use "sass:color";
 
 .tactics-board {
+  flex: 1;
   padding: 0 $padding-sm $padding-sm;
-  background: $mode-tactics;
 
   &__grid {
     display: grid;
@@ -185,7 +185,7 @@ const tableRows = computed(() => {
 
 @media (min-width: $bp-laptop) {
   .tactics-board {
-    padding: $padding-xl;
+    padding: 0;
 
     &__cell--head { @include title-md; }
     &__cell--zone { @include title-md; }

@@ -19,7 +19,9 @@ import X01PlayerSplitCard from '../components/x01/X01PlayerSplitCard.vue'
 import GameMenuModal from '../components/game/GameMenuModal.vue'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import AppIcon from '../components/AppIcon.vue'
-import AppHeader from '../components/AppHeader.vue'
+import GameLayout from '../components/game/GameLayout.vue'
+import GameHeaderButton from '../components/game/GameHeaderButton.vue'
+import GameStatusBar from '../components/game/GameStatusBar.vue'
 import { matchTone, matchColorVar } from '../utils/matchTone.js'
 
 const router          = useRouter()
@@ -121,6 +123,8 @@ const {
 const legNumber = computed(() => 1 + (isMulti
   ? allCompletedLegs.reduce((sum, legs) => sum + legs.value.length, 0)
   : completedLegs.value.length + aiLegsWon.value))
+const turnNumber = computed(() =>
+  (isMulti ? allVolleys[currentPlayerIndex.value].value.length : volleys.value.length) + 1)
 const headerTitle = computed(() => `${settings.startScore} · Manche ${legNumber.value}`)
 
 const isBust   = computed(() => phase.value === 'bust')
@@ -483,112 +487,97 @@ const multiWinnerName = computed(() =>
 </script>
 
 <template>
-  <div class="x01">
-    <AppHeader :title="headerTitle" :tone="tone" back-icon="exit" @back="router.push({ name: settingsRoute })">
-      <template v-if="phase !== 'game-over'" #right>
-        <button class="x01__menu-btn" aria-label="Menu" @click="showMenu = true">
-          <AppIcon name="gear" :width="24" :height="24" />
-        </button>
-      </template>
-    </AppHeader>
-    <!-- ── Jeu ──────────────────────────────────────────────────────────────── -->
-     <div class="x01__main">
-       <section class="x01__panel">
-         <div class="x01__players">
-           <X01PlayerSplitCard :players="playerCards" :active-index="activeCardIndex" />
+  <GameLayout
+    :title="headerTitle"
+    :tone="tone"
+    style="--entry-height: 480px; --entry-max-height: 62dvh"
+    @exit="router.push({ name: settingsRoute })"
+  >
+    <template v-if="phase !== 'game-over'" #header-right>
+      <GameHeaderButton icon="gear" label="Menu" @click="showMenu = true" />
+    </template>
 
-           <p v-if="targeting" class="x01__status">Où vises-tu ?</p>
-           <p v-else-if="pendingTarget" class="x01__status">Visé {{ pendingTarget.label }} · touché ?</p>
-           <p v-else-if="isOpponentTurn" class="x01__status">
-             {{ online.loading.value ? 'Connexion…' : `${activePlayerName} joue…` }}
-             <span v-if="!online.loading.value && !online.opponentOnline.value" class="x01__offline">hors ligne</span>
-           </p>
-         </div>
-       </section>
+    <template #panel>
+      <div class="x01__players">
+        <X01PlayerSplitCard :players="playerCards" :active-index="activeCardIndex" />
 
-       <section class="x01__entry">
-         <button v-if="online?.canUndoRemote.value" class="x01__remote-undo" @click="online.publishUndo">
-           <AppIcon name="undo" :width="16" :height="16" />
-           Annuler ma dernière volée
-         </button>
-         <GameInput
-           :darts="currentVolleyDarts"
-           value-key="label"
-           :bust="isBust"
-           :locked="isLocked || (aiTurn && !isMulti)"
-           :force-dart="analysisZone"
-           :targeting="targeting"
-           @dart="handleDart"
-           @miss="handleMiss"
-           @bust="bustVolley"
-           @validate="confirmVolleyTotal"
-           @undo="handleUndo"
-         />
-       </section>
-     </div>
+        <p v-if="targeting" class="x01__status">Où vises-tu ?</p>
+        <p v-else-if="pendingTarget" class="x01__status">Visé {{ pendingTarget.label }} · touché ?</p>
+        <p v-else-if="isOpponentTurn" class="x01__status">
+          {{ online.loading.value ? 'Connexion…' : `${activePlayerName} joue…` }}
+          <span v-if="!online.loading.value && !online.opponentOnline.value" class="x01__offline">hors ligne</span>
+        </p>
+      </div>
+    </template>
 
-    <!-- ── Modales ──────────────────────────────────────────────────────────── -->
-    <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
-    <GameMenuModal
-      :show="showMenu"
-      :finish-label="isOnline ? 'Abandonner le match' : undefined"
-      :quit-label="isOnline ? 'Quitter (reprendre plus tard)' : undefined"
-      @close="showMenu = false"
-      @finish="finishGame"
-      @quit="quitGame"
-    />
-    <X01DoublesModal
-      :show="pendingDoublesPrompt"
-      :start-remaining="doublesPromptStartRemaining"
-      @confirm="confirmDoublesAttempted"
-    />
-    <X01CheckoutModal
-      :show="!!pendingCheckout"
-      :winner-name="activePlayerName"
-      :default-darts="pendingCheckout?.defaultDarts ?? 3"
-      :checkout-score="pendingCheckout?.checkoutScore ?? 0"
-      @confirm="confirmCheckout"
+    <template #status>
+      <GameStatusBar desktop-only :label="`Tour ${turnNumber}`">
+        <span class="x01__turn">
+          Au tour de <span class="x01__turn-name">{{ activePlayerName }}</span>
+        </span>
+      </GameStatusBar>
+    </template>
+
+    <button v-if="online?.canUndoRemote.value" class="x01__remote-undo" @click="online.publishUndo">
+      <AppIcon name="undo" :width="16" :height="16" />
+      Annuler ma dernière volée
+    </button>
+    <GameInput
+      :darts="currentVolleyDarts"
+      value-key="label"
+      :bust="isBust"
+      :locked="isLocked || (aiTurn && !isMulti)"
+      :force-dart="analysisZone"
+      :targeting="targeting"
+      @dart="handleDart"
+      @miss="handleMiss"
+      @bust="bustVolley"
+      @validate="confirmVolleyTotal"
+      @undo="handleUndo"
     />
 
-    <!-- ── Résultats finaux ────────────────────────────────────────────────── -->
-    <Transition name="slide-up">
-      <X01MatchEnd
-        v-if="phase === 'game-over'"
-        class="x01__result"
-        :match-stats="matchStats"
-        :winner-index="resultWinnerIndex"
-        :subtitle="resultSubtitle"
-        :replay-label="isTournamentMatch ? (isLeagueMatch ? 'Retour aux journées' : 'Retour au bracket') : 'Rejouer'"
-        :checkout-analysis="checkoutAnalysis"
-        @replay="handleReplay"
-        @home="router.push({ name: 'home' })"
+    <template #modals>
+      <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
+      <GameMenuModal
+        :show="showMenu"
+        :finish-label="isOnline ? 'Abandonner le match' : undefined"
+        :quit-label="isOnline ? 'Quitter (reprendre plus tard)' : undefined"
+        @close="showMenu = false"
+        @finish="finishGame"
+        @quit="quitGame"
       />
-    </Transition>
+      <X01DoublesModal
+        :show="pendingDoublesPrompt"
+        :start-remaining="doublesPromptStartRemaining"
+        @confirm="confirmDoublesAttempted"
+      />
+      <X01CheckoutModal
+        :show="!!pendingCheckout"
+        :winner-name="activePlayerName"
+        :default-darts="pendingCheckout?.defaultDarts ?? 3"
+        :checkout-score="pendingCheckout?.checkoutScore ?? 0"
+        @confirm="confirmCheckout"
+      />
 
-  </div>
+      <Transition name="slide-up">
+        <X01MatchEnd
+          v-if="phase === 'game-over'"
+          class="x01__result"
+          :match-stats="matchStats"
+          :winner-index="resultWinnerIndex"
+          :subtitle="resultSubtitle"
+          :replay-label="isTournamentMatch ? (isLeagueMatch ? 'Retour aux journées' : 'Retour au bracket') : 'Rejouer'"
+          :checkout-analysis="checkoutAnalysis"
+          @replay="handleReplay"
+          @home="router.push({ name: 'home' })"
+        />
+      </Transition>
+    </template>
+  </GameLayout>
 </template>
 
 <style lang="scss" scoped>
 .x01 {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  overflow: hidden;
-  background: $bg;
-  &__main {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-  }
-
-  &__panel {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    background: var(--game-color, #{$accent});
-  }
-
   &__players {
     flex: 1;
     min-height: 0;
@@ -596,15 +585,6 @@ const multiWinnerName = computed(() =>
     flex-direction: column;
     gap: $gap-xs;
     padding: 0 $padding-md $padding-sm;
-  }
-
-  &__menu-btn {
-    color: $white;
-    display: flex;
-    align-items: center;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
   }
 
   &__status {
@@ -620,16 +600,18 @@ const multiWinnerName = computed(() =>
     text-transform: none;
   }
 
-  // Same height whatever the input mode, so the score panel never jumps
-  &__entry {
-    flex-shrink: 0;
-    height: 480px;
-    max-height: 62dvh;
+  &__turn {
+    @include text-md;
     display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
-    padding: $padding-sm $padding-md 0;
-    @include safe-bottom($padding-md);
+    align-items: baseline;
+    gap: $gap-xs;
+    color: $muted;
+    white-space: nowrap;
+  }
+
+  &__turn-name {
+    @include title-xl;
+    color: var(--game-color, var(--tone));
   }
 
   &__remote-undo {
@@ -656,23 +638,9 @@ const multiWinnerName = computed(() =>
 
 @media (min-width: $bp-laptop) {
   .x01 {
-    &__main {
-      flex-direction: row;
-    }
-    &__panel   { flex: 1; min-width: 0; padding: $padding-md; }
-    &__players { padding: 0 $padding-md $padding-md; gap: $gap-md; }
+    &__players { padding: 0; gap: $gap-md; }
     &__status  { @include title-md; }
     &__offline { @include text-sm; }
-
-    &__entry {
-      flex: 1;
-      min-width: 0;
-      height: auto;
-      max-height: none;
-      gap: $gap-md;
-      padding: $padding-xxl $padding-xxl 0;
-      @include safe-bottom($padding-xxl);
-    }
 
     &__remote-undo { @include text-md; }
   }

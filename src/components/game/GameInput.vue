@@ -1,10 +1,8 @@
 <script setup>
 import { ref, watch } from 'vue'
 import GameEntryBar from './GameEntryBar.vue'
-import SectorPad from './SectorPad.vue'
-import SvgDartboard from '../x01/SvgDartboard.vue'
-import NumPad from '../NumPad.vue'
-import AppIcon from '../AppIcon.vue'
+import DartboardEntry from './DartboardEntry.vue'
+import NumericKeypad from './NumericKeypad.vue'
 
 const props = defineProps({
   darts:      { type: Array,   required: true },
@@ -65,7 +63,7 @@ function undo() {
 </script>
 
 <template>
-  <div class="game-input" :class="{ 'game-input--targeting': targeting }">
+  <div class="game-input">
     <GameEntryBar
       :mode="mode"
       :modes="forceDart ? ['dart', 'board'] : undefined"
@@ -79,33 +77,26 @@ function undo() {
     />
 
     <template v-if="mode === 'volley'">
-      <NumPad :locked="locked || bust" @digit="appendDigit" @undo="undo" @validate="submitVolley" />
       <button class="game-input__bust" :disabled="locked || bust" @click="emit('bust')">Bust</button>
+      <NumericKeypad
+        left-key="undo"
+        :locked="locked || bust"
+        @digit="appendDigit"
+        @left="undo"
+        @validate="submitVolley"
+      />
     </template>
 
-    <SectorPad
-      v-else-if="mode === 'dart'"
-      class="game-input__target"
+    <DartboardEntry
+      v-else
+      :mode="mode"
       :locked="locked || bust"
       :miss-locked="targeting"
+      :targeting="targeting"
       @dart="emit('dart', $event)"
       @miss="emit('miss')"
       @undo="emit('undo')"
     />
-
-    <template v-else>
-      <div class="game-input__board game-input__target">
-        <SvgDartboard fill :locked="locked || bust" @dart="emit('dart', $event)" />
-      </div>
-      <div class="game-input__board-actions">
-        <button class="game-input__key game-input__key--undo" aria-label="Annuler" @click="emit('undo')">
-          <AppIcon name="undo" :width="40" :height="40" />
-        </button>
-        <button class="game-input__key game-input__key--miss" :disabled="locked || bust || targeting" @click="emit('miss')">
-          Raté
-        </button>
-      </div>
-    </template>
   </div>
 </template>
 
@@ -117,13 +108,9 @@ function undo() {
   flex-direction: column;
   gap: $gap-sm;
 
-  &--targeting &__target {
-    outline: $border-md dashed var(--game-color, #{$accent});
-    outline-offset: $padding-xxs;
-    border-radius: $radius-sm;
-  }
-
+  // Above the keys on desktop, below them on mobile
   &__bust {
+    order: 2;
     flex-shrink: 0;
     border-radius: $radius-sm;
     background: $dart-red;
@@ -137,49 +124,13 @@ function undo() {
     &:disabled { opacity: 0.4; }
   }
 
-  &__board {
-    flex: 1;
-    min-height: 0;
-    container-type: size;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  &__board-actions {
-    flex-shrink: 0;
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: $gap-xs;
-  }
-
-  &__key {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: $radius-sm;
-    border: $border-md solid $text-color;
-    background: $bg;
-    color: $text-color;
-    @include title-xl;
-
-    &:disabled { opacity: 0.4; }
-
-    &--undo {
-      background: $surface;
-      border-color: $border-color;
-    }
-
-    &--miss { grid-column: span 4; }
-  }
 }
 
 @media (min-width: $bp-laptop) {
   .game-input {
     gap: $gap-md;
 
-    &__bust { @include title-xxxl; }
-    &__key  { @include title-xxxl; }
+    &__bust { order: 0; @include title-xxxl; padding-block: $padding-xl; }
   }
 }
 </style>

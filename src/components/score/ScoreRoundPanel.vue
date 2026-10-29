@@ -1,41 +1,10 @@
 <script setup>
-import { computed, watch, ref } from 'vue'
-import AppIcon from '../AppIcon.vue'
-
-const props = defineProps({
+defineProps({
   phase: { type: Number, required: true },
-  showPhase: Boolean,
-  streak: { type: Number, default: 0 },
-  questionIndex: { type: Number, required: true },
-  maxQuestions: { type: Number, default: null },
-  timeLeft: { type: Number, default: null },
-  showTimer: Boolean,
   currentScore: { type: Number, required: true },
   currentVolee: { type: Array, required: true },
   voleeTotal: { type: Number, default: 0 },
   showDartValue: Boolean,
-})
-
-const progress = computed(() =>
-  props.maxQuestions ? `${Math.min(props.questionIndex / props.maxQuestions, 1) * 100}%` : null
-)
-
-const isBouncing = ref(false)
-
-const maxScale = computed(() => {
-  const baseScale = 1
-  const growth = props.streak * 0.1
-  return Math.min(baseScale + growth, 2.2)
-})
-
-watch(() => props.streak, (newVal, oldVal) => {
-  if (newVal > oldVal && newVal > 0) {
-    isBouncing.value = true
-
-    setTimeout(() => {
-      isBouncing.value = false
-    }, 300)
-  }
 })
 </script>
 
@@ -70,86 +39,12 @@ watch(() => props.streak, (newVal, oldVal) => {
 
 <style lang="scss" scoped>
 .round-panel {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: $gap-sm;
   min-height: 0;
   color: $white;
-
-  &__status {
-    display: flex;
-    align-items: center;
-    gap: $gap-xs;
-  }
-
-  &__streak-badge {
-    @include title-sm;
-    display: flex;
-    align-items: center;
-    gap: $gap-xs;
-    padding: $padding-xxs $padding-xs;
-    border-radius: $radius-sm;
-    background: $black;
-  }
-
-  &__streak-label.is-bouncing {
-    animation: bounceEffect 0.3s ease-in-out;
-  }
-
-  @keyframes bounceEffect {
-    0% {
-      transform: scale(1);
-    }
-    50% {
-      transform: scale(var(--max-scale)); /* Taille maximale du rebond */
-    }
-    100% {
-      transform: scale(1);
-    }
-  }
-
-  &__streak-value {
-    color: $orange-light;
-  }
-
-
-
-  &__progress {
-    flex: 1;
-    height: 8px;
-    background: rgba($white, 0.3);
-  }
-
-  &__progress-fill {
-    height: 100%;
-    background: $white;
-    transition: width 0.3s;
-  }
-
-  &__spacer {
-    flex: 1;
-  }
-
-  &__count {
-    @include title-md;
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__badge {
-    @include title-xxs;
-    display: flex;
-    align-items: center;
-    gap: $gap-xxs;
-    padding: $padding-xxs $padding-xs;
-    border: $border-md solid $white;
-    border-radius: $radius-sm;
-    font-variant-numeric: tabular-nums;
-
-    &--urgent {
-      background: $error;
-      border-color: $error;
-    }
-  }
 
   &__body {
     flex: 1;
@@ -232,10 +127,6 @@ watch(() => props.streak, (newVal, oldVal) => {
   .round-panel {
     gap: $gap-lg;
 
-    &__streak   { @include title-lg; padding: $padding-xs $padding-sm; }
-    &__progress { height: 10px; }
-    &__count    { @include title-xl; }
-    &__badge    { @include title-sm; }
     &__label    { @include text-lg; }
 
     &__score,

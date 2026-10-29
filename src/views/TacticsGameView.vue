@@ -11,8 +11,9 @@ import TacticsBoard from '../components/tactics/TacticsBoard.vue'
 import TacticsZoneChoiceModal from '../components/tactics/TacticsZoneChoiceModal.vue'
 import TacticsLegRecap from '../components/tactics/TacticsLegRecap.vue'
 import GameMenuModal from '../components/game/GameMenuModal.vue'
-import AppIcon from '../components/AppIcon.vue'
-import AppHeader from '../components/AppHeader.vue'
+import GameLayout from '../components/game/GameLayout.vue'
+import GameHeaderButton from '../components/game/GameHeaderButton.vue'
+import GameStatusBar from '../components/game/GameStatusBar.vue'
 
 const router    = useRouter()
 const gameStore = useGameStore()
@@ -161,121 +162,73 @@ watch(phase, async (val) => {
 </script>
 
 <template>
-  <div class="tactics">
-    <AppHeader
-      :class="{ 'tactics__header--over': isOver }"
-      :title="isOver ? 'Fin de partie' : 'Tactics'"
-      tone="red"
-      back-icon="exit"
-      @back="router.push({ name: 'tactics-settings' })"
-    >
-      <template v-if="!isOver" #right>
-        <button class="tactics__menu-btn" aria-label="Réglages de la partie" @click="showMenu = true">
-          <AppIcon name="gear" :width="24" :height="24" />
-        </button>
-      </template>
-    </AppHeader>
+  <GameLayout
+    title="Tactics"
+    tone="red"
+    :over="isOver"
+    bare-over
+    @exit="router.push({ name: 'tactics-settings' })"
+  >
+    <template #header-right>
+      <GameHeaderButton icon="gear" label="Réglages de la partie" @click="showMenu = true" />
+    </template>
 
-    <TacticsResult
-      v-if="isOver"
-      :players="resultPlayers"
-      :legs-to-win="settings.legsToWin"
-      :winner-index="isMulti ? resultWinnerIndex : 0"
-      :total-darts="stats?.totalDarts ?? null"
-      :zone-count="zones.length"
-      @replay="router.push({ name: 'tactics-settings' })"
-      @home="router.push({ name: 'home' })"
-      @quit="router.push({ name: 'tactics-settings' })"
+    <template #panel>
+      <TacticsBoard :players="boardPlayers" />
+    </template>
+
+    <template #status>
+      <GameStatusBar :label="`Tour ${volleyNumber}`">
+        <span class="tactics__aim">
+          Au tour de <span class="tactics__aim-player">{{ activePlayerName }}</span>
+        </span>
+      </GameStatusBar>
+    </template>
+
+    <TacticsInput
+      v-if="inputTarget"
+      :darts="currentDarts"
+      :target="inputTarget"
+      :locked="isLocked"
+      @dart="addDart"
+      @miss="addMiss"
+      @undo="undo"
     />
 
-    <div v-else class="tactics__game">
-      <TacticsBoard class="tactics__board" :players="boardPlayers" />
+    <template #over>
+      <TacticsResult
+        :players="resultPlayers"
+        :legs-to-win="settings.legsToWin"
+        :winner-index="isMulti ? resultWinnerIndex : 0"
+        :total-darts="stats?.totalDarts ?? null"
+        :zone-count="zones.length"
+        @replay="router.push({ name: 'tactics-settings' })"
+        @home="router.push({ name: 'home' })"
+        @quit="router.push({ name: 'tactics-settings' })"
+      />
+    </template>
 
-      <main class="tactics__main">
-        <div class="tactics__turn">
-          <span class="tactics__tour">Tour {{ volleyNumber }}</span>
-          <span class="tactics__aim">
-            Au tour de <span class="tactics__aim-player">{{ activePlayerName }}</span>
-          </span>
-        </div>
+    <template #modals>
+      <TacticsLegRecap
+        :show="showLegRecap"
+        :winner-name="recapWinnerName ?? ''"
+        :total-darts="recapLeg?.totalDarts ?? 0"
+        :volleys="recapLeg?.volleys ?? []"
+        @next="startNextLeg"
+      />
 
-        <TacticsInput
-          v-if="inputTarget"
-          :darts="currentDarts"
-          :target="inputTarget"
-          :locked="isLocked"
-          @dart="addDart"
-          @miss="addMiss"
-          @undo="undo"
-        />
-      </main>
-    </div>
-
-    <TacticsLegRecap
-      :show="showLegRecap"
-      :winner-name="recapWinnerName ?? ''"
-      :total-darts="recapLeg?.totalDarts ?? 0"
-      :volleys="recapLeg?.volleys ?? []"
-      @next="startNextLeg"
-    />
-
-    <GameMenuModal :show="showMenu" @close="showMenu = false" @finish="finishGame" @quit="quitGame" />
-    <TacticsZoneChoiceModal
-      :show="!!pendingZoneChoice"
-      v-bind="zoneChoiceProps"
-      @choose="resolveZoneChoice"
-    />
-  </div>
+      <GameMenuModal :show="showMenu" @close="showMenu = false" @finish="finishGame" @quit="quitGame" />
+      <TacticsZoneChoiceModal
+        :show="!!pendingZoneChoice"
+        v-bind="zoneChoiceProps"
+        @choose="resolveZoneChoice"
+      />
+    </template>
+  </GameLayout>
 </template>
 
 <style lang="scss" scoped>
 .tactics {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  overflow: hidden;
-
-  &__board {
-    flex: 1;
-  }
-
-  &__menu-btn {
-    color: $white;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
-  }
-
-  &__game {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-  }
-
-  &__main {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-sm;
-    padding: $padding-sm $padding-sm $padding-md;
-    @include safe-bottom($padding-md);
-  }
-
-  &__turn {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: $gap-sm;
-  }
-
-  &__tour { @include title-lg; }
-
   &__aim {
     @include text-sm;
     display: flex;
@@ -290,40 +243,14 @@ watch(phase, async (val) => {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    color: $mode-tactics;
-  }
-
-  &__aim-zone {
-    @include title-lg;
-    color: $text-color;
+    color: var(--tone);
   }
 }
 
 @media (min-width: $bp-laptop) {
   .tactics {
-    // The end screen carries its own header in the side column
-    &__header--over { display: none; }
-
-    &__game {
-      flex-direction: row;
-      align-items: stretch;
-      overflow: hidden;
-    }
-
-    &__board {
-      overflow-y: auto;
-    }
-
-    &__main {
-      flex: 1;
-      padding: $padding-xl;
-      gap: $gap-md;
-    }
-
-    &__tour { @include title-xl; }
     &__aim { @include text-md; }
-    &__aim-player,
-    &__aim-zone { @include title-xl; }
+    &__aim-player { @include title-xl; }
   }
 }
 </style>

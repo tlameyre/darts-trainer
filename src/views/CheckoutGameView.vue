@@ -1,14 +1,17 @@
 <script setup>
-import { watch, onUnmounted } from 'vue'
+import { computed, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import AppHeader from '../components/AppHeader.vue'
-import AppIcon from '../components/AppIcon.vue'
+import GameLayout from '../components/game/GameLayout.vue'
+import GameHeaderButton from '../components/game/GameHeaderButton.vue'
+import GameStatusBar from '../components/game/GameStatusBar.vue'
+import CheckoutQuizPanel from '../components/checkout/CheckoutQuizPanel.vue'
 import CheckoutFlashcard from '../components/checkout/CheckoutFlashcard.vue'
 import CheckoutQuizInput from '../components/checkout/CheckoutQuizInput.vue'
 import CheckoutRecap from '../components/checkout/CheckoutRecap.vue'
 import { useGameStore } from '../store/gameStore.js'
 import { useDbStore } from '../store/dbStore.js'
 import { useCheckoutTrainer } from '../composables/useCheckoutTrainer.js'
+import { describeResult } from '../composables/useCheckouts.js'
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -47,6 +50,12 @@ watch(gameOver, async (over) => {
   }
 })
 
+const quizResult = computed(() => (answered.value ? describeResult(lastResult.value) : null))
+
+const questionProgress = computed(() => Number.isFinite(progress.value.total)
+  ? { ratio: progress.value.index / progress.value.total, text: `${progress.value.index + 1}/${progress.value.total}` }
+  : null)
+
 function backToSettings() {
   router.push({ name: 'checkout-settings' })
 }
@@ -55,9 +64,8 @@ onUnmounted(() => cleanup())
 </script>
 
 <template>
-  <div class="co-game">
+  <div v-if="gameOver" class="co-over">
     <CheckoutRecap
-      v-if="gameOver"
       :variant="isQuiz ? 'quiz' : 'review'"
       :session-stats="sessionStats"
       :results="results"
@@ -67,77 +75,63 @@ onUnmounted(() => cleanup())
       @restart="backToSettings"
       @home="router.push({ name: 'home' })"
     />
-
-    <template v-else>
-      <AppHeader :title="isQuiz ? 'Quiz noté' : 'Révision'" tone="cyan" back-icon="exit" @back="backToSettings">
-        <template #right>
-          <button class="co-game__end-btn" aria-label="Terminer" @click="endSession">
-            <AppIcon name="check" :width="24" :height="24" />
-          </button>
-        </template>
-      </AppHeader>
-
-      <main class="co-game__main">
-        <CheckoutQuizInput
-          v-if="isQuiz"
-          :score="currentScore"
-          :checkout="currentCheckout"
-          :attempt-darts="attemptDarts"
-          :answered="answered"
-          :last-result="lastResult"
-          :progress="progress"
-          :points="sessionStats.points"
-          @dart="pushDart"
-          @undo="undoDart"
-          @submit="submit"
-          @next="next"
-        />
-
-        <CheckoutFlashcard
-          v-else
-          :score="currentScore"
-          :checkout="currentCheckout"
-          :revealed="revealed"
-          :done="reviewDone"
-          :total="reviewTotal"
-          @toggle="toggleReveal"
-          @grade="grade"
-        />
-      </main>
-    </template>
   </div>
+
+  <GameLayout
+    v-else-if="isQuiz"
+    title="Quiz noté"
+    tone="cyan"
+    :feedback="quizResult?.tone ?? null"
+    style="--panel-flex: 0 0 auto"
+    @exit="backToSettings"
+  >
+    <template #header-right>
+      <GameHeaderButton icon="check" label="Terminer" @click="endSession" />
+    </template>
+
+    <template #panel>
+      <CheckoutQuizPanel :score="currentScore" :result="quizResult" :progress="progress" :points="sessionStats.points" />
+    </template>
+
+    <template #status>
+      <GameStatusBar :label="`Question ${progress.index + 1}`" :progress="questionProgress" />
+    </template>
+
+    <CheckoutQuizInput
+      :checkout="currentCheckout"
+      :attempt-darts="attemptDarts"
+      :answered="answered"
+      :last-result="lastResult"
+      :progress="progress"
+      @dart="pushDart"
+      @undo="undoDart"
+      @submit="submit"
+      @next="next"
+    />
+  </GameLayout>
+
+  <GameLayout v-else title="Révision" tone="cyan" plain @exit="backToSettings">
+    <template #header-right>
+      <GameHeaderButton icon="check" label="Terminer" @click="endSession" />
+    </template>
+
+    <CheckoutFlashcard
+      :score="currentScore"
+      :checkout="currentCheckout"
+      :revealed="revealed"
+      :done="reviewDone"
+      :total="reviewTotal"
+      @toggle="toggleReveal"
+      @grade="grade"
+    />
+  </GameLayout>
 </template>
 
 <style lang="scss" scoped>
-.co-game {
+.co-over {
   display: flex;
   flex-direction: column;
   height: 100dvh;
   overflow: hidden;
-
-  &__main {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    padding: $padding-md $padding-md 0;
-    @include safe-bottom($padding-xl);
-  }
-
-  &__end-btn {
-    display: flex;
-    padding: $padding-xxs;
-    color: $white;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
-  }
-}
-
-@media (min-width: $bp-laptop) {
-  .co-game__main {
-    padding: $padding-xxl $padding-xxl 0;
-    @include safe-bottom($padding-xxl);
-  }
 }
 </style>

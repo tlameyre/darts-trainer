@@ -1,5 +1,6 @@
 <script setup>
 import AppIcon from '../AppIcon.vue'
+import GameStreakBadge from '../game/GameStreakBadge.vue'
 
 defineProps({
   tour: { type: Number, required: true },
@@ -26,7 +27,7 @@ function roundTone(hits) {
           <AppIcon name="clock" :width="16" :height="16" />
           {{ timeDisplay }}
         </span>
-        <span class="warmup-hero__streak">Série <span class="warmup-hero__streak-value">×{{ streak }}</span></span>
+        <GameStreakBadge class="warmup-hero__streak" :value="streak" />
     </div>
 
     <div class="warmup-hero__middle">
@@ -68,10 +69,12 @@ function roundTone(hits) {
 
 <style lang="scss" scoped>
 .warmup-hero {
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: $gap-sm;
+  padding: $padding-xs $padding-md $padding-md;
   color: $white;
 
   &__status {
@@ -89,19 +92,6 @@ function roundTone(hits) {
 
   &__tour {
     @include title-lg;
-  }
-
-  &__streak {
-    @include title-sm;
-    display: flex;
-    gap: $gap-xs;
-    padding: $padding-xxs $padding-xs;
-    border-radius: $radius-sm;
-    background: $black;
-  }
-
-  &__streak-value {
-    color: $blue-light;
   }
 
   &__timer {
@@ -215,6 +205,8 @@ function roundTone(hits) {
 
 @media (min-width: $bp-laptop) {
   .warmup-hero {
+    padding: 0;
+
     &__status { justify-content: end;}
     &__tour, &__streak { display: none;}
     &__timer  { position: inherit; transform: inherit; left: inherit; @include title-xxxl; padding: $padding-xs $padding-md; }
