@@ -8,6 +8,8 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { BADGES } from '../data/badges.js'
 
+import AppButton from '../components/AppButton.vue'
+import IconButton from '../components/IconButton.vue'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import BadgeDetailModal from '../components/badges/BadgeDetailModal.vue'
 import GameMenuModal from '../components/game/GameMenuModal.vue'
@@ -445,6 +447,10 @@ function openBadgeLocked() {
   showBadgeDetail.value = true
 }
 
+const buttonTones = ['orange', 'blue', 'green', 'cyan', 'red', 'online', 'tournament', 'black', 'danger', 'inverse', 'muted']
+const buttonVariants = ['primary', 'secondary', 'ghost', 'surface', 'dashed', 'link']
+const iconButtonVariants = ['bare', 'surface', 'outline', 'translucent', 'filled']
+
 function go(name, params) {
   router.push({ name, params })
 }
@@ -675,6 +681,47 @@ const mockProfileData = {
           <div class="dev__buttons">
             <button class="dev__btn" @click="go('login')">Login</button>
             <button class="dev__btn" @click="go('register')">Register</button>
+          </div>
+        </div>
+    </section>
+
+    <section class="dev__section">
+      <h2 class="dev__section-title">Boutons</h2>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Variantes (tone orange)</h3>
+          <div class="dev__button-grid">
+            <AppButton v-for="v in buttonVariants" :key="v" :variant="v" size="small" :block="false">{{ v }}</AppButton>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Tons (primary)</h3>
+          <div class="dev__button-grid">
+            <AppButton v-for="t in buttonTones" :key="t" :tone="t" size="small" :block="false">{{ t }}</AppButton>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Tons (secondary)</h3>
+          <div class="dev__button-grid">
+            <AppButton v-for="t in buttonTones" :key="t" variant="secondary" :tone="t" size="small" :block="false">{{ t }}</AppButton>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Tailles, icônes, états</h3>
+          <div class="dev__button-stack">
+            <AppButton>big</AppButton>
+            <AppButton size="md">md</AppButton>
+            <AppButton size="cta" tone="blue" icon-end="arrow-right">cta</AppButton>
+            <AppButton size="md" variant="secondary" tone="danger" icon="exit">icône + danger</AppButton>
+            <AppButton size="md" variant="surface" align="start" icon="close">align start</AppButton>
+            <AppButton size="small" rounded="full" active>active</AppButton>
+            <AppButton disabled>disabled</AppButton>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">IconButton</h3>
+          <div class="dev__icon-grid">
+            <IconButton v-for="v in iconButtonVariants" :key="v" :variant="v" icon="close" label="Fermer" />
+            <IconButton variant="filled" size="xl" icon="close" label="Fermer" color="#7C3AED" />
           </div>
         </div>
     </section>
@@ -920,6 +967,24 @@ const mockProfileData = {
     &:active { background: rgba(255, 255, 255, 0.12); }
   }
 
+  &__button-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $gap-xs;
+  }
+
+  &__button-stack {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
+  }
+
+  &__icon-grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: $gap-xs;
+  }
 
   &__fullscreen-preview {
     position: fixed;
