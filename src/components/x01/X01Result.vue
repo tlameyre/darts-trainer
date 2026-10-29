@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import AppButton from '../AppButton.vue'
 import AppTabs from '../AppTabs.vue'
 import X01MatchStats from './X01MatchStats.vue'
 import X01CheckoutReview from './X01CheckoutReview.vue'
@@ -94,12 +95,8 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
     </p>
 
     <div v-if="!hideActions" class="result__actions">
-      <button class="result__btn result__btn--secondary" @click="$emit('home')">
-        Retour au lobby
-      </button>
-      <button class="result__btn result__btn--primary" @click="$emit('replay')">
-        {{ replayLabel }}
-      </button>
+      <AppButton variant="secondary" @click="$emit('home')">Retour au lobby</AppButton>
+      <AppButton @click="$emit('replay')">{{ replayLabel }}</AppButton>
     </div>
 
   </div>
@@ -182,26 +179,13 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
 
   // ── Actions ───────────────────────────────────────────────────────────────
   &__actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: $gap-md;
     margin-top: auto;
     padding: 0 $padding-md;
   }
 
-  &__btn {
-    flex: 1;
-    padding: $padding-md;
-    border-radius: $radius-sm;
-    @include title-md;
-    font-weight: 700;
-    text-transform: uppercase;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.75; }
-
-    &--primary   { background: $orange; color: $white; }
-    &--secondary { background: rgba($white, 0.08); color: $text-color; }
-  }
 }
 
 @media (min-width: $bp-laptop) {
@@ -213,8 +197,6 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
 
     &__slide    { padding: 0 $padding-xxl; }
     &__actions  { padding: 0 $padding-xxl; }
-
-    &__btn { @include title-lg; }
   }
 }
 </style>

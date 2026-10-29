@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import AppButton from '../AppButton.vue'
 import AppIcon from '../AppIcon.vue'
 import DartPill from './DartPill.vue'
 import { getCheckout } from '../../composables/useCheckouts.js'
@@ -143,8 +144,8 @@ const rows = computed(() => props.results.map((r, i) => {
       </section>
 
       <div v-if="!hideActions" class="co-recap__actions">
-        <button class="co-recap__btn co-recap__btn--primary" @click="emit('restart')">Rejouer</button>
-        <button class="co-recap__btn" @click="emit('home')">Accueil</button>
+        <AppButton size="md" tone="cyan" @click="emit('restart')">Rejouer</AppButton>
+        <AppButton size="md" variant="secondary" @click="emit('home')">Accueil</AppButton>
       </div>
     </main>
   </div>
@@ -418,22 +419,6 @@ const rows = computed(() => props.results.map((r, i) => {
     background: $bg;
   }
 
-  &__btn {
-    height: 56px;
-    border: $border-md solid $text-color;
-    border-radius: $radius-sm;
-    color: $text-color;
-    @include title-lg;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.8; }
-
-    &--primary {
-      border-color: $mode-checkout;
-      background: $mode-checkout;
-      color: $white;
-    }
-  }
 }
 
 @media (min-width: $bp-laptop) {
@@ -494,7 +479,6 @@ const rows = computed(() => props.results.map((r, i) => {
     &__row-points { @include title-xxl; }
 
     &__actions { gap: $gap-sm; }
-    &__btn     { height: 64px; @include title-xl; }
   }
 }
 </style>

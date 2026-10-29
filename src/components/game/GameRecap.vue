@@ -47,8 +47,8 @@ defineEmits(['primary', 'home'])
       </ul>
 
       <div v-if="!hideActions" class="game-recap__actions">
-        <button class="game-recap__action game-recap__action--primary" @click="$emit('primary')">{{ primaryLabel }}</button>
-        <button class="game-recap__action game-recap__action--outline" @click="$emit('home')">Accueil</button>
+        <AppButton size="md" color="var(--recap-color)" @click="$emit('primary')">{{ primaryLabel }}</AppButton>
+        <AppButton size="md" variant="secondary" @click="$emit('home')">Accueil</AppButton>
       </div>
     </section>
   </div>
@@ -175,21 +175,6 @@ defineEmits(['primary', 'home'])
     padding-top: $padding-xs;
   }
 
-  &__action {
-    @include title-lg;
-    height: 56px;
-    border-radius: $radius-sm;
-
-    &--primary {
-      background: var(--recap-color);
-      color: $white;
-    }
-
-    &--outline {
-      border: $border-md solid $black;
-      color: $black;
-    }
-  }
 }
 
 @media (min-width: $bp-laptop) {
@@ -220,11 +205,6 @@ defineEmits(['primary', 'home'])
 
     &__list-title { @include title-xl; }
     &__list-count { @include text-md; }
-
-    &__action {
-      @include title-xl;
-      height: 64px;
-    }
   }
 }
 </style>

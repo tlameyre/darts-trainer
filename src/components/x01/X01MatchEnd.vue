@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { checkoutPct } from '../../composables/useX01MatchStats.js'
+import AppButton from '../AppButton.vue'
 import AppIcon from '../AppIcon.vue'
 import AppTabs from '../AppTabs.vue'
 import X01StatBars from './X01StatBars.vue'
@@ -203,10 +204,10 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
     <p v-else class="match-end__empty">Aucune volée enregistrée cette partie.</p>
 
     <div v-if="!hideActions || leg" class="match-end__actions">
-      <button v-if="leg" class="match-end__btn" @click="selectedLeg = null">Retour au match</button>
+      <AppButton v-if="leg" size="md" variant="secondary" @click="selectedLeg = null">Retour au match</AppButton>
       <template v-else>
-        <button class="match-end__btn" @click="$emit('home')">Retour</button>
-        <button class="match-end__btn match-end__btn--primary" @click="$emit('replay')">{{ replayLabel }}</button>
+        <AppButton size="md" variant="secondary" @click="$emit('home')">Retour</AppButton>
+        <AppButton class="match-end__replay" size="md" tone="game" @click="$emit('replay')">{{ replayLabel }}</AppButton>
       </template>
     </div>
   </div>
@@ -456,29 +457,13 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
     position: sticky;
     bottom: 0;
     margin-top: auto;
-    display: flex;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
     gap: $gap-xs;
     padding: $padding-sm $padding-md;
     @include safe-bottom($padding-md);
     background: $bg;
-  }
-
-  &__btn {
-    flex: 1;
-    height: 56px;
-    border-radius: $radius-sm;
-    border: $border-md solid $text-color;
-    color: $text-color;
-    @include title-lg;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.75; }
-
-    &--primary {
-      background: var(--game-color, #{$accent});
-      border-color: var(--game-color, #{$accent});
-      color: $white;
-    }
   }
 }
 
@@ -518,12 +503,7 @@ const legWinnerStats =computed(() => leg.value?.players[leg.value.winnerIndex] ?
       background: none;
     }
 
-    &__btn {
-      height: 64px;
-      @include title-xl;
-
-      &--primary { order: -1; }
-    }
+    &__replay { order: -1; }
 
     &__main,
     &__empty {

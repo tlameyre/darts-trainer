@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import AppButton from '../AppButton.vue'
 import AppIcon from '../AppIcon.vue'
 import { avatarColor } from '../../utils/avatarColor.js'
 
@@ -91,8 +92,8 @@ const subtitle = computed(() => {
     </main>
 
     <div class="result__actions">
-      <button class="result__btn result__btn--primary" @click="$emit('replay')">Rejouer</button>
-      <button class="result__btn" @click="$emit('home')">Accueil</button>
+      <AppButton size="md" tone="red" @click="$emit('replay')">Rejouer</AppButton>
+      <AppButton size="md" variant="secondary" @click="$emit('home')">Accueil</AppButton>
     </div>
   </div>
 </template>
@@ -286,19 +287,6 @@ const subtitle = computed(() => {
     @include safe-bottom($padding-md);
   }
 
-  &__btn {
-    @include title-xl;
-    height: 56px;
-    border: $border-md solid $black;
-    border-radius: $radius-sm;
-    color: $black;
-
-    &--primary {
-      border-color: $mode-tactics;
-      background: $mode-tactics;
-      color: $white;
-    }
-  }
 }
 
 // Desktop: red side column (header, winner, scores) and the ranking on the right
@@ -366,8 +354,6 @@ const subtitle = computed(() => {
       gap: $gap-sm;
       padding: 0 $padding-xxl * 1.25 $padding-xxl * 1.25;
     }
-
-    &__btn { @include title-xl; height: 64px; }
   }
 }
 </style>

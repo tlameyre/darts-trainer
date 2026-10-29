@@ -21,7 +21,7 @@ const props = defineProps({
   tone: {
     type: String,
     default: 'orange',
-    validator: v => ['orange', 'blue', 'green', 'cyan', 'red', 'online', 'tournament', 'black', 'danger', 'inverse', 'muted'].includes(v),
+    validator: v => ['orange', 'blue', 'green', 'cyan', 'red', 'online', 'tournament', 'game', 'black', 'danger', 'inverse', 'muted'].includes(v),
   },
   color: { type: String, default: null },
   active: { type: Boolean, default: false },
@@ -67,7 +67,6 @@ const iconSize = computed(() => (props.size === 'small' ? 16 : 20))
   align-items: center;
   justify-content: center;
   gap: $gap-xs;
-  flex-shrink: 0;
   text-transform: uppercase;
   transition: background 0.15s, transform 0.1s;
 
@@ -104,6 +103,7 @@ const iconSize = computed(() => (props.size === 'small' ? 16 : 20))
 
   &--cta {
     @include title-xl;
+    flex-shrink: 0;
     height: 56px;
     padding: 0 $padding-md;
   }
@@ -123,6 +123,11 @@ const iconSize = computed(() => (props.size === 'small' ? 16 : 20))
       --btn-color: #{$color};
       --btn-dark: #{$black};
     }
+  }
+
+  &--game {
+    --btn-color: var(--game-color, #{$accent});
+    --btn-dark: #{$black};
   }
 
   &--orange { --btn-dark: #{$orange-dark}; }
@@ -229,6 +234,7 @@ const iconSize = computed(() => (props.size === 'small' ? 16 : 20))
 
   .btn--md {
     @include title-xl;
+    height: 64px;
   }
 
   .btn--cta {
