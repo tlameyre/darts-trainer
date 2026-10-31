@@ -37,7 +37,7 @@ const profile = computed(() => {
   if (customMode.value) {
     return {
       level:        null,
-      label:        'Custom',
+      label:        'Perso',
       avgVolley:    AI_LEVELS[customAvg.value - 1].avgVolley,
       checkoutRate: AI_LEVELS[customCo.value - 1].checkoutRate,
     }

@@ -32,6 +32,10 @@ defineProps({
     &--card.principle--#{$name} { background: $color; }
   }
 
+  // Small white text: the base orange and cyan are below 4.5:1
+  &--card.principle--orange { background: $orange-dark; }
+  &--card.principle--cyan { background: $mode-checkout-dark; }
+
   &--panel { background: $tint-16; }
 
   &__title { @include title-lg; }

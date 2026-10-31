@@ -2,11 +2,13 @@
 // End-of-game layout shared by the training modes: colored hero with the
 // success rate and totals, then a scrollable list of rows (default slot).
 defineProps({
-  tone: { type: String, default: 'orange', validator: v => ['orange', 'blue'].includes(v) },
+  tone: { type: String, default: 'orange', validator: v => ['orange', 'blue', 'cyan'].includes(v) },
+  title: { type: String, default: 'Récap de la session' },
   percent: { type: Number, required: true },
-  badgeValue: { type: [String, Number], required: true },
-  badgeLabel: { type: String, required: true },
-  stats: { type: Array, required: true }, // { label, value }
+  unit: { type: String, default: '%' },
+  badgeValue: { type: [String, Number], default: null }, // no badge without a value
+  badgeLabel: { type: String, default: '' },
+  stats: { type: Array, default: () => [] }, // { label, value }
   statsColumns: { type: Number, default: 2 },
   listTitle: { type: String, default: '' }, // the list section is skipped without default slot content
   listCount: { type: String, default: '' },
@@ -21,15 +23,15 @@ defineEmits(['primary', 'home'])
 <template>
   <div class="game-recap" :class="`game-recap--${tone}`">
     <section class="game-recap__hero">
-      <span class="game-recap__title">Récap de la session</span>
+      <span class="game-recap__title">{{ title }}</span>
       <div class="game-recap__headline">
-        <span class="game-recap__percent">{{ percent }}<span class="game-recap__percent-sign">%</span></span>
-        <div class="game-recap__badge">
+        <span class="game-recap__percent">{{ percent }}<span class="game-recap__percent-sign">{{ unit }}</span></span>
+        <div v-if="badgeValue !== null" class="game-recap__badge">
           <span class="game-recap__badge-value">{{ badgeValue }}</span>
           <span class="game-recap__badge-label">{{ badgeLabel }}</span>
         </div>
       </div>
-      <div class="game-recap__stats" :style="{ gridTemplateColumns: `repeat(${statsColumns}, minmax(0, 1fr))` }">
+      <div v-if="stats.length" class="game-recap__stats" :style="{ gridTemplateColumns: `repeat(${statsColumns}, minmax(0, 1fr))` }">
         <div v-for="stat in stats" :key="stat.label" class="game-recap__stat">
           <span class="game-recap__stat-value">{{ stat.value }}</span>
           <span class="game-recap__stat-label">{{ stat.label }}</span>
@@ -42,6 +44,7 @@ defineEmits(['primary', 'home'])
         <h2 class="game-recap__list-title">{{ listTitle }}</h2>
         <span class="game-recap__list-count">{{ listCount }}</span>
       </div>
+      <slot name="legend" />
       <ul v-if="$slots.default" class="game-recap__list">
         <slot />
       </ul>
@@ -65,6 +68,10 @@ defineEmits(['primary', 'home'])
 
   &--blue {
     --recap-color: #{$blue};
+  }
+
+  &--cyan {
+    --recap-color: #{$mode-checkout};
   }
 
   &__hero {

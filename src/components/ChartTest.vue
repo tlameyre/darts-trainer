@@ -142,7 +142,6 @@ const chartOptions = computed(() => {
 .chart-container {
   width: 100%;
   margin: 20px auto;
-  padding: 15px;
   border-radius: 12px;
 }
 </style>

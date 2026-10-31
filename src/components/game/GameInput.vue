@@ -116,7 +116,7 @@ function undo() {
     @include title-xxl;
     letter-spacing: $tracking-sm;
     transition: opacity 0.15s;
-    min-height: 68px;
+    min-height: clamp(40px, 6.5dvh, 68px);
 
     &:active:not(:disabled) { opacity: 0.8; }
     &:disabled { opacity: 0.4; }

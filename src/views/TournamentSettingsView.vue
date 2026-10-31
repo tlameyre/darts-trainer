@@ -15,7 +15,7 @@ const tournamentStore = useTournamentStore()
 const SCORE_OPTIONS = [
   { value: 301, label: '301' },
   { value: 501, label: '501' },
-  { value: 'custom', label: 'Custom' },
+  { value: 'custom', label: 'Perso' },
 ]
 const ELIMINATION_OPTIONS = [
   { value: false, label: 'Simple' },

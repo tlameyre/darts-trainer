@@ -44,7 +44,7 @@ const PRINCIPLE = {
 
 const countLabel = computed(() => {
   if (settings.count === 'all') return 'Tous les checkouts'
-  if (settings.count === Infinity) return 'Sans limite'
+  if (settings.count === Infinity) return 'Infini'
   const n = settings.count === 'custom' ? customCount.value : settings.count
   return `${n} checkouts`
 })

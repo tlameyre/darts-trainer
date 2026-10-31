@@ -781,7 +781,6 @@ const mockProfileData = {
         :results="mockCheckoutResults"
         :reviewed-count="14"
         :review-total="20"
-        @exit="checkoutRecapPreview = null"
         @restart="checkoutRecapPreview = null"
         @home="checkoutRecapPreview = null"
       />

@@ -8,8 +8,6 @@ import ZoneBoard from '../zone/ZoneBoard.vue'
 const props = defineProps({
   show: { type: Boolean, required: true },
   zones: { type: Array, required: true },
-  // The change only applies once the current volley is over
-  midVolley: Boolean,
 })
 
 const emit = defineEmits(['close', 'zone-change', 'finish', 'quit'])
@@ -38,7 +36,6 @@ function validate() {
 
           <header class="zone-sheet__header">
             <div class="zone-sheet__heading">
-              <span v-if="midVolley" class="zone-sheet__caption">Après la volée en cours</span>
               <h2 id="zone-sheet-title" class="zone-sheet__title">Prochaine zone</h2>
             </div>
             <IconButton variant="outline" icon="close" label="Fermer" @click="emit('close')" />
@@ -122,13 +119,6 @@ function validate() {
     flex: 1;
     display: flex;
     flex-direction: column;
-  }
-
-  &__caption {
-    @include text-xs;
-    text-transform: uppercase;
-    letter-spacing: $tracking-lg;
-    color: $muted;
   }
 
   &__title {

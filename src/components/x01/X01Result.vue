@@ -8,7 +8,7 @@ import X01CheckoutReview from './X01CheckoutReview.vue'
 
 const props = defineProps({
   matchStats:  { type: Object,  default: null }, // sortie de buildMatchStats()
-  title:       { type: String,  default: 'Bien joué !' },
+  title:       { type: String,  default: 'Bien joué' },
   subtitle:    { type: String,  default: '' },
   titleColor:  { type: String,  default: null }, // 'orange' pour une défaite face à l'IA
   replayLabel: { type: String,  default: 'Rejouer' },

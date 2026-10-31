@@ -165,14 +165,11 @@ export function useWarmup({ duration, zones: initialZones }) {
 
   function undoLast() {
     if (gameOver.value || darts.value.length === 0) return;
-    darts.value.pop();
+    const popped = darts.value.pop();
 
-    // Undoing back into a volley thrown on other zones (before a zone change)
-    // makes those zones current again, so the screen matches the open volley
-    if (darts.value.length % 3 === 0) return;
-    const last = darts.value[darts.value.length - 1];
-    const lastZones = last.zones ?? [last.zone];
-    if (!zonesArrayMatch(lastZones, currentZones.value)) restoreZones(lastZones);
+    // Undoing a dart thrown before a zone change also undoes that change
+    const poppedZones = popped.zones ?? [popped.zone];
+    if (!zonesArrayMatch(poppedZones, currentZones.value)) restoreZones(poppedZones);
   }
 
   // Drops the period opened for the abandoned zones and resumes the previous one

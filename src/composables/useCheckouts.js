@@ -88,7 +88,7 @@ export function buildPool(brackets, order = "asc") {
 export function describeResult(result) {
   if (!result) return null;
   const pts = result.points ? `+${result.points} pts` : "0 pt";
-  if (result.optimal) return { tone: "ok", icon: "check", title: "Checkout !", pts };
+  if (result.optimal) return { tone: "ok", icon: "check", title: "Checkout", pts };
   if (result.correct) return { tone: "partial", icon: "check", title: "Checkout valide", pts };
   const left = result.score - result.darts.reduce((sum, d) => sum + d.pts, 0);
   return { tone: "ko", icon: "close", title: left > 0 ? `Raté · reste ${left}` : "Raté", pts };

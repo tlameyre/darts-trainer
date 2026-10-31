@@ -29,10 +29,10 @@ defineEmits(['select'])
   align-items: center;
   gap: $gap-sm;
   padding: $padding-sm;
-  border: $border-md solid $border-color;
+  border: $border-md solid var(--mode-color);
   border-radius: $radius-sm;
-  background: $surface;
-  color: $text-color;
+  background: var(--mode-color);
+  color: $white;
   text-align: left;
 
   &:active { opacity: 0.7; }
@@ -45,8 +45,7 @@ defineEmits(['select'])
     height: 52px;
     flex-shrink: 0;
     border-radius: $radius-sm;
-    background: var(--mode-color);
-    color: $white;
+    background: $tint-20;
   }
 
   &__body {
@@ -64,7 +63,7 @@ defineEmits(['select'])
   &__desc {
     @include text-xs;
     line-height: 1.3;
-    color: $muted;
+    color: rgba($white, 0.92);
   }
 }
 

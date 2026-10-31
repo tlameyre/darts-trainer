@@ -91,7 +91,7 @@ function set(value) {
   &--gauge &__cell { height: 28px; }
 
   &__nudge {
-    height: 40px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;

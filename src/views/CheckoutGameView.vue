@@ -1,5 +1,5 @@
 <script setup>
-import { computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import GameLayout from '../components/game/GameLayout.vue'
 import GameHeaderButton from '../components/game/GameHeaderButton.vue'
@@ -8,14 +8,18 @@ import CheckoutQuizPanel from '../components/checkout/CheckoutQuizPanel.vue'
 import CheckoutFlashcard from '../components/checkout/CheckoutFlashcard.vue'
 import CheckoutQuizInput from '../components/checkout/CheckoutQuizInput.vue'
 import CheckoutRecap from '../components/checkout/CheckoutRecap.vue'
+import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import { useGameStore } from '../store/gameStore.js'
 import { useDbStore } from '../store/dbStore.js'
+import { useBadgeStore } from '../store/badgeStore.js'
 import { useCheckoutTrainer } from '../composables/useCheckoutTrainer.js'
 import { describeResult } from '../composables/useCheckouts.js'
 
 const router = useRouter()
 const gameStore = useGameStore()
 const dbStore = useDbStore()
+const badgeStore = useBadgeStore()
+const newBadges = ref([])
 
 if (!gameStore.gameSettings || gameStore.gameSettings.mode !== 'checkout') {
   router.replace({ name: 'checkout-settings' })
@@ -47,6 +51,8 @@ watch(gameOver, async (over) => {
       // Per-question results let the stats reopen the same recap as at the end of the quiz
       settings: { brackets: settings.brackets, order: settings.order, results: results.value },
     })
+    const stats = await dbStore.fetchProfileStats()
+    newBadges.value = await badgeStore.checkCheckoutBadges(stats)
   }
 })
 
@@ -64,18 +70,23 @@ onUnmounted(() => cleanup())
 </script>
 
 <template>
-  <div v-if="gameOver" class="co-over">
-    <CheckoutRecap
-      :variant="isQuiz ? 'quiz' : 'review'"
-      :session-stats="sessionStats"
-      :results="results"
-      :reviewed-count="reviewDone"
-      :review-total="reviewTotal"
-      @exit="backToSettings"
-      @restart="backToSettings"
-      @home="router.push({ name: 'home' })"
-    />
-  </div>
+  <GameLayout v-if="gameOver" title="Fin de partie" tone="cyan" over @exit="backToSettings">
+    <template #over>
+      <CheckoutRecap
+        :variant="isQuiz ? 'quiz' : 'review'"
+        :session-stats="sessionStats"
+        :results="results"
+        :reviewed-count="reviewDone"
+        :review-total="reviewTotal"
+        @restart="backToSettings"
+        @home="router.push({ name: 'home' })"
+      />
+    </template>
+
+    <template #modals>
+      <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
+    </template>
+  </GameLayout>
 
   <GameLayout
     v-else-if="isQuiz"
@@ -130,12 +141,3 @@ onUnmounted(() => cleanup())
     />
   </GameLayout>
 </template>
-
-<style lang="scss" scoped>
-.co-over {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  overflow: hidden;
-}
-</style>

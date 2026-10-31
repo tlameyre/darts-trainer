@@ -55,10 +55,6 @@ watch(gameOver, async (val) => {
 const showZoneSheet = ref(false)
 const newBadges     = ref([])
 
-// A zone change asked mid-volley waits for the volley to end
-const pendingZones = ref(null)
-const midVolley    = computed(() => darts.value.length % 3 !== 0)
-
 function openZoneSheet() {
   pauseTimer()
   showZoneSheet.value = true
@@ -67,11 +63,6 @@ function openZoneSheet() {
 function closeZoneSheet() {
   showZoneSheet.value = false
   resumeTimer()
-}
-
-function onZoneChange(zones) {
-  if (midVolley.value) pendingZones.value = zones
-  else changeZones(zones)
 }
 
 function handleQuit() {
@@ -92,10 +83,6 @@ watch(() => darts.value.length, async (newLen, oldLen) => {
   if (newLen > oldLen && newLen > 0 && newLen % 3 === 0) {
     justCompleted.value = true
     _justCompletedTimer = setTimeout(() => { justCompleted.value = false }, 700)
-    if (pendingZones.value) {
-      changeZones(pendingZones.value)
-      pendingZones.value = null
-    }
     // Vérification des lancers spéciaux à chaque fin de volée
     const special = await badgeStore.checkSpecialThrow(darts.value)
     if (special.length) newBadges.value = [...newBadges.value, ...special]
@@ -190,10 +177,9 @@ onUnmounted(() => {
     <template #modals>
       <WarmupZoneSheet
         :show="showZoneSheet"
-        :zones="pendingZones ?? currentZones"
-        :mid-volley="midVolley"
+        :zones="currentZones"
         @close="closeZoneSheet"
-        @zone-change="onZoneChange"
+        @zone-change="changeZones"
         @finish="handleFinish"
         @quit="handleQuit"
       />

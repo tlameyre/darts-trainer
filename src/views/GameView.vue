@@ -156,7 +156,7 @@ onUnmounted(() => {
     </template>
 
     <NumericKeypad
-      style="--key-min: 84px"
+      style="--key-min: clamp(48px, 8.5dvh, 84px)"
       left-key="delete"
       confirm-tone="ink"
       confirm-label="OK"

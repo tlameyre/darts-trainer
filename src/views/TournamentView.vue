@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useTournamentStore } from '../store/tournamentStore.js'
 import { useFriendStore } from '../store/friendStore.js'
 import { useAuthStore } from '../store/authStore.js'
+import { useDbStore } from '../store/dbStore.js'
+import { useBadgeStore } from '../store/badgeStore.js'
 import { useGameStore } from '../store/gameStore.js'
 import { useOnlineMatchStore } from '../store/onlineMatchStore.js'
 import { MIN_PARTICIPANTS_TO_START } from '../data/tournamentConstants.js'
@@ -25,6 +27,7 @@ import TournamentStartModal from '../components/tournament/TournamentStartModal.
 import TournamentHostPickerModal from '../components/tournament/TournamentHostPickerModal.vue'
 import X01PlayerPicker from '../components/x01/X01PlayerPicker.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
+import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 
 const props = defineProps({
   // Preview /dev uniquement : { tournament, hosts, participants, matches }
@@ -36,6 +39,9 @@ const router           = useRouter()
 const tournamentStore  = useTournamentStore()
 const friendStore      = useFriendStore()
 const authStore        = useAuthStore()
+const dbStore          = useDbStore()
+const badgeStore       = useBadgeStore()
+const newBadges        = ref([])
 const gameStore        = useGameStore()
 const onlineMatchStore = useOnlineMatchStore()
 
@@ -138,6 +144,13 @@ const showAddPlayerPicker = ref(false)
 const showDeleteConfirm   = ref(false)
 const participantToRemove = ref(null)
 const deleting            = ref(false)
+
+// A finished tournament may unlock played/won badges for the current user
+watch(() => data.value?.tournament?.status, async (status) => {
+  if (status !== 'completed' || isMock.value) return
+  const stats = await dbStore.fetchProfileStats()
+  newBadges.value = await badgeStore.checkTournamentBadges(stats)
+}, { immediate: true })
 
 onMounted(() => {
   if (!isMock.value) {
@@ -400,10 +413,10 @@ async function playOnline() {
         </div>
         <div class="tournament__invite-actions">
           <AppButton size="small" variant="secondary" icon="copy" @click="copyCode">
-            {{ copied === 'code' ? 'Copié !' : 'Copier' }}
+            {{ copied === 'code' ? 'Copié' : 'Copier' }}
           </AppButton>
           <AppButton size="small" tone="tournament" @click="shareInviteLink">
-            {{ copied === 'link' ? 'Lien copié !' : 'Partager le lien' }}
+            {{ copied === 'link' ? 'Lien copié' : 'Partager le lien' }}
           </AppButton>
         </div>
       </div>
@@ -610,6 +623,7 @@ async function playOnline() {
       @close="showDeleteConfirm = false"
       @confirm="confirmDeleteTournament"
     />
+    <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
   </div>
   <div v-else class="tournament__loading">Chargement du tournoi…</div>
 </template>

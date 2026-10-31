@@ -22,11 +22,11 @@ const filter = ref(FILTERS.some(f => f.id === route.query.filter) ? route.query.
 
 const WIKI_TILE = {
   label: 'Encyclopédie', icon: 'book', color: '#14110F', settingsRoute: 'checkout-wiki',
-  description: 'Toutes les routes de checkout, de 2 à 170.', players: 'solo',
+  description: 'Toutes les routes de checkout, de 2 à 170.', players: ['solo'],
 }
 
 const groups = computed(() => {
-  const visible = modes => modes.filter(m => filter.value === 'all' || m.players === filter.value)
+  const visible = modes => modes.filter(m => filter.value === 'all' || m.players.includes(filter.value))
   return [
     { title: "S'entraîner", modes: visible([...GAME_MODES.filter(m => m.group === 'train'), WIKI_TILE]) },
     { title: 'Jouer',       modes: visible(GAME_MODES.filter(m => m.group !== 'train')) },

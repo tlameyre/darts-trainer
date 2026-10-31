@@ -103,6 +103,12 @@ function goBack(backTo) {
     min-height: 0;
   }
 
+  &__header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
   &__info {
     display: flex;
     padding: $padding-xxs;

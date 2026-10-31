@@ -139,12 +139,6 @@ $content-inset: max(#{$padding-xxl}, calc((100% - 1120px) / 2));
     gap: $gap-lg;
     @include nav-safe-bottom($padding-xxl);
 
-    .tournaments__header {
-      padding-left: $content-inset;
-      padding-right: $content-inset;
-      padding-bottom: $padding-xl;
-    }
-
     &__header-actions {
       display: flex;
       gap: $gap-xs;

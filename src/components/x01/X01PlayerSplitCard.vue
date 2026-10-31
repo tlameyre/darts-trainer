@@ -64,7 +64,7 @@ function statRows(p) {
           <span class="split-card__think-dot" />
         </span>
         <span v-if="player.isAI" class="split-card__level">
-          {{ player.level != null ? 'Lv. ' + player.level : 'Custom' }}
+          {{ player.level != null ? 'Lv. ' + player.level : 'Perso' }}
         </span>
         <span class="split-card__legs" title="Manches gagnées">{{ player.legsWon }}</span>
       </template>
@@ -164,14 +164,18 @@ function statRows(p) {
   }
 
   &__row-id {
+    flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: $gap-xxs;
+
+    .split-card__legs { align-self: flex-start; }
   }
 
   &__row-score {
+    flex-shrink: 0;
     @include title-xxxl;
     line-height: 1;
     opacity: 0.85;

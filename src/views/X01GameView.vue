@@ -490,7 +490,7 @@ const multiWinnerName = computed(() =>
   <GameLayout
     :title="headerTitle"
     :tone="tone"
-    style="--entry-height: 480px; --entry-max-height: 62dvh"
+    style="--entry-height: min(480px, 58dvh); --entry-max-height: 62dvh"
     @exit="router.push({ name: settingsRoute })"
   >
     <template v-if="phase !== 'game-over'" #header-right>

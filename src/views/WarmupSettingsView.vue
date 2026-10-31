@@ -24,7 +24,7 @@ const durationOptions = [
   { value: 15, label: '15 min' },
   { value: 30, label: '30 min' },
   { value: null, label: 'Infini' },
-  { value: 'custom', label: 'Custom' },
+  { value: 'custom', label: 'Perso' },
 ]
 
 const isCustomDuration = computed(() => settings.duration === 'custom')

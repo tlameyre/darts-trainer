@@ -3,7 +3,7 @@
  * Pour ajouter un mode : ajouter un objet ici + les routes dans router/index.js
  * `group` : "train" (s'entraîner) ou "play" (jouer) — sert au regroupement du lobby et de l'accueil.
  * `description` : une phrase pour le catalogue de la page Jouer.
- * `players` : "solo" | "multi" | "online" — filtre de la page Jouer.
+ * `players` : liste parmi "solo" | "multi" | "online" — filtres de la page Jouer.
  * `label` : nom court affiché sur les tuiles de l'accueil et du lobby.
  * `ink` : variante foncée de `color`, lisible en texte sur fond crème.
  */
@@ -16,7 +16,7 @@ export const GAME_MODES = [
     icon: "calculator",
     settingsRoute: "score-settings",
     description: "Compte le total de ta volée, de plus en plus vite.",
-    players: "solo",
+    players: ["solo"],
     group: "train",
   },
   {
@@ -27,7 +27,7 @@ export const GAME_MODES = [
     icon: "dartboard",
     settingsRoute: "warmup-settings",
     description: "Travaille une zone de la cible et suis ta précision.",
-    players: "solo",
+    players: ["solo"],
     group: "train",
   },
   {
@@ -38,7 +38,7 @@ export const GAME_MODES = [
     icon: "checkout",
     settingsRoute: "checkout-settings",
     description: "Trouve la route de chaque score, en révision ou en quiz.",
-    players: "solo",
+    players: ["solo"],
     group: "train",
   },
   {
@@ -49,7 +49,7 @@ export const GAME_MODES = [
     icon: "dartboard",
     settingsRoute: "x01-settings",
     description: "Du 101 au 501, contre tes amis ou un DartBot.",
-    players: "multi",
+    players: ["multi"],
     group: "play",
   },
   {
@@ -60,7 +60,7 @@ export const GAME_MODES = [
     icon: "globe",
     settingsRoute: "online-settings",
     description: "Défie un ami à distance, chacun sur son appareil.",
-    players: "online",
+    players: ["online"],
     group: "play",
   },
   {
@@ -71,7 +71,7 @@ export const GAME_MODES = [
     icon: "cricket-closed",
     settingsRoute: "tactics-settings",
     description: "Ferme les zones 20 à 12 avant les autres.",
-    players: "multi",
+    players: ["multi"],
     group: "play",
   },
   {
@@ -82,7 +82,7 @@ export const GAME_MODES = [
     icon: "trophy",
     settingsRoute: "tournaments",
     description: "Ligue ou coupe entre amis.",
-    players: "multi",
+    players: ["multi", "online"],
     group: "play",
   },
 ];

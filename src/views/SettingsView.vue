@@ -56,7 +56,7 @@ const PRINCIPLE = {
 
 const recap = computed(() => [
   difficultyOptions.find(o => o.value === settings.difficulty).label,
-  settings.maxQuestions ? `${settings.maxQuestions} questions` : 'Sans limite',
+  settings.maxQuestions ? `${settings.maxQuestions} questions` : 'Infini',
   settings.timeLimit ? `${settings.timeLimit} s par question` : 'Temps libre',
   ...(settings.doubleValidation ? ['Double calcul'] : []),
 ])
