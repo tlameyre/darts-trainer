@@ -90,9 +90,6 @@ function openTournament(id) {
 </template>
 
 <style lang="scss" scoped>
-// Content column of the desktop layout (1120px, centered)
-$content-inset: max(#{$padding-xxl}, calc((100% - 1120px) / 2));
-
 .tournaments {
   display: flex;
   flex-direction: column;
@@ -145,8 +142,8 @@ $content-inset: max(#{$padding-xxl}, calc((100% - 1120px) / 2));
     }
 
     &__tabs {
-      padding-left: $content-inset;
-      padding-right: $content-inset;
+      padding-left: $padding-lg;
+      padding-right: $padding-lg;
 
       :deep(.app-tabs__tab) {
         flex: none;
@@ -156,7 +153,7 @@ $content-inset: max(#{$padding-xxl}, calc((100% - 1120px) / 2));
       }
     }
 
-    &__main { padding: 0 $content-inset; }
+    &__main { padding: 0 $padding-lg; }
 
     &__list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: $gap-lg; }
 

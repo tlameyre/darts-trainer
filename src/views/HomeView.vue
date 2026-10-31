@@ -160,7 +160,7 @@ const playedToday = computed(() => week.value.some((day) => day.isToday && Objec
   &__cta-tiles {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: $gap-xs;
+    gap: $gap-xl;
   }
 
   &__streak {
@@ -193,13 +193,16 @@ const playedToday = computed(() => week.value.some((day) => day.isToday && Objec
   }
 }
 
+// Height of the pinned HomeHeader, so the sticky column stops just below it
+$home-header-height: 130px;
+
 @media (min-width: $bp-laptop) {
   .home {
     @include nav-safe-bottom($padding-xxl);
 
     &__main {
       display: grid;
-      grid-template-columns: 500px minmax(0, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       align-items: start;
       gap: $gap-xxl;
       padding: $padding-xxl $padding-xxl 0;
@@ -210,11 +213,16 @@ const playedToday = computed(() => week.value.some((day) => day.isToday && Objec
       flex-direction: column;
       gap: $gap-xl;
       min-width: 0;
+
+      &:not(.home__column--aside) {
+        position: sticky;
+        top: calc(#{$home-header-height} + #{$padding-xl});
+      }
     }
 
     &__pair {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      display: flex;
+      flex-direction: column;
       gap: $gap-xl;
     }
 
