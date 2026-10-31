@@ -44,16 +44,8 @@ import { getCheckout } from '../composables/useCheckouts.js'
 const router    = useRouter()
 const gameStore = useGameStore()
 
-// --- Preview LobbyView (dernière session et dernières stats fictives) ---
+// --- Preview LobbyView ---
 const showLobbyPreview = ref(false)
-const lobbyDaysAgo = (n) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString()
-const mockLobbyData = {
-  warmup: { played_at: lobbyDaysAgo(1), zone: 'D16+T20', accuracy: 64, total_darts: 96, duration_s: 480, settings: { duration: 5, zoneRecap: [{ zones: [{ sector: 16, type: 'D' }, { sector: 20, type: 'T' }] }] } },
-  score: { played_at: lobbyDaysAgo(3), correct_count: 8, total_questions: 10, best_streak: 6, settings: {} },
-  checkout: { played_at: lobbyDaysAgo(4), correct_count: 7, questions: 10, points: 22, settings: {} },
-  x01: [{ played_at: lobbyDaysAgo(5), avg_volley: 48.6, highest_finish: 64, legs_played: 2 }],
-  tournament: { name: 'Ligue du jeudi' },
-}
 
 // --- Preview HomeView (semaine, série, tournois, badges fictifs) ---
 const showHomePreview = ref(false)
@@ -68,6 +60,11 @@ const mockHomeTournaments = [
   { id: 'mock-t1', name: 'Ligue du jeudi', format: 'championship', status: 'in_progress', player_count: 8, created_at: daysAgo(20) },
   { id: 'mock-t2', name: "Coupe d'hiver", format: 'bracket', status: 'in_progress', player_count: 6, created_at: daysAgo(6) },
 ]
+const mockHomeSessions = {
+  x01: [{ id: 'mock-x01', played_at: daysAgo(1), legs_played: 3, avg_volley: 48.6 }],
+  warmup: [{ id: 'mock-warmup', played_at: daysAgo(1), zone: 'D16+T20', accuracy: 64, duration_s: 480 }],
+  checkout: [{ id: 'mock-checkout', played_at: daysAgo(4), questions: 20, correct_count: 14 }],
+}
 
 // --- Preview FriendsView ---
 const showFriendsPreview = ref(false)
@@ -651,7 +648,7 @@ const mockProfileData = {
           <h3 class="dev__group-title">Accueil et navigation</h3>
           <div class="dev__buttons">
             <button class="dev__btn" @click="showHomePreview = true">Accueil (données fictives)</button>
-            <button class="dev__btn" @click="showLobbyPreview = true">Jouer (données fictives)</button>
+            <button class="dev__btn" @click="showLobbyPreview = true">Jouer</button>
             <button class="dev__btn" @click="go('home')">Home</button>
             <button class="dev__btn" @click="go('play')">Lobby (Jouer)</button>
           </div>
@@ -748,13 +745,14 @@ const mockProfileData = {
         :mock-activity="mockHomeActivity"
         :mock-badges="mockHomeBadges"
         :mock-tournaments="mockHomeTournaments"
+        :mock-sessions="mockHomeSessions"
       />
       <button class="dev__close-preview" @click="showHomePreview = false">✕ Fermer</button>
     </div>
 
     <!-- LobbyView plein écran -->
     <div v-if="showLobbyPreview" class="dev__fullscreen-preview">
-      <LobbyView :mock-data="mockLobbyData" />
+      <LobbyView />
       <button class="dev__close-preview" @click="showLobbyPreview = false">✕ Fermer</button>
     </div>
 

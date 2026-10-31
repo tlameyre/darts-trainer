@@ -3,7 +3,7 @@ defineProps({
   // [{ id, label, color? }]
   tabs:       { type: Array,   required: true },
   modelValue: { type: String,  required: true },
-  variant:    { type: String,  default: 'pill' }, // 'pill' | 'chip' | 'bar' | 'underline'
+  variant:    { type: String,  default: 'pill' }, // 'pill' | 'chip' | 'bar' | 'underline' | 'filter'
   scrollable: { type: Boolean, default: false },  // défile horizontalement + snap
 })
 
@@ -65,7 +65,7 @@ function select(tab, e) {
 
     .app-tabs__tab {
       flex: 1;
-      height: 40px;
+      height: 44px;
       padding: 0 $padding-sm;
       border: $border-md solid $border-color;
       border-radius: $radius-sm;
@@ -80,6 +80,30 @@ function select(tab, e) {
         color: $white;
       }
     }
+  }
+
+  // ── Filter — compact outlined pills, ink-filled when active (Jouer) ──────
+  &--filter {
+    gap: $gap-xs;
+
+    .app-tabs__tab {
+      height: 36px;
+      padding: 0 $padding-sm;
+      border: $border-md solid $border-color;
+      border-radius: $radius-sm;
+      @include title-sm;
+      text-transform: uppercase;
+      color: $text-color;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+      &--active {
+        background: $black;
+        border-color: $black;
+        color: $bg;
+      }
+    }
+
+    &.app-tabs--scrollable .app-tabs__tab { flex: none; }
   }
 
   // ── Bar — white underline, for colored backgrounds (warmup detail) ───────
@@ -190,6 +214,12 @@ function select(tab, e) {
   .app-tabs--chip .app-tabs__tab {
     @include title-md;
     height: 48px;
+  }
+
+  .app-tabs--filter .app-tabs__tab {
+    @include title-md;
+    height: 44px;
+    padding: 0 $padding-md;
   }
 
   .app-tabs--bar {
