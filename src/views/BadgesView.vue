@@ -137,6 +137,9 @@ const percent = computed(() => Math.round((unlockedCount.value / BADGES.length) 
   min-height: 100dvh;
 
   &__header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     display: flex;
     flex-direction: column;
     gap: $gap-sm;

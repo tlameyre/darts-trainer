@@ -26,6 +26,9 @@ defineEmits(['back'])
 
 <style lang="scss" scoped>
 .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   width: 100%;
   display: grid;
   grid-template-columns: auto 1fr auto;
