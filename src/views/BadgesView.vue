@@ -4,10 +4,10 @@ import { useRouter } from 'vue-router'
 import { BADGES, BADGE_CATEGORIES } from '../data/badges.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import { useDbStore } from '../store/dbStore.js'
-import AppHeader from '../components/AppHeader.vue'
 import AppIcon from '../components/AppIcon.vue'
 import BadgeDetailModal from '../components/badges/BadgeDetailModal.vue'
 import BadgeIcon from '../components/badges/BadgeIcon.vue'
+import IconButton from '../components/IconButton.vue'
 import SectionTitle from '../components/SectionTitle.vue'
 
 const router      = useRouter()
@@ -62,17 +62,32 @@ const percent = computed(() => Math.round((unlockedCount.value / BADGES.length) 
 
 <template>
   <div class="badges">
-    <AppHeader title="BADGES" tone="ink" @back="router.back()" />
-
-    <section class="badges__progress" aria-label="Progression">
-      <div class="badges__total">
-        <span class="badges__total-value">{{ unlockedCount }}<span class="badges__total-max"> / {{ BADGES.length }}</span></span>
-        <span class="badges__total-label">badges obtenus</span>
+    <header class="badges__header">
+      <div class="badges__header-row">
+        <div class="badges__heading">
+          <IconButton icon="arrow-left" label="Retour" variant="bare" light @click="router.back()" />
+          <h1 class="badges__title">Badges</h1>
+        </div>
+        <div class="badges__total">
+          <span class="badges__total-value">{{ unlockedCount }}<span class="badges__total-max"> / {{ BADGES.length }}</span></span>
+          <span class="badges__total-label badges__total-label--count">badges obtenus</span>
+        </div>
       </div>
-      <div class="badges__bar"><div class="badges__fill" :style="{ width: `${percent}%` }" /></div>
-    </section>
+      <div class="badges__progress">
+        <div class="badges__bar"><div class="badges__fill" :style="{ width: `${percent}%` }" /></div>
+        <span class="badges__total-label badges__total-label--bar">badges obtenus</span>
+      </div>
+    </header>
 
     <main class="badges__main">
+      <section class="badges__summary" aria-label="Résumé par catégorie">
+        <div v-for="cat in categories" :key="cat.name" class="badges__tile" :style="{ '--cat-color': cat.color }">
+          <span class="badges__tile-name">{{ cat.name }}</span>
+          <span class="badges__tile-count">{{ cat.unlocked }}<span class="badges__tile-max"> / {{ cat.badges.length }}</span></span>
+          <span class="badges__tile-bar"><span class="badges__tile-fill" :style="{ width: `${Math.round(cat.unlocked / cat.badges.length * 100)}%` }" /></span>
+        </div>
+      </section>
+
       <section v-for="cat in categories" :key="cat.name" class="badges__category">
         <SectionTitle :title="cat.name" :count="`${cat.unlocked} / ${cat.badges.length}`" ruled class="badges__category-title" :style="{ '--cat-color': cat.color }" />
 
@@ -121,38 +136,64 @@ const percent = computed(() => Math.round((unlockedCount.value / BADGES.length) 
   flex-direction: column;
   min-height: 100dvh;
 
-  &__progress {
+  &__header {
     display: flex;
     flex-direction: column;
     gap: $gap-sm;
-    padding: 0 $padding-md $padding-lg;
+    padding: calc(#{$padding-xl} + env(safe-area-inset-top)) $padding-md $padding-md;
     background: $black;
     color: $bg;
   }
 
-  &__total {
+  &__header-row {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
   }
 
+  &__heading {
+    display: flex;
+    align-items: center;
+    gap: $gap-xs;
+    margin-left: -4px; // cancels the bare IconButton padding so the arrow lines up with the content edge
+  }
+
+  &__title {
+    @include title-xxxl;
+    line-height: 0.9;
+  }
+
+  &__total {
+    display: flex;
+    align-items: flex-end;
+    gap: $gap-sm;
+  }
+
   &__total-value {
-    @include display-xs;
+    @include title-xxxl;
     line-height: 0.9;
   }
 
   &__total-max {
-    @include title-xxl;
+    @include title-xl;
     opacity: 0.6;
   }
 
   &__total-label {
     @include text-xs;
-    padding-bottom: $padding-xxs;
     opacity: 0.75;
+
+    &--count { display: none; }
+  }
+
+  &__progress {
+    display: flex;
+    align-items: center;
+    gap: $gap-sm;
   }
 
   &__bar {
+    flex: 1;
     height: 8px;
     border-radius: $radius-xs;
     background: rgba($bg, 0.2);
@@ -162,6 +203,50 @@ const percent = computed(() => Math.round((unlockedCount.value / BADGES.length) 
   &__fill {
     height: 100%;
     background: $error-light;
+  }
+
+  &__summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: $gap-xs;
+  }
+
+  &__tile {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
+    padding: $padding-sm;
+    border-radius: $radius-xs;
+    background: var(--cat-color);
+    color: $white;
+  }
+
+  &__tile-name {
+    @include title-lg;
+    line-height: 1;
+  }
+
+  &__tile-count {
+    @include title-xxxl;
+    line-height: 0.9;
+  }
+
+  &__tile-max {
+    @include title-lg;
+    opacity: 0.8;
+  }
+
+  &__tile-bar {
+    height: 6px;
+    border-radius: $radius-xs;
+    background: rgba($white, 0.3);
+    overflow: hidden;
+  }
+
+  &__tile-fill {
+    display: block;
+    height: 100%;
+    background: $white;
   }
 
   &__main {
@@ -200,7 +285,7 @@ const percent = computed(() => Math.round((unlockedCount.value / BADGES.length) 
     flex-direction: column;
     align-items: center;
     gap: $gap-xs;
-    min-height: 124px;
+    min-height: 148px;
     padding: $padding-sm $padding-xxs $padding-xs;
     background: $surface;
     border: $border-md solid $surface;
@@ -218,7 +303,7 @@ const percent = computed(() => Math.round((unlockedCount.value / BADGES.length) 
     }
   }
 
-  &__item-icon { --badge-icon-size: 40px; }
+  &__item-icon { --badge-icon-size: 64px; }
 
   &__item-label {
     @include title-sm;
@@ -271,30 +356,42 @@ const percent = computed(() => Math.round((unlockedCount.value / BADGES.length) 
 
 @media (min-width: $bp-laptop) {
   .badges {
-    &__progress { padding: 0 $padding-xxl $padding-xl; }
-    &__total-value { @include display-sm; }
+    &__header {
+      gap: $gap-md;
+      padding: calc(#{$padding-xl} + env(safe-area-inset-top)) $padding-xxl $padding-lg;
+    }
+
+    &__title { @include display-xs; }
+    &__total-value { @include display-xs; }
     &__total-max { @include title-xxxl; }
     &__total-label { @include text-sm; }
+    &__total-label--count { display: inline; padding-bottom: $padding-xs; }
+    &__total-label--bar { display: none; }
     &__bar { height: 10px; }
 
     &__main {
       width: 100%;
-      max-width: 1120px;
+      max-width: 1440px;
       margin: 0 auto;
-      gap: $gap-xxl;
-      padding: $padding-xxl 0 0;
+      gap: $gap-xl;
+      padding: $padding-xl $padding-xxl 0;
       @include nav-safe-bottom($padding-xl);
     }
 
-    &__grid {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+    &__summary {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: $gap-sm;
     }
 
-    &__item { min-height: 148px; padding: $padding-md $padding-xxs $padding-sm; }
-    &__item-icon { --badge-icon-size: 52px; }
-    &__item-label { @include title-md; }
-    &__item-state, &__item-percent { @include text-xs; }
+    &__tile { padding: $padding-md; }
+    &__tile-name { @include title-xl; }
+    &__tile-count { @include display-xs; }
+    &__tile-max { @include title-xl; }
+
+    &__grid {
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: $gap-sm;
+    }
   }
 }
 </style>

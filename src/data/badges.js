@@ -97,42 +97,42 @@ const RAW_BADGES = [
   { id: 'shanghai',    label: 'Shanghai',   description: 'Toucher le simple, la double et la triple du même secteur en une volée', category: 'Lancers spéciaux' },
 ]
 
-// Icon symbols are defined in AppIconDefs.vue. New badges reuse existing symbols until their own icons are designed.
-const ICONS = {
-  first_game: 'badge-first-game', first_warmup: 'badge-first-warmup', profile_complete: 'badge-profile-complete',
-  sessions_10: 'badge-sessions-10', sessions_50: 'badge-sessions-50', sessions_100: 'badge-sessions-100',
-  total_darts_500: 'badge-first-game', total_darts_1000: 'badge-total-darts-1000', total_darts_5000: 'badge-total-darts-5000',
+// Text shown in the badge medallion (see BadgeIcon.vue): milestone number, short symbol or initials
+const MARKS = {
+  first_game: '1', first_warmup: '1', profile_complete: 'ID',
+  sessions_10: '10', sessions_50: '50', sessions_100: '100',
+  total_darts_500: '500', total_darts_1000: '1K', total_darts_5000: '5K',
 
-  x01_sessions_10: 'badge-first-game', x01_sessions_50: 'badge-x01-sessions-50', x01_sessions_100: 'badge-sessions-50',
-  x01_darts_100: 'badge-total-darts-1000', x01_darts_1000: 'badge-x01-darts-1000', x01_darts_5000: 'badge-total-darts-5000',
-  x01_first_win: 'badge-sessions-50', x01_wins_10: 'badge-sessions-50', x01_wins_50: 'badge-sessions-100',
-  x01_avg_60: 'badge-avg-80', x01_avg_80: 'badge-avg-80', x01_avg_100: 'badge-avg-80',
-  x01_finish_100: 'badge-bullseye', x01_nine_darter: 'badge-sniper',
+  x01_sessions_10: '10', x01_sessions_50: '50', x01_sessions_100: '100',
+  x01_darts_100: '100', x01_darts_1000: '1K', x01_darts_5000: '5K',
+  x01_first_win: '1', x01_wins_10: '10', x01_wins_50: '50',
+  x01_avg_60: '60', x01_avg_80: '80', x01_avg_100: '100',
+  x01_finish_100: '100', x01_nine_darter: '9',
 
-  warmup_sessions_10: 'badge-first-warmup', warmup_sessions_50: 'badge-first-game', warmup_sessions_100: 'badge-warmup-sessions-100',
-  darts_100: 'badge-total-darts-1000', darts_1000: 'badge-x01-darts-1000', darts_5000: 'badge-total-darts-5000',
-  precise: 'badge-precise', sniper: 'badge-sniper', perfect_warmup: 'badge-perfect-warmup', avg_80: 'badge-avg-80',
+  warmup_sessions_10: '10', warmup_sessions_50: '50', warmup_sessions_100: '100',
+  darts_100: '100', darts_1000: '1K', darts_5000: '5K',
+  precise: '80', sniper: '95', perfect_warmup: '100', avg_80: '80',
 
-  game_sessions_10: 'badge-game-sessions-10', game_sessions_50: 'badge-game-sessions-10', game_sessions_100: 'badge-game-sessions-100',
-  streak_10: 'badge-first-warmup', streak_20: 'badge-total-darts-5000', streak_50: 'badge-streak-50',
-  perfect_game: 'badge-streak-50',
-  correct_50: 'badge-perfect-warmup', correct_100: 'badge-correct-100', correct_500: 'badge-avg-80', correct_1000: 'badge-correct-1000',
-  questions_50: 'badge-questions-50', questions_100: 'badge-questions-50', questions_500: 'badge-avg-80',
-  questions_1000: 'badge-correct-100', questions_5000: 'badge-correct-1000', questions_10000: 'badge-sessions-50',
+  game_sessions_10: '10', game_sessions_50: '50', game_sessions_100: '100',
+  streak_10: '×10', streak_20: '×20', streak_50: '×50',
+  perfect_game: '100%',
+  correct_50: '50', correct_100: '100', correct_500: '500', correct_1000: '1K',
+  questions_50: '50', questions_100: '100', questions_500: '500',
+  questions_1000: '1K', questions_5000: '5K', questions_10000: '10K',
 
-  checkout_sessions_10: 'badge-game-sessions-10', checkout_sessions_50: 'badge-game-sessions-100',
-  checkout_perfect: 'badge-perfect-warmup', checkout_optimal_50: 'badge-correct-100', checkout_170: 'badge-big-fish',
+  checkout_sessions_10: '10', checkout_sessions_50: '50',
+  checkout_perfect: '100%', checkout_optimal_50: '50', checkout_170: '170',
 
-  tournament_played: 'badge-sessions-10', tournament_won: 'badge-sessions-50', tournament_won_3: 'badge-sessions-100',
+  tournament_played: 'T', tournament_won: 'W', tournament_won_3: '×3',
 
-  days_streak_3: 'badge-sessions-10', days_streak_7: 'badge-first-warmup', days_streak_30: 'badge-total-darts-5000',
-  week_5_sessions: 'badge-warmup-sessions-100',
+  days_streak_3: '3J', days_streak_7: '7J', days_streak_30: '30J',
+  week_5_sessions: '5/7',
 
-  one_eighty: 'badge-total-darts-1000', hat_trick: 'badge-x01-darts-1000', white_horse: 'badge-white-horse',
-  bullseye: 'badge-bullseye', big_fish: 'badge-big-fish', shanghai: 'badge-perfect-warmup',
+  one_eighty: '180', hat_trick: '3', white_horse: '3×T',
+  bullseye: '50', big_fish: '170', shanghai: 'S',
 }
 
-export const BADGES = RAW_BADGES.map(b => ({ ...b, icon: ICONS[b.id] }))
+export const BADGES = RAW_BADGES.map(b => ({ ...b, mark: MARKS[b.id] }))
 
 export function getBadge(id) {
   return BADGES.find(b => b.id === id)
