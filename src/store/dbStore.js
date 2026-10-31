@@ -1,6 +1,16 @@
 import { defineStore } from 'pinia'
 import { supabase } from '../lib/supabase.js'
 import { useAuthStore } from './authStore.js'
+import { bestDayStreak, maxSessionsInWindow } from '../utils/activityDays.js'
+
+// A win is recorded in the session settings: against the bot via aiLegsWon, otherwise against the opponents' legs
+function isX01Win(settings) {
+  const mine = settings?.humanLegsWon
+  if (mine == null) return false
+  if (settings.aiLegsWon != null) return mine > settings.aiLegsWon
+  const opponents = settings.opponents
+  return Array.isArray(opponents) && opponents.length > 0 && mine > Math.max(...opponents.map(o => o.legsWon ?? 0))
+}
 
 export const useDbStore = defineStore('db', () => {
   function getUser() {
@@ -285,12 +295,26 @@ export const useDbStore = defineStore('db', () => {
     const user = getUser()
     if (!user) return null
 
-    const [{ data: gameSessions }, { data: warmupSessions }, { data: x01Sessions }, { data: checkoutSessions }] = await Promise.all([
-      supabase.from('game_sessions').select('id, best_streak, correct_count, total_questions').eq('user_id', user.id),
-      supabase.from('warmup_sessions').select('total_darts, accuracy').eq('user_id', user.id),
-      supabase.from('x01_sessions').select('total_darts').eq('user_id', user.id),
-      supabase.from('checkout_sessions').select('id').eq('user_id', user.id),
+    const [
+      { data: gameSessions }, { data: warmupSessions }, { data: x01Sessions }, { data: checkoutSessions },
+      { data: participations },
+    ] = await Promise.all([
+      supabase.from('game_sessions').select('id, played_at, best_streak, correct_count, total_questions').eq('user_id', user.id),
+      supabase.from('warmup_sessions').select('played_at, total_darts, accuracy').eq('user_id', user.id),
+      supabase.from('x01_sessions').select('played_at, start_score, total_darts, avg_volley, highest_finish, min_darts, settings').eq('user_id', user.id),
+      supabase.from('checkout_sessions').select('played_at, questions, correct_count, optimal_count, settings').eq('user_id', user.id),
+      supabase.from('tournament_participants').select('id, tournament_id').eq('user_id', user.id),
     ])
+
+    // Winner is stored on the tournament, so fetch the tournaments of those participations
+    const tournamentIds = [...new Set((participations ?? []).map(p => p.tournament_id))]
+    const { data: tournaments } = tournamentIds.length
+      ? await supabase.from('tournaments').select('id, status, winner_participant_id').in('id', tournamentIds)
+      : { data: [] }
+    const myParticipantIds = new Set((participations ?? []).map(p => p.id))
+    const completedTournaments = (tournaments ?? []).filter(t => t.status === 'completed')
+    const tournamentsPlayed = completedTournaments.length
+    const tournamentsWon    = completedTournaments.filter(t => myParticipantIds.has(t.winner_participant_id)).length
 
     const warmupSessionsCount   = warmupSessions?.length ?? 0
     const x01SessionsCount      = x01Sessions?.length ?? 0
@@ -323,11 +347,35 @@ export const useDbStore = defineStore('db', () => {
       ? Math.round(last10.reduce((s, r) => s + Number(r.accuracy), 0) / 10)
       : 0
 
+    // X01 performance (a volley average only counts once at least 10 darts were thrown)
+    const x01Wins = x01Sessions?.filter(r => isX01Win(r.settings)).length ?? 0
+    const bestX01Avg = x01Sessions?.reduce((best, r) =>
+      (r.total_darts ?? 0) >= 10 ? Math.max(best, Number(r.avg_volley ?? 0)) : best, 0) ?? 0
+    const bestX01Finish = x01Sessions?.reduce((best, r) => Math.max(best, r.highest_finish ?? 0), 0) ?? 0
+    const hasNineDarter = x01Sessions?.some(r => r.start_score === 501 && r.min_darts > 0 && r.min_darts <= 9) ?? false
+
+    // Checkout quiz
+    const checkoutOptimalTotal = checkoutSessions?.reduce((s, r) => s + (r.optimal_count ?? 0), 0) ?? 0
+    const hasPerfectCheckout   = checkoutSessions?.some(r => r.questions >= 10 && r.correct_count === r.questions) ?? false
+    const hasCheckout170       = checkoutSessions?.some(r =>
+      r.settings?.results?.some(q => q.score === 170 && q.correct)) ?? false
+
+    // Regularity
+    const playedDates = [gameSessions, warmupSessions, x01Sessions, checkoutSessions]
+      .flatMap(rows => (rows ?? []).map(r => r.played_at))
+      .filter(Boolean)
+    const bestDaysStreak  = bestDayStreak(playedDates)
+    const maxSessionsWeek = maxSessionsInWindow(playedDates, 7)
+
     return {
       totalSessions, warmupSessionsCount, x01SessionsCount, gameSessionsCount, checkoutSessionsCount,
       totalDarts, warmupDarts, x01Darts,
       totalQuestions, bestGameAccuracy,
       avgAccuracy, bestAccuracy, bestStreak, totalCorrect, avgAccuracy10, avg80eligible,
+      x01Wins, bestX01Avg, bestX01Finish, hasNineDarter,
+      checkoutOptimalTotal, hasPerfectCheckout, hasCheckout170,
+      bestDaysStreak, maxSessionsWeek,
+      tournamentsPlayed, tournamentsWon,
     }
   }
 
