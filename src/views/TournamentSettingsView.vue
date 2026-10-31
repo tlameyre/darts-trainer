@@ -6,7 +6,7 @@ import AppButton from '../components/AppButton.vue'
 import IconButton from '../components/IconButton.vue'
 import AppIcon from '../components/AppIcon.vue'
 import OptionSelector from '../components/OptionSelector.vue'
-import ToggleSwitch from '../components/ToggleSwitch.vue'
+import OptionTile from '../components/OptionTile.vue'
 import { useTournamentStore } from '../store/tournamentStore.js'
 
 const router          = useRouter()
@@ -166,9 +166,7 @@ async function createTournament() {
           <template v-if="isChampionship">
             <section class="settings__field">
               <span class="settings__label">Options du championnat</span>
-              <div class="settings__card">
-                <ToggleSwitch v-model="settings.doubleRoundRobin" tone="tournament" title="Aller-retour" description="Chaque duel se joue deux fois" />
-              </div>
+              <OptionTile v-model="settings.doubleRoundRobin" tone="tournament" title="Aller-retour" description="Chaque duel se joue deux fois" />
               <div class="settings__card">
                 <OptionSelector v-model="settings.playoffSize" label="Playoffs" :options="PLAYOFF_OPTIONS" tone="tournament" />
               </div>
@@ -266,7 +264,7 @@ async function createTournament() {
 
   &__step-bar {
     height: 6px;
-    border-radius: 2px;
+    border-radius: $radius-xs;
     background: $border-color;
 
     .settings__step--done &,
@@ -505,7 +503,7 @@ async function createTournament() {
       align-items: center;
       justify-content: center;
       border-radius: $radius-sm;
-      background: rgba($white, 0.2);
+      background: $tint-20;
       @include title-xl;
 
       .settings__aside-step:not(.settings__aside-step--off):last-child &,

@@ -24,8 +24,8 @@ defineProps({
   padding: $padding-sm $padding-xs;
 
   &--highlight {
-    background: rgba(#047857, 0.15);
-    border: 1px solid rgba(#047857, 0.3);
+    background: rgba($accent, 0.15);
+    border: $border-sm solid rgba($accent, 0.3);
   }
 
   &__value {

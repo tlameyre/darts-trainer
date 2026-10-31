@@ -40,6 +40,11 @@ $muted: #5F594F;
 // Input
 $input-placeholder: rgba(20, 17, 15, 0.55);
 
+// Overlays — scrim behind modals, tints on a mode-coloured panel
+$scrim: rgba($black, 0.6);
+$tint-16: rgba($white, 0.16);
+$tint-20: rgba($white, 0.2);
+
 // Dartboard chip colors (fidèle aux couleurs de la cible)
 $dart-red: #C8001F; // double/triple secteurs rouges + double bull
 $dart-green: #047857; // double/triple secteurs verts + outer bull

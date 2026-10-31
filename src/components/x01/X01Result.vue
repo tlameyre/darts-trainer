@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import AppButton from '../AppButton.vue'
+import AppIcon from '../AppIcon.vue'
 import AppTabs from '../AppTabs.vue'
 import X01MatchStats from './X01MatchStats.vue'
 import X01CheckoutReview from './X01CheckoutReview.vue'
@@ -9,7 +10,6 @@ const props = defineProps({
   matchStats:  { type: Object,  default: null }, // sortie de buildMatchStats()
   title:       { type: String,  default: 'Bien joué !' },
   subtitle:    { type: String,  default: '' },
-  emoji:       { type: String,  default: '🏆' },
   titleColor:  { type: String,  default: null }, // 'orange' pour une défaite face à l'IA
   replayLabel: { type: String,  default: 'Rejouer' },
   hideActions: { type: Boolean, default: false },
@@ -63,7 +63,7 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
   <div class="result" ref="rootEl">
 
     <div class="result__top">
-      <div class="result__emoji">{{ emoji }}</div>
+      <AppIcon class="result__trophy" name="trophy" :width="54" :height="54" />
       <h2 class="result__title" :class="{ 'result__title--orange': titleColor === 'orange' }">
         {{ title }}
       </h2>
@@ -120,7 +120,7 @@ onBeforeUnmount(() => sliderEl.value?.removeEventListener('scroll', onScroll))
     gap: $gap-xs;
   }
 
-  &__emoji  { @include display-xs; line-height: 1; }
+  &__trophy { flex-shrink: 0; }
 
   &__title {
     @include title-xxl;

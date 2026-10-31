@@ -211,7 +211,7 @@ function startGame() {
     white-space: nowrap;
     padding: 2px $padding-xxs;
     border-radius: $radius-sm;
-    background: rgba($white, 0.2);
+    background: $tint-20;
   }
 
   &__brackets {

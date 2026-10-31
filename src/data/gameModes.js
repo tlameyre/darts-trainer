@@ -55,8 +55,8 @@ export const GAME_MODES = [
     label: "501 en ligne",
     description:
       "Défie un ami à distance : chacun joue sur son appareil, les scores se synchronisent.",
-    color: "#B45309",
-    ink: "#B45309",
+    color: "#BE185D",
+    ink: "#BE185D",
     icon: "globe",
     settingsRoute: "online-settings",
     group: "play",

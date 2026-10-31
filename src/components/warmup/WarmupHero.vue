@@ -142,7 +142,7 @@ function roundTone(hits) {
     min-width: 96px;
     padding: $padding-xxs $padding-xs;
     border-radius: $radius-sm;
-    background: rgba($white, 0.16);
+    background: $tint-16;
 
     // A volley without a single hit takes the "miss" style: red with white text
     &--ko {

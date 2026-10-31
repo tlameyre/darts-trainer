@@ -93,7 +93,7 @@ const tag = computed(() => {
     margin-left: auto;
     padding: 2px $padding-xs;
     border-radius: $radius-sm;
-    background: rgba($white, 0.2);
+    background: $tint-20;
     white-space: nowrap;
   }
 

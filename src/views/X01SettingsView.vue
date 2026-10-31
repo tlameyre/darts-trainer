@@ -165,7 +165,7 @@ function startGame() {
 }
 
 .option-tile--on .settings__aim {
-  background: rgba($white, 0.16);
+  background: $tint-16;
 }
 
 @media (min-width: $bp-laptop) {

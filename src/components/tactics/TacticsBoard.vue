@@ -161,7 +161,7 @@ const tableRows = computed(() => {
     content: '';
     position: absolute;
     inset: 3px;
-    border-radius: 3px;
+    border-radius: $radius-xs;
   }
 
   &__mark {

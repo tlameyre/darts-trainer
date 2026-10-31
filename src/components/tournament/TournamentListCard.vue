@@ -183,7 +183,7 @@ const progress = computed(() => {
     grid-area: bar;
     display: block;
     height: 6px;
-    border-radius: 2px;
+    border-radius: $radius-xs;
     background: $border-color;
     overflow: hidden;
   }

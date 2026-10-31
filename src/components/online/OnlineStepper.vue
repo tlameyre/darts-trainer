@@ -39,7 +39,7 @@ function stateOf(index) {
 
   &__bar {
     height: 6px;
-    border-radius: 2px;
+    border-radius: $radius-xs;
     background: $border-color;
     overflow: hidden;
   }

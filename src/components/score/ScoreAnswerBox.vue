@@ -45,8 +45,8 @@ defineProps({
     color: $white;
   }
 
-  &--ok { background: rgba($white, 0.2); }
-  &--ko { background: rgba($white, 0.2); }
+  &--ok { background: $tint-20; }
+  &--ko { background: $tint-20; }
 
   &__wrong {
     text-decoration: line-through;

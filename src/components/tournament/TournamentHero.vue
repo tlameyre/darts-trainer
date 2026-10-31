@@ -89,7 +89,7 @@ defineEmits(['back'])
     align-self: flex-start;
     padding: 3px $padding-xs;
     border-radius: $radius-sm;
-    background: rgba($white, 0.2);
+    background: $tint-20;
     @include title-xxs;
     letter-spacing: 0.04em;
   }
@@ -125,7 +125,7 @@ defineEmits(['back'])
 
   &__bar {
     height: 8px;
-    border-radius: 2px;
+    border-radius: $radius-xs;
     background: rgba($white, 0.25);
     overflow: hidden;
   }

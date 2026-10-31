@@ -410,7 +410,6 @@ function handleDocumentClick(event) {
     border: $border-md solid $black;
     border-radius: $radius-sm;
     background: $white;
-    box-shadow: 0 6px 18px rgba($black, 0.22);
   }
 
   &__popover-arrow {

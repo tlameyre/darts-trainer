@@ -336,7 +336,7 @@ function removeSelected(item) {
     align-items: center;
     justify-content: center;
     border-radius: $radius-pill;
-    background: rgba($white, 0.2);
+    background: $tint-20;
   }
 
   &__grid {

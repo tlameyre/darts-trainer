@@ -42,7 +42,7 @@ defineEmits(['close'])
   &__backdrop {
     position: absolute;
     inset: 0;
-    background: rgba($black, 0.6);
+    background: $scrim;
   }
 
   &__sheet {

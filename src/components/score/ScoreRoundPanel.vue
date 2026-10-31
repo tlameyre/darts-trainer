@@ -102,7 +102,7 @@ defineProps({
     gap: $gap-xs;
     padding: $padding-xs 0;
     border-radius: $radius-sm;
-    background: rgba($white, 0.16);
+    background: $tint-16;
   }
 
   &__dart-label {

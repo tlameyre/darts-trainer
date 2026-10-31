@@ -244,7 +244,7 @@ function formatDate(iso) {
     &--link {
       transition: background 0.15s;
 
-      &:active { background: rgba($white, 0.2); }
+      &:active { background: $tint-20; }
     }
   }
 }

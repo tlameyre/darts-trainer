@@ -32,7 +32,7 @@ defineProps({
     &--card.principle--#{$name} { background: $color; }
   }
 
-  &--panel { background: rgba($white, 0.16); }
+  &--panel { background: $tint-16; }
 
   &__title { @include title-lg; }
 

@@ -127,7 +127,7 @@ function statRows(p) {
     align-items: center;
     justify-content: center;
     border-radius: $radius-sm;
-    background: rgba($white, 0.2);
+    background: $tint-20;
     color: $white;
     @include title-sm;
     line-height: 1;

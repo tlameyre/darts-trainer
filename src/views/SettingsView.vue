@@ -202,7 +202,7 @@ function startGame() {
   }
 
   .settings__dart {
-    background: rgba($white, 0.16);
+    background: $tint-16;
   }
 }
 

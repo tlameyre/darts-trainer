@@ -326,7 +326,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     margin-left: auto;
     padding: 2px $padding-xs;
     border-radius: $radius-sm;
-    background: rgba($white, 0.2);
+    background: $tint-20;
     @include title-sm;
 
     &--corner {
@@ -355,7 +355,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     margin-top: $gap-xs;
     padding: $padding-xs $padding-sm;
     border-radius: $radius-sm;
-    background: rgba($white, 0.16);
+    background: $tint-16;
     @include text-sm;
     font-weight: 600;
   }
@@ -377,7 +377,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     align-items: center;
     justify-content: center;
     border-radius: $radius-sm;
-    background: rgba($white, 0.2);
+    background: $tint-20;
     color: $white;
     transition: opacity 0.15s;
 

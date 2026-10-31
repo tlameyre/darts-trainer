@@ -86,7 +86,7 @@ defineProps({
     align-items: center;
     justify-content: center;
     border-radius: $radius-pill;
-    box-shadow: 0 0 0 3px rgba($white, 0.9);
+    border: $border-lg solid $white;
   }
 
   &__text {
@@ -105,7 +105,7 @@ defineProps({
     @include title-xxs;
     padding: $padding-xxs 6px;
     border-radius: $radius-xs;
-    background: rgba($white, 0.2);
+    background: $tint-20;
     letter-spacing: $tracking-sm;
   }
 
@@ -155,7 +155,7 @@ defineProps({
 
     &__text { align-items: flex-start; gap: $gap-xxs; }
 
-    &__avatar { @include title-xxxl; width: 88px; height: 88px; box-shadow: 0 0 0 4px rgba($white, 0.9); }
+    &__avatar { @include title-xxxl; width: 88px; height: 88px; }
     &__name   { @include title-xxxl; }
     &__tag    { @include title-sm; }
     &__vs     { @include display-xs; line-height: 0.8; padding-left: $padding-lg; }

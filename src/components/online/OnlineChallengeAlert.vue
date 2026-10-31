@@ -92,7 +92,7 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
   &__backdrop {
     position: absolute;
     inset: 0;
-    background: rgba($black, 0.6);
+    background: $scrim;
   }
 
   &__card {
@@ -101,9 +101,9 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
     max-width: 342px;
     max-height: 100%;
     overflow-y: auto;
+    border: $border-md solid $border-color;
     border-radius: $radius-lg;
     background: $bg;
-    box-shadow: 0 24px 48px rgba($black, 0.35);
   }
 
   &__hero {
@@ -157,7 +157,7 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
     height: 64px;
     flex-shrink: 0;
     border-radius: $radius-pill;
-    box-shadow: 0 0 0 3px $white;
+    border: $border-lg solid $white;
     color: $white;
     @include title-xl;
     display: flex;
@@ -177,7 +177,7 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
   &__tag {
     padding: 2px $padding-xs;
     border-radius: $radius-sm;
-    background: rgba($white, 0.2);
+    background: $tint-20;
     @include title-xxs;
     letter-spacing: 0.04em;
   }
