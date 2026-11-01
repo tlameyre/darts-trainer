@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import AppButton from '../AppButton.vue'
 import IconButton from '../IconButton.vue'
 
 const props = defineProps({
@@ -40,8 +41,18 @@ const chartSeries = computed(() =>
 )
 
 const picked = ref(null)
+const chartRef = ref(null)
+const zoomed = ref(false)
 
-watch(() => [props.series, props.periodMode, props.range], () => { picked.value = null })
+watch(() => [props.series, props.periodMode, props.range], () => {
+  picked.value = null
+  zoomed.value = false
+})
+
+function resetZoom() {
+  chartRef.value?.zoomX(xBounds.value.min, xBounds.value.max)
+  zoomed.value = false
+}
 
 function openSession(session) {
   picked.value = null
@@ -64,12 +75,7 @@ const xBounds = computed(() => {
   return min === max ? { min: min - 86400000, max: max + 86400000 } : { min, max }
 })
 
-const X_TICKS = {
-  week: { amount: 7, format: 'dd/MM' },
-  month: { amount: 4, format: 'dd/MM' },
-  year: { amount: 11, format: 'MMM' },
-  all: { amount: 5, format: 'MMM yy' },
-}
+const X_TICKS = { week: 7, month: 4, year: 11, all: 5 }
 
 const averageLine = computed(() => {
   if (props.series.length !== 1 || !props.series[0].points.length) return null
@@ -103,14 +109,13 @@ function tooltipHtml({ seriesIndex, dataPointIndex }) {
 }
 
 const chartOptions = computed(() => {
-  const ticks = X_TICKS[props.periodMode] ?? X_TICKS.all
-  const labelStyle = { colors: MUTED, fontSize: isWide.value ? '13px' : '11px', fontFamily: 'Barlow' }
+    const labelStyle = { colors: MUTED, fontSize: isWide.value ? '13px' : '11px', fontFamily: 'Barlow' }
   return {
     chart: {
       id: 'darts-accuracy-chart',
       type: 'line',
       toolbar: { show: false },
-      zoom: { enabled: false },
+      zoom: { enabled: true, type: 'x', allowMouseWheelZoom: false },
       fontFamily: 'Barlow',
       foreColor: MUTED,
       animations: { enabled: true, speed: 350 },
@@ -125,6 +130,7 @@ const chartOptions = computed(() => {
       }],
       defaultLocale: 'fr',
       events: {
+        zoomed: () => { zoomed.value = true; picked.value = null },
         dataPointSelection: (_event, _ctx, { seriesIndex, dataPointIndex }) => {
           const serie = props.series[seriesIndex]
           const sessions = serie?.points[dataPointIndex]?.sessions
@@ -135,14 +141,14 @@ const chartOptions = computed(() => {
       },
     },
     colors: props.series.map(s => s.color || FALLBACK_COLOR),
-    stroke: { curve: 'straight', width: 3, lineCap: 'round' },
+    stroke: { curve: 'monotoneCubic', width: 3, lineCap: 'round' },
     markers: { size: isWide.value ? 6 : 5, strokeWidth: 2, strokeColors: '#F2EFE6', hover: { sizeOffset: 3 } },
     grid: { borderColor: GRID, strokeDashArray: 3, padding: { left: 4, right: 12 } },
     legend: { show: props.series.length > 1, position: 'top', horizontalAlign: 'left', labels: { colors: INK }, markers: { size: 6 } },
     xaxis: {
       type: 'datetime',
       ...xBounds.value,
-      tickAmount: ticks.amount,
+      tickAmount: X_TICKS[props.periodMode] ?? X_TICKS.all,
       tooltip: { enabled: false },
       axisBorder: { color: GRID },
       axisTicks: { color: GRID },
@@ -150,7 +156,15 @@ const chartOptions = computed(() => {
         hideOverlappingLabels: true,
         style: labelStyle,
         datetimeUTC: false,
-        datetimeFormatter: { year: 'yyyy', month: ticks.format, day: ticks.format, hour: ticks.format },
+        formatter: (_value, timestamp, opts) => {
+          const { minX, maxX } = opts.w.globals
+          const date = new Date(timestamp)
+          if (maxX - minX <= 150 * 86400000) {
+            return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+          }
+          const month = date.toLocaleDateString('fr-FR', { month: 'short' })
+          return props.periodMode === 'all' ? `${month} ${String(date.getFullYear()).slice(2)}` : month
+        },
       },
     },
     yaxis: {
@@ -182,7 +196,11 @@ const chartOptions = computed(() => {
 
 <template>
   <div class="accuracy-chart" role="img" aria-label="Évolution de la précision d'échauffement">
-    <apexchart type="line" :height="isWide ? 360 : 260" :options="chartOptions" :series="chartSeries" />
+    <apexchart ref="chartRef" type="line" :height="isWide ? 360 : 260" :options="chartOptions" :series="chartSeries" />
+
+    <div v-if="zoomed" class="accuracy-chart__zoom">
+      <AppButton size="small" variant="secondary" icon="zoom-out" @click="resetZoom">Réinitialiser le zoom</AppButton>
+    </div>
 
     <div v-if="picked" class="accuracy-chart__picker">
       <div class="accuracy-chart__picker-head">
@@ -203,6 +221,9 @@ const chartOptions = computed(() => {
   min-width: 0;
 
   :deep(.apexcharts-marker) { cursor: pointer; }
+  :deep(.apexcharts-toolbar) { display: none; }
+
+  &__zoom { margin-top: $padding-xs; }
 
   &__picker {
     display: flex;
