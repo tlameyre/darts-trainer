@@ -24,6 +24,10 @@ import AppIcon from '../AppIcon.vue'
   &:disabled { opacity: 0.4; }
 }
 
+@media (hover: hover) {
+  .add-btn:not(:disabled):hover { border-color: var(--tone); }
+}
+
 @media (min-width: $bp-laptop) {
   .add-btn {
     @include title-md;

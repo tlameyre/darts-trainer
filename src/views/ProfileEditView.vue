@@ -272,6 +272,10 @@ async function onPasswordSave(newPassword) {
 
     &::placeholder { color: $input-placeholder; }
     &:focus { border-color: $black; }
+
+    @media (hover: hover) {
+      &:not(:focus):hover { border-color: $black; }
+    }
   }
 
   &__account-item {

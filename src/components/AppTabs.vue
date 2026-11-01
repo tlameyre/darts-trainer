@@ -205,6 +205,19 @@ function select(tab, e) {
   }
 }
 
+@media (hover: hover) {
+  .app-tabs__tab:not(.app-tabs__tab--active):hover {
+    opacity: 1;
+  }
+
+  .app-tabs--pill .app-tabs__tab:not(.app-tabs__tab--active):hover,
+  .app-tabs--leg .app-tabs__tab:not(.app-tabs__tab--active):hover,
+  .app-tabs--underline .app-tabs__tab:not(.app-tabs__tab--active):hover { color: $text-color; }
+
+  .app-tabs--chip .app-tabs__tab:not(.app-tabs__tab--active):hover,
+  .app-tabs--filter .app-tabs__tab:not(.app-tabs__tab--active):hover { border-color: $text-color; }
+}
+
 @media (min-width: $bp-laptop) {
   .app-tabs--pill .app-tabs__tab {
     @include title-md;

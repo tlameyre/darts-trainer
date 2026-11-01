@@ -109,6 +109,12 @@ function set(value) {
   }
 }
 
+@media (hover: hover) {
+  .step-scale__cell:not(.step-scale__cell--filled):not(.step-scale__cell--current):hover { border-color: $text-color; }
+  .step-scale__nudge:not(:disabled):not(.step-scale__nudge--up):hover { border-color: $text-color; }
+  .step-scale__nudge--up:not(:disabled):hover { opacity: 0.85; }
+}
+
 @media (min-width: $bp-laptop) {
   .step-scale {
     &__cell { @include title-lg; height: 52px; }

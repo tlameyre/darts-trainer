@@ -63,6 +63,10 @@ function onInput(event) {
   }
 }
 
+@media (hover: hover) {
+  .custom-value__input:not(:focus):hover { border-color: $text-color; }
+}
+
 @media (min-width: $bp-laptop) {
   .custom-value {
     &__input { @include title-xl; height: 56px; }

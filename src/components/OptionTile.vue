@@ -97,6 +97,10 @@ defineEmits(['update:modelValue'])
   }
 }
 
+@media (hover: hover) {
+  .option-tile:not(.option-tile--on):hover { border-color: $text-color; }
+}
+
 @media (min-width: $bp-laptop) {
   .option-tile {
     gap: $gap-sm;

@@ -443,6 +443,10 @@ function removeSelected(item) {
       outline: none;
       border-color: var(--picker-accent);
     }
+
+    @media (hover: hover) {
+      &:not(:focus):hover { border-color: $text-color; }
+    }
   }
 
   &__guest-row {

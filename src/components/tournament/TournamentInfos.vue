@@ -131,6 +131,10 @@ const rules = computed(() => {
     @include text-md;
 
     &:focus { outline: none; border-color: $mode-tournament; }
+
+    @media (hover: hover) {
+      &:not(:focus):hover { border-color: $text-color; }
+    }
   }
 
   &__card {

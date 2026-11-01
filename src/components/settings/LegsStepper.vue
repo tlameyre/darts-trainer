@@ -27,7 +27,7 @@ const hint = computed(() => `${props.phrase} ${props.modelValue} manche${props.m
       ><AppIcon name="minus" :width="24" :height="24" /></button>
       <span class="legs-stepper__value">{{ modelValue }}</span>
       <button
-        class="legs-stepper__btn legs-stepper__btn--up"
+        class="legs-stepper__btn"
         aria-label="Plus de manches"
         :disabled="modelValue >= max"
         @click="emit('update:modelValue', modelValue + 1)"
@@ -51,7 +51,7 @@ const hint = computed(() => `${props.phrase} ${props.modelValue} manche${props.m
     border-radius: $radius-sm;
     color: $text-color;
 
-    &--up {
+    &:not(:disabled):active {
       border-color: var(--tone);
       background: var(--tone);
       color: $white;
@@ -69,6 +69,14 @@ const hint = computed(() => `${props.phrase} ${props.modelValue} manche${props.m
     border-radius: $radius-sm;
     background: $surface;
     line-height: 1;
+  }
+}
+
+@media (hover: hover) {
+  .legs-stepper__btn:not(:disabled):hover {
+    border-color: var(--tone);
+    background: var(--tone);
+    color: $white;
   }
 }
 

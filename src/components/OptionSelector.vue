@@ -98,6 +98,10 @@ defineEmits(['update:modelValue'])
   }
 }
 
+@media (hover: hover) {
+  .option-selector__option:not(.option-selector__option--active):hover { border-color: $text-color; }
+}
+
 @media (min-width: $bp-laptop) {
   .option-selector__option {
     @include title-xl;
