@@ -286,12 +286,6 @@ const periodSummary = computed(() => {
   return { sessions: perSession.length, avgAccuracy: Math.round((hits / total) * 100), best: `${best} %` }
 })
 
-const summaryCaption = computed(() => {
-  const labels = selectedZoneOptions.value.map(z => z.label)
-  if (!labels.length) return 'Précision moyenne · toutes zones'
-  return `Précision moyenne · ${labels.length > 3 ? `${labels.length} zones` : labels.join(', ')}`
-})
-
 // Un résumé par zone sélectionnée, pour coller à ce qui est affiché sur le graphique
 const zoneSummaries = computed(() => selectedZoneOptions.value.map(z => ({
   key: z.key,
@@ -308,7 +302,7 @@ const zoneSummaries = computed(() => selectedZoneOptions.value.map(z => ({
     <StatsPeriodHero
       :tabs="PERIOD_TABS" :mode="periodMode" :label="periodLabel"
       :can-prev="canPrev" :can-next="canNext"
-      :caption="summaryCaption" :accuracy="periodSummary.avgAccuracy" :sessions="periodSummary.sessions" :best="periodSummary.best"
+      caption="Précision moyenne" :accuracy="periodSummary.avgAccuracy" :sessions="periodSummary.sessions" :best="periodSummary.best"
       @update:mode="setPeriodMode" @prev="periodOffset--" @next="periodOffset++"
     />
 
