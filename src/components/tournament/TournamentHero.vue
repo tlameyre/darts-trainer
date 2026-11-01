@@ -36,7 +36,7 @@ defineEmits(['back'])
         <span>{{ progress.label }}</span>
         <span>{{ progress.percent }}%</span>
       </div>
-      <div class="hero__bar"><div class="hero__fill" :style="{ width: `${progress.percent}%` }" /></div>
+      <div class="hero__track"><div class="hero__fill" :style="{ width: `${progress.percent}%` }" /></div>
     </div>
 
     <div v-if="$slots.default" class="hero__extra"><slot /></div>
@@ -123,7 +123,7 @@ defineEmits(['back'])
     opacity: 0.9;
   }
 
-  &__bar {
+  &__track {
     height: 8px;
     border-radius: $radius-xs;
     background: rgba($white, 0.25);
@@ -167,7 +167,7 @@ defineEmits(['back'])
     &__tag { padding: 6px $padding-sm; @include title-lg; }
     &__progress { gap: $gap-xs; }
     &__progress-row { @include text-sm; }
-    &__bar { height: 10px; }
+    &__track { height: 10px; }
     &__extra { margin-top: auto; }
   }
 }
