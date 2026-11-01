@@ -195,12 +195,11 @@ const chartOptions = computed(() => {
 </script>
 
 <template>
-  <div class="accuracy-chart" role="img" aria-label="Évolution de la précision d'échauffement">
-    <apexchart ref="chartRef" type="line" :height="isWide ? 360 : 260" :options="chartOptions" :series="chartSeries" />
-
+  <div class="accuracy-chart" role="img" @dblclick="zoomed && resetZoom()" aria-label="Évolution de la précision d'échauffement">
     <div v-if="zoomed" class="accuracy-chart__zoom">
       <AppButton size="small" variant="secondary" icon="zoom-out" @click="resetZoom">Réinitialiser le zoom</AppButton>
     </div>
+    <apexchart ref="chartRef" type="line" :height="isWide ? 360 : 260" :options="chartOptions" :series="chartSeries" />
 
     <div v-if="picked" class="accuracy-chart__picker">
       <div class="accuracy-chart__picker-head">
@@ -223,7 +222,7 @@ const chartOptions = computed(() => {
   :deep(.apexcharts-marker) { cursor: pointer; }
   :deep(.apexcharts-toolbar) { display: none; }
 
-  &__zoom { margin-top: $padding-xs; }
+  &__zoom { margin-bottom: $padding-xs; }
 
   &__picker {
     display: flex;
