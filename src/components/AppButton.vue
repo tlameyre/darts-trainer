@@ -216,6 +216,14 @@ const iconSize = computed(() => (props.size === 'small' ? 16 : 20))
   }
 }
 
+@media (hover: hover) {
+  .btn--primary:hover { background: var(--btn-dark); }
+  .btn--secondary:not(.btn--active):hover { background: rgba($white, 0.05); }
+  .btn--ghost:not(.btn--active):hover { background: rgba($white, 0.08); }
+  .btn--surface:hover { background: $border-color; }
+  .btn--link:hover { opacity: 0.6; }
+}
+
 @media (min-width: $bp-laptop) {
   .btn--big {
     @include title-lg;

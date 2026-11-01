@@ -92,4 +92,12 @@ const resolvedIconSize = computed(() => props.iconSize ?? (props.variant === 'ba
     pointer-events: none;
   }
 }
+
+@media (hover: hover) {
+  .icon-btn--bare:hover { opacity: 0.6; }
+  .icon-btn--surface:hover { background: $border-color; }
+  .icon-btn--outline:hover { background: rgba($black, 0.06); }
+  .icon-btn--translucent:hover { background: rgba($white, 0.3); }
+  .icon-btn--filled:hover { opacity: 0.8; }
+}
 </style>
