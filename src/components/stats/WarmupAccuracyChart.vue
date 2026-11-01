@@ -172,8 +172,8 @@ const chartOptions = computed(() => {
       tickAmount: 4,
       labels: { style: labelStyle, formatter: val => `${Math.round(val)}%` },
     },
-    annotations: averageLine.value === null ? {} : {
-      yaxis: [{
+    annotations: {
+      yaxis: averageLine.value === null ? [] : [{
         y: averageLine.value,
         borderColor: INK,
         strokeDashArray: 4,

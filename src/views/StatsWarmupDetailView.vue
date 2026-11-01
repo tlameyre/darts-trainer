@@ -315,8 +315,7 @@ const zoneSummaries = computed(() => selectedZoneOptions.value.map(z => ({
     <p v-if="loading" class="warmup-detail__empty">Chargement…</p>
 
     <main v-else-if="allSessions.length" class="warmup-detail__main">
-      <button v-if="zoneCategories.length" class="warmup-detail__zone-btn" aria-haspopup="dialog"
-        @click="showZoneSheet = true">
+      <div v-if="zoneCategories.length" class="warmup-detail__zone-btn">
         <span class="warmup-detail__zone-btn-text">
           <span class="warmup-detail__zone-btn-label">
             Zones affichées · {{ selectedZones.length || 'toutes' }}
@@ -325,14 +324,17 @@ const zoneSummaries = computed(() => selectedZoneOptions.value.map(z => ({
             <span v-for="z in selectedZoneOptions" :key="z.key" class="warmup-detail__zone-tag">
               <span class="warmup-detail__dot" :style="{ background: z.color }" />
               {{ z.label }}
+              <button class="warmup-detail__zone-tag-remove" :aria-label="`Retirer ${z.label}`" @click="toggleZone(z.key)">
+                <AppIcon name="close" :width="12" :height="12" />
+              </button>
             </span>
           </span>
         </span>
-        <span class="warmup-detail__zone-btn-action">
+        <button class="warmup-detail__zone-btn-action" aria-haspopup="dialog" @click="showZoneSheet = true">
           <AppIcon name="sliders" :width="18" :height="18" />
           Filtrer
-        </span>
-      </button>
+        </button>
+      </div>
 
       <section class="warmup-detail__chart">
         <SectionTitle title="Précision par zone" :count="periodCaption" ruled />
@@ -455,6 +457,15 @@ const zoneSummaries = computed(() => selectedZoneOptions.value.map(z => ({
     @include title-sm;
     line-height: 1;
     text-transform: uppercase;
+  }
+
+  &__zone-tag-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: (-$padding-xxs) (-$padding-xxs) (-$padding-xxs) 0;
+    padding: $padding-xs;
+    color: $muted;
   }
 
   &__zone-btn-action {
