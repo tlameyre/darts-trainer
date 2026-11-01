@@ -148,7 +148,8 @@ defineEmits(['primary', 'home'])
     display: flex;
     flex-direction: column;
     gap: $gap-xs;
-    padding: $padding-md;
+    padding: $padding-md $padding-md 0;
+    @include safe-bottom($padding-md);
   }
 
   &__list-head {
@@ -188,6 +189,8 @@ defineEmits(['primary', 'home'])
   .game-recap {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    // Bounded row: a long list scrolls instead of pushing the actions out of view
+    grid-template-rows: minmax(0, 1fr);
 
     &__hero {
       justify-content: flex-end;
@@ -207,7 +210,8 @@ defineEmits(['primary', 'home'])
 
     &__details {
       gap: $gap-sm;
-      padding: $padding-xxl;
+      padding: $padding-xxl $padding-xxl 0;
+      @include safe-bottom($padding-xxl);
     }
 
     &__list-title { @include title-xl; }
