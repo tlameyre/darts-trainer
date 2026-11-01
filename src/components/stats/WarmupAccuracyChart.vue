@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import IconButton from '../IconButton.vue'
 
 const props = defineProps({
   series: { type: Array, default: () => [] },
@@ -25,18 +26,37 @@ onMounted(() => {
 })
 onUnmounted(() => mq?.removeEventListener('change', syncWidth))
 
+// Points are daily aggregates: pin them to local midnight so they sit on the day ticks
+function dayStart(iso) {
+  const d = new Date(iso)
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+}
+
 const chartSeries = computed(() =>
   props.series.map(s => ({
     name: s.label,
-    data: s.points.map(pt => ({ x: new Date(pt.played_at).getTime(), y: pt.accuracy })),
+    data: s.points.map(pt => ({ x: dayStart(pt.played_at), y: pt.accuracy })),
   }))
 )
+
+const picked = ref(null)
+
+watch(() => [props.series, props.periodMode, props.range], () => { picked.value = null })
+
+function openSession(session) {
+  picked.value = null
+  emit('open-session', session)
+}
+
+function formatTime(iso) {
+  return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+}
 
 const allPoints = computed(() => props.series.flatMap(s => s.points))
 
 const xBounds = computed(() => {
   if (props.range) return { min: props.range.start, max: props.range.end }
-  const times = allPoints.value.map(pt => new Date(pt.played_at).getTime())
+  const times = allPoints.value.map(pt => dayStart(pt.played_at))
   if (!times.length) return {}
   const min = Math.min(...times)
   const max = Math.max(...times)
@@ -77,7 +97,7 @@ function tooltipHtml({ seriesIndex, dataPointIndex }) {
         <b>${serie.label}</b>
         <span class="chart-tip__value">${pt.accuracy} %</span>
       </span>
-      <span class="chart-tip__sub">${count} session${count > 1 ? 's' : ''} · touche pour ouvrir</span>
+      <span class="chart-tip__sub">${count} session${count > 1 ? 's' : ''} · touche pour ${count > 1 ? 'choisir' : 'ouvrir'}</span>
       ${overall}
     </div>`
 }
@@ -106,8 +126,11 @@ const chartOptions = computed(() => {
       defaultLocale: 'fr',
       events: {
         dataPointSelection: (_event, _ctx, { seriesIndex, dataPointIndex }) => {
-          const sessions = props.series[seriesIndex]?.points[dataPointIndex]?.sessions
-          if (sessions?.length) emit('open-session', sessions[sessions.length - 1])
+          const serie = props.series[seriesIndex]
+          const sessions = serie?.points[dataPointIndex]?.sessions
+          if (!sessions?.length) return
+          if (sessions.length === 1) return openSession(sessions[0])
+          picked.value = { date: serie.points[dataPointIndex].played_at, label: serie.label, sessions }
         },
       },
     },
@@ -160,6 +183,17 @@ const chartOptions = computed(() => {
 <template>
   <div class="accuracy-chart" role="img" aria-label="Évolution de la précision d'échauffement">
     <apexchart type="line" :height="isWide ? 360 : 260" :options="chartOptions" :series="chartSeries" />
+
+    <div v-if="picked" class="accuracy-chart__picker">
+      <div class="accuracy-chart__picker-head">
+        <span class="accuracy-chart__picker-title">{{ formatDate(picked.date) }} · {{ picked.label }}</span>
+        <IconButton variant="bare" icon="close" label="Fermer" @click="picked = null" />
+      </div>
+      <button v-for="s in picked.sessions" :key="s.id" class="accuracy-chart__session" @click="openSession(s)">
+        <span class="accuracy-chart__session-time">{{ formatTime(s.played_at) }}</span>
+        <span class="accuracy-chart__session-value">{{ s.displayAccuracy }} %</span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -169,6 +203,38 @@ const chartOptions = computed(() => {
   min-width: 0;
 
   :deep(.apexcharts-marker) { cursor: pointer; }
+
+  &__picker {
+    display: flex;
+    flex-direction: column;
+    margin-top: $padding-sm;
+    border: $border-sm solid $border-color;
+    border-radius: $radius-sm;
+    background: $surface;
+  }
+
+  &__picker-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $padding-xs $padding-md;
+    gap: $gap-sm;
+    @include text-sm;
+  }
+
+  &__picker-title::first-letter { text-transform: uppercase; }
+
+  &__session {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $padding-sm $padding-md;
+    border-top: $border-sm solid $border-color;
+    color: $text-color;
+    @include text-md;
+
+    &-value { @include title-sm; }
+  }
 
   :deep(.apexcharts-tooltip) {
     border: $border-sm solid $border-color;
