@@ -24,6 +24,8 @@ onMounted(async () => {
   const [b, s] = await Promise.all([badgeStore.fetchUserBadges(), dbStore.fetchProfileStats()])
   userBadges.value = b
   stats.value      = s
+
+  if ((await badgeStore.syncStatBadges(s)).length) userBadges.value = await badgeStore.fetchUserBadges()
 })
 
 // Badge enrichi avec unlockedAt si débloqué

@@ -284,6 +284,14 @@ export const useBadgeStore = defineStore('badge', () => {
     return unlockBadges(newStatBadgeIds(unlocked, cumulativeStats))
   }
 
+  // ── Rattrapage : stat déjà au seuil mais badge jamais débloqué ───────────────
+
+  async function syncStatBadges(stats) {
+    if (!getUser()) return []
+    const unlocked = await fetchUnlockedIds()
+    return unlockBadges(newStatBadgeIds(unlocked, stats))
+  }
+
   // ── Checks en temps réel (lancers spéciaux) ───────────────────────────────────
 
   async function checkSpecialThrow(darts, volleyScore = null) {
@@ -442,7 +450,7 @@ export const useBadgeStore = defineStore('badge', () => {
     getBadgeProgress,
     checkGameBadges, checkWarmupBadges, checkX01Badges, checkCheckoutBadges, checkTournamentBadges,
     checkSpecialThrow, checkProfileBadge,
-    revokeVolumeBadges,
+    syncStatBadges, revokeVolumeBadges,
     fetchUserBadges,
   }
 })
