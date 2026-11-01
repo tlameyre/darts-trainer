@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import AppButton from '../AppButton.vue'
 import IconButton from '../IconButton.vue'
 
 const props = defineProps({
@@ -143,7 +142,7 @@ const chartOptions = computed(() => {
     colors: props.series.map(s => s.color || FALLBACK_COLOR),
     stroke: { curve: 'monotoneCubic', width: 3, lineCap: 'round' },
     markers: { size: isWide.value ? 6 : 5, strokeWidth: 2, strokeColors: '#F2EFE6', hover: { sizeOffset: 3 } },
-    grid: { borderColor: GRID, strokeDashArray: 3, padding: { left: 4, right: 12 } },
+    grid: { borderColor: GRID, strokeDashArray: 3, padding: { top: 28, left: 4, right: 12 } },
     legend: { show: props.series.length > 1, position: 'top', horizontalAlign: 'left', labels: { colors: INK }, markers: { size: 6 } },
     xaxis: {
       type: 'datetime',
@@ -197,7 +196,7 @@ const chartOptions = computed(() => {
 <template>
   <div class="accuracy-chart" role="img" @dblclick="zoomed && resetZoom()" aria-label="Évolution de la précision d'échauffement">
     <div v-if="zoomed" class="accuracy-chart__zoom">
-      <AppButton size="small" variant="secondary" icon="zoom-out" @click="resetZoom">Réinitialiser le zoom</AppButton>
+      <IconButton variant="outline" size="sm" icon="zoom-out" label="Réinitialiser le zoom" @click="resetZoom" />
     </div>
     <apexchart ref="chartRef" type="line" :height="isWide ? 360 : 260" :options="chartOptions" :series="chartSeries" />
 
@@ -216,13 +215,19 @@ const chartOptions = computed(() => {
 
 <style lang="scss" scoped>
 .accuracy-chart {
+  position: relative;
   width: 100%;
   min-width: 0;
 
   :deep(.apexcharts-marker) { cursor: pointer; }
   :deep(.apexcharts-toolbar) { display: none; }
 
-  &__zoom { margin-bottom: $padding-xs; }
+  &__zoom {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+  }
 
   &__picker {
     display: flex;
