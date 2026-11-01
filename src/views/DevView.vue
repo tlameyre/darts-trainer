@@ -20,7 +20,6 @@ import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
 import SvgDartboard from '../components/x01/SvgDartboard.vue'
 import GameInput from '../components/game/GameInput.vue'
 import X01CheckoutReview from '../components/x01/X01CheckoutReview.vue'
-import X01Result from '../components/x01/X01Result.vue'
 import X01MatchEnd from '../components/x01/X01MatchEnd.vue'
 import { buildMatchStats } from '../composables/useX01MatchStats.js'
 import { analyzeLegs, ALL_SEGMENTS } from '../composables/useCheckoutAnalysis.js'
@@ -312,8 +311,7 @@ function onMockDart(d) {
 // --- Preview X01CheckoutReview (revue des checkouts, départ fictif à 170) ---
 const showCheckoutReviewPreview = ref(false)
 
-// ─── X01Result — stats de fin de match fictives (2 joueurs, 3 legs) ──────────
-const showX01ResultPreview = ref(false)
+// ─── Stats de fin de match fictives (2 joueurs, 3 legs) ──────────────────────
 // scores: points par volée (volée de 3 fléchettes), 'B' = bust ; doubles: doubles tentés sur la dernière volée
 function mockLeg(scores, { won = false, dartsToFinish = 3, doubles = 0 } = {}) {
   const volleys = scores.map(sc => (sc === 'B'
@@ -549,7 +547,6 @@ const mockProfileData = {
           <div class="dev__buttons">
             <button class="dev__btn" @click="matchEndPreview = 2">Fin de match — 2 joueurs</button>
             <button class="dev__btn" @click="matchEndPreview = 4">Fin de match — 4 joueurs</button>
-            <button class="dev__btn" @click="showX01ResultPreview = true">Stats de fin de match</button>
             <button class="dev__btn" @click="showCheckoutReviewPreview = true">Revue des checkouts</button>
           </div>
         </div>
@@ -803,16 +800,6 @@ const mockProfileData = {
         @undo="mockDarts = mockDarts.slice(0, -1)"
       />
       <button class="dev__close-preview" @click="showGameInputPreview = false">✕ Fermer</button>
-    </div>
-
-    <div v-if="showX01ResultPreview" class="dev__fullscreen-preview dev__gameinput-preview">
-      <X01Result
-        :match-stats="mockMatchStats"
-        subtitle="501 pts · 3 manches"
-        :checkout-analysis="mockCheckoutAnalysis"
-        hide-actions
-      />
-      <button class="dev__close-preview" @click="showX01ResultPreview = false">✕ Fermer</button>
     </div>
 
     <div v-if="matchEndPreview" class="dev__fullscreen-preview">
