@@ -2,11 +2,13 @@
 // End-of-game layout shared by the training modes: colored hero with the
 // success rate and totals, then a scrollable list of rows (default slot).
 defineProps({
-  tone: { type: String, default: 'orange', validator: v => ['orange', 'blue'].includes(v) },
+  tone: { type: String, default: 'orange', validator: v => ['orange', 'blue', 'cyan'].includes(v) },
+  title: { type: String, default: 'Récap de la session' },
   percent: { type: Number, required: true },
-  badgeValue: { type: [String, Number], required: true },
-  badgeLabel: { type: String, required: true },
-  stats: { type: Array, required: true }, // { label, value }
+  unit: { type: String, default: '%' },
+  badgeValue: { type: [String, Number], default: null }, // no badge without a value
+  badgeLabel: { type: String, default: '' },
+  stats: { type: Array, default: () => [] }, // { label, value }
   statsColumns: { type: Number, default: 2 },
   listTitle: { type: String, default: '' }, // the list section is skipped without default slot content
   listCount: { type: String, default: '' },
@@ -21,15 +23,15 @@ defineEmits(['primary', 'home'])
 <template>
   <div class="game-recap" :class="`game-recap--${tone}`">
     <section class="game-recap__hero">
-      <span class="game-recap__title">Récap de la session</span>
+      <span class="game-recap__title">{{ title }}</span>
       <div class="game-recap__headline">
-        <span class="game-recap__percent">{{ percent }}<span class="game-recap__percent-sign">%</span></span>
-        <div class="game-recap__badge">
+        <span class="game-recap__percent">{{ percent }}<span class="game-recap__percent-sign">{{ unit }}</span></span>
+        <div v-if="badgeValue !== null" class="game-recap__badge">
           <span class="game-recap__badge-value">{{ badgeValue }}</span>
           <span class="game-recap__badge-label">{{ badgeLabel }}</span>
         </div>
       </div>
-      <div class="game-recap__stats" :style="{ gridTemplateColumns: `repeat(${statsColumns}, minmax(0, 1fr))` }">
+      <div v-if="stats.length" class="game-recap__stats" :style="{ gridTemplateColumns: `repeat(${statsColumns}, minmax(0, 1fr))` }">
         <div v-for="stat in stats" :key="stat.label" class="game-recap__stat">
           <span class="game-recap__stat-value">{{ stat.value }}</span>
           <span class="game-recap__stat-label">{{ stat.label }}</span>
@@ -42,13 +44,14 @@ defineEmits(['primary', 'home'])
         <h2 class="game-recap__list-title">{{ listTitle }}</h2>
         <span class="game-recap__list-count">{{ listCount }}</span>
       </div>
+      <slot name="legend" />
       <ul v-if="$slots.default" class="game-recap__list">
         <slot />
       </ul>
 
       <div v-if="!hideActions" class="game-recap__actions">
-        <button class="game-recap__action game-recap__action--primary" @click="$emit('primary')">{{ primaryLabel }}</button>
-        <button class="game-recap__action game-recap__action--outline" @click="$emit('home')">Accueil</button>
+        <AppButton size="md" color="var(--recap-color)" @click="$emit('primary')">{{ primaryLabel }}</AppButton>
+        <AppButton size="md" variant="secondary" @click="$emit('home')">Accueil</AppButton>
       </div>
     </section>
   </div>
@@ -65,6 +68,10 @@ defineEmits(['primary', 'home'])
 
   &--blue {
     --recap-color: #{$blue};
+  }
+
+  &--cyan {
+    --recap-color: #{$mode-checkout};
   }
 
   &__hero {
@@ -141,7 +148,8 @@ defineEmits(['primary', 'home'])
     display: flex;
     flex-direction: column;
     gap: $gap-xs;
-    padding: $padding-md;
+    padding: $padding-md $padding-md 0;
+    @include safe-bottom($padding-md);
   }
 
   &__list-head {
@@ -175,27 +183,14 @@ defineEmits(['primary', 'home'])
     padding-top: $padding-xs;
   }
 
-  &__action {
-    @include title-lg;
-    height: 56px;
-    border-radius: $radius-sm;
-
-    &--primary {
-      background: var(--recap-color);
-      color: $white;
-    }
-
-    &--outline {
-      border: $border-md solid $black;
-      color: $black;
-    }
-  }
 }
 
 @media (min-width: $bp-laptop) {
   .game-recap {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    // Bounded row: a long list scrolls instead of pushing the actions out of view
+    grid-template-rows: minmax(0, 1fr);
 
     &__hero {
       justify-content: flex-end;
@@ -215,16 +210,12 @@ defineEmits(['primary', 'home'])
 
     &__details {
       gap: $gap-sm;
-      padding: $padding-xxl;
+      padding: $padding-xxl $padding-xxl 0;
+      @include safe-bottom($padding-xxl);
     }
 
     &__list-title { @include title-xl; }
     &__list-count { @include text-md; }
-
-    &__action {
-      @include title-xl;
-      height: 64px;
-    }
   }
 }
 </style>

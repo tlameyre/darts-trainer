@@ -91,7 +91,7 @@ function set(value) {
   &--gauge &__cell { height: 28px; }
 
   &__nudge {
-    height: 40px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -107,6 +107,12 @@ function set(value) {
 
     &:disabled { opacity: 0.4; }
   }
+}
+
+@media (hover: hover) {
+  .step-scale__cell:not(.step-scale__cell--filled):not(.step-scale__cell--current):hover { border-color: $text-color; }
+  .step-scale__nudge:not(:disabled):not(.step-scale__nudge--up):hover { border-color: $text-color; }
+  .step-scale__nudge--up:not(:disabled):hover { opacity: 0.85; }
 }
 
 @media (min-width: $bp-laptop) {

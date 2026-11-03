@@ -8,6 +8,8 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { BADGES } from '../data/badges.js'
 
+import AppButton from '../components/AppButton.vue'
+import IconButton from '../components/IconButton.vue'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 import BadgeDetailModal from '../components/badges/BadgeDetailModal.vue'
 import GameMenuModal from '../components/game/GameMenuModal.vue'
@@ -18,7 +20,6 @@ import X01CheckoutModal from '../components/x01/X01CheckoutModal.vue'
 import SvgDartboard from '../components/x01/SvgDartboard.vue'
 import GameInput from '../components/game/GameInput.vue'
 import X01CheckoutReview from '../components/x01/X01CheckoutReview.vue'
-import X01Result from '../components/x01/X01Result.vue'
 import X01MatchEnd from '../components/x01/X01MatchEnd.vue'
 import { buildMatchStats } from '../composables/useX01MatchStats.js'
 import { analyzeLegs, ALL_SEGMENTS } from '../composables/useCheckoutAnalysis.js'
@@ -42,16 +43,8 @@ import { getCheckout } from '../composables/useCheckouts.js'
 const router    = useRouter()
 const gameStore = useGameStore()
 
-// --- Preview LobbyView (dernière session et dernières stats fictives) ---
+// --- Preview LobbyView ---
 const showLobbyPreview = ref(false)
-const lobbyDaysAgo = (n) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString()
-const mockLobbyData = {
-  warmup: { played_at: lobbyDaysAgo(1), zone: 'D16+T20', accuracy: 64, total_darts: 96, duration_s: 480, settings: { duration: 5, zoneRecap: [{ zones: [{ sector: 16, type: 'D' }, { sector: 20, type: 'T' }] }] } },
-  score: { played_at: lobbyDaysAgo(3), correct_count: 8, total_questions: 10, best_streak: 6, settings: {} },
-  checkout: { played_at: lobbyDaysAgo(4), correct_count: 7, questions: 10, points: 22, settings: {} },
-  x01: [{ played_at: lobbyDaysAgo(5), avg_volley: 48.6, highest_finish: 64, legs_played: 2 }],
-  tournament: { name: 'Ligue du jeudi' },
-}
 
 // --- Preview HomeView (semaine, série, tournois, badges fictifs) ---
 const showHomePreview = ref(false)
@@ -66,6 +59,11 @@ const mockHomeTournaments = [
   { id: 'mock-t1', name: 'Ligue du jeudi', format: 'championship', status: 'in_progress', player_count: 8, created_at: daysAgo(20) },
   { id: 'mock-t2', name: "Coupe d'hiver", format: 'bracket', status: 'in_progress', player_count: 6, created_at: daysAgo(6) },
 ]
+const mockHomeSessions = {
+  x01: [{ id: 'mock-x01', played_at: daysAgo(1), legs_played: 3, avg_volley: 48.6 }],
+  warmup: [{ id: 'mock-warmup', played_at: daysAgo(1), zone: 'D16+T20', accuracy: 64, duration_s: 480 }],
+  checkout: [{ id: 'mock-checkout', played_at: daysAgo(4), questions: 20, correct_count: 14 }],
+}
 
 // --- Preview FriendsView ---
 const showFriendsPreview = ref(false)
@@ -313,8 +311,7 @@ function onMockDart(d) {
 // --- Preview X01CheckoutReview (revue des checkouts, départ fictif à 170) ---
 const showCheckoutReviewPreview = ref(false)
 
-// ─── X01Result — stats de fin de match fictives (2 joueurs, 3 legs) ──────────
-const showX01ResultPreview = ref(false)
+// ─── Stats de fin de match fictives (2 joueurs, 3 legs) ──────────────────────
 // scores: points par volée (volée de 3 fléchettes), 'B' = bust ; doubles: doubles tentés sur la dernière volée
 function mockLeg(scores, { won = false, dartsToFinish = 3, doubles = 0 } = {}) {
   const volleys = scores.map(sc => (sc === 'B'
@@ -445,33 +442,13 @@ function openBadgeLocked() {
   showBadgeDetail.value = true
 }
 
-// --- Vues plein écran ---
-const views = [
-  { name: 'home',           label: 'Home' },
-  { name: 'play',           label: 'Lobby (Jouer)' },
-  { name: 'stats',          label: 'Stats' },
-  { name: 'stats-warmup-detail', label: 'Stats — Détail échauffement' },
-  { name: 'profile',        label: 'Profil' },
-  { name: 'profile-edit',   label: 'Édition profil' },
-  { name: 'badges',         label: 'Badges' },
-  { name: 'friends',        label: 'Amis' },
-  { name: 'score-settings', label: 'Réglages Score' },
-  { name: 'warmup-settings',label: 'Réglages Warmup' },
-  { name: 'checkout-settings', label: 'Réglages Checkouts' },
-  { name: 'checkout-wiki', label: 'Wiki Checkouts' },
-  { name: 'checkout-wiki-detail', label: 'Wiki Checkout — Détail', params: { score: 170 } },
-  { name: 'x01-settings',  label: 'Réglages 501' },
-  { name: 'x01-starter',   label: 'Partie 501 — Qui commence' },
-  { name: 'x01-game',      label: 'Partie 501' },
-  { name: 'online-settings', label: '501 en ligne — Réglages' },
-  { name: 'tactics-settings', label: 'Réglages Tactics' },
-  { name: 'tactics-starter',  label: 'Partie Tactics — Qui commence' },
-  { name: 'tactics-game',     label: 'Partie Tactics' },
-  { name: 'tournaments',        label: 'Tournois — Liste' },
-  { name: 'tournament-settings', label: 'Tournois — Création' },
-  { name: 'login',          label: 'Login' },
-  { name: 'register',       label: 'Register' },
-]
+const buttonTones = ['orange', 'blue', 'green', 'cyan', 'red', 'online', 'tournament', 'black', 'danger', 'inverse', 'muted']
+const buttonVariants = ['primary', 'secondary', 'ghost', 'surface', 'link']
+const iconButtonVariants = ['bare', 'surface', 'outline', 'translucent', 'filled']
+
+function go(name, params) {
+  router.push({ name, params })
+}
 
 // --- Mock data FriendsView ---
 const mockFriends = [
@@ -499,178 +476,248 @@ const mockProfileData = {
   <div class="dev">
     <h1 class="dev__title">🛠 Dev Playground</h1>
 
-    <!-- Overlays / Modals -->
     <section class="dev__section">
-      <h2 class="dev__section-title">Overlays & Modals</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="showUnlockOne">Badge débloqué (1)</button>
-        <button class="dev__btn" @click="showUnlockMany">Badges débloqués (3)</button>
-        <button class="dev__btn" @click="openBadgeUnlocked">Détail badge (débloqué)</button>
-        <button class="dev__btn" @click="openBadgeLocked">Détail badge (verrouillé + progression)</button>
-        <button class="dev__btn" @click="showGameMenu = true">Menu de partie</button>
-        <button class="dev__btn" @click="showEmailModal = true">Changer email</button>
-        <button class="dev__btn" @click="showPasswordModal = true">Changer mot de passe</button>
-        <button class="dev__btn" @click="showDoublesModal = true">X01 — Doubles tentés</button>
-        <button class="dev__btn" @click="showCheckoutModal = true">X01 — Checkout</button>
-      </div>
-    </section>
-
-    <!-- Vues -->
-    <section class="dev__section">
-      <h2 class="dev__section-title">Vues</h2>
-      <div class="dev__buttons">
-        <button
-          v-for="v in views"
-          :key="v.name"
-          class="dev__btn"
-          @click="router.push({ name: v.name, params: v.params })"
-        >
-          {{ v.label }}
-        </button>
-      </div>
-    </section>
-
-    <!-- HomeView — aperçu plein écran avec données fictives -->
-    <section class="dev__section">
-      <h2 class="dev__section-title">Accueil (preview)</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="showHomePreview = true">Ouvrir l'accueil</button>
-      </div>
-    </section>
-
-    <!-- LobbyView — aperçu plein écran avec données fictives -->
-    <section class="dev__section">
-      <h2 class="dev__section-title">Jouer (preview)</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="showLobbyPreview = true">Ouvrir la page Jouer</button>
-      </div>
-    </section>
-
-    <!-- FriendsView — aperçu plein écran avec données fictives -->
-    <section class="dev__section">
-      <h2 class="dev__section-title">Vue Amis (preview)</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="showFriendsPreview = true">Ouvrir la vue Amis</button>
-      </div>
-    </section>
-
-    <!-- ProfileView — aperçu plein écran avec données fictives -->
-    <section class="dev__section">
-      <h2 class="dev__section-title">Vue Profil (preview)</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="showProfilePreview = true">Ouvrir la vue Profil</button>
-      </div>
-    </section>
-
-    <!-- TournamentView — aperçu plein écran avec données fictives -->
-    <section class="dev__section">
-      <h2 class="dev__section-title">Vue Tournoi — bracket (preview)</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="showTournamentByesPreview = true">Bracket 5 joueurs (avec byes)</button>
-        <button class="dev__btn" @click="showTournamentDoubleElimPreview = true">Bracket 4 joueurs (double élimination)</button>
-        <button class="dev__btn" @click="showChampionshipOngoingPreview = true">Championnat 9 joueurs aller-retour en cours (18 journées, exempts, top 4)</button>
-        <button class="dev__btn" @click="showChampionshipPlayoffsPreview = true">Championnat 4 joueurs aller-retour + finale</button>
-        <button class="dev__btn" @click="showTournamentPendingPreview = true">Tournoi pas démarré (Infos/Participants)</button>
-        <button class="dev__btn" @click="showTournamentJoinPreview = true">Page "Rejoindre par code"</button>
-        <button class="dev__btn" @click="openMockTournamentMatch">Match tournoi (bouton "Retour au bracket")</button>
-      </div>
-    </section>
-
-    <!-- OnlineMatchLobbyView — aperçu plein écran avec données fictives -->
-    <section class="dev__section">
-      <h2 class="dev__section-title">Match en ligne — salle d'attente (preview)</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="showOnlineSettingsPreview = true">Réglages (amis fictifs)</button>
-        <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('invited'), myId: 'me' }">Invitation envoyée (hôte)</button>
-        <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('invited'), myId: 'u1' }">Invitation reçue (invité)</button>
-        <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted'), myId: 'me' }">Bull — choix du premier joueur (hôte)</button>
-        <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted'), myId: 'u1' }">Bull — attente (invité)</button>
-        <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('declined'), myId: 'me' }">Invitation refusée</button>
-        <button class="dev__btn" @click="challengePreview = 'online'">Alerte défi — 501 en ligne</button>
-        <button class="dev__btn" @click="challengePreview = 'tournament'">Alerte défi — match de tournoi</button>
-        <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('invited', 'mock-match'), myId: 'me' }">Invitation envoyée — match de tournoi</button>
-        <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted', 'mock-match'), myId: 'me' }">Bull — match de tournoi (hôte)</button>
-      </div>
-    </section>
-
-    <!-- Tactics — parties avec données fictives (preview) -->
-    <section class="dev__section">
-      <h2 class="dev__section-title">Tactics — parties avec données fictives (preview)</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="openMockTacticsGame({ playerCount: 2 })">Partie Tactics — 2 joueurs</button>
-        <button class="dev__btn" @click="openMockTacticsGame({ playerCount: 3 })">Partie Tactics — 3 joueurs</button>
-        <button class="dev__btn" @click="openMockTacticsGame({ playerCount: 4 })">Partie Tactics — 4 joueurs</button>
-        <button class="dev__btn" @click="openMockTacticsGame({ playerCount: 1 })">Partie Tactics — Solo</button>
-      </div>
-    </section>
-
-    <!-- Checkouts — parties preview -->
-    <section class="dev__section">
-      <h2 class="dev__section-title">Checkouts — preview</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="openMockCheckoutGame('review')">Checkouts — révision libre</button>
-        <button class="dev__btn" @click="openMockCheckoutGame('quiz')">Checkouts — quiz noté</button>
-        <button class="dev__btn" @click="checkoutRecapPreview = 'quiz'">Récap — quiz</button>
-        <button class="dev__btn" @click="checkoutRecapPreview = 'review'">Récap — révision</button>
-      </div>
-    </section>
-
-    <!-- SvgDartboard — aperçu plein écran -->
-    <section class="dev__section">
-      <h2 class="dev__section-title">Cible SVG (preview)</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="showDartboardPreview = true">Ouvrir la cible</button>
-      </div>
-    </section>
-
-    <!-- GameInput — aperçu plein écran (popover de sélection de mode) -->
-    <section class="dev__section">
-      <h2 class="dev__section-title">Saisie de partie — GameInput (preview)</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="showGameInputPreview = true">Ouvrir la saisie</button>
-      </div>
-    </section>
-
-    <!-- X01CheckoutReview — revue des checkouts avec données fictives -->
-    <section class="dev__section">
-      <h2 class="dev__section-title">X01 — Revue des checkouts (preview)</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="showCheckoutReviewPreview = true">Ouvrir la revue</button>
-      </div>
-    </section>
-
-    <!-- X01Result — stats de fin de match avec données fictives -->
-    <section class="dev__section">
-      <h2 class="dev__section-title">X01 — Stats de fin de match (preview)</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="showX01ResultPreview = true">Ouvrir le résultat</button>
-      </div>
-    </section>
-
-    <!-- X01MatchEnd — fin de match Nouvelle DA avec données fictives -->
-    <section class="dev__section">
-      <h2 class="dev__section-title">X01 — Fin de match (preview)</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="matchEndPreview = 2">2 joueurs</button>
-        <button class="dev__btn" @click="matchEndPreview = 4">4 joueurs</button>
-      </div>
+      <h2 class="dev__section-title">Calcul</h2>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Réglages</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="go('score-settings')">Réglages Score</button>
+          </div>
+        </div>
     </section>
 
     <section class="dev__section">
-      <h2 class="dev__section-title">Stats — Détail match X01 de tournoi (preview)</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="openSessionPreview('tournament')">Détail match 501 — tournoi (badge → championnat fictif)</button>
-        <button class="dev__btn" @click="openSessionPreview('online')">Détail match 501 — en ligne</button>
-        <button class="dev__btn" @click="openSessionPreview('normal')">Détail match 501 — normal</button>
-      </div>
+      <h2 class="dev__section-title">Échauffement</h2>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Réglages</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="go('warmup-settings')">Réglages Warmup</button>
+          </div>
+        </div>
     </section>
 
-    <!-- StatsWarmupDetailView — aperçu plein écran avec données fictives -->
     <section class="dev__section">
-      <h2 class="dev__section-title">Stats — Détail échauffement (preview)</h2>
-      <div class="dev__buttons">
-        <button class="dev__btn" @click="showWarmupDetailPreview = true">Ouvrir la vue Détail échauffement</button>
-      </div>
+      <h2 class="dev__section-title">Checkouts</h2>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Réglages</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="go('checkout-settings')">Réglages Checkouts</button>
+            <button class="dev__btn" @click="go('checkout-wiki')">Wiki Checkouts</button>
+            <button class="dev__btn" @click="go('checkout-wiki-detail', { score: 170 })">Wiki Checkout — Détail</button>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">En jeu</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="openMockCheckoutGame('review')">Révision libre</button>
+            <button class="dev__btn" @click="openMockCheckoutGame('quiz')">Quiz noté</button>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Fin</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="checkoutRecapPreview = 'quiz'">Récap — quiz</button>
+            <button class="dev__btn" @click="checkoutRecapPreview = 'review'">Récap — révision</button>
+          </div>
+        </div>
+    </section>
+
+    <section class="dev__section">
+      <h2 class="dev__section-title">501</h2>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Réglages</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="go('x01-settings')">Réglages 501</button>
+            <button class="dev__btn" @click="go('x01-starter')">Qui commence</button>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">En jeu</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="go('x01-game')">Partie 501</button>
+            <button class="dev__btn" @click="showDartboardPreview = true">Cible SVG</button>
+            <button class="dev__btn" @click="showGameInputPreview = true">Saisie — GameInput</button>
+            <button class="dev__btn" @click="showGameMenu = true">Menu de partie</button>
+            <button class="dev__btn" @click="showDoublesModal = true">Doubles tentés</button>
+            <button class="dev__btn" @click="showCheckoutModal = true">Checkout</button>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Fin</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="matchEndPreview = 2">Fin de match — 2 joueurs</button>
+            <button class="dev__btn" @click="matchEndPreview = 4">Fin de match — 4 joueurs</button>
+            <button class="dev__btn" @click="showCheckoutReviewPreview = true">Revue des checkouts</button>
+          </div>
+        </div>
+    </section>
+
+    <section class="dev__section">
+      <h2 class="dev__section-title">501 en ligne</h2>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Réglages</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="showOnlineSettingsPreview = true">Réglages (amis fictifs)</button>
+            <button class="dev__btn" @click="go('online-settings')">Réglages (réel)</button>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Salle d'attente et défis</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('invited'), myId: 'me' }">Invitation envoyée (hôte)</button>
+            <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('invited'), myId: 'u1' }">Invitation reçue (invité)</button>
+            <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted'), myId: 'me' }">Bull — choix du premier joueur (hôte)</button>
+            <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted'), myId: 'u1' }">Bull — attente (invité)</button>
+            <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('declined'), myId: 'me' }">Invitation refusée</button>
+            <button class="dev__btn" @click="challengePreview = 'online'">Alerte défi — 501 en ligne</button>
+          </div>
+        </div>
+    </section>
+
+    <section class="dev__section">
+      <h2 class="dev__section-title">Tactics</h2>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Réglages</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="go('tactics-settings')">Réglages Tactics</button>
+            <button class="dev__btn" @click="go('tactics-starter')">Qui commence</button>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">En jeu</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="openMockTacticsGame({ playerCount: 2 })">Partie — 2 joueurs</button>
+            <button class="dev__btn" @click="openMockTacticsGame({ playerCount: 3 })">Partie — 3 joueurs</button>
+            <button class="dev__btn" @click="openMockTacticsGame({ playerCount: 4 })">Partie — 4 joueurs</button>
+            <button class="dev__btn" @click="openMockTacticsGame({ playerCount: 1 })">Partie — solo</button>
+          </div>
+        </div>
+    </section>
+
+    <section class="dev__section">
+      <h2 class="dev__section-title">Tournois</h2>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Réglages</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="go('tournaments')">Liste des tournois</button>
+            <button class="dev__btn" @click="go('tournament-settings')">Création</button>
+            <button class="dev__btn" @click="showTournamentJoinPreview = true">Page "Rejoindre par code"</button>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">En cours</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="showTournamentByesPreview = true">Bracket 5 joueurs (avec byes)</button>
+            <button class="dev__btn" @click="showTournamentDoubleElimPreview = true">Bracket 4 joueurs (double élimination)</button>
+            <button class="dev__btn" @click="showChampionshipOngoingPreview = true">Championnat 9 joueurs aller-retour en cours</button>
+            <button class="dev__btn" @click="showChampionshipPlayoffsPreview = true">Championnat 4 joueurs aller-retour + finale</button>
+            <button class="dev__btn" @click="showTournamentPendingPreview = true">Tournoi pas démarré (Infos/Participants)</button>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Match de tournoi</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="openMockTournamentMatch">Partie ("Retour au bracket")</button>
+            <button class="dev__btn" @click="challengePreview = 'tournament'">Alerte défi — match de tournoi</button>
+            <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('invited', 'mock-match'), myId: 'me' }">Invitation envoyée</button>
+            <button class="dev__btn" @click="onlineLobbyPreview = { match: mockOnlineMatch('accepted', 'mock-match'), myId: 'me' }">Bull (hôte)</button>
+          </div>
+        </div>
+    </section>
+
+    <section class="dev__section">
+      <h2 class="dev__section-title">Stats</h2>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Écrans</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="go('stats')">Stats</button>
+            <button class="dev__btn" @click="showWarmupDetailPreview = true">Détail échauffement</button>
+            <button class="dev__btn" @click="openSessionPreview('tournament')">Détail match 501 — tournoi</button>
+            <button class="dev__btn" @click="openSessionPreview('online')">Détail match 501 — en ligne</button>
+            <button class="dev__btn" @click="openSessionPreview('normal')">Détail match 501 — normal</button>
+          </div>
+        </div>
+    </section>
+
+    <section class="dev__section">
+      <h2 class="dev__section-title">Application</h2>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Accueil et navigation</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="showHomePreview = true">Accueil (données fictives)</button>
+            <button class="dev__btn" @click="showLobbyPreview = true">Jouer</button>
+            <button class="dev__btn" @click="go('home')">Home</button>
+            <button class="dev__btn" @click="go('play')">Lobby (Jouer)</button>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Profil et social</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="showProfilePreview = true">Profil (données fictives)</button>
+            <button class="dev__btn" @click="go('profile-edit')">Édition profil</button>
+            <button class="dev__btn" @click="go('badges')">Badges</button>
+            <button class="dev__btn" @click="showFriendsPreview = true">Amis (données fictives)</button>
+            <button class="dev__btn" @click="showEmailModal = true">Changer email</button>
+            <button class="dev__btn" @click="showPasswordModal = true">Changer mot de passe</button>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Badges</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="showUnlockOne">Badge débloqué (1)</button>
+            <button class="dev__btn" @click="showUnlockMany">Badges débloqués (3)</button>
+            <button class="dev__btn" @click="openBadgeUnlocked">Détail badge (débloqué)</button>
+            <button class="dev__btn" @click="openBadgeLocked">Détail badge (verrouillé + progression)</button>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Authentification</h3>
+          <div class="dev__buttons">
+            <button class="dev__btn" @click="go('login')">Login</button>
+            <button class="dev__btn" @click="go('register')">Register</button>
+          </div>
+        </div>
+    </section>
+
+    <section class="dev__section">
+      <h2 class="dev__section-title">Boutons</h2>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Variantes (tone orange)</h3>
+          <div class="dev__button-grid">
+            <AppButton v-for="v in buttonVariants" :key="v" :variant="v" size="small" :block="false">{{ v }}</AppButton>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Tons (primary)</h3>
+          <div class="dev__button-grid">
+            <AppButton v-for="t in buttonTones" :key="t" :tone="t" size="small" :block="false">{{ t }}</AppButton>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Tons (secondary)</h3>
+          <div class="dev__button-grid">
+            <AppButton v-for="t in buttonTones" :key="t" variant="secondary" :tone="t" size="small" :block="false">{{ t }}</AppButton>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">Tailles, icônes, états</h3>
+          <div class="dev__button-stack">
+            <AppButton>big</AppButton>
+            <AppButton size="md">md</AppButton>
+            <AppButton size="cta" tone="blue" icon-end="arrow-right">cta</AppButton>
+            <AppButton size="md" variant="secondary" tone="danger" icon="exit">icône + danger</AppButton>
+            <AppButton size="md" variant="surface" align="start" icon="close">align start</AppButton>
+            <AppButton size="small" rounded="full" active>active</AppButton>
+            <AppButton disabled>disabled</AppButton>
+          </div>
+        </div>
+        <div class="dev__group">
+          <h3 class="dev__group-title">IconButton</h3>
+          <div class="dev__icon-grid">
+            <IconButton v-for="v in iconButtonVariants" :key="v" :variant="v" icon="close" label="Fermer" />
+            <IconButton variant="filled" size="xl" icon="close" label="Fermer" color="#7C3AED" />
+          </div>
+        </div>
     </section>
 
     <!-- Game Over en aperçu (a besoin d'un conteneur) -->
@@ -695,13 +742,14 @@ const mockProfileData = {
         :mock-activity="mockHomeActivity"
         :mock-badges="mockHomeBadges"
         :mock-tournaments="mockHomeTournaments"
+        :mock-sessions="mockHomeSessions"
       />
       <button class="dev__close-preview" @click="showHomePreview = false">✕ Fermer</button>
     </div>
 
     <!-- LobbyView plein écran -->
     <div v-if="showLobbyPreview" class="dev__fullscreen-preview">
-      <LobbyView :mock-data="mockLobbyData" />
+      <LobbyView />
       <button class="dev__close-preview" @click="showLobbyPreview = false">✕ Fermer</button>
     </div>
 
@@ -730,7 +778,6 @@ const mockProfileData = {
         :results="mockCheckoutResults"
         :reviewed-count="14"
         :review-total="20"
-        @exit="checkoutRecapPreview = null"
         @restart="checkoutRecapPreview = null"
         @home="checkoutRecapPreview = null"
       />
@@ -753,16 +800,6 @@ const mockProfileData = {
         @undo="mockDarts = mockDarts.slice(0, -1)"
       />
       <button class="dev__close-preview" @click="showGameInputPreview = false">✕ Fermer</button>
-    </div>
-
-    <div v-if="showX01ResultPreview" class="dev__fullscreen-preview dev__gameinput-preview">
-      <X01Result
-        :match-stats="mockMatchStats"
-        subtitle="501 pts · 3 manches"
-        :checkout-analysis="mockCheckoutAnalysis"
-        hide-actions
-      />
-      <button class="dev__close-preview" @click="showX01ResultPreview = false">✕ Fermer</button>
     </div>
 
     <div v-if="matchEndPreview" class="dev__fullscreen-preview">
@@ -876,6 +913,17 @@ const mockProfileData = {
     gap: $gap-sm;
   }
 
+  &__group {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
+  }
+
+  &__group-title {
+    @include text-xs;
+    color: $muted;
+  }
+
   &__section-title {
     @include title-sm;
     color: $muted;
@@ -903,6 +951,24 @@ const mockProfileData = {
     &:active { background: rgba(255, 255, 255, 0.12); }
   }
 
+  &__button-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $gap-xs;
+  }
+
+  &__button-stack {
+    display: flex;
+    flex-direction: column;
+    gap: $gap-xs;
+  }
+
+  &__icon-grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: $gap-xs;
+  }
 
   &__fullscreen-preview {
     position: fixed;

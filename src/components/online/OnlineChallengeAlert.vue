@@ -1,5 +1,7 @@
 <script setup>
 import { computed } from 'vue'
+import AppButton from '../AppButton.vue'
+import IconButton from '../IconButton.vue'
 import AppIcon from '../AppIcon.vue'
 import { avatarColor } from '../../utils/avatarColor.js'
 
@@ -30,9 +32,7 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
               <AppIcon :name="tournament ? 'trophy' : 'globe'" :width="16" :height="16" />
               {{ tournament ? 'Défi de tournoi' : 'Défi en ligne' }}
             </span>
-            <button class="alert__close" aria-label="Fermer" @click="$emit('later')">
-              <AppIcon name="close" :width="16" :height="16" />
-            </button>
+            <IconButton variant="translucent" size="sm" icon="close" label="Fermer" @click="$emit('later')" />
           </div>
 
           <h2 id="challenge-title" class="alert__title">{{ opponentName }} te défie</h2>
@@ -66,13 +66,10 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
           </div>
 
           <div class="alert__actions">
-            <button class="alert__btn" @click="$emit('later')">Plus tard</button>
-            <button class="alert__btn alert__btn--primary" :disabled="busy" @click="$emit('accept')">
-              <AppIcon name="check" :width="20" :height="20" />
-              Accepter
-            </button>
+            <AppButton size="md" variant="secondary" @click="$emit('later')">Plus tard</AppButton>
+            <AppButton size="md" color="var(--alert-color)" icon="check" :disabled="busy" @click="$emit('accept')">Accepter</AppButton>
           </div>
-          <button class="alert__decline" :disabled="busy" @click="$emit('decline')">Refuser le défi</button>
+          <AppButton variant="link" tone="muted" :block="false" :disabled="busy" @click="$emit('decline')">Refuser le défi</AppButton>
         </div>
       </section>
     </div>
@@ -95,7 +92,7 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
   &__backdrop {
     position: absolute;
     inset: 0;
-    background: rgba($black, 0.6);
+    background: $scrim;
   }
 
   &__card {
@@ -104,9 +101,9 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
     max-width: 342px;
     max-height: 100%;
     overflow-y: auto;
+    border: $border-md solid $border-color;
     border-radius: $radius-lg;
     background: $bg;
-    box-shadow: 0 24px 48px rgba($black, 0.35);
   }
 
   &__hero {
@@ -132,17 +129,6 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
     font-weight: 600;
     letter-spacing: $tracking-lg;
     text-transform: uppercase;
-  }
-
-  &__close {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: $radius-sm;
-    background: rgba($white, 0.18);
-    color: $white;
   }
 
   &__title {
@@ -171,7 +157,7 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
     height: 64px;
     flex-shrink: 0;
     border-radius: $radius-pill;
-    box-shadow: 0 0 0 3px $white;
+    border: $border-lg solid $white;
     color: $white;
     @include title-xl;
     display: flex;
@@ -191,7 +177,7 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
   &__tag {
     padding: 2px $padding-xs;
     border-radius: $radius-sm;
-    background: rgba($white, 0.2);
+    background: $tint-20;
     @include title-xxs;
     letter-spacing: 0.04em;
   }
@@ -273,38 +259,6 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
     grid-template-columns: 1fr 1.6fr;
     gap: $gap-xs;
   }
-
-  &__btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xs;
-    height: 56px;
-    border: $border-md solid $black;
-    border-radius: $radius-sm;
-    color: $text-color;
-    @include title-lg;
-
-    &--primary {
-      border-color: var(--alert-color);
-      background: var(--alert-color);
-      color: $white;
-      @include title-xl;
-    }
-
-    &:disabled { opacity: 0.4; }
-  }
-
-  &__decline {
-    align-self: center;
-    padding: $padding-xxs $padding-xs;
-    @include text-sm;
-    font-weight: 600;
-    color: $muted;
-    text-decoration: underline;
-
-    &:disabled { opacity: 0.4; }
-  }
 }
 
 @media (min-width: $bp-laptop) {
@@ -320,9 +274,6 @@ const chips = computed(() => [String(props.startScore), `Premier à ${props.legs
     &__tournament-kicker { @include text-xs; }
     &__tournament-name { @include title-xl; }
     &__chip { @include title-md; }
-    &__btn { height: 70px; @include title-xl; }
-    &__btn--primary { @include title-xxl; }
-    &__decline { @include text-md; }
   }
 }
 </style>

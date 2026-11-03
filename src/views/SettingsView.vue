@@ -1,10 +1,11 @@
 <script setup>
-import { reactive } from 'vue'
+import { reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import AppHeader from '../components/AppHeader.vue'
 import OptionSelector from '../components/OptionSelector.vue'
 import OptionTile from '../components/OptionTile.vue'
-import StartButton from '../components/StartButton.vue'
+import AppButton from '../components/AppButton.vue'
+import SettingsLayout from '../components/settings/SettingsLayout.vue'
+import SettingsSection from '../components/settings/SettingsSection.vue'
 import { useGameStore } from '../store/gameStore.js'
 
 const router = useRouter()
@@ -48,6 +49,18 @@ const sampleDarts = [
   { label: 'D5', value: 10 },
 ]
 
+const PRINCIPLE = {
+  text: "Trois fléchettes s'affichent : calcule de tête le score de la volée, puis ce qu'il te reste à finir.",
+  chips: ['Volée', 'Reste', 'Série'],
+}
+
+const recap = computed(() => [
+  difficultyOptions.find(o => o.value === settings.difficulty).label,
+  settings.maxQuestions ? `${settings.maxQuestions} questions` : 'Infini',
+  settings.timeLimit ? `${settings.timeLimit} s par question` : 'Temps libre',
+  ...(settings.doubleValidation ? ['Double calcul'] : []),
+])
+
 function startGame() {
   gameStore.gameSettings = { ...settings }
   router.push({ name: 'score-game' })
@@ -55,18 +68,13 @@ function startGame() {
 </script>
 
 <template>
-  <div class="settings">
-    <AppHeader title="Calcul" @back="router.push({ name: 'home' })" />
+  <SettingsLayout title="Calcul" back-to="home" :principle="PRINCIPLE" :recap="recap">
+    <OptionSelector label="Difficulté des volées" :options="difficultyOptions" v-model="settings.difficulty" />
+    <OptionSelector label="Nombre de questions" :options="questionOptions" v-model="settings.maxQuestions" />
+    <OptionSelector label="Temps par question" :options="timeOptions" v-model="settings.timeLimit" />
 
-    <main class="settings__main">
-      <section class="settings__choices">
-        <OptionSelector label="Difficulté des volées" :options="difficultyOptions" v-model="settings.difficulty" />
-        <OptionSelector label="Nombre de questions" :options="questionOptions" v-model="settings.maxQuestions" />
-        <OptionSelector label="Temps par question" :options="timeOptions" v-model="settings.timeLimit" />
-      </section>
-
-      <section class="settings__options">
-        <h2 class="settings__label">Options</h2>
+    <template #side>
+      <SettingsSection label="Options">
         <div class="settings__tiles">
           <OptionTile
             v-model="settings.doubleValidation"
@@ -99,46 +107,17 @@ function startGame() {
             </template>
           </OptionTile>
         </div>
-        <StartButton class="settings__start" @click="startGame" />
-      </section>
+      </SettingsSection>
+    </template>
 
-    </main>
-  </div>
+    <template #start>
+      <AppButton size="cta" icon-end="arrow-right" @click="startGame">Commencer</AppButton>
+    </template>
+  </SettingsLayout>
 </template>
 
 <style lang="scss" scoped>
 .settings {
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
-  @include safe-bottom($padding-md);
-
-  &__main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: $gap-lg;
-    padding: $padding-lg $padding-md 0;
-  }
-
-  &__choices {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-lg;
-  }
-
-  &__options {
-    display: flex;
-    flex-direction: column;
-    gap: $gap-xs;
-    flex: 1;
-  }
-
-  &__label {
-    @include title-sm;
-    color: $muted;
-  }
-
   &__tiles {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -213,9 +192,6 @@ function startGame() {
     color: $white;
   }
 
-  &__start {
-    margin-top: auto;
-  }
 }
 
 // Active tile: invert the preview chips so they stay readable on orange
@@ -226,33 +202,12 @@ function startGame() {
   }
 
   .settings__dart {
-    background: rgba($white, 0.16);
+    background: $tint-16;
   }
 }
 
 @media (min-width: $bp-laptop) {
   .settings {
-    @include safe-bottom(0px);
-
-    &__main {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0;
-      padding: 0;
-    }
-
-    &__choices {
-      gap: $gap-xxl;
-      padding: $padding-xxl $padding-xxl 0;
-    }
-
-    &__options {
-      grid-row: 1 / 3;
-      grid-column: 2;
-      padding: $padding-xxl;
-      border-left: $border-sm solid $border-color;
-    }
-
     &__tiles {
       gap: $gap-sm;
     }

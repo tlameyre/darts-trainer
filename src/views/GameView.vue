@@ -7,12 +7,15 @@ import { useDbStore } from '../store/dbStore.js'
 import { useBadgeStore } from '../store/badgeStore.js'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 
-import AppHeader from '../components/AppHeader.vue'
+import GameLayout from '../components/game/GameLayout.vue'
+import GameHeaderButton from '../components/game/GameHeaderButton.vue'
+import GameStatusBar from '../components/game/GameStatusBar.vue'
 import AppIcon from '../components/AppIcon.vue'
+import GameStreakBadge from '../components/game/GameStreakBadge.vue'
 import GameMenuModal from '../components/game/GameMenuModal.vue'
 import ScoreRoundPanel from '../components/score/ScoreRoundPanel.vue'
 import ScoreAnswerBox from '../components/score/ScoreAnswerBox.vue'
-import ScoreKeypad from '../components/score/ScoreKeypad.vue'
+import NumericKeypad from '../components/game/NumericKeypad.vue'
 import ScoreRecap from '../components/score/ScoreRecap.vue'
 
 const router     = useRouter()
@@ -41,6 +44,13 @@ const tone = computed(() => {
   if (feedbackState.value === 'wrong' || feedbackState.value === 'timeout') return 'ko'
   return null
 })
+
+const questionProgress = computed(() => settings.maxQuestions
+  ? { ratio: questionIndex.value / settings.maxQuestions, text: `${questionIndex.value}/${settings.maxQuestions}` }
+  : null)
+
+const timeRatio = computed(() => settings.timeLimit ? Math.max(timeLeft.value, 0) / settings.timeLimit : 0)
+const timeDisplay = computed(() => `${Math.floor(timeLeft.value / 60)}:${String(timeLeft.value % 60).padStart(2, '0')}`)
 
 watch(gameOver, async (val) => {
   if (val) {
@@ -97,143 +107,137 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="game" :class="!gameOver && tone && `game--${tone}`">
-    <AppHeader
-      :title="gameOver ? 'Fin de partie' : 'Entraînement'"
-      :back-icon="gameOver ? 'exit' : 'arrow-left'"
-      @back="router.push({ name: 'score-settings' })"
-    >
-      <template v-if="!gameOver" #right>
-        <button class="game__menu-btn" aria-label="Menu de la partie" @click="showMenu = true">
-          <AppIcon name="gear" :width="24" :height="24" />
-        </button>
-      </template>
-    </AppHeader>
+  <GameLayout
+    title="Entraînement Calcul"
+    :feedback="gameOver ? null : tone"
+    :over="gameOver"
+    @exit="router.push({ name: 'score-settings' })"
+  >
+    <template #header-right>
+      <GameHeaderButton icon="gear" label="Menu de la partie" @click="showMenu = true" />
+    </template>
 
-    <ScoreRecap
-      v-if="gameOver"
-      :history="history"
-      :double-validation="settings.doubleValidation"
-      :best="best"
-      :duration-ms="durationMs"
-      @replay="router.push({ name: 'score-settings' })"
-      @home="router.push({ name: 'home' })"
-    />
+    <template #panel>
+      <div class="game__status">
+        <span class="game__pill">Q{{ questionIndex }}<span v-if="settings.maxQuestions" class="game__pill-max">/{{ settings.maxQuestions }}</span></span>
+        <div v-if="settings.timeLimit" class="game__timer-bar" role="timer" :aria-label="`Temps restant : ${timeLeft} secondes`">
+          <div class="game__timer-fill" :style="{ width: `${timeRatio * 100}%` }" />
+        </div>
+        <span v-else class="game__spacer" />
+        <GameStreakBadge v-if="streak > 0" :value="streak" />
+      </div>
 
-    <main v-else class="game__main">
+      <div v-if="settings.timeLimit" class="game__timer">
+        <AppIcon name="clock" :width="28" :height="28" />
+        {{ timeDisplay }}
+      </div>
+
       <ScoreRoundPanel
-        class="game__panel"
         :phase="phase"
-        :show-phase="settings.doubleValidation"
-        :streak="streak"
-        :question-index="questionIndex"
-        :max-questions="settings.maxQuestions"
-        :time-left="timeLeft"
-        :show-timer="!!settings.timeLimit"
         :current-score="currentScore"
         :current-volee="currentVolee"
         :volee-total="voleeTotal"
         :show-dart-value="settings.showDartValue"
       />
-      <div class="game__answer">
-        <ScoreAnswerBox :value="inputValue" :tone="tone" :expected="correctAnswer" />
-      </div>
-      <ScoreKeypad class="game__keys" @digit="appendDigit" @delete="deleteDigit" @validate="validate" />
-    </main>
+    </template>
 
-    <GameMenuModal :show="showMenu" @close="showMenu = false" @finish="finishGame" @quit="quitGame" />
-    <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
-  </div>
+    <template #status>
+      <GameStatusBar
+        desktop-only
+        :label="`Question ${questionIndex}`"
+        :progress="questionProgress"
+      >
+        <GameStreakBadge v-if="streak > 0" :value="streak" />
+      </GameStatusBar>
+    </template>
+
+    <template #answer>
+      <ScoreAnswerBox :value="inputValue" :tone="tone" :expected="correctAnswer" />
+    </template>
+
+    <NumericKeypad
+      style="--key-min: clamp(48px, 8.5dvh, 84px)"
+      left-key="delete"
+      confirm-tone="ink"
+      confirm-label="OK"
+      @digit="appendDigit"
+      @left="deleteDigit"
+      @validate="validate"
+    />
+
+    <template #over>
+      <ScoreRecap
+        :history="history"
+        :double-validation="settings.doubleValidation"
+        :best="best"
+        :duration-ms="durationMs"
+        @replay="router.push({ name: 'score-settings' })"
+        @home="router.push({ name: 'home' })"
+      />
+    </template>
+
+    <template #modals>
+      <GameMenuModal :show="showMenu" @close="showMenu = false" @finish="finishGame" @quit="quitGame" />
+      <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
+    </template>
+  </GameLayout>
 </template>
 
 <style lang="scss" scoped>
+// Mobile: status sits on the colored panel; desktop: the status bar and the timer chip replace it
 .game {
-  height: 100dvh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-
-  &__menu-btn {
+  &__status {
     display: flex;
     align-items: center;
-    padding: $padding-xxs;
-    color: $white;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
-  }
-
-  &__main {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  &__panel {
-    flex: 1;
+    gap: $gap-xs;
     padding: $padding-xs $padding-md 0;
-    background: $orange;
   }
 
-  &__answer {
-    padding: $padding-sm $padding-md $padding-md;
-    background: $orange;
+  &__pill {
+    @include title-md;
+    padding: $padding-xxs $padding-xs;
+    border-radius: $radius-sm;
+    background: rgba($black, 0.22);
+    line-height: 1;
+    white-space: nowrap;
   }
 
-  // AppHeader's root carries this view's scope, so its background can be themed here
-  .app-header,
-  &__panel,
-  &__answer {
-    transition: background 0.2s;
+  &__pill-max { opacity: 0.7; }
+
+  &__timer-bar,
+  &__spacer { flex: 1; }
+
+  &__timer-bar {
+    height: 12px;
+    border-radius: $radius-sm;
+    background: rgba($white, 0.3);
+    overflow: hidden;
   }
 
-  &--ok {
-    .app-header,
-    .game__panel,
-    .game__answer {
-      background: $accent;
-    }
+  &__timer-fill {
+    height: 100%;
+    background: $white;
+    transition: width 1s linear;
   }
 
-  &--ko {
-    .app-header,
-    .game__panel,
-    .game__answer {
-      background: $error;
-    }
-  }
-
-  &__keys {
-    padding: $padding-sm $padding-md $padding-md;
-  }
+  &__timer { display: none; }
 }
 
 @media (min-width: $bp-laptop) {
   .game {
-    &__main {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-template-rows: auto 1fr;
-    }
+    &__status { display: none; }
 
-    &__panel {
-      grid-row: 1 / 3;
-      padding: $padding-xl $padding-xxl $padding-xxl;
-    }
-
-    &__answer {
-      padding: $padding-xl $padding-xxl $padding-md;
-    }
-
-    &__answer,
-    &--ok .game__answer,
-    &--ko .game__answer {
-      background: transparent;
-    }
-
-    &__keys {
-      padding: 0 $padding-xxl $padding-xxl;
+    &__timer {
+      @include title-xxxl;
+      align-self: flex-end;
+      display: flex;
+      align-items: center;
+      gap: $gap-xs;
+      padding: $padding-xs $padding-md;
+      border-radius: $radius-sm;
+      background: rgba($black, 0.22);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
     }
   }
 }

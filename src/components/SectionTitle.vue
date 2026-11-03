@@ -1,4 +1,6 @@
 <script setup>
+import AppButton from './AppButton.vue'
+
 defineProps({
   title: { type: String, required: true },
   action: { type: String, default: null },
@@ -17,10 +19,10 @@ defineEmits(['action'])
       <slot />
     </h2>
     <span v-if="count" class="section-title__count">{{ count }}</span>
-    <button v-if="action" class="section-title__action" @click="$emit('action')">
+    <AppButton v-if="action" variant="link" tone="danger" :block="false" @click="$emit('action')">
       {{ action }}
       <span v-if="badge" class="section-title__badge">{{ badge }}</span>
-    </button>
+    </AppButton>
   </div>
 </template>
 
@@ -60,21 +62,11 @@ defineEmits(['action'])
     line-height: 1.4;
     text-align: center;
   }
-
-  &__action {
-    @include text-sm;
-    font-weight: 600;
-    color: $error;
-    transition: color 0.15s;
-
-    &:hover { color: $text-color; }
-  }
 }
 
 @media (min-width: $bp-laptop) {
   .section-title {
     &__text { @include title-xl; }
-    &__action { @include text-md; font-weight: 600; }
     &__count  { @include text-sm; }
   }
 }

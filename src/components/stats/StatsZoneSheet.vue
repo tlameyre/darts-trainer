@@ -1,4 +1,5 @@
 <script setup>
+import AppButton from '../AppButton.vue'
 import AppIcon from '../AppIcon.vue'
 import AppModal from '../AppModal.vue'
 
@@ -70,12 +71,12 @@ function selectedZones() {
       </div>
 
       <div class="zone-sheet__footer">
-        <button class="zone-sheet__clear" :disabled="!selected.length" @click="emit('clear')">
+        <AppButton size="md" variant="secondary" :disabled="!selected.length" @click="emit('clear')">
           Tout désélectionner
-        </button>
-        <button class="zone-sheet__done" @click="emit('close')">
+        </AppButton>
+        <AppButton size="md" tone="blue" @click="emit('close')">
           {{ selected.length ? `Afficher ${selected.length} zone${selected.length > 1 ? 's' : ''}` : 'Fermer' }}
-        </button>
+        </AppButton>
       </div>
     </div>
   </AppModal>
@@ -223,27 +224,6 @@ function selectedZones() {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
     gap: $gap-xs;
   }
-
-  &__clear,
-  &__done {
-    height: 56px;
-    border-radius: $radius-sm;
-    text-transform: uppercase;
-  }
-
-  &__clear {
-    border: $border-md solid $black;
-    color: $text-color;
-    @include title-md;
-
-    &:disabled { opacity: 0.4; }
-  }
-
-  &__done {
-    background: $blue;
-    color: $white;
-    @include title-xl;
-  }
 }
 
 @media (min-width: $bp-laptop) {
@@ -261,10 +241,6 @@ function selectedZones() {
       display: flex;
       justify-content: flex-end;
     }
-
-    &__clear,
-    &__done { padding: 0 $padding-xl; }
-    &__done { padding: 0 $padding-xxl; }
   }
 }
 </style>

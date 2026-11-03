@@ -1,4 +1,5 @@
 <script setup>
+import AppButton from '../AppButton.vue'
 import SectionTitle from '../SectionTitle.vue'
 import { avatarColor } from '../../utils/avatarColor.js'
 
@@ -24,11 +25,7 @@ defineEmits(['add-player', 'remove-player', 'add-host', 'remove-host'])
           <span class="roster__avatar" :style="{ background: avatarColor(p.player_data?.name) }">{{ p.player_data?.name?.[0] }}</span>
           <span class="roster__name">{{ p.user_id && p.user_id === myUserId ? 'Toi' : p.player_data?.name }}</span>
           <span v-if="hostUserIds.includes(p.user_id)" class="roster__tag">Hôte</span>
-          <button
-            v-else-if="canManage"
-            class="roster__remove"
-            @click="$emit('remove-player', p)"
-          >Retirer</button>
+          <AppButton v-else-if="canManage" size="small" variant="secondary" tone="muted" :block="false" @click="$emit('remove-player', p)">Retirer</AppButton>
         </div>
         <div v-if="canManage && participants.length < minPlayers" class="roster__row roster__row--empty">
           <span class="roster__avatar roster__avatar--empty" />
@@ -44,11 +41,7 @@ defineEmits(['add-player', 'remove-player', 'add-host', 'remove-host'])
           <span class="roster__avatar" :style="{ background: avatarColor(h.name) }">{{ h.name?.[0] }}</span>
           <span class="roster__name">{{ h.user_id === myUserId ? 'Toi' : h.name }}</span>
           <span v-if="h.role === 'creator'" class="roster__hint">Créateur</span>
-          <button
-            v-else-if="isHost && h.user_id !== myUserId"
-            class="roster__remove"
-            @click="$emit('remove-host', h.user_id)"
-          >Retirer</button>
+          <AppButton v-else-if="isHost && h.user_id !== myUserId" size="small" variant="secondary" tone="muted" :block="false" @click="$emit('remove-host', h.user_id)">Retirer</AppButton>
         </div>
       </div>
       <p class="roster__hint">Les hôtes peuvent démarrer le tournoi et saisir les résultats.</p>
@@ -138,16 +131,6 @@ defineEmits(['add-player', 'remove-player', 'add-host', 'remove-host'])
     @include text-xs;
     color: $muted;
   }
-
-  &__remove {
-    height: 36px;
-    padding: 0 $padding-xs;
-    border: $border-md solid $border-color;
-    border-radius: $radius-sm;
-    @include text-xs;
-    font-weight: 600;
-    color: $muted;
-  }
 }
 
 @media (min-width: $bp-laptop) {
@@ -181,7 +164,6 @@ defineEmits(['add-player', 'remove-player', 'add-host', 'remove-host'])
     &__avatar { width: 44px; height: 44px; @include title-lg; }
     &__name { @include title-xxl; }
     &__wait,
-    &__remove,
     &__hint { @include text-sm; }
     &__tag { @include title-sm; }
     &__section > .roster__hint { @include text-sm; }

@@ -1,14 +1,13 @@
 <script setup>
 import { ref, watch } from 'vue'
-import AppIcon from '../AppIcon.vue'
+import AppButton from '../AppButton.vue'
+import IconButton from '../IconButton.vue'
 import ZoneTypePicker from '../zone/ZoneTypePicker.vue'
 import ZoneBoard from '../zone/ZoneBoard.vue'
 
 const props = defineProps({
   show: { type: Boolean, required: true },
   zones: { type: Array, required: true },
-  // The change only applies once the current volley is over
-  midVolley: Boolean,
 })
 
 const emit = defineEmits(['close', 'zone-change', 'finish', 'quit'])
@@ -37,12 +36,9 @@ function validate() {
 
           <header class="zone-sheet__header">
             <div class="zone-sheet__heading">
-              <span v-if="midVolley" class="zone-sheet__caption">Après la volée en cours</span>
               <h2 id="zone-sheet-title" class="zone-sheet__title">Prochaine zone</h2>
             </div>
-            <button class="zone-sheet__close" aria-label="Fermer" @click="emit('close')">
-              <AppIcon name="close" :width="16" :height="16" />
-            </button>
+            <IconButton variant="outline" icon="close" label="Fermer" @click="emit('close')" />
           </header>
 
           <div class="zone-sheet__body">
@@ -63,19 +59,13 @@ function validate() {
           </div>
 
           <div class="zone-sheet__actions">
-            <button class="zone-sheet__btn zone-sheet__btn--cancel" @click="emit('close')">Annuler</button>
-            <button class="zone-sheet__btn zone-sheet__btn--validate" @click="validate">Valider</button>
+            <AppButton size="md" variant="surface" @click="emit('close')">Annuler</AppButton>
+            <AppButton size="md" tone="blue" @click="validate">Valider</AppButton>
           </div>
 
           <div class="zone-sheet__session">
-            <button class="zone-sheet__link" @click="emit('finish')">
-              <AppIcon name="check" :width="16" :height="16" />
-              Terminer la session
-            </button>
-            <button class="zone-sheet__link zone-sheet__link--danger" @click="emit('quit')">
-              <AppIcon name="exit" :width="16" :height="16" />
-              Quitter sans sauvegarder
-            </button>
+            <AppButton variant="link" tone="muted" :block="false" icon="check" @click="emit('finish')">Terminer la session</AppButton>
+            <AppButton variant="link" tone="danger" :block="false" icon="exit" @click="emit('quit')">Quitter sans sauvegarder</AppButton>
           </div>
         </div>
       </div>
@@ -131,27 +121,9 @@ function validate() {
     flex-direction: column;
   }
 
-  &__caption {
-    @include text-xs;
-    text-transform: uppercase;
-    letter-spacing: $tracking-lg;
-    color: $muted;
-  }
-
   &__title {
     @include title-xxl;
     line-height: 1;
-  }
-
-  &__close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border: $border-md solid $black;
-    border-radius: $radius-sm;
-    color: $black;
   }
 
   &__body {
@@ -190,45 +162,15 @@ function validate() {
   }
 
   &__actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
     gap: $gap-xs;
-  }
-
-  &__btn {
-    @include title-lg;
-    height: 52px;
-    border-radius: $radius-sm;
-
-    &--cancel {
-      flex: 1;
-      background: $surface;
-      color: $black;
-    }
-
-    &--validate {
-      flex: 2;
-      background: $blue;
-      color: $white;
-    }
   }
 
   &__session {
     display: flex;
     justify-content: center;
     gap: $gap-lg;
-  }
-
-  &__link {
-    @include title-sm;
-    display: flex;
-    align-items: center;
-    gap: $gap-xxs;
-    white-space: nowrap;
-    color: $muted;
-
-    &--danger {
-      color: $error;
-    }
   }
 }
 

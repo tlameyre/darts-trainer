@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import AppModal from '../AppModal.vue'
 import AppButton from '../AppButton.vue'
-import ToggleSwitch from '../ToggleSwitch.vue'
+import OptionTile from '../OptionTile.vue'
 import { isPowerOfTwo } from '../../composables/useTournamentBracket.js'
 import { playoffSizeOptions } from '../../composables/useChampionship.js'
 
@@ -55,7 +55,7 @@ function confirm() {
   <AppModal :show="show" title="Démarrer le tournoi" size="sm" @close="$emit('close')">
     <div class="start-modal">
       <template v-if="isChampionship">
-        <ToggleSwitch
+        <OptionTile
           v-model="doubleRoundRobin"
           tone="tournament"
           title="Aller-retour"
@@ -74,13 +74,13 @@ function confirm() {
         </div>
       </template>
       <template v-else>
-        <ToggleSwitch
+        <OptionTile
           v-model="manualSeeding"
           tone="tournament"
           title="Seeding manuel"
           description="Sinon, tirage au sort à l'instant du démarrage."
         />
-        <ToggleSwitch
+        <OptionTile
           :model-value="doubleElimination"
           tone="tournament"
           title="Bracket perdants"

@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { useTournamentStore } from '../store/tournamentStore.js'
 import PageHeader from '../components/PageHeader.vue'
 import AppButton from '../components/AppButton.vue'
-import AppIcon from '../components/AppIcon.vue'
 import AppTabs from '../components/AppTabs.vue'
 import TournamentListCard from '../components/tournament/TournamentListCard.vue'
 import TournamentJoinByCodeModal from '../components/tournament/TournamentJoinByCodeModal.vue'
@@ -54,11 +53,8 @@ function openTournament(id) {
   <div class="tournaments">
     <PageHeader class="tournaments__header" title="Tournois">
       <div class="tournaments__header-actions">
-        <button class="tournaments__header-btn" @click="showJoinModal = true">Rejoindre avec un code</button>
-        <button class="tournaments__header-btn tournaments__header-btn--primary" @click="router.push({ name: 'tournament-settings' })">
-          <AppIcon name="plus" :width="16" :height="16" />
-          Créer un tournoi
-        </button>
+        <AppButton size="md" variant="secondary" tone="inverse" :block="false" @click="showJoinModal = true">Rejoindre avec un code</AppButton>
+        <AppButton size="md" tone="tournament" :block="false" icon="plus" @click="router.push({ name: 'tournament-settings' })">Créer un tournoi</AppButton>
       </div>
     </PageHeader>
 
@@ -81,10 +77,7 @@ function openTournament(id) {
 
     <div class="tournaments__actions">
       <AppButton variant="secondary" @click="showJoinModal = true">Rejoindre</AppButton>
-      <AppButton tone="tournament" @click="router.push({ name: 'tournament-settings' })">
-        <AppIcon name="plus" :width="16" :height="16" />
-        Créer
-      </AppButton>
+      <AppButton tone="tournament" icon="plus" @click="router.push({ name: 'tournament-settings' })">Créer</AppButton>
     </div>
 
     <TournamentJoinByCodeModal
@@ -97,9 +90,6 @@ function openTournament(id) {
 </template>
 
 <style lang="scss" scoped>
-// Content column of the desktop layout (1120px, centered)
-$content-inset: max(#{$padding-xxl}, calc((100% - 1120px) / 2));
-
 .tournaments {
   display: flex;
   flex-direction: column;
@@ -146,39 +136,14 @@ $content-inset: max(#{$padding-xxl}, calc((100% - 1120px) / 2));
     gap: $gap-lg;
     @include nav-safe-bottom($padding-xxl);
 
-    .tournaments__header {
-      padding-left: $content-inset;
-      padding-right: $content-inset;
-      padding-bottom: $padding-xl;
-    }
-
     &__header-actions {
       display: flex;
       gap: $gap-xs;
     }
 
-    &__header-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: $gap-xs;
-      height: 56px;
-      padding: 0 $padding-lg;
-      border: $border-md solid $bg;
-      border-radius: $radius-sm;
-      color: $bg;
-      @include title-md;
-
-      &--primary {
-        border-color: $mode-tournament;
-        background: $mode-tournament;
-        color: $white;
-      }
-    }
-
     &__tabs {
-      padding-left: $content-inset;
-      padding-right: $content-inset;
+      padding-left: $padding-lg;
+      padding-right: $padding-lg;
 
       :deep(.app-tabs__tab) {
         flex: none;
@@ -188,7 +153,7 @@ $content-inset: max(#{$padding-xxl}, calc((100% - 1120px) / 2));
       }
     }
 
-    &__main { padding: 0 $content-inset; }
+    &__main { padding: 0 $padding-lg; }
 
     &__list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: $gap-lg; }
 

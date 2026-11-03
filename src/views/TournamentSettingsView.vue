@@ -3,9 +3,10 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
+import IconButton from '../components/IconButton.vue'
 import AppIcon from '../components/AppIcon.vue'
 import OptionSelector from '../components/OptionSelector.vue'
-import ToggleSwitch from '../components/ToggleSwitch.vue'
+import OptionTile from '../components/OptionTile.vue'
 import { useTournamentStore } from '../store/tournamentStore.js'
 
 const router          = useRouter()
@@ -14,7 +15,7 @@ const tournamentStore = useTournamentStore()
 const SCORE_OPTIONS = [
   { value: 301, label: '301' },
   { value: 501, label: '501' },
-  { value: 'custom', label: 'Custom' },
+  { value: 'custom', label: 'Perso' },
 ]
 const ELIMINATION_OPTIONS = [
   { value: false, label: 'Simple' },
@@ -86,9 +87,7 @@ async function createTournament() {
   <div class="settings">
     <aside class="settings__aside">
       <header class="settings__aside-bar">
-        <button class="settings__aside-back" aria-label="Retour" @click="router.push({ name: 'tournaments' })">
-          <AppIcon name="arrow-left" :width="24" :height="24" />
-        </button>
+        <IconButton variant="bare" light icon="arrow-left" label="Retour" @click="router.push({ name: 'tournaments' })" />
         <h1 class="settings__aside-bar-title">Tournoi</h1>
       </header>
       <h2 class="settings__aside-title">Nouveau tournoi</h2>
@@ -167,9 +166,7 @@ async function createTournament() {
           <template v-if="isChampionship">
             <section class="settings__field">
               <span class="settings__label">Options du championnat</span>
-              <div class="settings__card">
-                <ToggleSwitch v-model="settings.doubleRoundRobin" tone="tournament" title="Aller-retour" description="Chaque duel se joue deux fois" />
-              </div>
+              <OptionTile v-model="settings.doubleRoundRobin" tone="tournament" title="Aller-retour" description="Chaque duel se joue deux fois" />
               <div class="settings__card">
                 <OptionSelector v-model="settings.playoffSize" label="Playoffs" :options="PLAYOFF_OPTIONS" tone="tournament" />
               </div>
@@ -208,11 +205,13 @@ async function createTournament() {
       </main>
 
       <div class="settings__footer">
-        <AppButton class="settings__footer-secondary" variant="secondary" @click="backFromHeader">
-          {{ step === 1 ? 'Annuler' : 'Retour' }}
-        </AppButton>
-        <AppButton v-if="step === 1" tone="tournament" :disabled="!canSubmitStep1" @click="goToStep2">Suivant</AppButton>
-        <AppButton v-else tone="tournament" :disabled="creating" @click="createTournament">
+        <div class="settings__footer-secondary">
+          <AppButton size="cta" variant="secondary" @click="backFromHeader">
+            {{ step === 1 ? 'Annuler' : 'Retour' }}
+          </AppButton>
+        </div>
+        <AppButton v-if="step === 1" size="cta" tone="tournament" :disabled="!canSubmitStep1" @click="goToStep2">Suivant</AppButton>
+        <AppButton v-else size="cta" tone="tournament" :disabled="creating" @click="createTournament">
           {{ creating ? 'Création...' : 'Créer le tournoi' }}
         </AppButton>
       </div>
@@ -265,7 +264,7 @@ async function createTournament() {
 
   &__step-bar {
     height: 6px;
-    border-radius: 2px;
+    border-radius: $radius-xs;
     background: $border-color;
 
     .settings__step--done &,
@@ -470,11 +469,6 @@ async function createTournament() {
       gap: $gap-sm;
     }
 
-    &__aside-back {
-      display: flex;
-      padding: $padding-xxs;
-      color: $white;
-    }
 
     &__aside-bar-title {
       @include title-xl;
@@ -509,7 +503,7 @@ async function createTournament() {
       align-items: center;
       justify-content: center;
       border-radius: $radius-sm;
-      background: rgba($white, 0.2);
+      background: $tint-20;
       @include title-xl;
 
       .settings__aside-step:not(.settings__aside-step--off):last-child &,
@@ -603,8 +597,6 @@ async function createTournament() {
     }
 
     &__footer-secondary { display: flex; }
-
-    &__footer :deep(.btn) { height: 60px; padding: 0; @include title-xxl; }
 
     &__label { @include title-md; }
     &__optional,

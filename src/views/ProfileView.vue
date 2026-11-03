@@ -9,7 +9,7 @@ import { useFriendStore } from '../store/friendStore.js'
 import BadgeDetailModal from '../components/badges/BadgeDetailModal.vue'
 import ProfileFriendsSection from '../components/friends/ProfileFriendsSection.vue'
 import ProfileHero from '../components/profile/ProfileHero.vue'
-import AppIcon from '../components/AppIcon.vue'
+import AppButton from '../components/AppButton.vue'
 import RecentBadges from '../components/RecentBadges.vue'
 
 // Optional mock data — only used by /dev to preview without auth
@@ -102,10 +102,7 @@ async function onSignOut() {
         @view-all="router.push({ name: 'badges' })"
       />
 
-      <button class="profile__logout" @click="onSignOut">
-        <AppIcon name="exit" :width="20" :height="20" />
-        Se déconnecter
-      </button>
+      <AppButton class="profile__logout" variant="secondary" tone="danger" icon="exit" @click="onSignOut">Se déconnecter</AppButton>
     </main>
 
     <BadgeDetailModal
@@ -127,22 +124,6 @@ async function onSignOut() {
     gap: $gap-xl;
     padding: $padding-lg $padding-md 0;
     @include nav-safe-bottom;
-  }
-
-  &__logout {
-    @include title-md;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xs;
-    height: 52px;
-    border: $border-md solid $error;
-    border-radius: $radius-sm;
-    color: $error;
-    text-transform: uppercase;
-    transition: background 0.15s;
-
-    &:active { background: rgba($error, 0.08); }
   }
 }
 

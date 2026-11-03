@@ -3,10 +3,11 @@ import { computed } from 'vue'
 import { BADGES } from '../data/badges.js'
 import SectionTitle from './SectionTitle.vue'
 import BadgeIcon from './badges/BadgeIcon.vue'
+import { relativeDay } from '../utils/relativeDay.js'
 
 const props = defineProps({
   badges:    { type: Array,  required: true },
-  emptyText: { type: String, default: 'Aucun badge encore — commence à jouer !' },
+  emptyText: { type: String, default: 'Aucun badge encore — commence à jouer.' },
   ruled:     { type: Boolean, default: false }, // heavy rule under the title + progress bar (profile)
 })
 
@@ -14,18 +15,6 @@ defineEmits(['badge-click', 'view-all'])
 
 const recentBadges = computed(() => props.badges.slice(0, 4))
 const percent = computed(() => Math.round((props.badges.length / BADGES.length) * 100))
-
-const DAY_MS = 24 * 60 * 60 * 1000
-
-function unlockedWhen(iso) {
-  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  const days = Math.round((startOfDay(new Date()) - startOfDay(new Date(iso))) / DAY_MS)
-  if (days <= 0) return "Aujourd'hui"
-  if (days === 1) return 'Hier'
-  if (days < 7) return `Il y a ${days} j`
-  if (days < 30) return `Il y a ${Math.floor(days / 7)} sem.`
-  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-}
 </script>
 
 <template>
@@ -50,7 +39,7 @@ function unlockedWhen(iso) {
         >
           <BadgeIcon :badge="badge" class="recent-badges__icon" />
           <span class="recent-badges__label">{{ badge.label }}</span>
-          <span class="recent-badges__when">{{ unlockedWhen(badge.unlockedAt) }}</span>
+          <span class="recent-badges__when">{{ relativeDay(badge.unlockedAt) }}</span>
         </button>
       </div>
     </template>

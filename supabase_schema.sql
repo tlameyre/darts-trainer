@@ -77,6 +77,9 @@ create policy "Lecture propres badges"
 create policy "Insertion propres badges"
   on public.user_badges for insert with check (auth.uid() = user_id);
 
+create policy "Suppression propres badges"
+  on public.user_badges for delete using (auth.uid() = user_id);
+
 
 -- 3. Sessions Score Training
 create table public.game_sessions (

@@ -20,13 +20,16 @@ defineEmits(['profile'])
       </div>
     </div>
     <span v-if="streak" class="home-header__streak">
-      Série - <span class="home-header__streak-value">{{ streak }}j</span>
+      Série <span class="home-header__streak-value">{{ streak }} j</span>
     </span>
   </header>
 </template>
 
 <style lang="scss" scoped>
 .home-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;

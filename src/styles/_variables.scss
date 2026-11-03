@@ -40,6 +40,11 @@ $muted: #5F594F;
 // Input
 $input-placeholder: rgba(20, 17, 15, 0.55);
 
+// Overlays — scrim behind modals, tints on a mode-coloured panel
+$scrim: rgba($black, 0.6);
+$tint-16: rgba($white, 0.16);
+$tint-20: rgba($white, 0.2);
+
 // Dartboard chip colors (fidèle aux couleurs de la cible)
 $dart-red: #C8001F; // double/triple secteurs rouges + double bull
 $dart-green: #047857; // double/triple secteurs verts + outer bull
@@ -52,9 +57,21 @@ $dart-cream-accent: #B39B62; // light single gauge (recap)
 
 // Game modes — home tiles (à valider)
 $mode-checkout: #0891B2;
-$mode-online: #B45309;
+$mode-checkout-dark: #0E7490; // white text 12–14px on Checkouts (3.7:1 on the base color)
+$mode-online: #BE185D;
 $mode-tactics: #DC2626;
 $mode-tournament: #7C3AED;
+
+// Accent per tone — exposed as --tone by the settings layout
+$tones: (
+  "orange": $orange,
+  "blue": $blue,
+  "green": $accent,
+  "cyan": $mode-checkout,
+  "red": $mode-tactics,
+  "online": $mode-online,
+  "tournament": $mode-tournament,
+);
 
 // Players in multi-player stats (bars, charts), keyed by turn order
 // Player 0 follows the match color (online / tournament) when one is set
@@ -77,6 +94,7 @@ $title-lg: 20px;
 $title-xl: 22px;
 $title-xxl: 28px;
 $title-xxxl: 40px;
+$title-hero: 64px; // desktop settings panel headline
 
 
 // Font sizes — display (scores, icons, emojis)

@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useTournamentStore } from '../store/tournamentStore.js'
 import { useFriendStore } from '../store/friendStore.js'
 import { useAuthStore } from '../store/authStore.js'
+import { useDbStore } from '../store/dbStore.js'
+import { useBadgeStore } from '../store/badgeStore.js'
 import { useGameStore } from '../store/gameStore.js'
 import { useOnlineMatchStore } from '../store/onlineMatchStore.js'
 import { MIN_PARTICIPANTS_TO_START } from '../data/tournamentConstants.js'
@@ -25,6 +27,7 @@ import TournamentStartModal from '../components/tournament/TournamentStartModal.
 import TournamentHostPickerModal from '../components/tournament/TournamentHostPickerModal.vue'
 import X01PlayerPicker from '../components/x01/X01PlayerPicker.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
+import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay.vue'
 
 const props = defineProps({
   // Preview /dev uniquement : { tournament, hosts, participants, matches }
@@ -36,6 +39,9 @@ const router           = useRouter()
 const tournamentStore  = useTournamentStore()
 const friendStore      = useFriendStore()
 const authStore        = useAuthStore()
+const dbStore          = useDbStore()
+const badgeStore       = useBadgeStore()
+const newBadges        = ref([])
 const gameStore        = useGameStore()
 const onlineMatchStore = useOnlineMatchStore()
 
@@ -138,6 +144,13 @@ const showAddPlayerPicker = ref(false)
 const showDeleteConfirm   = ref(false)
 const participantToRemove = ref(null)
 const deleting            = ref(false)
+
+// A finished tournament may unlock played/won badges for the current user
+watch(() => data.value?.tournament?.status, async (status) => {
+  if (status !== 'completed' || isMock.value) return
+  const stats = await dbStore.fetchProfileStats()
+  newBadges.value = await badgeStore.checkTournamentBadges(stats)
+}, { immediate: true })
 
 onMounted(() => {
   if (!isMock.value) {
@@ -399,13 +412,12 @@ async function playOnline() {
           <span class="tournament__invite-code">{{ data.tournament.join_code }}</span>
         </div>
         <div class="tournament__invite-actions">
-          <button class="tournament__invite-btn" @click="copyCode">
-            <AppIcon name="copy" :width="16" :height="16" />
-            {{ copied === 'code' ? 'Copié !' : 'Copier' }}
-          </button>
-          <button class="tournament__invite-btn tournament__invite-btn--primary" @click="shareInviteLink">
-            {{ copied === 'link' ? 'Lien copié !' : 'Partager le lien' }}
-          </button>
+          <AppButton size="small" variant="secondary" icon="copy" @click="copyCode">
+            {{ copied === 'code' ? 'Copié' : 'Copier' }}
+          </AppButton>
+          <AppButton size="small" tone="tournament" @click="shareInviteLink">
+            {{ copied === 'link' ? 'Lien copié' : 'Partager le lien' }}
+          </AppButton>
         </div>
       </div>
 
@@ -416,10 +428,9 @@ async function playOnline() {
             vs <span class="tournament__mine-name">{{ myMatch.opponent.player_data?.name }}</span>
           </span>
         </div>
-        <button class="tournament__mine-btn" @click="onPlay(myMatch.id)">
-          <AppIcon name="play" :width="16" :height="16" />
+        <AppButton size="small" tone="tournament" :block="false" icon="play" @click="onPlay(myMatch.id)">
           {{ myMatch.live ? 'Rejoindre' : 'Jouer' }}
-        </button>
+        </AppButton>
       </div>
     </TournamentHero>
 
@@ -438,23 +449,21 @@ async function playOnline() {
           @add-host="openHostPicker"
           @remove-host="onRemoveHost"
         />
-        <button v-if="isHost" class="tournament__delete tournament__delete--mobile" @click="showDeleteConfirm = true">
-          <AppIcon name="trash" :width="16" :height="16" />
-          Supprimer le tournoi
-        </button>
+        <div v-if="isHost" class="tournament__delete tournament__delete--mobile">
+          <AppButton variant="link" tone="danger" :block="false" icon="trash" @click="showDeleteConfirm = true">Supprimer le tournoi</AppButton>
+        </div>
       </main>
 
       <div v-if="isHost" class="tournament__start">
-        <button class="tournament__delete tournament__delete--desktop" @click="showDeleteConfirm = true">
-          <AppIcon name="trash" :width="16" :height="16" />
-          Supprimer le tournoi
-        </button>
+        <div class="tournament__delete tournament__delete--desktop">
+          <AppButton variant="link" tone="danger" :block="false" icon="trash" @click="showDeleteConfirm = true">Supprimer le tournoi</AppButton>
+        </div>
         <div class="tournament__start-main">
           <span v-if="!canStart" class="tournament__start-hint">
             <AppIcon name="lock" :width="16" :height="16" />
             Encore {{ MIN_PARTICIPANTS_TO_START - data.participants.length }} joueur{{ MIN_PARTICIPANTS_TO_START - data.participants.length > 1 ? 's' : '' }} pour pouvoir démarrer
           </span>
-          <AppButton tone="tournament" :disabled="!canStart" @click="showStartModal = true">
+          <AppButton size="cta" tone="tournament" :disabled="!canStart" @click="showStartModal = true">
             Démarrer le tournoi
           </AppButton>
         </div>
@@ -614,6 +623,7 @@ async function playOnline() {
       @close="showDeleteConfirm = false"
       @confirm="confirmDeleteTournament"
     />
+    <BadgeUnlockOverlay :badges="newBadges" @done="newBadges = []" />
   </div>
   <div v-else class="tournament__loading">Chargement du tournoi…</div>
 </template>
@@ -692,24 +702,6 @@ async function playOnline() {
     gap: $gap-xs;
   }
 
-  &__invite-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xxs;
-    height: 44px;
-    border: $border-md solid $border-color;
-    border-radius: $radius-sm;
-    color: $text-color;
-    @include title-md;
-
-    &--primary {
-      border-color: $mode-tournament;
-      background: $mode-tournament;
-      color: $white;
-    }
-  }
-
   &__mine {
     grid-template-columns: 1fr auto;
     align-items: center;
@@ -725,25 +717,9 @@ async function playOnline() {
     color: $text-color;
   }
 
-  &__mine-btn {
-    display: flex;
-    align-items: center;
-    gap: $gap-xxs;
-    height: 44px;
-    padding: 0 $padding-sm;
-    border-radius: $radius-sm;
-    background: $mode-tournament;
-    color: $white;
-    @include title-md;
-  }
-
   &__delete {
     align-self: center;
     display: flex;
-    align-items: center;
-    gap: $gap-xs;
-    @include text-sm;
-    color: $error;
   }
 
   &__delete--desktop { display: none; }
@@ -840,12 +816,9 @@ async function playOnline() {
     &__loading,
     &__empty,
     &__locked-text,
-    &__delete { @include text-md; }
     &__invite { padding: $padding-md; gap: $gap-md; }
     &__invite-label { @include text-xs; }
     &__invite-code { @include display-xs; }
-    &__invite-btn { height: 48px; @include title-lg; }
-    &__mine-btn { @include title-lg; }
     &__mine-name { @include title-xl; }
     &__locked-title { @include title-lg; }
     &__start-hint { @include text-sm; }
@@ -870,7 +843,7 @@ async function playOnline() {
       align-items: center;
       gap: $gap-md;
 
-      :deep(.btn) { width: 280px; height: 60px; padding: 0; @include title-xxl; }
+      :deep(.btn) { width: 280px; }
     }
   }
 }

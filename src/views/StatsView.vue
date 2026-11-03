@@ -141,11 +141,14 @@ async function deleteSession(id) {
 .stats {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
 
   &__main {
     display: flex;
+    flex: 1;
     flex-direction: column;
+    min-height: 0;
     gap: $gap-lg;
     padding: $padding-md $padding-md 0;
     @include nav-safe-bottom;

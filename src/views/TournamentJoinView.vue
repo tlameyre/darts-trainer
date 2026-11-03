@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useTournamentStore } from '../store/tournamentStore.js'
 import AppHeader from '../components/AppHeader.vue'
 import AppButton from '../components/AppButton.vue'
+import IconButton from '../components/IconButton.vue'
 import AppIcon from '../components/AppIcon.vue'
 import SectionTitle from '../components/SectionTitle.vue'
 import { MIN_PARTICIPANTS_TO_START } from '../data/tournamentConstants.js'
@@ -62,9 +63,7 @@ async function join() {
     <template v-else-if="preview">
       <section class="join__hero">
         <header class="join__bar">
-          <button class="join__back" aria-label="Retour" @click="router.push({ name: 'tournaments' })">
-            <AppIcon name="arrow-left" :width="24" :height="24" />
-          </button>
+          <IconButton variant="bare" light icon="arrow-left" label="Retour" @click="router.push({ name: 'tournaments' })" />
           <h1 class="join__bar-title">Invitation</h1>
         </header>
 
@@ -95,8 +94,8 @@ async function join() {
         <p v-if="error" class="join__warning">{{ error }}</p>
 
         <div class="join__actions">
-          <AppButton variant="secondary" @click="router.push({ name: 'tournaments' })">Plus tard</AppButton>
-          <AppButton tone="tournament" :disabled="joining || !canJoin" @click="join">
+          <AppButton size="cta" variant="secondary" @click="router.push({ name: 'tournaments' })">Plus tard</AppButton>
+          <AppButton size="cta" tone="tournament" :disabled="joining || !canJoin" @click="join">
             {{ joining ? 'Inscription...' : 'Rejoindre le tournoi' }}
           </AppButton>
         </div>
@@ -211,11 +210,6 @@ async function join() {
       margin-bottom: auto;
     }
 
-    &__back {
-      display: flex;
-      padding: $padding-xxs;
-      color: $white;
-    }
 
     &__bar-title {
       @include title-xl;
@@ -280,8 +274,6 @@ async function join() {
       grid-template-columns: 1fr 1fr;
       gap: $gap-sm;
       margin-top: auto;
-
-      :deep(.btn) { height: 60px; padding: 0; @include title-xl; }
     }
 
     &__message { grid-column: 1 / -1; @include text-md; }

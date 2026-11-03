@@ -5,7 +5,7 @@ defineProps({
   description: String,
   // Radio-like tiles (one choice among several) don't need the on/off badge
   showBadge: { type: Boolean, default: true },
-  tone: { type: String, default: 'orange', validator: v => ['orange', 'green', 'cyan'].includes(v) },
+  tone: { type: String, default: 'orange', validator: v => ['orange', 'green', 'cyan', 'tournament'].includes(v) },
 })
 
 defineEmits(['update:modelValue'])
@@ -75,6 +75,7 @@ defineEmits(['update:modelValue'])
   &--orange { --tone: #{$orange}; }
   &--green { --tone: #{$accent}; }
   &--cyan { --tone: #{$mode-checkout}; }
+  &--tournament { --tone: #{$mode-tournament}; }
 
   &--on {
     background: var(--tone);
@@ -82,7 +83,7 @@ defineEmits(['update:modelValue'])
     color: $white;
 
     .option-tile__preview {
-      background: rgba($white, 0.16);
+      background: $tint-16;
     }
 
     .option-tile__desc {
@@ -94,6 +95,10 @@ defineEmits(['update:modelValue'])
       color: var(--tone);
     }
   }
+}
+
+@media (hover: hover) {
+  .option-tile:not(.option-tile--on):hover { border-color: $text-color; }
 }
 
 @media (min-width: $bp-laptop) {

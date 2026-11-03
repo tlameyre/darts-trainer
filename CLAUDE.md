@@ -34,6 +34,14 @@ src/
 - **Composants** : découper en sous-composants dès qu'une section est significative ou réutilisable
 - **Imports** : chemins relatifs explicites (pas d'alias `@`)
 
+## Boutons
+
+- **Boutons d'action avec texte** : toujours `AppButton` (`size` big/small/md/cta, `variant` primary/secondary/ghost/surface/link, `tone`, `color` pour une CSS var dynamique, `block`, `icon`/`iconEnd`, `align`). Ne pas recréer de `<button>` stylé à la main ; pas de hack `:deep(.btn)`.
+- **Boutons icône seule** (fermer, retour, supprimer…) : `IconButton` (`variant` bare/surface/outline/translucent/filled, `size`, `light` pour fond sombre, `label` obligatoire).
+- Les widgets spécifiques (pads de saisie, tuiles, onglets, steppers, lignes de liste) restent des `<button>` dédiés.
+- Ne jamais surcharger `display`/`width`/`height` d'un `AppButton` depuis le parent (conflit de spécificité) : envelopper dans un `<div>` pour la visibilité/layout.
+- Toute variante ou tout ton ajouté doit être montré dans la section « Boutons » de `/dev`.
+
 ## SCSS — variables, typographie et responsive
 
 Toutes les variables et mixins sont disponibles globalement dans les `<style scoped>` (injectés via `vite.config.js`). Ne jamais définir de valeurs brutes pour les couleurs, espacements, tailles de police ou rayons — utiliser exclusivement les variables de `_variables.scss`.

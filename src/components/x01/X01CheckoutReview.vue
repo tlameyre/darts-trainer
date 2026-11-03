@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import AppIcon from '../AppIcon.vue'
 import StatCell from '../StatCell.vue'
 import DartPill from '../checkout/DartPill.vue'
 import { sameDart } from '../../composables/useCheckoutAnalysis.js'
@@ -58,7 +59,7 @@ const pctLabel = (pct) => (pct == null ? '–' : `${pct} %`)
           <span class="co-review__arrow">→</span>
           <DartPill v-if="move.hit.type !== 'miss'" :dart="move.hit" size="sm" />
           <span v-else class="co-review__miss">Raté</span>
-          <span v-if="sameDart(move.hit, move.target)" class="co-review__on-target">✓</span>
+          <span v-if="sameDart(move.hit, move.target)" class="co-review__on-target"><AppIcon name="check" :width="16" :height="16" /></span>
           <span class="co-review__grade" :class="`co-review__grade--${move.grade}`">
             {{ GRADE_LABELS[move.grade] }}
           </span>

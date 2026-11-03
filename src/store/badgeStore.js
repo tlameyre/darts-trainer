@@ -5,6 +5,32 @@ import { BADGES, getBadge } from '../data/badges.js'
 
 const MIN_VOLLEYS = 5   // min. 5 volées (15 fléchettes) pour les badges de précision
 
+// Badges derived from a single cumulative stat: [stat key in fetchProfileStats, target]
+const STAT_THRESHOLDS = {
+  x01_first_win: ['x01Wins', 1], x01_wins_10: ['x01Wins', 10], x01_wins_50: ['x01Wins', 50],
+  x01_avg_60: ['bestX01Avg', 60], x01_avg_80: ['bestX01Avg', 80], x01_avg_100: ['bestX01Avg', 100],
+  x01_finish_100: ['bestX01Finish', 100], x01_nine_darter: ['hasNineDarter', 1],
+  checkout_sessions_10: ['checkoutSessionsCount', 10], checkout_sessions_50: ['checkoutSessionsCount', 50],
+  checkout_perfect: ['hasPerfectCheckout', 1], checkout_optimal_50: ['checkoutOptimalTotal', 50],
+  checkout_170: ['hasCheckout170', 1],
+  tournament_played: ['tournamentsPlayed', 1], tournament_won: ['tournamentsWon', 1], tournament_won_3: ['tournamentsWon', 3],
+  days_streak_3: ['bestDaysStreak', 3], days_streak_7: ['bestDaysStreak', 7], days_streak_30: ['bestDaysStreak', 30],
+  week_5_sessions: ['maxSessionsWeek', 5],
+}
+
+function statValue(stats, key) {
+  return Number(stats?.[key] ?? 0)
+}
+
+// Tournament results come from the server, not from deleted sessions, so they are never revoked
+const isSessionDerived = id => !id.startsWith('tournament_')
+
+function newStatBadgeIds(unlocked, stats) {
+  return Object.entries(STAT_THRESHOLDS)
+    .filter(([id, [key, target]]) => !unlocked.has(id) && statValue(stats, key) >= target)
+    .map(([id]) => id)
+}
+
 export const useBadgeStore = defineStore('badge', () => {
   function getUser() {
     return useAuthStore().user
@@ -91,7 +117,12 @@ export const useBadgeStore = defineStore('badge', () => {
       case 'sniper':         return { current: Math.round(bestAccuracy),       target: 95,    suffix: '%' }
       case 'perfect_warmup': return { current: Math.round(bestAccuracy),       target: 100,   suffix: '%' }
       case 'avg_80':         return { current: Math.round(avgAccuracy10 ?? 0), target: 80,    suffix: '%' }
-      default:               return null
+      default: {
+        const threshold = STAT_THRESHOLDS[badgeId]
+        if (!threshold) return null
+        const [key, target] = threshold
+        return { current: Math.min(Math.floor(statValue(stats, key)), target), target, suffix: '' }
+      }
     }
   }
 
@@ -147,7 +178,7 @@ export const useBadgeStore = defineStore('badge', () => {
     if (!unlocked.has('total_darts_1000') && totalDarts >= 1000) toUnlock.push('total_darts_1000')
     if (!unlocked.has('total_darts_5000') && totalDarts >= 5000) toUnlock.push('total_darts_5000')
 
-    return unlockBadges(toUnlock)
+    return unlockBadges([...toUnlock, ...newStatBadgeIds(unlocked, cumulativeStats)])
   }
 
   // ── Checks après session Échauffement ────────────────────────────────────────
@@ -196,7 +227,7 @@ export const useBadgeStore = defineStore('badge', () => {
     if (!unlocked.has('avg_80') && avg80eligible && avgAccuracy10 >= 80)
       toUnlock.push('avg_80')
 
-    return unlockBadges(toUnlock)
+    return unlockBadges([...toUnlock, ...newStatBadgeIds(unlocked, cumulativeStats)])
   }
 
   // ── Checks après session X01 ─────────────────────────────────────────────────
@@ -228,7 +259,37 @@ export const useBadgeStore = defineStore('badge', () => {
     if (!unlocked.has('total_darts_1000') && totalDarts >= 1000) toUnlock.push('total_darts_1000')
     if (!unlocked.has('total_darts_5000') && totalDarts >= 5000) toUnlock.push('total_darts_5000')
 
-    return unlockBadges(toUnlock)
+    return unlockBadges([...toUnlock, ...newStatBadgeIds(unlocked, cumulativeStats)])
+  }
+
+  // ── Checks après session Checkout ────────────────────────────────────────────
+
+  async function checkCheckoutBadges(cumulativeStats) {
+    if (!getUser()) return []
+
+    const unlocked = await fetchUnlockedIds()
+    const { totalSessions } = cumulativeStats
+    const toUnlock = [
+      ['sessions_10', 10], ['sessions_50', 50], ['sessions_100', 100],
+    ].filter(([id, target]) => !unlocked.has(id) && totalSessions >= target).map(([id]) => id)
+
+    return unlockBadges([...toUnlock, ...newStatBadgeIds(unlocked, cumulativeStats)])
+  }
+
+  // ── Check tournois (résultat calculé côté serveur) ───────────────────────────
+
+  async function checkTournamentBadges(cumulativeStats) {
+    if (!getUser()) return []
+    const unlocked = await fetchUnlockedIds()
+    return unlockBadges(newStatBadgeIds(unlocked, cumulativeStats))
+  }
+
+  // ── Rattrapage : stat déjà au seuil mais badge jamais débloqué ───────────────
+
+  async function syncStatBadges(stats) {
+    if (!getUser()) return []
+    const unlocked = await fetchUnlockedIds()
+    return unlockBadges(newStatBadgeIds(unlocked, stats))
   }
 
   // ── Checks en temps réel (lancers spéciaux) ───────────────────────────────────
@@ -347,6 +408,10 @@ export const useBadgeStore = defineStore('badge', () => {
     if (unlocked.has('questions_100')   && totalQuestions < 100)   toRevoke.push('questions_100')
     if (unlocked.has('questions_50')    && totalQuestions < 50)    toRevoke.push('questions_50')
 
+    Object.entries(STAT_THRESHOLDS).forEach(([id, [key, target]]) => {
+      if (isSessionDerived(id) && unlocked.has(id) && statValue(cumulativeStats, key) < target) toRevoke.push(id)
+    })
+
     if (!toRevoke.length) return
 
     await supabase.from('user_badges')
@@ -383,8 +448,9 @@ export const useBadgeStore = defineStore('badge', () => {
 
   return {
     getBadgeProgress,
-    checkGameBadges, checkWarmupBadges, checkX01Badges, checkSpecialThrow, checkProfileBadge,
-    revokeVolumeBadges,
+    checkGameBadges, checkWarmupBadges, checkX01Badges, checkCheckoutBadges, checkTournamentBadges,
+    checkSpecialThrow, checkProfileBadge,
+    syncStatBadges, revokeVolumeBadges,
     fetchUserBadges,
   }
 })

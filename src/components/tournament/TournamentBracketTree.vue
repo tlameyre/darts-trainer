@@ -222,7 +222,7 @@ function roundLabel(rounds, idx) {
     &__swatch {
       width: 12px;
       height: 12px;
-      border-radius: 2px;
+      border-radius: $radius-xs;
       border: $border-md solid;
 
       &--live { border-color: $error; }

@@ -1,9 +1,12 @@
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import AppIcon from './AppIcon.vue'
+
+const props = defineProps({
   size: {
     type: String,
     default: 'big',
-    validator: v => ['big', 'small'].includes(v),
+    validator: v => ['big', 'small', 'md', 'cta'].includes(v),
   },
   rounded: {
     type: String,
@@ -13,23 +16,44 @@ defineProps({
   variant: {
     type: String,
     default: 'primary',
-    validator: v => ['primary', 'secondary', 'ghost'].includes(v),
-  },
-  active: {
-    type: Boolean,
-    default: false,
+    validator: v => ['primary', 'secondary', 'ghost', 'surface', 'link'].includes(v),
   },
   tone: {
     type: String,
     default: 'orange',
-    validator: v => ['orange', 'tournament'].includes(v),
+    validator: v => ['orange', 'blue', 'green', 'cyan', 'red', 'online', 'tournament', 'game', 'black', 'danger', 'inverse', 'muted'].includes(v),
   },
+  color: { type: String, default: null },
+  active: { type: Boolean, default: false },
+  block: { type: Boolean, default: true },
+  align: {
+    type: String,
+    default: 'center',
+    validator: v => ['center', 'start'].includes(v),
+  },
+  icon: { type: String, default: null },
+  iconEnd: { type: String, default: null },
 })
+
+const iconSize = computed(() => (props.size === 'small' ? 16 : 20))
 </script>
 
 <template>
-  <button :class="['btn', `btn--${size}`, `btn--${rounded}`, `btn--${variant}`, `btn--${tone}`, { 'btn--active': active }]">
+  <button
+    :class="[
+      'btn',
+      variant === 'link' ? 'btn--link' : `btn--${size}`,
+      `btn--${rounded}`,
+      `btn--${variant}`,
+      `btn--${tone}`,
+      `btn--align-${align}`,
+      { 'btn--active': active, 'btn--block': block },
+    ]"
+    :style="color ? { '--btn-color': color } : null"
+  >
+    <AppIcon v-if="icon" :name="icon" :width="iconSize" :height="iconSize" />
     <slot />
+    <AppIcon v-if="iconEnd" :name="iconEnd" :width="iconSize" :height="iconSize" />
   </button>
 </template>
 
@@ -37,15 +61,25 @@ defineProps({
 @use '../styles/variables' as *;
 
 .btn {
+  --btn-text: #{$white};
+  --btn-outline: #{$text-color};
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  gap: $gap-xs;
   text-transform: uppercase;
   transition: background 0.15s, transform 0.1s;
 
   &:active {
     transform: scale(0.98);
+  }
+
+  &--block {
+    width: 100%;
+  }
+
+  &--align-start {
+    justify-content: flex-start;
   }
 
   // --- Tailles ---
@@ -61,6 +95,19 @@ defineProps({
     padding: $padding-xs $padding-md;
   }
 
+  &--md {
+    @include title-lg;
+    height: 56px;
+    padding: 0 $padding-md;
+  }
+
+  &--cta {
+    @include title-xl;
+    flex-shrink: 0;
+    height: 56px;
+    padding: 0 $padding-md;
+  }
+
   // --- Radius ---
   &--default {
     border-radius: $radius-sm;
@@ -70,58 +117,111 @@ defineProps({
     border-radius: $radius-pill;
   }
 
+  // --- Tons ---
+  @each $name, $color in $tones {
+    &--#{$name} {
+      --btn-color: #{$color};
+      --btn-dark: #{$black};
+    }
+  }
+
+  &--game {
+    --btn-color: var(--game-color, #{$accent});
+    --btn-dark: #{$black};
+  }
+
+  &--orange { --btn-dark: #{$orange-dark}; }
+  &--blue { --btn-dark: #{$blue-dark}; }
+
+  &--black {
+    --btn-color: #{$black};
+    --btn-dark: #{$muted};
+  }
+
+  &--danger {
+    --btn-color: #{$error};
+    --btn-dark: #{$error-dark};
+    --btn-outline: #{$error};
+  }
+
+  &--inverse {
+    --btn-color: #{$bg};
+    --btn-dark: #{$surface};
+    --btn-text: #{$black};
+    --btn-outline: #{$bg};
+  }
+
+  &--muted {
+    --btn-color: #{$muted};
+    --btn-dark: #{$black};
+    --btn-outline: #{$muted};
+  }
+
   // --- Variantes ---
   &--primary {
-    background: $orange;
-    color: $white;
+    background: var(--btn-color);
+    color: var(--btn-text);
 
     &:active {
-      background: $orange-dark;
+      background: var(--btn-dark);
     }
   }
 
-  &--secondary {
-    background: transparent;
-    color: $text-color;
-    border: $border-md solid $text-color;
-
-    &:active {
-      background: rgba($white, 0.05);
-    }
-  }
-
+  &--secondary,
   &--ghost {
     background: transparent;
+    color: var(--btn-outline);
+    border: $border-md solid var(--btn-outline);
+  }
+
+  &--secondary:active {
+    background: rgba($white, 0.05);
+  }
+
+  &--ghost:active {
+    background: rgba($white, 0.08);
+  }
+
+  &--surface {
+    background: $surface;
     color: $text-color;
-    border: $border-md solid $text-color;
 
     &:active {
-      background: rgba($white, 0.08);
+      background: $border-color;
     }
   }
 
-  &--tournament.btn--primary {
-    background: $mode-tournament;
+  &--link {
+    @include text-sm;
+    padding: 0;
+    background: transparent;
+    color: var(--btn-outline);
+    text-transform: none;
 
-    &:active { background: $black; }
+    &:active {
+      opacity: 0.6;
+    }
   }
 
   // État actif (ex: option sélectionnée dans un groupe)
   &--active {
-    background: $orange;
-    border-color: $orange;
-    color: $white;
-  }
-
-  &--tournament.btn--active {
-    background: $mode-tournament;
-    border-color: $mode-tournament;
+    background: var(--btn-color);
+    border-color: var(--btn-color);
+    color: var(--btn-text);
   }
 
   &:disabled {
     opacity: 0.4;
     pointer-events: none;
   }
+}
+
+@media (hover: hover) {
+  .btn--primary:hover { background: var(--btn-dark); }
+  .btn--secondary:not(.btn--active):hover { background: rgba($white, 0.05); }
+  .btn--ghost:not(.btn--active):hover { background: rgba($white, 0.08); }
+  .btn--surface:hover { background: $border-color; }
+  .btn--link:hover { opacity: 0.6; }
 }
 
 @media (min-width: $bp-laptop) {
@@ -133,6 +233,20 @@ defineProps({
   .btn--small {
     @include title-md;
     padding: $padding-sm $padding-lg;
+  }
+
+  .btn--md {
+    @include title-xl;
+    height: 64px;
+  }
+
+  .btn--cta {
+    @include title-xxl;
+    height: 64px;
+  }
+
+  .btn--link {
+    @include text-md;
   }
 }
 </style>

@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { canFinish } from '../../composables/useCheckoutAnalysis.js'
+import AppButton from '../AppButton.vue'
+import IconButton from '../IconButton.vue'
 import AppModal from '../AppModal.vue'
 import AppIcon from '../AppIcon.vue'
 
@@ -49,9 +51,7 @@ function confirm() {
         <span v-if="winnerName" class="co-modal__label">{{ winnerName }} remporte la manche</span>
         <p class="co-modal__title">Checkout {{ checkoutScore }} !</p>
       </div>
-      <button class="co-modal__close" aria-label="Fermer" @click="confirm">
-        <AppIcon name="close" :width="22" :height="22" />
-      </button>
+      <IconButton variant="bare" icon="close" :icon-size="22" label="Fermer" @click="confirm" />
     </div>
 
     <div class="co-modal__group">
@@ -88,7 +88,7 @@ function confirm() {
       </div>
     </div>
 
-    <button class="co-modal__confirm" @click="confirm">Valider la manche</button>
+    <AppButton size="md" tone="game" @click="confirm">Valider la manche</AppButton>
   </AppModal>
 </template>
 
@@ -124,14 +124,6 @@ function confirm() {
     line-height: 1.05;
   }
 
-  &__close {
-    color: $text-color;
-    display: flex;
-    padding: $padding-xxs;
-    flex-shrink: 0;
-    transition: opacity 0.15s;
-    &:active { opacity: 0.6; }
-  }
 
   &__group {
     display: flex;
@@ -171,18 +163,6 @@ function confirm() {
 
     &:disabled { opacity: 0.2; cursor: default; }
   }
-
-  &__confirm {
-    height: 56px;
-    border-radius: $radius-sm;
-    background: var(--game-color, #{$accent});
-    color: $white;
-    @include title-lg;
-    letter-spacing: $tracking-sm;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.8; }
-  }
 }
 
 @media (min-width: $bp-laptop) {
@@ -190,7 +170,6 @@ function confirm() {
     &__title   { @include title-xxxl; }
     &__label   { @include text-sm; }
     &__btn     { height: 80px; @include display-xs; }
-    &__confirm { height: 64px; @include title-xl; }
   }
 }
 </style>

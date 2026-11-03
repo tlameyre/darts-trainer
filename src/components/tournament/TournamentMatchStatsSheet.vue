@@ -1,7 +1,7 @@
 <script setup>
-import { computed } from 'vue'
-import AppIcon from '../AppIcon.vue'
-import X01Result from '../x01/X01Result.vue'
+import { ref, computed, watch } from 'vue'
+import AppHeader from '../AppHeader.vue'
+import X01MatchEnd from '../x01/X01MatchEnd.vue'
 
 const props = defineProps({
   match:        { type: Object,  default: null }, // ligne tournament_matches ; null = fermé
@@ -33,79 +33,56 @@ const heading = computed(() => {
   return m.bracket_type === 'league' ? `Journée ${m.round} · ${versus}` : versus
 })
 
-const title    = computed(() => `${nameOf(props.match?.winner_participant_id)} a gagné le match !`)
+const winnerIndex = computed(() => {
+  const name = nameOf(props.match?.winner_participant_id)
+  const idx = viewerStats.value?.players.findIndex(p => p.name === name) ?? -1
+  return idx >= 0 ? idx : null
+})
+
 const subtitle = computed(() => {
   const m = props.match
   if (!m) return ''
   const score = m.player1_legs != null && m.player2_legs != null ? ` · ${m.player1_legs} – ${m.player2_legs}` : ''
   return `${props.startScore} pts${score}`
 })
+
+// The match recap has its own header inside a leg detail
+const inLegDetail = ref(false)
+watch(() => props.match?.id, () => { inLegDetail.value = false })
 </script>
 
 <template>
   <Transition name="slide-up">
     <div v-if="match" class="match-sheet">
-      <div class="match-sheet__topbar">
-        <button class="match-sheet__close" aria-label="Fermer" @click="$emit('close')">
-          <AppIcon name="arrow-left" :width="20" :height="20" />
-        </button>
-        <span class="match-sheet__heading">{{ heading }}</span>
-        <span class="match-sheet__spacer" />
-      </div>
+      <AppHeader v-if="!inLegDetail" :title="heading" tone="tournament" @back="$emit('close')" />
 
       <p v-if="loading" class="match-sheet__empty">Chargement des stats…</p>
-      <X01Result v-else :match-stats="viewerStats" :title="title" :subtitle="subtitle" hide-actions />
+      <X01MatchEnd
+        v-else
+        class="match-sheet__recap"
+        :match-stats="viewerStats"
+        :winner-index="winnerIndex"
+        :subtitle="subtitle"
+        hide-actions
+        @leg-detail="inLegDetail = $event"
+      />
     </div>
   </Transition>
 </template>
 
 <style lang="scss" scoped>
 .match-sheet {
+  --game-color: #{$mode-tournament};
   position: fixed;
   inset: 0;
   background: $bg;
   z-index: 100;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  padding: $padding-md $padding-md 0;
 
-  &__topbar {
-    display: flex;
-    align-items: center;
-    gap: $gap-sm;
-    margin-bottom: $gap-md;
-    flex-shrink: 0;
-  }
-
-  &__close,
-  &__spacer {
-    width: 36px;
-    height: 36px;
-    flex-shrink: 0;
-  }
-
-  &__close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: $radius-sm;
-    background: rgba($white, 0.07);
-    color: $text-color;
-    transition: opacity 0.15s;
-
-    &:active { opacity: 0.6; }
-  }
-
-  &__heading {
+  &__recap {
     flex: 1;
-    min-width: 0;
-    @include title-sm;
-    color: $muted;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    min-height: 0;
   }
 
   &__empty {
@@ -117,12 +94,7 @@ const subtitle = computed(() => {
 }
 
 @media (min-width: $bp-laptop) {
-  .match-sheet {
-    padding: $padding-xl;
-
-    &__heading { @include title-sm; }
-    &__empty   { @include text-md; }
-  }
+  .match-sheet__empty { @include text-md; }
 }
 
 .slide-up-enter-active { transition: transform 0.3s ease, opacity 0.3s; }

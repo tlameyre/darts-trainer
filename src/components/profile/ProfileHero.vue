@@ -1,5 +1,5 @@
 <script setup>
-import AppIcon from '../AppIcon.vue'
+import AppButton from '../AppButton.vue'
 
 defineProps({
   initials: { type: String, required: true },
@@ -16,10 +16,7 @@ defineEmits(['edit'])
 <template>
   <header class="profile-hero">
     <div class="profile-hero__top">
-      <button class="profile-hero__edit" @click="$emit('edit')">
-        <AppIcon name="pen" :width="20" :height="20" />
-        Modifier
-      </button>
+      <AppButton class="profile-hero__edit" size="small" variant="secondary" tone="inverse" :block="false" icon="pen" @click="$emit('edit')">Modifier</AppButton>
     </div>
 
     <div class="profile-hero__identity">
@@ -62,22 +59,6 @@ defineEmits(['edit'])
     display: flex;
     align-items: center;
     justify-content: flex-end;
-  }
-
-  &__edit {
-    @include title-sm;
-    display: flex;
-    align-items: center;
-    gap: $gap-xs;
-    height: 40px;
-    padding: 0 $padding-sm;
-    border: $border-md solid rgba($bg, 0.3);
-    border-radius: $radius-sm;
-    color: $bg;
-    text-transform: uppercase;
-    transition: background 0.15s;
-
-    &:active { background: rgba($bg, 0.1); }
   }
 
   &__identity {
@@ -160,7 +141,7 @@ defineEmits(['edit'])
     padding: calc(#{$padding-xxl} + env(safe-area-inset-top)) $padding-xxl $padding-xl;
 
     &__top { display: contents; }
-    &__edit { grid-area: edit; height: 48px; padding: 0 $padding-md; @include title-md; }
+    &__edit { grid-area: edit; }
     &__identity { grid-area: identity; gap: $gap-lg; }
     &__stats { grid-area: stats; margin: 0; padding-top: 0; border-top: 0; }
 

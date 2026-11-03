@@ -23,14 +23,19 @@ defineProps({
 .stats-history {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: $gap-xs;
 
   &__list {
     display: flex;
+    flex: 1;
     flex-direction: column;
     gap: $gap-xs;
+    min-height: 0;
     margin: 0;
     padding: 0;
+    overflow-y: auto;
   }
 
   &__empty {

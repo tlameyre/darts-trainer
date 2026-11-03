@@ -89,8 +89,8 @@ const tableRows = computed(() => {
 @use "sass:color";
 
 .tactics-board {
+  flex: 1;
   padding: 0 $padding-sm $padding-sm;
-  background: $mode-tactics;
 
   &__grid {
     display: grid;
@@ -99,7 +99,8 @@ const tableRows = computed(() => {
     border-radius: $radius-sm;
     background: color.adjust($mode-tactics, $lightness: -10%);
     overflow: hidden;
-    height: 100%;
+    grid-template-rows: 36px;
+    grid-auto-rows: 30px;
   }
 
   &__cell {
@@ -160,7 +161,7 @@ const tableRows = computed(() => {
     content: '';
     position: absolute;
     inset: 3px;
-    border-radius: 3px;
+    border-radius: $radius-xs;
   }
 
   &__mark {
@@ -185,7 +186,13 @@ const tableRows = computed(() => {
 
 @media (min-width: $bp-laptop) {
   .tactics-board {
-    padding: $padding-xl;
+    padding: 0;
+
+    &__grid {
+      height: 100%;
+      grid-template-rows: auto;
+      grid-auto-rows: auto;
+    }
 
     &__cell--head { @include title-md; }
     &__cell--zone { @include title-md; }

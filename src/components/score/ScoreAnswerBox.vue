@@ -23,12 +23,12 @@ defineProps({
 
 <style lang="scss" scoped>
 .answer-box {
-  @include display-xs;
+  @include title-xxxl;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: $gap-sm;
-  height: 76px;
+  height: 64px;
   flex-shrink: 0;
   border-radius: $radius-sm;
   background: $bg;
@@ -45,8 +45,8 @@ defineProps({
     color: $white;
   }
 
-  &--ok { background: rgba($white, 0.2); }
-  &--ko { background: rgba($white, 0.2); }
+  &--ok { background: $tint-20; }
+  &--ko { background: $tint-20; }
 
   &__wrong {
     text-decoration: line-through;

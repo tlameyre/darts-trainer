@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { BADGE_CATEGORIES } from '../../data/badges.js'
 import AppModal from '../AppModal.vue'
+import IconButton from '../IconButton.vue'
 import AppIcon from '../AppIcon.vue'
 import BadgeIcon from './BadgeIcon.vue'
 
@@ -28,9 +29,7 @@ function pct(progress) {
 <template>
   <AppModal :show="show && !!badge" size="lg" centered width="520px" @close="$emit('close')">
     <template v-if="badge">
-      <button class="app-modal__close bd-modal__close" aria-label="Fermer" @click="$emit('close')">
-        <AppIcon name="close" :width="16" :height="16" />
-      </button>
+      <IconButton class="bd-modal__close" icon="close" label="Fermer" @click="$emit('close')" />
 
       <div class="bd-modal__head">
         <BadgeIcon :badge="badge" :locked="!badge.unlockedAt" class="bd-modal__icon" />

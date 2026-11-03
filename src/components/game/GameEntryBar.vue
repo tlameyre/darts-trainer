@@ -55,7 +55,6 @@ function selectMode(id) {
     <div v-else-if="mode === 'volley'" class="entry-bar__volley">
       <span v-if="value" class="entry-bar__value">{{ value }}</span>
       <span v-else class="entry-bar__placeholder">Score de la volée</span>
-      <span class="entry-bar__caret" />
     </div>
 
     <div v-else class="entry-bar__slots">
@@ -100,13 +99,14 @@ function selectMode(id) {
 
 <style lang="scss" scoped>
 .entry-bar {
-  // Slot / caret color, overridable by the mode using the bar
+  // Slot color, overridable by the mode using the bar
   --entry-color: var(--game-color, #{$accent});
+  --bar-size: clamp(40px, 6.5dvh, 52px);
 
   position: relative;
   flex-shrink: 0;
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) 52px;
+  grid-template-columns: var(--bar-size) minmax(0, 1fr) var(--bar-size);
   align-items: center;
   gap: $gap-sm;
   padding: $padding-sm;
@@ -114,8 +114,8 @@ function selectMode(id) {
   background: $surface;
 
   &__btn {
-    width: 52px;
-    height: 52px;
+    width: var(--bar-size);
+    height: var(--bar-size);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -134,6 +134,7 @@ function selectMode(id) {
     justify-content: center;
     gap: $gap-xxs;
     min-width: 0;
+    height: calc(var(--bar-size) - 8px);
   }
 
   &__value {
@@ -147,15 +148,8 @@ function selectMode(id) {
     color: $input-placeholder;
   }
 
-  &__caret {
-    width: $border-lg;
-    height: 44px;
-    background: var(--entry-color);
-    animation: caret-blink 1s steps(1) infinite;
-  }
-
   &__bust {
-    height: 52px;
+    height: var(--bar-size);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -177,7 +171,7 @@ function selectMode(id) {
     @include title-xl;
     flex: 1;
     min-width: 0;
-    height: 52px;
+    height: var(--bar-size);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -207,7 +201,7 @@ function selectMode(id) {
   &__popover {
     position: absolute;
     left: $padding-sm;
-    bottom: calc(100% + #{$gap-xs});
+    top: calc(100% + #{$gap-xs});
     z-index: 41;
     display: flex;
     flex-direction: column;
@@ -235,10 +229,6 @@ function selectMode(id) {
       color: $white;
     }
   }
-}
-
-@keyframes caret-blink {
-  50% { opacity: 0; }
 }
 
 @media (min-width: $bp-laptop) {

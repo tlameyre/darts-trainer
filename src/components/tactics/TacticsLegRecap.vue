@@ -1,4 +1,5 @@
 <script setup>
+import AppButton from '../AppButton.vue'
 import AppIcon from '../AppIcon.vue'
 
 defineProps({
@@ -33,10 +34,9 @@ defineEmits(['next'])
         </div>
       </div>
 
-      <button class="leg-recap__next" @click="$emit('next')">
+      <AppButton class="leg-recap__next" size="cta" tone="red" :block="false" icon-end="arrow-right" @click="$emit('next')">
         Manche suivante
-        <AppIcon name="arrow-right" :width="20" :height="20" />
-      </button>
+      </AppButton>
     </div>
   </Transition>
 </template>
@@ -123,19 +123,7 @@ defineEmits(['next'])
   }
 
   &__next {
-    @include title-xl;
     margin: auto $padding-md 0;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $gap-xs;
-    border-radius: $radius-sm;
-    background: $mode-tactics;
-    color: $white;
-    transition: background 0.15s;
-
-    &:active { background: $black; }
   }
 }
 
@@ -156,7 +144,7 @@ defineEmits(['next'])
     &__name { @include display-md; }
     &__stat-val { @include display-lg; }
     &__stat-lbl { @include text-md; }
-    &__next { @include title-xxl; height: 64px; margin: auto 0 $padding-xxl; }
+    &__next { margin: auto 0 $padding-xxl; }
   }
 }
 

@@ -10,7 +10,6 @@ import StatsPeriodHero from '../components/stats/StatsPeriodHero.vue'
 import StatsZoneSheet from '../components/stats/StatsZoneSheet.vue'
 import WarmupAccuracyChart from '../components/stats/WarmupAccuracyChart.vue'
 import StatsSessionDetail from '../components/stats/StatsSessionDetail.vue'
-import ChartTest from '../components/ChartTest.vue'
 
 const props = defineProps({
   mockSessions: { type: Array, default: null },
@@ -287,12 +286,6 @@ const periodSummary = computed(() => {
   return { sessions: perSession.length, avgAccuracy: Math.round((hits / total) * 100), best: `${best} %` }
 })
 
-const summaryCaption = computed(() => {
-  const labels = selectedZoneOptions.value.map(z => z.label)
-  if (!labels.length) return 'Précision moyenne · toutes zones'
-  return `Précision moyenne · ${labels.length > 3 ? `${labels.length} zones` : labels.join(', ')}`
-})
-
 // Un résumé par zone sélectionnée, pour coller à ce qui est affiché sur le graphique
 const zoneSummaries = computed(() => selectedZoneOptions.value.map(z => ({
   key: z.key,
@@ -309,15 +302,14 @@ const zoneSummaries = computed(() => selectedZoneOptions.value.map(z => ({
     <StatsPeriodHero
       :tabs="PERIOD_TABS" :mode="periodMode" :label="periodLabel"
       :can-prev="canPrev" :can-next="canNext"
-      :caption="summaryCaption" :accuracy="periodSummary.avgAccuracy" :sessions="periodSummary.sessions" :best="periodSummary.best"
+      caption="Précision moyenne" :accuracy="periodSummary.avgAccuracy" :sessions="periodSummary.sessions" :best="periodSummary.best"
       @update:mode="setPeriodMode" @prev="periodOffset--" @next="periodOffset++"
     />
 
     <p v-if="loading" class="warmup-detail__empty">Chargement…</p>
 
     <main v-else-if="allSessions.length" class="warmup-detail__main">
-      <button v-if="zoneCategories.length" class="warmup-detail__zone-btn" aria-haspopup="dialog"
-        @click="showZoneSheet = true">
+      <div v-if="zoneCategories.length" class="warmup-detail__zone-btn">
         <span class="warmup-detail__zone-btn-text">
           <span class="warmup-detail__zone-btn-label">
             Zones affichées · {{ selectedZones.length || 'toutes' }}
@@ -326,24 +318,26 @@ const zoneSummaries = computed(() => selectedZoneOptions.value.map(z => ({
             <span v-for="z in selectedZoneOptions" :key="z.key" class="warmup-detail__zone-tag">
               <span class="warmup-detail__dot" :style="{ background: z.color }" />
               {{ z.label }}
+              <button class="warmup-detail__zone-tag-remove" :aria-label="`Retirer ${z.label}`" @click="toggleZone(z.key)">
+                <AppIcon name="close" :width="12" :height="12" />
+              </button>
             </span>
           </span>
         </span>
-        <span class="warmup-detail__zone-btn-action">
+        <button class="warmup-detail__zone-btn-action" aria-haspopup="dialog" @click="showZoneSheet = true">
           <AppIcon name="sliders" :width="18" :height="18" />
           Filtrer
-        </span>
-      </button>
+        </button>
+      </div>
 
       <section class="warmup-detail__chart">
         <SectionTitle title="Précision par zone" :count="periodCaption" ruled />
-        <ChartTest v-if="hasChartData" :series="chartSeries" :periodMode="periodMode" />
-          <!-- <WarmupAccuracyChart
-            v-if="hasChartData"
-            :series="chartSeries" :mode="periodMode"
-            @open-session="openSession"
-          /> -->
-        <p v-else class="warmup-detail__empty">Aucune session d'échauffement pour cette période.</p>
+        <WarmupAccuracyChart
+          v-if="hasChartData"
+          :series="chartSeries" :period-mode="periodMode" :range="periodRange"
+          @open-session="openSession"
+        />
+        <p v-else class="warmup-detail__empty">{{ selectedZones.length ? 'Aucune donnée pour ces zones sur cette période.' : 'Aucune session d\'échauffement pour cette période.' }}</p>
       </section>
 
       <section v-if="zoneSummaries.length" class="warmup-detail__summaries">
@@ -457,6 +451,15 @@ const zoneSummaries = computed(() => selectedZoneOptions.value.map(z => ({
     @include title-sm;
     line-height: 1;
     text-transform: uppercase;
+  }
+
+  &__zone-tag-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: (-$padding-xxs) (-$padding-xxs) (-$padding-xxs) 0;
+    padding: $padding-xs;
+    color: $muted;
   }
 
   &__zone-btn-action {
